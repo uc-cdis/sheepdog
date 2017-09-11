@@ -164,6 +164,13 @@ ROLE_OPEN = 'release'
 SUBMITTABLE_FILE_STATES = FILE_STATE_TRANSITIONS['submitted']
 SUBMITTABLE_STATES = ENTITY_STATE_TRANSITIONS['submitted']
 
+# Async scheduling configuration
+ASYNC_MAX_Q_LEN = 128
+ERR_ASYNC_SCHEDULING = (
+    'The API is currently under heavy load and currently has too many'
+    ' asynchronous tasks. Please try again later.'
+)
+
 BCR_MAPPING = """
 # example:
 #   -

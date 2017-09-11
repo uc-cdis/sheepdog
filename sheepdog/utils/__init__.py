@@ -45,6 +45,7 @@ from sheepdog.utils.transforms.graph_to_doc import (
 )
 from . import parse
 from . import s3
+from . import scheduling
 
 
 ALLOWED_STATES = [ERROR_STATE, submitted_state(), UPLOADING_STATE]
