@@ -614,13 +614,12 @@ class ExportFile(object):
         delimiter = DELIMITERS[self.file_format]
         json_output, self.result = self.result, {}
 
-        def encode(k, v):
-            """Encode key/values for writing a tsv dict (see below)."""
-            if isinstance(k, unicode):
-                k = k.encode('utf-8')
-            if isinstance(v, unicode):
-                v = v.encode('utf-8')
-            return (k, v)
+        def encode(string):
+            """Encode keys or values for writing a tsv dict (see below)."""
+            if isinstance(string, unicode):
+                return string.encode('utf-8')
+            else:
+                return string
 
         for label, entities in json_output.iteritems():
             template = self.templates[label]
@@ -634,7 +633,7 @@ class ExportFile(object):
 
             for tsv_dict in get_tsv_dicts(entities, titles):
                 writer.writerow(
-                    {encode(k, v) for k, v in tsv_dict.iteritems()}
+                    {encode(k): encode(v) for k, v in tsv_dict.iteritems()}
                 )
 
     def get_delimited_response(self):
