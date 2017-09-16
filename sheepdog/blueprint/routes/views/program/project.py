@@ -286,6 +286,10 @@ def export_entities(program, project):
         kwargs = {k: v for k, v in flask.request.args.iteritems()}
     else:
         kwargs = utils.parse.parse_request_json()
+
+    if 'format' in kwargs:
+        kwargs['file_format'] = kwargs['format']
+        del kwargs['format']
     output = utils.transforms.graph_to_doc.ExportFile(
         program=program, project=project, **kwargs
     )
