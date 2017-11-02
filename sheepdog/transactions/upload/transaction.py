@@ -14,7 +14,7 @@ from sheepdog.errors import (
     UserError,
 )
 from sheepdog.globals import (
-    case_cache_enabled(),
+    case_cache_enabled,
     TX_LOG_STATE_ERRORED,
     TX_LOG_STATE_FAILED,
     TX_LOG_STATE_SUCCEEDED,
