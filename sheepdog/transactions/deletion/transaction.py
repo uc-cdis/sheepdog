@@ -3,6 +3,7 @@ from gdcapi.errors import UserError
 
 from sheepdog import utils
 from sheepdog.globals import (
+    case_cache_enabled,
     FLAG_IS_ASYNC,
     TX_LOG_STATE_FAILED,
 )
@@ -127,10 +128,11 @@ class DeletionTransaction(TransactionBase):
             self.entities.append(missing)
 
         # see DeletionEntity.related_cases() docstring for details
-        self.related_cases = {
-            node.node_id: [{
-                'id': c.node_id,
-                'submitter_id': c.submitter_id
-            } for c in node._related_cases_from_cache]
-            for node in nodes
-        }
+        if case_cache_enabled():
+            self.related_cases = {
+                node.node_id: [{
+                    'id': c.node_id,
+                    'submitter_id': c.submitter_id
+                } for c in node._related_cases_from_cache]
+                for node in nodes
+            }

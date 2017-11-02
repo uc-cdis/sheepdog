@@ -6,6 +6,10 @@ import abc
 
 import psqlgraph
 
+from sheepdog.globals import (
+    case_cache_enabled,
+)
+
 
 class EntityErrors(object):
     """Enum of possible entity error classifications."""
@@ -104,7 +108,7 @@ class EntityBase(object):
         """Gets related cases from shortcut edge
 
         """
-        if not self.node or not self.entity_type or not self.node.label:
+        if not case_cache_enabled() or not self.node or not self.entity_type or not self.node.label:
             return []
         self.transaction.session.flush()
 
