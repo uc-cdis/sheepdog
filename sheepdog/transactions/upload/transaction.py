@@ -14,6 +14,7 @@ from sheepdog.errors import (
     UserError,
 )
 from sheepdog.globals import (
+    case_cache_enabled,
     TX_LOG_STATE_ERRORED,
     TX_LOG_STATE_FAILED,
     TX_LOG_STATE_SUCCEEDED,
@@ -204,18 +205,19 @@ class UploadTransaction(TransactionBase):
             'created_entity_count': self.created_entity_count,
             'updated_entity_count': self.updated_entity_count,
         })
-        doc['cases_related_to_updated_entities_count'] = len({
-            case['id']
-            for entity in doc['entities']
-            for case in entity['related_cases']
-            if entity['action'] == "update"
-        })
-        doc['cases_related_to_created_entities_count'] = len({
-            case['id']
-            for entity in doc['entities']
-            for case in entity['related_cases']
-            if entity['action'] == "create"
-        })
+        if case_cache_enabled():
+            doc['cases_related_to_updated_entities_count'] = len({
+                case['id']
+                for entity in doc['entities']
+                for case in entity['related_cases']
+                if entity['action'] == "update"
+            })
+            doc['cases_related_to_created_entities_count'] = len({
+                case['id']
+                for entity in doc['entities']
+                for case in entity['related_cases']
+                if entity['action'] == "create"
+            })
         return doc
 
     @property
