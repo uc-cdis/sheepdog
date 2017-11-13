@@ -494,7 +494,7 @@ class UploadEntity(EntityBase):
         if not self.node:
             return
 
-        role = self.transaction.role
+        role = self.action
         try:
             if role == 'create':
                 # Check if the category for the node is data_file or
@@ -512,9 +512,9 @@ class UploadEntity(EntityBase):
                     # ``self.transaction.signpost`` is an IndexClient instance
                     # which supports creation of index and alias records.
                     self.transaction.signpost.create(
-                        str(uuid.uuid4()), hashes=hashes
+                        did=str(uuid.uuid4()), hashes=hashes, size=self.node._props.get('file_size'), urls=[]
                     )
-                    self.transaction.signpost.create_alias(alias, hashes=hashes)
+                    self.transaction.signpost.create_alias(record=alias, hashes=hashes, size=self.node._props.get('file_size'), release='private')
                 self.transaction.session.add(self.node)
             elif role == 'update':
                 self.node = self.transaction.session.merge(self.node)
