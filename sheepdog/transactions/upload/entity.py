@@ -501,8 +501,8 @@ class UploadEntity(EntityBase):
           file, then do not create a new one.
         """
         project_id = self.transaction.project_id
-        submitter_id = self.node._props.get("submitter_id")
-        hashes = {'md5': self.node._props.get("md5sum")}
+        submitter_id = self.node._props.get('submitter_id')
+        hashes = {'md5': self.node._props.get('md5sum')}
         size = self.node._props.get('file_size')
         alias = "{}/{}".format(project_id, submitter_id)
         # Check if there is an existing record with this hash and size,
