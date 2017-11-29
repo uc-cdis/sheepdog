@@ -505,12 +505,15 @@ class UploadEntity(EntityBase):
         hashes = {'md5': self.node._props.get('md5sum')}
         size = self.node._props.get('file_size')
         alias = "{}/{}".format(project_id, submitter_id)
-        # Check if there is an existing record with this hash and size,
-        # i.e. this node already has an index record. Create a new record (with
+        # Check if there is an existing record with this hash and size, i.e.
+        # this node already has an index record. Create a new record (with
         # UUID) only if none was found.
         params = {'hashes': hashes, 'size': size}
-        ids = self.transaction.signpost._get('index', params=params)['ids']
-        if not ids:
+        # document: indexclient.Document
+        # if `document` exists, `document.did` is the UUID that is already
+        # registered in indexd for this entity.
+        document = self.transaction.signpost.get_with_params(params)
+        if not document:
             self.transaction.signpost.create(
                 did=str(uuid.uuid4()), hashes=hashes, size=size, urls=[]
             )
