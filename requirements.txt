@@ -4,8 +4,6 @@ Flask-Cors==1.9.0
 Flask-SQLAlchemy-Session==1.1
 Flask==0.10.1
 fuzzywuzzy==0.6.1
-gdcapi==1.5.0
-gdcdatamodel==0.0.0
 graphene==0.10.2
 jsonschema==2.5.1
 lxml==3.8.0
@@ -19,3 +17,4 @@ sqlalchemy==0.9.9
 -e git+https://git@github.com/uc-cdis/cdis-python-utils.git@0.1.5#egg=cdispyutils
 -e git+https://git@github.com/uc-cdis/userdatamodel.git@f25f5dfb356e80c45153ffd3e91b399be672a81c#egg=userdatamodel
 -e git+https://git@github.com/uc-cdis/cdis_oauth2client.git@0.1.1#egg=cdis_oauth2client
+-e git+https://git@github.com/uc-cdis/gdcdatamodel.git@44108de7b5aaabc33db6f39dda5130e1c2e0a3f6#egg=gdcdatamodel
