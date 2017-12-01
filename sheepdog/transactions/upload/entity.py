@@ -490,6 +490,37 @@ class UploadEntity(EntityBase):
         """
         return node.project_id == self.transaction.project_id
 
+    def register_index(self):
+        """
+        Call the "signpost" (index client) for the transaction to register a
+        new index record for this entity.
+
+        NOTE:
+        - Should only ever be called for data and metadata files.
+        - If there is already a record matching the hash and size for this
+          file, then do not create a new one.
+        """
+        project_id = self.transaction.project_id
+        submitter_id = self.node._props.get('submitter_id')
+        hashes = {'md5': self.node._props.get('md5sum')}
+        size = self.node._props.get('file_size')
+        alias = "{}/{}".format(project_id, submitter_id)
+        # Check if there is an existing record with this hash and size, i.e.
+        # this node already has an index record. Create a new record (with
+        # UUID) only if none was found.
+        params = {'hashes': hashes, 'size': size}
+        # document: indexclient.Document
+        # if `document` exists, `document.did` is the UUID that is already
+        # registered in indexd for this entity.
+        document = self.transaction.signpost.get_with_params(params)
+        if not document:
+            self.transaction.signpost.create(
+                did=str(uuid.uuid4()), hashes=hashes, size=size, urls=[]
+            )
+        self.transaction.signpost.create_alias(
+            record=alias, hashes=hashes, size=size, release='private'
+        )
+
     def flush_to_session(self):
         if not self.node:
             return
@@ -498,35 +529,23 @@ class UploadEntity(EntityBase):
         try:
             if role == 'create':
                 # Check if the category for the node is data_file or
-                # metadata_file, in which case, register a uuid and alias in
+                # metadata_file, in which case, register a UUID and alias in
                 # the index service.
                 cls = psqlgraph.Node.get_subclass(self.entity_type)
                 category = dictionary.schema.get(cls.label)['category']
-                is_data_file = category == 'data_file'
-                is_metadata_file = category == 'metadata_file'
-                if is_data_file or is_metadata_file:
-                    project_id = self.transaction.project_id
-                    submitter_id = self.node._props.get("submitter_id")
-                    hashes = {'md5': self.node._props.get("md5sum")}
-                    alias = "{}/{}".format(project_id, submitter_id)
-                    # ``self.transaction.signpost`` is an IndexClient instance
-                    # which supports creation of index and alias records.
-                    self.transaction.signpost.create(
-                        did=str(uuid.uuid4()), hashes=hashes, size=self.node._props.get('file_size'), urls=[]
-                    )
-                    self.transaction.signpost.create_alias(record=alias, hashes=hashes, size=self.node._props.get('file_size'), release='private')
+                if category == 'data_file' or category == 'metadata_file':
+                    self.register_index()
                 self.transaction.session.add(self.node)
             elif role == 'update':
                 self.node = self.transaction.session.merge(self.node)
             else:
-                message = 'Uknown role {}'.format(role)
+                message = 'Unknown role {}'.format(role)
                 self.logger.error(message)
                 self.record_error(
                     message, type=EntityErrors.INVALID_PERMISSIONS
                 )
         except Exception as e:  # pylint: disable=broad-except
             self.logger.exception(e)
-            # FIXME: could leak unnecessary implementation details
             self.record_error(str(e))
 
     def get_skeleton_node(self, label, properties, project_id=None):

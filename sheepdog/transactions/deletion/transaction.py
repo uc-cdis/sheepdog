@@ -1,5 +1,4 @@
 import flask
-from gdcapi.errors import UserError
 
 from sheepdog import utils
 from sheepdog.globals import (
