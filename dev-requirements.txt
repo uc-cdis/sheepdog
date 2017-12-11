@@ -1,2 +1,4 @@
 pytest-cov==2.5.1
 codacy-coverage
+Sphinx==1.6.5
+sphinx_rtd_theme
