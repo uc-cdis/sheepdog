@@ -1,0 +1,360 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>sheepdog.globals &mdash; sheepdog 0.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="sheepdog 0.1.0 documentation" href="../index.html"/>
+        <link rel="up" title="API Reference" href="index.html"/>
+        <link rel="next" title="sheepdog.models" href="sheepdog.models.html"/>
+        <link rel="prev" title="sheepdog.errors" href="sheepdog.errors.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../contents.html" class="icon icon-home"> sheepdog
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">sheepdog</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.auth.html"><code class="docutils literal"><span class="pre">sheepdog.auth</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.blueprint.html"><code class="docutils literal"><span class="pre">sheepdog.blueprint</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.dictionary.html"><code class="docutils literal"><span class="pre">sheepdog.dictionary</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.errors.html"><code class="docutils literal"><span class="pre">sheepdog.errors</span></code></a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal"><span class="pre">sheepdog.globals</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.models.html"><code class="docutils literal"><span class="pre">sheepdog.models</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.transactions.html"><code class="docutils literal"><span class="pre">sheepdog.transactions</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.utils.html"><code class="docutils literal"><span class="pre">sheepdog.utils</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../entities/index.html">Entity Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../requests/index.html">Requests Schema</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../contents.html">sheepdog</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../contents.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">API Reference</a> &raquo;</li>
+      
+    <li><code class="docutils literal"><span class="pre">sheepdog.globals</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sheepdog.globals">
+<span id="sheepdog-globals"></span><h1><code class="docutils literal"><span class="pre">sheepdog.globals</span></code><a class="headerlink" href="#module-sheepdog.globals" title="Permalink to this headline">¶</a></h1>
+<p>Contains values for global constants.</p>
+<dl class="data">
+<dt id="sheepdog.globals.ALLOWED_DELETION_STATES">
+<code class="descname">ALLOWED_DELETION_STATES</code><em class="property"> = ['validated']</em><a class="headerlink" href="#sheepdog.globals.ALLOWED_DELETION_STATES" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a list of states that an entity must be in to allow deletion.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.ENTITY_STATE_CATEGORIES">
+<code class="descname">ENTITY_STATE_CATEGORIES</code><em class="property"> = ['biospecimen', 'clinical', 'data_file']</em><a class="headerlink" href="#sheepdog.globals.ENTITY_STATE_CATEGORIES" title="Permalink to this definition">¶</a></dt>
+<dd><p>These categories should all have a <code class="docutils literal"><span class="pre">state</span></code> associated with each type</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.ENTITY_STATE_TRANSITIONS">
+<code class="descname">ENTITY_STATE_TRANSITIONS</code><em class="property"> = {'submitted': ['validated', None]}</em><a class="headerlink" href="#sheepdog.globals.ENTITY_STATE_TRANSITIONS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Possible entity.state transitions
+{ to_state: from_state }</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.ERROR_STATE">
+<code class="descname">ERROR_STATE</code><em class="property"> = 'error'</em><a class="headerlink" href="#sheepdog.globals.ERROR_STATE" title="Permalink to this definition">¶</a></dt>
+<dd><p>State a file should be put in given an error.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.FILE_STATE_KEY">
+<code class="descname">FILE_STATE_KEY</code><em class="property"> = 'file_state'</em><a class="headerlink" href="#sheepdog.globals.FILE_STATE_KEY" title="Permalink to this definition">¶</a></dt>
+<dd><p>The key that specifies the high level state that a file is in the
+pipeline</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.FILE_STATE_TRANSITIONS">
+<code class="descname">FILE_STATE_TRANSITIONS</code><em class="property"> = {'submitted': ['validated']}</em><a class="headerlink" href="#sheepdog.globals.FILE_STATE_TRANSITIONS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Possible data_file.file_state transitions
+{ to_state: from_state }</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.MESSAGE_500">
+<code class="descname">MESSAGE_500</code><em class="property"> = 'Internal server error. Sorry, something unexpected went wrong!'</em><a class="headerlink" href="#sheepdog.globals.MESSAGE_500" title="Permalink to this definition">¶</a></dt>
+<dd><p>Message to provide for internal server errors.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.REGEX_UUID">
+<code class="descname">REGEX_UUID</code><em class="property"> = &lt;_sre.SRE_Pattern object&gt;</em><a class="headerlink" href="#sheepdog.globals.REGEX_UUID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Regex to match a Program or Project uuid.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.STATES_COMITTABLE_DRY_RUN">
+<code class="descname">STATES_COMITTABLE_DRY_RUN</code><em class="property"> = set(['SUCCEEDED'])</em><a class="headerlink" href="#sheepdog.globals.STATES_COMITTABLE_DRY_RUN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allow dry_run transactions to be committed (in a new transaction)
+if the TransactionLog.state is in the following</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.STATE_KEY">
+<code class="descname">STATE_KEY</code><em class="property"> = 'state'</em><a class="headerlink" href="#sheepdog.globals.STATE_KEY" title="Permalink to this definition">¶</a></dt>
+<dd><p>The key that specifies the high level state that an entity is in the
+release process.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.SUCCESS_STATE">
+<code class="descname">SUCCESS_STATE</code><em class="property"> = 'uploaded'</em><a class="headerlink" href="#sheepdog.globals.SUCCESS_STATE" title="Permalink to this definition">¶</a></dt>
+<dd><p>State file enters when user completes upload.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.TX_LOG_STATE_ERRORED">
+<code class="descname">TX_LOG_STATE_ERRORED</code><em class="property"> = 'ERRORED'</em><a class="headerlink" href="#sheepdog.globals.TX_LOG_STATE_ERRORED" title="Permalink to this definition">¶</a></dt>
+<dd><p>The transaction failed due to system error</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.TX_LOG_STATE_FAILED">
+<code class="descname">TX_LOG_STATE_FAILED</code><em class="property"> = 'FAILED'</em><a class="headerlink" href="#sheepdog.globals.TX_LOG_STATE_FAILED" title="Permalink to this definition">¶</a></dt>
+<dd><p>The transaction failed due to user error</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.TX_LOG_STATE_PENDING">
+<code class="descname">TX_LOG_STATE_PENDING</code><em class="property"> = 'PENDING'</em><a class="headerlink" href="#sheepdog.globals.TX_LOG_STATE_PENDING" title="Permalink to this definition">¶</a></dt>
+<dd><p>The transaction is sill pending or a fatal event ended the job
+before it could report an ERROR status</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.TX_LOG_STATE_SUCCEEDED">
+<code class="descname">TX_LOG_STATE_SUCCEEDED</code><em class="property"> = 'SUCCEEDED'</em><a class="headerlink" href="#sheepdog.globals.TX_LOG_STATE_SUCCEEDED" title="Permalink to this definition">¶</a></dt>
+<dd><p>The transaction succeeded without user or system error.  If the
+transaction was a non-dry_run mutation, then the result should be
+represented in the database</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="sheepdog.globals.UPLOADING_STATE">
+<code class="descname">UPLOADING_STATE</code><em class="property"> = 'uploading'</em><a class="headerlink" href="#sheepdog.globals.UPLOADING_STATE" title="Permalink to this definition">¶</a></dt>
+<dd><p>State file enters when user begins upload.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.globals.case_cache_enabled">
+<code class="descname">case_cache_enabled</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.globals.case_cache_enabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return if the case cache is enabled or not. NOTE that the dictionary must be initialized
+first!</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This function assumes that the dictionary has already been initialized.
+The except/return None behavior is to, for example, allow Sphinx to
+still import/run individual modules without raising errors.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.globals.submitted_state">
+<code class="descname">submitted_state</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.globals.submitted_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the initial file state. NOTE that the dictionary must be initialized
+first!</p>
+<p>This would be a global defined as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">SUBMITTED_STATE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">dictionary</span><span class="o">.</span><span class="n">resolvers</span><span class="p">[</span><span class="s1">&#39;_definitions.yaml&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">source</span><span class="p">[</span><span class="s1">&#39;file_state&#39;</span><span class="p">][</span><span class="s1">&#39;default&#39;</span><span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>but the dictionary must be initialized first, so this value cannot be used
+before that.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This function assumes that the dictionary has already been initialized.
+The except/return None behavior is to, for example, allow Sphinx to
+still import/run individual modules without raising errors.</p>
+</div>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="sheepdog.models.html" class="btn btn-neutral float-right" title="sheepdog.models" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="sheepdog.errors.html" class="btn btn-neutral" title="sheepdog.errors" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Center for Data Intensive Science.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

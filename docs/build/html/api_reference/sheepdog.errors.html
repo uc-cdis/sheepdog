@@ -1,0 +1,282 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>sheepdog.errors &mdash; sheepdog 0.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="sheepdog 0.1.0 documentation" href="../index.html"/>
+        <link rel="up" title="API Reference" href="index.html"/>
+        <link rel="next" title="sheepdog.globals" href="sheepdog.globals.html"/>
+        <link rel="prev" title="sheepdog.dictionary" href="sheepdog.dictionary.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../contents.html" class="icon icon-home"> sheepdog
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">sheepdog</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.auth.html"><code class="docutils literal"><span class="pre">sheepdog.auth</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.blueprint.html"><code class="docutils literal"><span class="pre">sheepdog.blueprint</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.dictionary.html"><code class="docutils literal"><span class="pre">sheepdog.dictionary</span></code></a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal"><span class="pre">sheepdog.errors</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.globals.html"><code class="docutils literal"><span class="pre">sheepdog.globals</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.models.html"><code class="docutils literal"><span class="pre">sheepdog.models</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.transactions.html"><code class="docutils literal"><span class="pre">sheepdog.transactions</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.utils.html"><code class="docutils literal"><span class="pre">sheepdog.utils</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../entities/index.html">Entity Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../requests/index.html">Requests Schema</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../contents.html">sheepdog</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../contents.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">API Reference</a> &raquo;</li>
+      
+    <li><code class="docutils literal"><span class="pre">sheepdog.errors</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sheepdog.errors">
+<span id="sheepdog-errors"></span><h1><code class="docutils literal"><span class="pre">sheepdog.errors</span></code><a class="headerlink" href="#module-sheepdog.errors" title="Permalink to this headline">¶</a></h1>
+<p>TODO</p>
+<dl class="exception">
+<dt id="sheepdog.errors.APIError">
+<em class="property">exception </em><code class="descname">APIError</code><span class="sig-paren">(</span><em>message</em>, <em>code</em>, <em>json</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.errors.APIError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="sheepdog.errors.APINotImplemented">
+<em class="property">exception </em><code class="descname">APINotImplemented</code><span class="sig-paren">(</span><em>message</em>, <em>code=501</em>, <em>json=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.errors.APINotImplemented" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sheepdog.errors.APIError" title="sheepdog.errors.APIError"><code class="xref py py-class docutils literal"><span class="pre">sheepdog.errors.APIError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="sheepdog.errors.AuthError">
+<em class="property">exception </em><code class="descname">AuthError</code><span class="sig-paren">(</span><em>message=None</em>, <em>code=403</em>, <em>json=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.errors.AuthError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sheepdog.errors.APIError" title="sheepdog.errors.APIError"><code class="xref py py-class docutils literal"><span class="pre">sheepdog.errors.APIError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="sheepdog.errors.InternalError">
+<em class="property">exception </em><code class="descname">InternalError</code><span class="sig-paren">(</span><em>message=None</em>, <em>code=500</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.errors.InternalError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sheepdog.errors.APIError" title="sheepdog.errors.APIError"><code class="xref py py-class docutils literal"><span class="pre">sheepdog.errors.APIError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="sheepdog.errors.InvalidTokenError">
+<em class="property">exception </em><code class="descname">InvalidTokenError</code><a class="headerlink" href="#sheepdog.errors.InvalidTokenError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sheepdog.errors.AuthError" title="sheepdog.errors.AuthError"><code class="xref py py-class docutils literal"><span class="pre">sheepdog.errors.AuthError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="sheepdog.errors.NotFoundError">
+<em class="property">exception </em><code class="descname">NotFoundError</code><span class="sig-paren">(</span><em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.errors.NotFoundError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sheepdog.errors.APIError" title="sheepdog.errors.APIError"><code class="xref py py-class docutils literal"><span class="pre">sheepdog.errors.APIError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="sheepdog.errors.ParsingError">
+<em class="property">exception </em><code class="descname">ParsingError</code><a class="headerlink" href="#sheepdog.errors.ParsingError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="sheepdog.errors.SchemaError">
+<em class="property">exception </em><code class="descname">SchemaError</code><span class="sig-paren">(</span><em>message</em>, <em>e=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.errors.SchemaError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="sheepdog.errors.UnsupportedError">
+<em class="property">exception </em><code class="descname">UnsupportedError</code><span class="sig-paren">(</span><em>file_format</em>, <em>code=400</em>, <em>json=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.errors.UnsupportedError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sheepdog.errors.UserError" title="sheepdog.errors.UserError"><code class="xref py py-class docutils literal"><span class="pre">sheepdog.errors.UserError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="sheepdog.errors.UserError">
+<em class="property">exception </em><code class="descname">UserError</code><span class="sig-paren">(</span><em>message</em>, <em>code=400</em>, <em>json=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.errors.UserError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sheepdog.errors.APIError" title="sheepdog.errors.APIError"><code class="xref py py-class docutils literal"><span class="pre">sheepdog.errors.APIError</span></code></a></p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="sheepdog.globals.html" class="btn btn-neutral float-right" title="sheepdog.globals" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="sheepdog.dictionary.html" class="btn btn-neutral" title="sheepdog.dictionary" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Center for Data Intensive Science.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,358 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Requests Schema &mdash; sheepdog 0.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="sheepdog 0.1.0 documentation" href="../index.html"/>
+        <link rel="prev" title="Entity Usage" href="../entities/index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../contents.html" class="icon icon-home"> sheepdog
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">sheepdog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../entities/index.html">Entity Usage</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Requests Schema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#specifying-entity-information">Specifying Entity Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#response-format">Response Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#error-types">Error Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#status-messages">Status Messages</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../contents.html">sheepdog</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../contents.html">Docs</a> &raquo;</li>
+      
+    <li>Requests Schema</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="requests-schema">
+<h1>Requests Schema<a class="headerlink" href="#requests-schema" title="Permalink to this headline">¶</a></h1>
+<p>The schema for requests to the submission API is located at
+<a class="reference external" href="https://github.com/NCI-GDC/gdcdictionary/">github.com/NCI_GDC/gdcdictionary</a>.</p>
+<div class="section" id="specifying-entity-information">
+<h2>Specifying Entity Information<a class="headerlink" href="#specifying-entity-information" title="Permalink to this headline">¶</a></h2>
+<p>When updating, creating, replacing, or deleting entities in the GDC system, you
+need to specify the entity type, the entity id, any relationships the entity
+has to parent entities from which it was derived, and any properties (required
+and optional as defined by the entity schema).  The structure for each entity
+should look as follows:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">&#39;type&#39;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+    <span class="s1">&#39;id&#39;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+    <span class="s1">&#39;submitter_id&#39;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+    <span class="s1">&#39;&lt;entity_property_keys&gt;&#39;</span><span class="o">:</span> <span class="nx">any</span> <span class="nx">type</span><span class="p">,</span>
+    <span class="s1">&#39;&lt;relationship_type&gt;&#39;</span><span class="o">:</span> <span class="p">[{</span>
+    <span class="s1">&#39;id&#39;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+    <span class="s1">&#39;submitter_id&#39;</span><span class="o">:</span> <span class="nx">string</span>
+    <span class="p">}],</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt><strong>id</strong></dt>
+<dd><em>This or</em> <code class="docutils literal"><span class="pre">submitter_id</span></code> <em>required.</em> A string specifying the id of the ebject
+you are creating, updating, or deleting.  This is the official GDC ID for the
+entity.  If you prefer to refer to the entity using your custom id, you can
+do so with the <code class="docutils literal"><span class="pre">submitter_id</span></code> field.</dd>
+<dt><strong>submitter_id</strong></dt>
+<dd><em>This or</em> <code class="docutils literal"><span class="pre">id</span></code> <em>required.</em> A string specifying your custom id of the ebject
+you are creating, updating, or deleting.  This is not the official GDC ID for
+the entity.  If you prefer to refer to the entity using a GDC ID, you can do
+so with the <code class="docutils literal"><span class="pre">&#64;id</span></code> field.</dd>
+<dt><strong>&lt;entity_property_keys&gt;</strong></dt>
+<dd>All keys not listed above will be treated as properties keys.  These key
+value pairs will be used as properties on referenced entity.</dd>
+<dt><strong>&lt;relationship_type&gt;</strong></dt>
+<dd>The type of a relationship.  The value for this is a JSON object specifying
+either the <code class="docutils literal"><span class="pre">submitter_id</span></code> or the <code class="docutils literal"><span class="pre">id</span></code> of the neighboring entity.</dd>
+</dl>
+</div>
+<div class="section" id="response-format">
+<span id="label-response-format"></span><h2>Response Format<a class="headerlink" href="#response-format" title="Permalink to this headline">¶</a></h2>
+<p>The following fields should be included in all responses, regardless of
+success.</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;code&quot;</span><span class="o">:</span> <span class="kr">int</span><span class="p">,</span>
+    <span class="s2">&quot;created_entity_count&quot;</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s2">&quot;entity&quot;</span><span class="o">:</span> <span class="p">[</span><span class="nx">object</span><span class="p">],</span>
+    <span class="s2">&quot;entity_error_count&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+    <span class="s2">&quot;message&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+    <span class="s2">&quot;success&quot;</span><span class="o">:</span> <span class="kr">boolean</span><span class="p">,</span>
+    <span class="s2">&quot;transactional_error_count&quot;</span><span class="o">:</span> <span class="kr">int</span><span class="p">,</span>
+    <span class="s2">&quot;transactional_errors&quot;</span><span class="o">:</span> <span class="p">[</span><span class="nx">transactional_error</span><span class="p">],</span>
+    <span class="s2">&quot;updated_entity_count&quot;</span><span class="o">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt><strong>success</strong></dt>
+<dd>A boolean value stating whether the transaction was successful.  If the value
+is <cite>False</cite>, then no changes will be made to the database.</dd>
+<dt><strong>code</strong></dt>
+<dd>The HTTP status code of the response.</dd>
+<dt><strong>message</strong></dt>
+<dd>A human readable summary of the transaction results.</dd>
+<dt><strong>transactional_errors</strong></dt>
+<dd><blockquote class="first">
+<div>A list of transactional errors occured.  These errors are errors that are
+not specific to an individual entity. Transactional errors are of the form</div></blockquote>
+<div class="last highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s1">&#39;message&#39;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+<dt><strong>transactional_error_count</strong></dt>
+<dd>A count of the number of transactional errors that occured.</dd>
+<dt><strong>entity_error_count</strong></dt>
+<dd>A count of the number entities that were not successful.</dd>
+<dt><strong>entities</strong></dt>
+<dd><p class="first">A list of entities of the form:</p>
+<div class="last highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;submitter_id&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+    <span class="s2">&quot;errors&quot;</span><span class="o">:</span> <span class="p">[</span><span class="nx">entity_errors</span><span class="p">],</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+    <span class="s2">&quot;valid&quot;</span><span class="o">:</span> <span class="kr">boolean</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><strong>entity_errors</strong></p>
+<blockquote>
+<div><p>A list of errors that occurred while parsing, validating, or
+performing a CRUD operation on a specific entity. Entity errors are
+of the form</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">&#39;keys&#39;</span><span class="o">:</span> <span class="p">[</span><span class="nx">string</span><span class="p">],</span>
+    <span class="s1">&#39;message&#39;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>For a listing of the types of errors, see <span class="xref std std-ref">label-error-types</span>.</p>
+<dl class="docutils">
+<dt><strong>created_entitiy_count</strong></dt>
+<dd>The number of entities created by the transaction.</dd>
+<dt><strong>updated_entitiy_count</strong></dt>
+<dd>The number of existing entities updated by the transaction.</dd>
+</dl>
+</div>
+<div class="section" id="error-types">
+<span id="label-creaing-entities"></span><h2>Error Types<a class="headerlink" href="#error-types" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt><strong>EntityNotFoundError</strong></dt>
+<dd>A referenced entity was not found.  This includes both the
+transaction and the datamodel.</dd>
+<dt><strong>MissingPropertyError</strong></dt>
+<dd>A required property was not provided.</dd>
+<dt><strong>ValidationError</strong></dt>
+<dd>A provided property did not pass a validation test.</dd>
+</dl>
+</div>
+<div class="section" id="status-messages">
+<span id="label-status-messages"></span><h2>Status Messages<a class="headerlink" href="#status-messages" title="Permalink to this headline">¶</a></h2>
+<p>API responses will contain a status for each entity specified in the request:</p>
+<dl class="docutils">
+<dt><strong>success</strong></dt>
+<dd>The desired transaction was sucessful and the entity’s state was
+modified in the database.  Because requests are transactional,
+either all entities will have status <code class="docutils literal"><span class="pre">success</span></code> or none will.</dd>
+<dt><strong>valid</strong></dt>
+<dd>The desired transaction was not sucessful, but the trasaction was
+not aborted because of this entity.  Had all other entities in this
+transaction been <code class="docutils literal"><span class="pre">valid</span></code> and there were no internal errors, then
+the stats of this entity would <code class="docutils literal"><span class="pre">success</span></code>.</dd>
+<dt><strong>error</strong></dt>
+<dd>The desired transaction was not sucessful, and the trasaction was in
+part aborted because of this entity.  This entity did not pass
+validation or an internal error occured when attempting to complete
+the transaction. The <code class="docutils literal"><span class="pre">error</span></code> state will be accompanied by a list
+of errors recorded about the entity (see
+<span class="xref std std-ref">label-error-messages</span>).</dd>
+</dl>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../entities/index.html" class="btn btn-neutral" title="Entity Usage" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Center for Data Intensive Science.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

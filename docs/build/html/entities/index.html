@@ -1,0 +1,405 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Entity Usage &mdash; sheepdog 0.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="sheepdog 0.1.0 documentation" href="../index.html"/>
+        <link rel="next" title="Requests Schema" href="../requests/index.html"/>
+        <link rel="prev" title="sheepdog.utils" href="../api_reference/sheepdog.utils.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../contents.html" class="icon icon-home"> sheepdog
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">sheepdog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_reference/index.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Entity Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#creating-entities">Creating Entities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#retrieving-entities">Retrieving Entities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#replacing-entities">Replacing Entities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#updating-entities">Updating Entities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deleting-entities">Deleting Entities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../requests/index.html">Requests Schema</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../contents.html">sheepdog</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../contents.html">Docs</a> &raquo;</li>
+      
+    <li>Entity Usage</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="entity-usage">
+<h1>Entity Usage<a class="headerlink" href="#entity-usage" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="creating-entities">
+<h2>Creating Entities<a class="headerlink" href="#creating-entities" title="Permalink to this headline">¶</a></h2>
+<p><strong>Example Usage for Creating Entities</strong></p>
+<p>The following example will:</p>
+<ol class="arabic simple">
+<li>Create a new aliquot <code class="docutils literal"><span class="pre">aliquot-1</span></code>.</li>
+<li>Specify that <code class="docutils literal"><span class="pre">aliquot-1</span></code> was derived from analyte <code class="docutils literal"><span class="pre">analyte-1</span></code>.</li>
+<li>Specify that <code class="docutils literal"><span class="pre">analyte-1</span></code> was derived from existing portion <code class="docutils literal"><span class="pre">portion-1</span></code>.</li>
+</ol>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/v0/submission/program1/project1/</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">example.com</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+<span class="na">X-Auth-Token</span><span class="o">:</span> <span class="l">MIIDKgYJKoZIhvcNAQcC...</span>
+<span class="na">Accept</span><span class="o">:</span> <span class="l">application/json</span>
+</pre></div>
+</div>
+<div class="highlight-JavaScript"><div class="highlight"><pre><span></span><span class="p">[{</span>
+        <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;analyte&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;portions&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;submitter_id&quot;</span><span class="o">:</span> <span class="s2">&quot;portion-1&quot;</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;analyte_type&quot;</span><span class="o">:</span> <span class="s2">&quot;DNA&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;submitter_id&quot;</span><span class="o">:</span> <span class="s2">&quot;analyte-1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;amount&quot;</span><span class="o">:</span> <span class="mf">10.98</span><span class="p">,</span>
+        <span class="s2">&quot;concentration&quot;</span><span class="o">:</span> <span class="mf">0.14</span><span class="p">,</span>
+        <span class="s2">&quot;spectrophotometer_method&quot;</span><span class="o">:</span> <span class="s2">&quot;PicoGreen&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;analyte_type_id&quot;</span><span class="o">:</span> <span class="s2">&quot;D&quot;</span>
+    <span class="p">},</span> <span class="p">{</span>
+        <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;aliquot&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;analytes&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;submitter_id&quot;</span><span class="o">:</span> <span class="s2">&quot;analyte-1&quot;</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;submitter_id&quot;</span><span class="o">:</span> <span class="s2">&quot;aliquot-1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;source_center&quot;</span><span class="o">:</span> <span class="s2">&quot;23&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;concentration&quot;</span><span class="o">:</span> <span class="mf">0.07</span>
+    <span class="p">}]</span>
+</pre></div>
+</div>
+<p><strong>Example successful result:</strong></p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">201</span> <span class="ne">CREATED</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+</pre></div>
+</div>
+<div class="highlight-JavaScript"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;code&quot;</span><span class="o">:</span> <span class="mi">201</span><span class="p">,</span>
+    <span class="s2">&quot;created_entity_count&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;entities&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;submitter_id&quot;</span><span class="o">:</span> <span class="s2">&quot;analyte-1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;errors&quot;</span><span class="o">:</span> <span class="p">[],</span>
+        <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;2e1429d5-b2ec-4c02-93ac-207d10b1193c&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;valid&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;analyte&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;submitter_id&quot;</span><span class="o">:</span> <span class="s2">&quot;aliquot-1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;errors&quot;</span><span class="o">:</span> <span class="p">[],</span>
+        <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;6a30b20a-1e38-4c16-8c16-c03ab30f7a11&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;valid&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;aliquot&quot;</span>
+    <span class="p">}</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;entity_error_count&quot;</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s2">&quot;message&quot;</span><span class="o">:</span> <span class="s2">&quot;Transaction successful.&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;success&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="s2">&quot;transactional_error_count&quot;</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s2">&quot;transactional_errors&quot;</span><span class="o">:</span> <span class="p">[],</span>
+    <span class="s2">&quot;updated_entity_count&quot;</span><span class="o">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Successful example response:</strong></p>
+<p>In the successful example response, the analyte will be created,
+assigned ID <code class="docutils literal"><span class="pre">2e1429d5...</span></code>, and linked to portion
+<code class="docutils literal"><span class="pre">portion-1</span></code>. The aliquot will be created, assigned an ID, and
+linked to analyte <code class="docutils literal"><span class="pre">analyte-1</span></code>.  Note that the portion
+<code class="docutils literal"><span class="pre">portion-1</span></code> referenced by <code class="docutils literal"><span class="pre">analyte-1</span></code> above is not included
+in the transaction.  Part of the validation for the creation of
+any entity is to check if:</p>
+<p>1. The entity it was derived from exists in the current transaction, If
+the parent entity was in the transaction, verify that any
+information provided does not conflict with the existing version
+2. If the parent entity was not in the transaction, verify that it
+already exists in the system</p>
+<p>Just as the portion referenced by <code class="docutils literal"><span class="pre">portion-1</span></code> was uploaded in a
+previous transaction, we could have split this example into two
+transactions, the first creating the aliquot, and the second
+creating the file.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The GDC will not allow entities to exist without knowing what they
+were derived from. For example, you cannot upload an aliquot if you
+are not uploading/have not previously uploaded the sample, portion,
+or analyte from which it was derived.  This rule applies to deletes
+as well (see <a class="reference internal" href="#label-deleting-entities"><span class="std std-ref">Deleting Entities</span></a>.) Exceptions must be
+made to this rule for Programs and Data Bundles elements to be
+uploaded.</p>
+</div>
+<p><strong>Example bad request:</strong></p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/v0/submission/program1/project1</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">example.com</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+<span class="na">X-Auth-Token</span><span class="o">:</span> <span class="l">MIIDKgYJKoZIhvcNAQcC...</span>
+<span class="na">Accept</span><span class="o">:</span> <span class="l">application/json</span>
+</pre></div>
+</div>
+<div class="highlight-JavaScript"><div class="highlight"><pre><span></span><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;analytes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;portions&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;submitter_id&quot;</span><span class="o">:</span> <span class="s2">&quot;portion-1&quot;</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;analyte_type&quot;</span><span class="o">:</span> <span class="s2">&quot;DNA&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;submitter_id&quot;</span><span class="o">:</span> <span class="s2">&quot;analyte-1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;amount&quot;</span><span class="o">:</span> <span class="mf">10.98</span><span class="p">,</span>
+        <span class="s2">&quot;concentration&quot;</span><span class="o">:</span> <span class="mf">0.14</span><span class="p">,</span>
+        <span class="s2">&quot;spectrophotometer_method&quot;</span><span class="o">:</span> <span class="s2">&quot;PicoGreen&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;analyte_type_id&quot;</span><span class="o">:</span> <span class="s2">&quot;D&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;aliquot&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;analytes&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;submitter_id&quot;</span><span class="o">:</span> <span class="s2">&quot;analyte-1&quot;</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;submitter_id&quot;</span><span class="o">:</span> <span class="s2">&quot;aliquot-1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;source_center&quot;</span><span class="o">:</span> <span class="s2">&quot;23&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;concentration&quot;</span><span class="o">:</span> <span class="mf">0.07</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p><strong>Example error result:</strong></p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">400</span> <span class="ne">BAD REQUEST</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+</pre></div>
+</div>
+<div class="highlight-JavaScript"><div class="highlight"><pre><span></span><span class="p">[{</span>
+    <span class="s2">&quot;code&quot;</span><span class="o">:</span> <span class="mi">400</span><span class="p">,</span>
+    <span class="s2">&quot;created_entity_count&quot;</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s2">&quot;entities&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;submitter_id&quot;</span><span class="o">:</span> <span class="s2">&quot;analyte-1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;errors&quot;</span><span class="o">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;keys&quot;</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;message&quot;</span><span class="o">:</span> <span class="s2">&quot;Invalid entity type: analytes. Did you mean &#39;analyte&#39;?&quot;</span>
+        <span class="p">}</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;2e1429d5-b2ec-4c02-93ac-207d10b1193c&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;valid&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;analytes&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;submitter_id&quot;</span><span class="o">:</span> <span class="s2">&quot;aliquot-1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;errors&quot;</span><span class="o">:</span> <span class="p">[],</span>
+        <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;6a30b20a-1e38-4c16-8c16-c03ab30f7a11&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;valid&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;aliquot&quot;</span>
+    <span class="p">}</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;entity_error_count&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;message&quot;</span><span class="o">:</span> <span class="s2">&quot;Transaction aborted due to 1 invalid entity.&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;success&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="s2">&quot;transactional_error_count&quot;</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s2">&quot;transactional_errors&quot;</span><span class="o">:</span> <span class="p">[],</span>
+    <span class="s2">&quot;updated_entity_count&quot;</span><span class="o">:</span> <span class="mi">0</span>
+<span class="p">}]</span>
+</pre></div>
+</div>
+<p><strong>Unsuccessful example response:</strong></p>
+<p>In the second example response, the API returned error code
+<code class="docutils literal"><span class="pre">400</span></code> and each entity with a list of errors.  The submission API
+intends to be as helpful as possible when fixing invalid data
+errors and will provide a list of all known errors regarding each
+entity.  Ideally, fixing the errors described should result in a
+successful uploading and not further errors (i.e. validation is
+not short circuited), but this may not always be the case.</p>
+</div>
+<div class="section" id="retrieving-entities">
+<span id="label-retrieving-entities"></span><h2>Retrieving Entities<a class="headerlink" href="#retrieving-entities" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="replacing-entities">
+<span id="label-replacing-entities"></span><h2>Replacing Entities<a class="headerlink" href="#replacing-entities" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="updating-entities">
+<span id="label-updating-entities"></span><h2>Updating Entities<a class="headerlink" href="#updating-entities" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="deleting-entities">
+<span id="label-deleting-entities"></span><h2>Deleting Entities<a class="headerlink" href="#deleting-entities" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../requests/index.html" class="btn btn-neutral float-right" title="Requests Schema" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../api_reference/sheepdog.utils.html" class="btn btn-neutral" title="sheepdog.utils" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Center for Data Intensive Science.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

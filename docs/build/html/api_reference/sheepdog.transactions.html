@@ -1,0 +1,920 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>sheepdog.transactions &mdash; sheepdog 0.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="sheepdog 0.1.0 documentation" href="../index.html"/>
+        <link rel="up" title="API Reference" href="index.html"/>
+        <link rel="next" title="sheepdog.utils" href="sheepdog.utils.html"/>
+        <link rel="prev" title="sheepdog.models" href="sheepdog.models.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../contents.html" class="icon icon-home"> sheepdog
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">sheepdog</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.auth.html"><code class="docutils literal"><span class="pre">sheepdog.auth</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.blueprint.html"><code class="docutils literal"><span class="pre">sheepdog.blueprint</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.dictionary.html"><code class="docutils literal"><span class="pre">sheepdog.dictionary</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.errors.html"><code class="docutils literal"><span class="pre">sheepdog.errors</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.globals.html"><code class="docutils literal"><span class="pre">sheepdog.globals</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.models.html"><code class="docutils literal"><span class="pre">sheepdog.models</span></code></a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal"><span class="pre">sheepdog.transactions</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#base-classes">Base Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#module-sheepdog.transactions.entity_base"><code class="docutils literal"><span class="pre">sheepdog.transactions.entity_base</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-sheepdog.transactions.transaction_base"><code class="docutils literal"><span class="pre">sheepdog.transactions.transaction_base</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#transactions">Transactions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#module-sheepdog.transactions.close"><code class="docutils literal"><span class="pre">sheepdog.transactions.close</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-sheepdog.transactions.deletion"><code class="docutils literal"><span class="pre">sheepdog.transactions.deletion</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-sheepdog.transactions.release"><code class="docutils literal"><span class="pre">sheepdog.transactions.release</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-sheepdog.transactions.review"><code class="docutils literal"><span class="pre">sheepdog.transactions.review</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-sheepdog.transactions.submission"><code class="docutils literal"><span class="pre">sheepdog.transactions.submission</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-sheepdog.transactions.upload"><code class="docutils literal"><span class="pre">sheepdog.transactions.upload</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.utils.html"><code class="docutils literal"><span class="pre">sheepdog.utils</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../entities/index.html">Entity Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../requests/index.html">Requests Schema</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../contents.html">sheepdog</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../contents.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">API Reference</a> &raquo;</li>
+      
+    <li><code class="docutils literal"><span class="pre">sheepdog.transactions</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sheepdog.transactions">
+<span id="sheepdog-transactions"></span><h1><code class="docutils literal"><span class="pre">sheepdog.transactions</span></code><a class="headerlink" href="#module-sheepdog.transactions" title="Permalink to this headline">¶</a></h1>
+<p>TODO</p>
+<div class="section" id="base-classes">
+<h2>Base Classes<a class="headerlink" href="#base-classes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-sheepdog.transactions.entity_base">
+<span id="sheepdog-transactions-entity-base"></span><h3><code class="docutils literal"><span class="pre">sheepdog.transactions.entity_base</span></code><a class="headerlink" href="#module-sheepdog.transactions.entity_base" title="Permalink to this headline">¶</a></h3>
+<p>TODO</p>
+<dl class="class">
+<dt id="sheepdog.transactions.entity_base.EntityBase">
+<em class="property">class </em><code class="descname">EntityBase</code><span class="sig-paren">(</span><em>transaction</em>, <em>node=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityBase.base_json">
+<code class="descname">base_json</code><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityBase.base_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a json object representation.  This property is intended
+to be used to produce all server response payloads.</p>
+<p>Subclasses sould call and add to this base.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.entity_base.EntityBase.get_links">
+<code class="descname">get_links</code><span class="sig-paren">(</span><em>node</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityBase.get_links" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the possible links to submittable entities given a node.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityBase.is_valid">
+<code class="descname">is_valid</code><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityBase.is_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return bolean of whether this entity has no recorded errors.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityBase.json">
+<code class="descname">json</code><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityBase.json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias <code class="docutils literal"><span class="pre">base_json</span></code>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityBase.node_exists">
+<code class="descname">node_exists</code><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityBase.node_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check that the node exists in the database.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityBase.pg_secondary_keys">
+<code class="descname">pg_secondary_keys</code><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityBase.pg_secondary_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the list of unique tuples for the node type</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.entity_base.EntityBase.record_error">
+<code class="descname">record_error</code><span class="sig-paren">(</span><em>message</em>, <em>keys=None</em>, <em>type=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityBase.record_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an error message.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>message</strong> (<em>str</em>) – message explaining what went wrong</li>
+<li><strong>keys</strong> (<em>list</em>) – what keys in the JSON were invalid</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.entity_base.EntityBase.record_warning">
+<code class="descname">record_warning</code><span class="sig-paren">(</span><em>message</em>, <em>keys=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityBase.record_warning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record a warning message.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>message</strong> (<em>str</em>) – message explaining what went wrong</li>
+<li><strong>keys</strong> (<em>list</em>) – what keys in the JSON were invalid</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityBase.related_cases">
+<code class="descname">related_cases</code><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityBase.related_cases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets related cases from shortcut edge</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityBase.secondary_keys">
+<code class="descname">secondary_keys</code><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityBase.secondary_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the list of unique dicts for the node</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityBase.secondary_keys_dicts">
+<code class="descname">secondary_keys_dicts</code><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityBase.secondary_keys_dicts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the list of unique tuples for the node</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.entity_base.EntityBase.set_old_props">
+<code class="descname">set_old_props</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityBase.set_old_props" title="Permalink to this definition">¶</a></dt>
+<dd><p>Snapshot the properties as they are now to put in transaction log.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sheepdog.transactions.entity_base.EntityErrors">
+<em class="property">class </em><code class="descname">EntityErrors</code><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityErrors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Enum of possible entity error classifications.</p>
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityErrors.INVALID_LINK">
+<code class="descname">INVALID_LINK</code><em class="property"> = 'INVALID_LINK'</em><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityErrors.INVALID_LINK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityErrors.INVALID_NUMERIC">
+<code class="descname">INVALID_NUMERIC</code><em class="property"> = 'INVALID_NUMERIC'</em><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityErrors.INVALID_NUMERIC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityErrors.INVALID_PERMISSIONS">
+<code class="descname">INVALID_PERMISSIONS</code><em class="property"> = 'INVALID_PERMISSIONS'</em><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityErrors.INVALID_PERMISSIONS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityErrors.INVALID_PROPERTY">
+<code class="descname">INVALID_PROPERTY</code><em class="property"> = 'INVALID_PROPERTY'</em><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityErrors.INVALID_PROPERTY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityErrors.INVALID_TYPE">
+<code class="descname">INVALID_TYPE</code><em class="property"> = 'INVALID_TYPE'</em><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityErrors.INVALID_TYPE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityErrors.INVALID_VALUE">
+<code class="descname">INVALID_VALUE</code><em class="property"> = 'INVALID_VALUE'</em><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityErrors.INVALID_VALUE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityErrors.MISSING_PROPERTY">
+<code class="descname">MISSING_PROPERTY</code><em class="property"> = 'MISSING_PROPERTY'</em><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityErrors.MISSING_PROPERTY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityErrors.NOT_FOUND">
+<code class="descname">NOT_FOUND</code><em class="property"> = 'NOT_FOUND'</em><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityErrors.NOT_FOUND" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityErrors.NOT_UNIQUE">
+<code class="descname">NOT_UNIQUE</code><em class="property"> = 'NOT_UNIQUE'</em><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityErrors.NOT_UNIQUE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.entity_base.EntityErrors.UNCATEGORIZED">
+<code class="descname">UNCATEGORIZED</code><em class="property"> = 'ERROR'</em><a class="headerlink" href="#sheepdog.transactions.entity_base.EntityErrors.UNCATEGORIZED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.transactions.transaction_base">
+<span id="sheepdog-transactions-transaction-base"></span><h3><code class="docutils literal"><span class="pre">sheepdog.transactions.transaction_base</span></code><a class="headerlink" href="#module-sheepdog.transactions.transaction_base" title="Permalink to this headline">¶</a></h3>
+<p>Define the <code class="docutils literal"><span class="pre">TransactionBase</span></code> class, which <code class="docutils literal"><span class="pre">UploadTransaction</span></code> inherits
+from.</p>
+<dl class="class">
+<dt id="sheepdog.transactions.transaction_base.MissingNode">
+<em class="property">class </em><code class="descname">MissingNode</code><span class="sig-paren">(</span><em>ID=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.MissingNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Placeholder class to stub properties of a missing node.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase">
+<em class="property">class </em><code class="descname">TransactionBase</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Parent class for GDC API transactions.</p>
+<ul>
+<li><p class="first">Children must define:</p>
+<blockquote>
+<div><p>REQUIRED_PROJECT_STATES = [..]</p>
+</div></blockquote>
+</li>
+<li><p class="first">Children should always call <code class="docutils literal"><span class="pre">super(...,</span> <span class="pre">self).__init__()</span></code></p>
+</li>
+</ul>
+<p>Collected functionality for submission transactions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>program</strong> – Program.name of the transaction</li>
+<li><strong>project</strong> – Project.code of the transaction</li>
+<li><strong>document_name</strong> – Name of a file containing mutation</li>
+<li><strong>dry_run</strong> – If True, the transaction will not be committed</li>
+<li><strong>role</strong> – The role required to take this transaction</li>
+<li><strong>user</strong> – The initializer of the transaction</li>
+<li><strong>signpost</strong> – Signpost driver (default: capp.signpost)</li>
+<li><strong>db_driver</strong> – PsqlGraph driver (default: capp.db)</li>
+<li><strong>logger</strong> – Logging driver (default: capp.logger)</li>
+<li><strong>transaction_id</strong> – Optionally inherit and write to an existing
+TransactionLog. If this is not provided, a new TransactionLog
+will be created.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.REQUIRED_PROJECT_STATES">
+<code class="descname">REQUIRED_PROJECT_STATES</code><em class="property"> = []</em><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.REQUIRED_PROJECT_STATES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.assert_project_state">
+<code class="descname">assert_project_state</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.assert_project_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assert that the transaction is allowed given the Project.state.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.base_json">
+<code class="descname">base_json</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.base_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return attributes in dictionary form.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.claim_transaction_log">
+<code class="descname">claim_transaction_log</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.claim_transaction_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new, default transaction log and writes it to the
+database in a separate session.</p>
+<p>This allows the transaction log and transaction mutations to be
+separate transactions and clients to view the transaction
+before completion.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The integer id of the transaction</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.clean_session">
+<code class="descname">clean_session</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.clean_session" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new nested session context independent of existing sessions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.commit">
+<code class="descname">commit</code><span class="sig-paren">(</span><em>assert_has_entities=True</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.commit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Conditionally write to the database.</p>
+<p>If <code class="docutils literal"><span class="pre">assert_has_entities</span></code> and there are no entities, record an error
+and return without committing.</p>
+<p>If the transaction is a dry run, do not write to database (rollback),
+but return without recording an error.</p>
+<p>If successful, attempt to flush changes, transaction log and commit.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.entity_error_count">
+<code class="descname">entity_error_count</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.entity_error_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return only the number of errors recorded for all of the the
+transaction’s entities.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.entity_errors">
+<code class="descname">entity_errors</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.entity_errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the error JSON for each entity that is up to this point
+unsuccessful.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.entity_responses">
+<code class="descname">entity_responses</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.entity_responses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of JSON response objects generated by each entity.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.error_count">
+<code class="descname">error_count</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.error_count" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Return the **total*</em> error count* – the sum of transactional and entity
+error counts.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.fetch_transaction_log">
+<code class="descname">fetch_transaction_log</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.fetch_transaction_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Look up external state of transaction log.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.get_transaction_timestamp">
+<code class="descname">get_transaction_timestamp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.get_transaction_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the timestamp that was written on entities. If the flush was
+lazy (no entities, etc), create a new one.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.json">
+<code class="descname">json</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the json representation (wraps <code class="docutils literal"><span class="pre">base_json</span></code>).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.message">
+<code class="descname">message</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a string describing the current state of the transaction.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.new_stub_transaction_document">
+<em class="property">static </em><code class="descname">new_stub_transaction_document</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.new_stub_transaction_document" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a stub document.</p>
+<p>This is more an artifact of bulk transactions. Bulk transactions
+include multiple documents in one transaction. The API attempts to keep
+it as uniform as possible with the normal transaction response by
+simply creating a response per document in the bulk transaction.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.new_transaction_log">
+<code class="descname">new_transaction_log</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.new_transaction_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a new, default transaction log</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.nodes">
+<code class="descname">nodes</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list containing the node for all successfully instantiated
+entities.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.project_id">
+<code class="descname">project_id</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.project_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the project id.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.record_error">
+<code class="descname">record_error</code><span class="sig-paren">(</span><em>message</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.record_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an error message.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>message</strong> (<em>str</em>) – a message explaining what when wrong</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.record_errors_for_empty_transaction">
+<code class="descname">record_errors_for_empty_transaction</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.record_errors_for_empty_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record transactional_errors for empty subtransactions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.record_internal_error">
+<code class="descname">record_internal_error</code><span class="sig-paren">(</span><em>exception</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.record_internal_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Centralized management for transaction internal errors.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>exception</strong> (<em>Exception</em>) – the Exception that was raised</td>
+</tr>
+</tbody>
+</table>
+<p>Log the exception message but do not return it to the user.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.record_user_error">
+<code class="descname">record_user_error</code><span class="sig-paren">(</span><em>exception</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.record_user_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Centralized management for transaction user errors.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>exception</strong> (<em>Exception</em>) – the Exception that was raised</td>
+</tr>
+</tbody>
+</table>
+<p>Log the exception message and return it to the user.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.rollback">
+<code class="descname">rollback</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.rollback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Erase all changes in the current session.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.rollback_with_tx_log_state">
+<code class="descname">rollback_with_tx_log_state</code><span class="sig-paren">(</span><em>state</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.rollback_with_tx_log_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Erase all changes in the current session and set the
+transaction_log.state in a separate session.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.session">
+<code class="descname">session</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.session" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap current database session.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.set_transaction_log_state">
+<code class="descname">set_transaction_log_state</code><span class="sig-paren">(</span><em>state</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.set_transaction_log_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transition the transaction_log.state to param:<cite>state</cite> in a clean
+session.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.status_code">
+<code class="descname">status_code</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.status_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return status code according to <code class="docutils literal"><span class="pre">self.success</span></code>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.success">
+<code class="descname">success</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.success" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return true if the transaction has been successful so far. A
+transaction is considered successful if it or its entities have not
+recorded errors up to the point <code class="docutils literal"><span class="pre">.success</span></code> is referenced.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.transaction_id">
+<code class="descname">transaction_id</code><em class="property"> = None</em><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.transaction_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a transaction log, this will be created and committed to the
+database during claim_transaction_log()</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.transactional_error_count">
+<code class="descname">transactional_error_count</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.transactional_error_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of transactional errors recorded up to this point.</p>
+<p>Transactional errors are errors that are not specific to an individual
+entity.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.valid_entities">
+<code class="descname">valid_entities</code><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.valid_entities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of entities that (up to this point) have no recorded
+errors.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.transactions.transaction_base.TransactionBase.write_transaction_log">
+<code class="descname">write_transaction_log</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.transaction_base.TransactionBase.write_transaction_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write the entity snapshots and response json to the Transaction*
+models.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="transactions">
+<h2>Transactions<a class="headerlink" href="#transactions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-sheepdog.transactions.close">
+<span id="sheepdog-transactions-close"></span><h3><code class="docutils literal"><span class="pre">sheepdog.transactions.close</span></code><a class="headerlink" href="#module-sheepdog.transactions.close" title="Permalink to this headline">¶</a></h3>
+<p>Top-level functionality for closing dry_run transactions to prevent them from
+being committed in the future.</p>
+<dl class="function">
+<dt id="sheepdog.transactions.close.close_transaction">
+<code class="descname">close_transaction</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>transaction_id</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.close.close_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commit a dry_run transaction by repeating it with a new non-dry_run
+transaction.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.transactions.deletion">
+<span id="sheepdog-transactions-deletion"></span><h3><code class="docutils literal"><span class="pre">sheepdog.transactions.deletion</span></code><a class="headerlink" href="#module-sheepdog.transactions.deletion" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="sheepdog.transactions.deletion.handle_deletion_request">
+<code class="descname">handle_deletion_request</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>ids</em>, <em>**tx_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.deletion.handle_deletion_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and execute a single deletion transaction.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(API json response, status code)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">Tuple[flask.Response, int]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.transactions.deletion.transaction_worker">
+<code class="descname">transaction_worker</code><span class="sig-paren">(</span><em>transaction</em>, <em>ids</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.deletion.transaction_worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a single transaction in the background after request context.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>transaction</strong> (<em>DeletionTransaction</em>) – the transaction instance</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.transactions.release">
+<span id="sheepdog-transactions-release"></span><h3><code class="docutils literal"><span class="pre">sheepdog.transactions.release</span></code><a class="headerlink" href="#module-sheepdog.transactions.release" title="Permalink to this headline">¶</a></h3>
+<p>Defines transactions to release the project.</p>
+<p>TODO(jsm|2016-02-01): Add review constraints.</p>
+<dl class="function">
+<dt id="sheepdog.transactions.release.handle_release_transaction">
+<code class="descname">handle_release_transaction</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>**tx_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.release.handle_release_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and execute a single transaction.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(API response json, status code)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">Tuple[flask.Response, int]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.transactions.release.transaction_worker">
+<code class="descname">transaction_worker</code><span class="sig-paren">(</span><em>transaction</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.release.transaction_worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a single transaction in the background after request context.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>transaction</strong> – The transaction instance</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.transactions.review">
+<span id="sheepdog-transactions-review"></span><h3><code class="docutils literal"><span class="pre">sheepdog.transactions.review</span></code><a class="headerlink" href="#module-sheepdog.transactions.review" title="Permalink to this headline">¶</a></h3>
+<p>Defines transactions to transition the project to and from <code class="docutils literal"><span class="pre">review</span></code>.</p>
+<p>TODO(jsm|2016-02-01): Add review constraints.</p>
+<dl class="function">
+<dt id="sheepdog.transactions.review.handle_open_transaction">
+<code class="descname">handle_open_transaction</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>**tx_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.review.handle_open_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to take review action.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.transactions.review.handle_review_transaction">
+<code class="descname">handle_review_transaction</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>**tx_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.review.handle_review_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to take review action.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.transactions.review.transaction_worker">
+<code class="descname">transaction_worker</code><span class="sig-paren">(</span><em>transaction</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.review.transaction_worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a single transaction in the background after request context.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>transaction</strong> – The transaction instance</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.transactions.submission">
+<span id="sheepdog-transactions-submission"></span><h3><code class="docutils literal"><span class="pre">sheepdog.transactions.submission</span></code><a class="headerlink" href="#module-sheepdog.transactions.submission" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="sheepdog.transactions.submission.handle_submission_transaction">
+<code class="descname">handle_submission_transaction</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>*doc_args</em>, <em>**tx_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.submission.handle_submission_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and execute a single (not bulk) transaction.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(API response json, status code)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">Tuple[flask.Response, int]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.transactions.submission.transaction_worker">
+<code class="descname">transaction_worker</code><span class="sig-paren">(</span><em>transaction</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.submission.transaction_worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a single transaction in the background after request context.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>transaction</strong> – The transaction instance</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.transactions.upload">
+<span id="sheepdog-transactions-upload"></span><h3><code class="docutils literal"><span class="pre">sheepdog.transactions.upload</span></code><a class="headerlink" href="#module-sheepdog.transactions.upload" title="Permalink to this headline">¶</a></h3>
+<p>Pylint <code class="docutils literal"><span class="pre">no-member</span></code> error disabled because of false positives with
+<code class="docutils literal"><span class="pre">lxml.etree</span></code>.</p>
+<dl class="function">
+<dt id="sheepdog.transactions.upload.bulk_transaction_worker">
+<code class="descname">bulk_transaction_worker</code><span class="sig-paren">(</span><em>transaction</em>, <em>wrappers</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.upload.bulk_transaction_worker" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.transactions.upload.handle_biospecimen_bcr_xml_transaction">
+<code class="descname">handle_biospecimen_bcr_xml_transaction</code><span class="sig-paren">(</span><em>role</em>, <em>program</em>, <em>project</em>, <em>**tx_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.upload.handle_biospecimen_bcr_xml_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Entrypoint from the flask blueprint for BCR Biospecimen XML XSD 2.6</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.transactions.upload.handle_bulk_transaction">
+<code class="descname">handle_bulk_transaction</code><span class="sig-paren">(</span><em>role</em>, <em>program</em>, <em>project</em>, <em>**tx_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.upload.handle_bulk_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.transactions.upload.handle_clinical_bcr_xml_transaction">
+<code class="descname">handle_clinical_bcr_xml_transaction</code><span class="sig-paren">(</span><em>role</em>, <em>program</em>, <em>project</em>, <em>**tx_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.upload.handle_clinical_bcr_xml_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Entrypoint from the flask blueprint for BCR Clinical XML XSD 2.6</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.transactions.upload.handle_single_transaction">
+<code class="descname">handle_single_transaction</code><span class="sig-paren">(</span><em>role</em>, <em>program</em>, <em>project</em>, <em>**tx_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.upload.handle_single_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main entry point for single file transactions.</p>
+<p>This function multiplexes on the content-type to call the appropriate
+transaction handler.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.transactions.upload.handle_xml_transaction">
+<code class="descname">handle_xml_transaction</code><span class="sig-paren">(</span><em>role</em>, <em>program</em>, <em>project</em>, <em>parser</em>, <em>**tx_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.upload.handle_xml_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle XML transactions. Provide a parser that has a function with the
+signature <code class="docutils literal"><span class="pre">parser.loads(doc)</span></code> to load a doc and <code class="docutils literal"><span class="pre">parser.json</span></code> property
+to retreive the parsed docs.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.transactions.upload.single_transaction_worker">
+<code class="descname">single_transaction_worker</code><span class="sig-paren">(</span><em>transaction</em>, <em>*doc_args</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.upload.single_transaction_worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute single transaction (called in serial or async).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.transactions.upload.unpack_bulk_wrapper">
+<code class="descname">unpack_bulk_wrapper</code><span class="sig-paren">(</span><em>wrapper</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.transactions.upload.unpack_bulk_wrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the name, the doc, and the doc_format from the wrapper.</p>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="sheepdog.utils.html" class="btn btn-neutral float-right" title="sheepdog.utils" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="sheepdog.models.html" class="btn btn-neutral" title="sheepdog.models" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Center for Data Intensive Science.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

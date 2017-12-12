@@ -1,0 +1,855 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>sheepdog.blueprint &mdash; sheepdog 0.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="sheepdog 0.1.0 documentation" href="../index.html"/>
+        <link rel="up" title="API Reference" href="index.html"/>
+        <link rel="next" title="sheepdog.dictionary" href="sheepdog.dictionary.html"/>
+        <link rel="prev" title="sheepdog.auth" href="sheepdog.auth.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../contents.html" class="icon icon-home"> sheepdog
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">sheepdog</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.auth.html"><code class="docutils literal"><span class="pre">sheepdog.auth</span></code></a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal"><span class="pre">sheepdog.blueprint</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-sheepdog.blueprint.routes"><code class="docutils literal"><span class="pre">sheepdog.blueprint.routes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-sheepdog.blueprint.routes.views"><code class="docutils literal"><span class="pre">sheepdog.blueprint.routes.views</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-sheepdog.blueprint.routes.views.program"><code class="docutils literal"><span class="pre">sheepdog.blueprint.routes.views.program</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-sheepdog.blueprint.routes.views.program.project"><code class="docutils literal"><span class="pre">sheepdog.blueprint.routes.views.program.project</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.dictionary.html"><code class="docutils literal"><span class="pre">sheepdog.dictionary</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.errors.html"><code class="docutils literal"><span class="pre">sheepdog.errors</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.globals.html"><code class="docutils literal"><span class="pre">sheepdog.globals</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.models.html"><code class="docutils literal"><span class="pre">sheepdog.models</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.transactions.html"><code class="docutils literal"><span class="pre">sheepdog.transactions</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.utils.html"><code class="docutils literal"><span class="pre">sheepdog.utils</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../entities/index.html">Entity Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../requests/index.html">Requests Schema</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../contents.html">sheepdog</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../contents.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">API Reference</a> &raquo;</li>
+      
+    <li><code class="docutils literal"><span class="pre">sheepdog.blueprint</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sheepdog.blueprint">
+<span id="sheepdog-blueprint"></span><h1><code class="docutils literal"><span class="pre">sheepdog.blueprint</span></code><a class="headerlink" href="#module-sheepdog.blueprint" title="Permalink to this headline">¶</a></h1>
+<p>Defines the sheepdog blueprint, which must be initialized with modules defining
+the data dicitonary and the data models.</p>
+<dl class="function">
+<dt id="sheepdog.blueprint.create_blueprint">
+<code class="descname">create_blueprint</code><span class="sig-paren">(</span><em>dictionary_to_use</em>, <em>models_to_use</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.create_blueprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the blueprint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dictionary_to_use</strong> – data dictionary such as gdcdictionary</li>
+<li><strong>models_to_use</strong> – data model such as gdcdatamodel</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the sheepdog blueprint</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">flask.Blueprint</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="section" id="module-sheepdog.blueprint.routes">
+<span id="sheepdog-blueprint-routes"></span><h2><code class="docutils literal"><span class="pre">sheepdog.blueprint.routes</span></code><a class="headerlink" href="#module-sheepdog.blueprint.routes" title="Permalink to this headline">¶</a></h2>
+<p>List routes to be added to the blueprint in <code class="docutils literal"><span class="pre">sheepdog.blueprint</span></code>. Each
+route is constructed with the <code class="docutils literal"><span class="pre">new_route</span></code> function from
+<code class="docutils literal"><span class="pre">sheepdog.blueprint.routes.route_utils</span></code>.</p>
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.new_route">
+<code class="descname">new_route</code><span class="sig-paren">(</span><em>rule</em>, <em>view_func</em>, <em>endpoint=None</em>, <em>methods=None</em>, <em>options=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.new_route" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a dictionary representation of a URL rule to be added to the
+blueprint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>rule</strong> (<em>str</em>) – the path for the URL</li>
+<li><strong>view_func</strong> (<em>callable</em>) – function to render the page</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Keyword Arguments:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><ul class="first simple">
+<li><strong>endpoint</strong> (<em>str</em>) – endpoint name (internal Flask usage)</li>
+<li><strong>methods</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – list of methods the rule should handle (GET, etc.)</li>
+<li><strong>options</strong> (<em>dict</em>) – options to pass as keyword args to <code class="docutils literal"><span class="pre">add_url_rule</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">dictionary containing the above information for the route</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.blueprint.routes.views">
+<span id="sheepdog-blueprint-routes-views"></span><h2><code class="docutils literal"><span class="pre">sheepdog.blueprint.routes.views</span></code><a class="headerlink" href="#module-sheepdog.blueprint.routes.views" title="Permalink to this headline">¶</a></h2>
+<p>Provide view functions for routes in the blueprint.</p>
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.get_dictionary">
+<code class="descname">get_dictionary</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.get_dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>/_dictionary</p>
+<p>Return links to the JSON schema definitions.</p>
+<p>TODO</p>
+<p><strong>Example</strong></p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/v0/submission/CGCI/BLGSP/_dictionary</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">example.com</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+<span class="na">X-Auth-Token</span><span class="o">:</span> <span class="l">MIIDKgYJKoZIhvcNAQcC...</span>
+<span class="na">Accept</span><span class="o">:</span> <span class="l">application/json</span>
+</pre></div>
+</div>
+<div class="highlight-JavaScript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;links&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="s2">&quot;/v0/submission/_dictionary/case&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/v0/submission/_dictionary/program&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/v0/submission/_dictionary/aliquot&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/v0/submission/_dictionary/annotation&quot;</span><span class="p">,</span>
+    <span class="p">...</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.get_programs">
+<code class="descname">get_programs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.get_programs" title="Permalink to this definition">¶</a></dt>
+<dd><p>/
+GET</p>
+<p>Return the available resources at the top level above programs i.e.
+registered programs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Reqheader Content-Type:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><a href="#id3"><span class="problematic" id="id4">|reqheader_Content-Type|</span></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Reqheader Accept:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><a href="#id5"><span class="problematic" id="id6">|reqheader_Accept|</span></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Reqheader X-Auth-Token:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><a href="#id7"><span class="problematic" id="id8">|reqheader_X-Auth-Token|</span></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Resheader Content-Type:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><a href="#id9"><span class="problematic" id="id10">|resheader_Content-Type|</span></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Statuscode 200:</th><td class="field-body">Success</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Statuscode 404:</th><td class="field-body">Program not found.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Statuscode 403:</th><td class="field-body">Unauthorized request.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong></p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/v0/submission/</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">example.com</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+<span class="na">X-Auth-Token</span><span class="o">:</span> <span class="l">MIIDKgYJKoZIhvcNAQcC...</span>
+<span class="na">Accept</span><span class="o">:</span> <span class="l">application/json</span>
+</pre></div>
+</div>
+<div class="highlight-JavaScript"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;links&quot;</span><span class="o">:</span> <span class="p">[</span>
+        <span class="s2">&quot;/v0/sumission/CGCI/&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;/v0/sumission/TARGET/&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;/v0/sumission/TCGA/&quot;</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.get_template">
+<code class="descname">get_template</code><span class="sig-paren">(</span><em>entity</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.get_template" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.get_templates">
+<code class="descname">get_templates</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.get_templates" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.root_create">
+<code class="descname">root_create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.root_create" title="Permalink to this definition">¶</a></dt>
+<dd><p>/
+PUT POST PATCH</p>
+<p>Register a program.</p>
+<p>The content of the request is a JSON containing the information
+describing a program.  Authorization for registering programs is
+limited to administrative users.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Reqheader Content-Type:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><a href="#id11"><span class="problematic" id="id12">|reqheader_Content-Type|</span></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Reqheader Accept:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><a href="#id13"><span class="problematic" id="id14">|reqheader_Accept|</span></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Reqheader X-Auth-Token:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><a href="#id15"><span class="problematic" id="id16">|reqheader_X-Auth-Token|</span></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Resheader Content-Type:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><a href="#id17"><span class="problematic" id="id18">|resheader_Content-Type|</span></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Statuscode 200:</th><td class="field-body">Registered successfully.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Statuscode 404:</th><td class="field-body">Program not found.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Statuscode 403:</th><td class="field-body">Unauthorized request.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong></p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/v0/submission/CGCI/</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">example.com</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+<span class="na">X-Auth-Token</span><span class="o">:</span> <span class="l">MIIDKgYJKoZIhvcNAQcC...</span>
+<span class="na">Accept</span><span class="o">:</span> <span class="l">application/json</span>
+</pre></div>
+</div>
+<div class="highlight-JavaScript"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;program&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;CGCI&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dbgap_accession_number&quot;</span><span class="o">:</span> <span class="s2">&quot;phs000178&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.validate_upload_manifest">
+<code class="descname">validate_upload_manifest</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.validate_upload_manifest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.blueprint.routes.views.program">
+<span id="sheepdog-blueprint-routes-views-program"></span><h2><code class="docutils literal"><span class="pre">sheepdog.blueprint.routes.views.program</span></code><a class="headerlink" href="#module-sheepdog.blueprint.routes.views.program" title="Permalink to this headline">¶</a></h2>
+<p>View functions for routes in the blueprint for ‘/&lt;program&gt;’ paths.</p>
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.create_files_viewer">
+<code class="descname">create_files_viewer</code><span class="sig-paren">(</span><em>dry_run=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.create_files_viewer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.create_project">
+<code class="descname">create_project</code><span class="sig-paren">(</span><em>program</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.create_project" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a project.</p>
+<p>The content of the request is a JSON containing the information describing
+a project. Authorization for registering projects is limited to
+administrative users.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>program</strong> (<em>str</em>) – <a href="#id19"><span class="problematic" id="id20">|program_id|</span></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Reqheader Content-Type:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><a href="#id21"><span class="problematic" id="id22">|reqheader_Content-Type|</span></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Reqheader Accept:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><a href="#id23"><span class="problematic" id="id24">|reqheader_Accept|</span></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Reqheader X-Auth-Token:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><a href="#id25"><span class="problematic" id="id26">|reqheader_X-Auth-Token|</span></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Resheader Content-Type:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><a href="#id27"><span class="problematic" id="id28">|resheader_Content-Type|</span></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Statuscode 200:</th><td class="field-body">Registered successfully.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Statuscode 404:</th><td class="field-body">Program not found.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Statuscode 403:</th><td class="field-body">Unauthorized request.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="nf">POST</span> <span class="nn">/v0/submission/CGCI/</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">example.com</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+<span class="na">X-Auth-Token</span><span class="o">:</span> <span class="l">MIIDKgYJKoZIhvcNAQcC...</span>
+<span class="na">Accept</span><span class="o">:</span> <span class="l">application/json</span>
+</pre></div>
+</div>
+<div class="highlight-JavaScript"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;project&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;code&quot;</span><span class="o">:</span> <span class="s2">&quot;BLGSP&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;disease_type&quot;</span><span class="o">:</span> <span class="s2">&quot;Burkitt Lymphoma&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;Burkitt Lymphoma Genome Sequencing Project&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;primary_site&quot;</span><span class="o">:</span> <span class="s2">&quot;Lymph Nodes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dbgap_accession_number&quot;</span><span class="o">:</span> <span class="s2">&quot;phs000527&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;state&quot;</span><span class="o">:</span> <span class="s2">&quot;active&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.create_transactions_viewer">
+<code class="descname">create_transactions_viewer</code><span class="sig-paren">(</span><em>operation</em>, <em>dry_run=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.create_transactions_viewer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.get_projects">
+<code class="descname">get_projects</code><span class="sig-paren">(</span><em>program</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.get_projects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the available resources at the top level of program <code class="docutils literal"><span class="pre">program</span></code>,
+i.e. registered projects.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>program</strong> (<em>str</em>) – <a href="#id29"><span class="problematic" id="id30">|program_id|</span></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Reqheader Content-Type:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><a href="#id31"><span class="problematic" id="id32">|reqheader_Content-Type|</span></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Reqheader Accept:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><a href="#id33"><span class="problematic" id="id34">|reqheader_Accept|</span></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Reqheader X-Auth-Token:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><a href="#id35"><span class="problematic" id="id36">|reqheader_X-Auth-Token|</span></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Resheader Content-Type:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><a href="#id37"><span class="problematic" id="id38">|resheader_Content-Type|</span></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Statuscode 200:</th><td class="field-body">Success</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Statuscode 403:</th><td class="field-body">Unauthorized request.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Statuscode 404:</th><td class="field-body">Program not found.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong></p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/v0/submission/CGCI/</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">example.com</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+<span class="na">X-Auth-Token</span><span class="o">:</span> <span class="l">MIIDKgYJKoZIhvcNAQcC...</span>
+<span class="na">Accept</span><span class="o">:</span> <span class="l">application/json</span>
+</pre></div>
+</div>
+<div class="highlight-JavaScript"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;links&quot;</span><span class="o">:</span> <span class="p">[</span>
+        <span class="s2">&quot;/v0/sumission/CGCI/BLGSP&quot;</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.blueprint.routes.views.program.project">
+<span id="sheepdog-blueprint-routes-views-program-project"></span><h2><code class="docutils literal"><span class="pre">sheepdog.blueprint.routes.views.program.project</span></code><a class="headerlink" href="#module-sheepdog.blueprint.routes.views.program.project" title="Permalink to this headline">¶</a></h2>
+<p>View functions for routes in the blueprint for ‘/&lt;program&gt;/&lt;project&gt;’ paths.</p>
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.close_transaction">
+<code class="descname">close_transaction</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.close_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close a transaction. The transaction is prevented from being committed in
+the future.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.commit_dry_run_transaction">
+<code class="descname">commit_dry_run_transaction</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.commit_dry_run_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>See documentation for committing a dry run transaction.</p>
+<p>This call should only succeed if:
+1. transaction_id points to a dry_run transaction
+2. transaction_id points to a transaction that hasn’t been committed already
+3. transaction_id points to a successful transaction</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.create_biospecimen_viewer">
+<code class="descname">create_biospecimen_viewer</code><span class="sig-paren">(</span><em>dry_run=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.create_biospecimen_viewer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.create_clinical_viewer">
+<code class="descname">create_clinical_viewer</code><span class="sig-paren">(</span><em>dry_run=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.create_clinical_viewer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.create_delete_entities_viewer">
+<code class="descname">create_delete_entities_viewer</code><span class="sig-paren">(</span><em>dry_run=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.create_delete_entities_viewer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a view function for deleting entities.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.create_files_viewer">
+<code class="descname">create_files_viewer</code><span class="sig-paren">(</span><em>dry_run=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.create_files_viewer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a view function for handling file operations.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.create_open_project_viewer">
+<code class="descname">create_open_project_viewer</code><span class="sig-paren">(</span><em>dry_run=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.create_open_project_viewer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.create_release_project_viewer">
+<code class="descname">create_release_project_viewer</code><span class="sig-paren">(</span><em>dry_run=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.create_release_project_viewer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a view function for <code class="docutils literal"><span class="pre">/&lt;program&gt;/&lt;project&gt;/open</span></code> or
+<code class="docutils literal"><span class="pre">/&lt;program&gt;/&lt;project&gt;/open/_dry_run</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.create_review_project_viewer">
+<code class="descname">create_review_project_viewer</code><span class="sig-paren">(</span><em>dry_run=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.create_review_project_viewer" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Docstring for create_review_project_viewer.
+:param dry_run: TODO
+:return: TODO</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.create_submit_project_viewer">
+<code class="descname">create_submit_project_viewer</code><span class="sig-paren">(</span><em>dry_run=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.create_submit_project_viewer" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Docstring for create_submit_projecct_viewer.
+:param dry_run: TODO
+:return: TODO</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.create_viewer">
+<code class="descname">create_viewer</code><span class="sig-paren">(</span><em>method</em>, <em>bulk=False</em>, <em>dry_run=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.create_viewer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provide view functions for the following endpoints:</p>
+<blockquote>
+<div>/&lt;program&gt;/&lt;project&gt;
+/&lt;program&gt;/&lt;project&gt;/_dry_run
+/&lt;program&gt;/&lt;project&gt;/bulk
+/&lt;program&gt;/&lt;project&gt;/bulk/_dry_run</div></blockquote>
+<p>for POST and PUT methods.</p>
+<p>The view function returned is for handling either a POST or PUT method and
+with <code class="docutils literal"><span class="pre">dry_run</span></code> being either True or False.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.export_entities">
+<code class="descname">export_entities</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.export_entities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export endpoint which returns a file with required entities as an attachment.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Query ids:</th><td class="field-body">one or a list of gdc ids seperated by comma</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Query format:</th><td class="field-body">output format, <code class="docutils literal"><span class="pre">json</span></code> or <code class="docutils literal"><span class="pre">tsv</span></code> or <code class="docutils literal"><span class="pre">csv</span></code>, default is tsv</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Query with_children:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">recursively find children or not. True or False, default is False</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Query category:</th><td class="field-body">category of node to filter on children. Example: clinical</td>
+</tr>
+</tbody>
+</table>
+<p>If there is only one entity type in the output,
+it will return a {node_type}.tsv or {node_type}.json, eg: aliquot.tsv
+If there are multiple entity types, it returns <code class="docutils literal"><span class="pre">gdc_export_{one_time_sha}.tar.gz</span></code>
+for tsv format, returns <code class="docutils literal"><span class="pre">gdc_export_{one_time_sha}.json</span></code> for json format</p>
+<p>:statuscode 200 Success
+:statuscode 400 Bad Request
+:statuscode 404 No id is found
+:statuscode 403 Unauthorized</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.get_dictionary_entry">
+<code class="descname">get_dictionary_entry</code><span class="sig-paren">(</span><em>entry</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.get_dictionary_entry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the project level JSON schema definition for a given entity
+type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>entry</strong> (<em>str</em>) – entity type to retrieve the schema for (e.g. <code class="docutils literal"><span class="pre">aliquot</span></code>)</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Reqheader Content-Type:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><a href="#id39"><span class="problematic" id="id40">|reqheader_Content-Type|</span></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Reqheader Accept:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><a href="#id41"><span class="problematic" id="id42">|reqheader_Accept|</span></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Reqheader X-Auth-Token:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><a href="#id43"><span class="problematic" id="id44">|reqheader_X-Auth-Token|</span></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Resheader Content-Type:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><a href="#id45"><span class="problematic" id="id46">|resheader_Content-Type|</span></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Statuscode 200:</th><td class="field-body">Success</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Statuscode 404:</th><td class="field-body">Resource not found.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Statuscode 403:</th><td class="field-body">Unauthorized request.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong></p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">/v0/submission/_dictionary/case</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">example.com</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+<span class="na">X-Auth-Token</span><span class="o">:</span> <span class="l">MIIDKgYJKoZIhvcNAQcC...</span>
+<span class="na">Accept</span><span class="o">:</span> <span class="l">application/json</span>
+</pre></div>
+</div>
+<div class="highlight-JavaScript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;$schema&quot;</span><span class="o">:</span> <span class="s2">&quot;http://json-schema.org/draft-04/schema#&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;additionalProperties&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+  <span class="s2">&quot;category&quot;</span><span class="o">:</span> <span class="s2">&quot;administrative&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;description&quot;</span><span class="o">:</span> <span class="s2">&quot;TODO&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;case&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;links&quot;</span><span class="o">:</span> <span class="p">[...]</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.get_entities_by_id">
+<code class="descname">get_entities_by_id</code><span class="sig-paren">(</span><em>program</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.get_entities_by_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve existing GDC entities by ID.</p>
+<p>The return type of a <a href="#id1"><span class="problematic" id="id2">:http:method:`get`</span></a> on this endpoint is a JSON array
+containing JSON object elements, each corresponding to a provided ID.
+Return results are unordered.</p>
+<p>If any ID is not found in the database, a status code of 404 is returned
+with the missing IDs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>program</strong> (<em>str</em>) – <a href="#id47"><span class="problematic" id="id48">|program_id|</span></a></li>
+<li><strong>project</strong> (<em>str</em>) – <a href="#id49"><span class="problematic" id="id50">|project_id|</span></a></li>
+<li><strong>entity_id_string</strong> (<em>str</em>) – A comma-separated list of ids specifying the entities to retrieve.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Reqheader Content-Type:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first"><a href="#id51"><span class="problematic" id="id52">|reqheader_Content-Type|</span></a></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Reqheader Accept:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><p class="first"><a href="#id53"><span class="problematic" id="id54">|reqheader_Accept|</span></a></p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Reqheader X-Auth-Token:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first"><a href="#id55"><span class="problematic" id="id56">|reqheader_X-Auth-Token|</span></a></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Resheader Content-Type:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><p class="first"><a href="#id57"><span class="problematic" id="id58">|resheader_Content-Type|</span></a></p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Statuscode 200:</th><td class="field-body"><p class="first">Success.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Statuscode 404:</th><td class="field-body"><p class="first">Entity not found.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Statuscode 403:</th><td class="field-body"><p class="first last">Unauthorized request.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.get_manifest">
+<code class="descname">get_manifest</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.get_manifest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.get_project_dictionary">
+<code class="descname">get_project_dictionary</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.get_project_dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return links to the project level JSON schema definitions. (See
+<code class="xref py py-func docutils literal"><span class="pre">get_dicionary()</span></code>.)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.get_project_dictionary_entry">
+<code class="descname">get_project_dictionary_entry</code><span class="sig-paren">(</span><em>program</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.get_project_dictionary_entry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the dictionary entry for a specific project. (See
+<a class="reference internal" href="#sheepdog.blueprint.routes.views.program.project.get_dictionary_entry" title="sheepdog.blueprint.routes.views.program.project.get_dictionary_entry"><code class="xref py py-func docutils literal"><span class="pre">get_dictionary_entry()</span></code></a>.)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.get_project_template">
+<code class="descname">get_project_template</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.get_project_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return TSV template of an entity type.</p>
+<p>In the template, links are represented as {link_type}.{link_unique_key} for
+one_to_one and many_to_one relationships. For many_to_many relationships,
+they are represented as {link_type}.{link_unique_key}#1 to infer user the
+multiplicity.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>program</strong> (<em>str</em>) – <a href="#id59"><span class="problematic" id="id60">|program_id|</span></a></li>
+<li><strong>project</strong> (<em>str</em>) – <a href="#id61"><span class="problematic" id="id62">|project_id|</span></a></li>
+<li><strong>entity</strong> (<em>str</em>) – type of the entity</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Query format:</th><td class="field-body"><p class="first last">output format, <code class="docutils literal"><span class="pre">csv</span></code> or <code class="docutils literal"><span class="pre">tsv</span></code>, default is tsv</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>:statuscode 200 Success
+:statuscode 404 Entity type is not found</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.get_project_templates">
+<code class="descname">get_project_templates</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.get_project_templates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get templates for all entity types.</p>
+<p>In the template, Links are represented as {link_type}.{link_unique_key} for
+one_to_one  and many_to_one relationships. For many_to_many relationships,
+they are represented as {link_type}.{link_unique_key}#1 to infer user the
+multiplicity</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>program</strong> (<em>str</em>) – <a href="#id63"><span class="problematic" id="id64">|program_id|</span></a></li>
+<li><strong>project</strong> (<em>str</em>) – <a href="#id65"><span class="problematic" id="id66">|project_id|</span></a></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Query format:</th><td class="field-body"><p class="first">output format, <code class="docutils literal"><span class="pre">csv</span></code> or <code class="docutils literal"><span class="pre">tsv</span></code>, default is tsv</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Query categories:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body"><p class="first">target entities’ categories</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Query exclude:</th><td class="field-body"><p class="first last">entity types to be excluded</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>:statuscode 200 Success</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.blueprint.routes.views.program.project.resubmit_transaction">
+<code class="descname">resubmit_transaction</code><span class="sig-paren">(</span><em>transaction_log</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.blueprint.routes.views.program.project.resubmit_transaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new transaction based on existing transaction_log.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="sheepdog.dictionary.html" class="btn btn-neutral float-right" title="sheepdog.dictionary" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="sheepdog.auth.html" class="btn btn-neutral" title="sheepdog.auth" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Center for Data Intensive Science.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
