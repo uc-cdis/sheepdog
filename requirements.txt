@@ -7,11 +7,11 @@ fuzzywuzzy==0.6.1
 graphene==0.10.2
 jsonschema==2.5.1
 lxml==3.8.0
+psycopg2==2.7.3.2
 PyYAML==3.12
 requests==2.5.2
 setuptools==36.3.0
 simplejson==3.8.1
-sphinx_rtd_theme
 sqlalchemy==0.9.9
 -e git+https://git@github.com/NCI-GDC/psqlgraph.git@4fbeddeb058ad09741c5d2b9aacbd1c63cfc3dd1#egg=psqlgraph
 -e git+https://git@github.com/uc-cdis/cdis-python-utils.git@0.1.5#egg=cdispyutils
