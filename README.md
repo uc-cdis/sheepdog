@@ -7,7 +7,7 @@
 
 ### For General Usage
 
-To install sheepdog for use with other Plan X services, running these commands is sufficient.
+To install sheepdog for use with other Gen3 services, running these commands is sufficient.
 
 ```bash
 pip install -r requirements.txt
