@@ -1,0 +1,1371 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>sheepdog.utils &mdash; sheepdog 0.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="sheepdog 0.1.0 documentation" href="../index.html"/>
+        <link rel="up" title="API Reference" href="index.html"/>
+        <link rel="next" title="Entity Usage" href="../entities/index.html"/>
+        <link rel="prev" title="sheepdog.transactions" href="sheepdog.transactions.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../contents.html" class="icon icon-home"> sheepdog
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">sheepdog</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.auth.html"><code class="docutils literal"><span class="pre">sheepdog.auth</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.blueprint.html"><code class="docutils literal"><span class="pre">sheepdog.blueprint</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.dictionary.html"><code class="docutils literal"><span class="pre">sheepdog.dictionary</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.errors.html"><code class="docutils literal"><span class="pre">sheepdog.errors</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.globals.html"><code class="docutils literal"><span class="pre">sheepdog.globals</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.models.html"><code class="docutils literal"><span class="pre">sheepdog.models</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.transactions.html"><code class="docutils literal"><span class="pre">sheepdog.transactions</span></code></a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal"><span class="pre">sheepdog.utils</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-sheepdog.utils.manifest"><code class="docutils literal"><span class="pre">sheepdog.utils.manifest</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-sheepdog.utils.parse"><code class="docutils literal"><span class="pre">sheepdog.utils.parse</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-sheepdog.utils.s3"><code class="docutils literal"><span class="pre">sheepdog.utils.s3</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-sheepdog.utils.transforms"><code class="docutils literal"><span class="pre">sheepdog.utils.transforms</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-sheepdog.utils.transforms.bcr_xml_to_json"><code class="docutils literal"><span class="pre">sheepdog.utils.transforms.bcr_xml_to_json</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-sheepdog.utils.transforms.graph_to_doc"><code class="docutils literal"><span class="pre">sheepdog.utils.transforms.graph_to_doc</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../entities/index.html">Entity Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../requests/index.html">Requests Schema</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../contents.html">sheepdog</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../contents.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">API Reference</a> &raquo;</li>
+      
+    <li><code class="docutils literal"><span class="pre">sheepdog.utils</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sheepdog.utils">
+<span id="sheepdog-utils"></span><h1><code class="docutils literal"><span class="pre">sheepdog.utils</span></code><a class="headerlink" href="#module-sheepdog.utils" title="Permalink to this headline">¶</a></h1>
+<p>Provide utility functions primarily for code in <code class="docutils literal"><span class="pre">sheepdog.blueprint</span></code>
+(though some are also used in <code class="docutils literal"><span class="pre">sheepdog.upload</span></code>).</p>
+<dl class="function">
+<dt id="sheepdog.utils.assert_program_exists">
+<code class="descname">assert_program_exists</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.assert_program_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap a function to check that a Program node with a matching name exists.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.assert_project_exists">
+<code class="descname">assert_project_exists</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.assert_project_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap a function to check that a Project node with a matching name exists.</p>
+<p>TODO</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.check_action_allowed_in_state">
+<code class="descname">check_action_allowed_in_state</code><span class="sig-paren">(</span><em>action</em>, <em>file_state</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.check_action_allowed_in_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.create_entity_list">
+<code class="descname">create_entity_list</code><span class="sig-paren">(</span><em>nodes</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.create_entity_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.get_all_template">
+<code class="descname">get_all_template</code><span class="sig-paren">(</span><em>file_format</em>, <em>categories=None</em>, <em>exclude=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.get_all_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return template in format <cite>file_format</cite> for given categories.</p>
+<p>..note: kwargs absorbs <cite>project</cite>, <cite>program</cite> intended for future use</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.get_delimited_template">
+<code class="descname">get_delimited_template</code><span class="sig-paren">(</span><em>entity_types</em>, <em>file_format</em>, <em>filename='submission_templates.tar.gz'</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.get_delimited_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>entity_types</strong> – TODO</li>
+<li><strong>file_format</strong> – TODO</li>
+<li><strong>filename</strong> – TODO</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><code class="docutils literal"><span class="pre">file_format</span></code> (TSV or CSV) template for entity types.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.get_external_proxies">
+<code class="descname">get_external_proxies</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.get_external_proxies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get any custom proxies set in the config.</p>
+<p>This is a rather specific use case, but here we want to reach an external
+resource via a proxy but do not want to set the proxy environment variable
+proper.</p>
+<p>This value should be added to <code class="docutils literal"><span class="pre">app.config['EXTERNAL_PROXIES']</span></code>, and
+should look something like</p>
+<div class="highlight-JavaScript"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">&#39;http&#39;</span><span class="o">:</span> <span class="s2">&quot;http://&lt;http_proxy:port&gt;&quot;</span><span class="p">,</span>
+    <span class="s1">&#39;http&#39;</span><span class="o">:</span> <span class="s2">&quot;https://&lt;https_proxy:port&gt;&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A Dictionary <code class="docutils literal"><span class="pre">{'http':</span> <span class="pre">...,</span> <span class="pre">'https':</span> <span class="pre">...}</span></code> with proxies. If a certain
+proxy is not specified, it should be absent from the dictionary.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.get_json_template">
+<code class="descname">get_json_template</code><span class="sig-paren">(</span><em>entity_types</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.get_json_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return json template for entity types.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.get_node">
+<code class="descname">get_node</code><span class="sig-paren">(</span><em>project_id</em>, <em>uuid</em>, <em>db=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.get_node" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.get_signpost">
+<code class="descname">get_signpost</code><span class="sig-paren">(</span><em>uuid</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.get_signpost" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.get_suggestion">
+<code class="descname">get_suggestion</code><span class="sig-paren">(</span><em>value</em>, <em>choices</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.get_suggestion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a suggestion to help with typos, etc.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.get_variables">
+<code class="descname">get_variables</code><span class="sig-paren">(</span><em>payload</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.get_variables" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.is_flag_set">
+<code class="descname">is_flag_set</code><span class="sig-paren">(</span><em>flag</em>, <em>default=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.is_flag_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the value of a flag is specified (e.g. “?async=true”). Requires
+flask request context.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.is_property_hidden">
+<code class="descname">is_property_hidden</code><span class="sig-paren">(</span><em>key</em>, <em>schema</em>, <em>exclude_id</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.is_property_hidden" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate whether key should be hidden.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.json_dumps_formatted">
+<code class="descname">json_dumps_formatted</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.json_dumps_formatted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return json string with standard format.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.jsonify_check_errors">
+<code class="descname">jsonify_check_errors</code><span class="sig-paren">(</span><em>data_and_errors</em>, <em>error_code=400</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.jsonify_check_errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.log_duration">
+<code class="descname">log_duration</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.log_duration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provide context manager for executing code and logging the duration.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.lookup_program">
+<code class="descname">lookup_program</code><span class="sig-paren">(</span><em>psql_driver</em>, <em>program</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.lookup_program" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a program by Program.name</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.lookup_project">
+<code class="descname">lookup_project</code><span class="sig-paren">(</span><em>db_driver</em>, <em>program_name</em>, <em>project_code</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.lookup_project" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lookup project node in database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>program_name</strong> – Project.programs[0].code</li>
+<li><strong>project_code</strong> – Project.name</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">None if no project found, else the matching
+<code class="xref py py-class docutils literal"><span class="pre">models.Project</span></code>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">models.Project</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.proxy_request">
+<code class="descname">proxy_request</code><span class="sig-paren">(</span><em>project_id</em>, <em>uuid</em>, <em>data</em>, <em>args</em>, <em>headers</em>, <em>method</em>, <em>action</em>, <em>dry_run=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.proxy_request" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.update_signpost_url">
+<code class="descname">update_signpost_url</code><span class="sig-paren">(</span><em>signpost_obj</em>, <em>key_name</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.update_signpost_url" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.update_state">
+<code class="descname">update_state</code><span class="sig-paren">(</span><em>node</em>, <em>state</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.update_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<div class="section" id="module-sheepdog.utils.manifest">
+<span id="sheepdog-utils-manifest"></span><h2><code class="docutils literal"><span class="pre">sheepdog.utils.manifest</span></code><a class="headerlink" href="#module-sheepdog.utils.manifest" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+<dl class="function">
+<dt id="sheepdog.utils.manifest.get_manifest">
+<code class="descname">get_manifest</code><span class="sig-paren">(</span><em>program</em>, <em>project</em>, <em>ids</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.manifest.get_manifest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use the ExportFile exporter to create a json export of the file. This json
+export is used as the base for the manifest.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a list of file dictionary objects</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.manifest.validate_upload_manifest">
+<code class="descname">validate_upload_manifest</code><span class="sig-paren">(</span><em>manifest</em>, <em>schema=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.manifest.validate_upload_manifest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a list of errors found in JSON Schema validation.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.utils.parse">
+<span id="sheepdog-utils-parse"></span><h2><code class="docutils literal"><span class="pre">sheepdog.utils.parse</span></code><a class="headerlink" href="#module-sheepdog.utils.parse" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+<dl class="function">
+<dt id="sheepdog.utils.parse.oph_raise_for_duplicates">
+<code class="descname">oph_raise_for_duplicates</code><span class="sig-paren">(</span><em>object_pairs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.parse.oph_raise_for_duplicates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an list of ordered pairs, contstruct a dict as with the normal JSON
+<code class="docutils literal"><span class="pre">object_pairs_hook</span></code>, but raise an exception if there are duplicate keys
+with a message describing all violations.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.parse.parse_json">
+<code class="descname">parse_json</code><span class="sig-paren">(</span><em>raw</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.parse.parse_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a python representation of a JSON document.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>raw</strong> (<em>str</em>) – string of raw JSON content</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">UserError</span></code> – if any exception is raised parsing the JSON body</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Uses <a class="reference internal" href="#sheepdog.utils.parse.oph_raise_for_duplicates" title="sheepdog.utils.parse.oph_raise_for_duplicates"><code class="xref py py-func docutils literal"><span class="pre">oph_raise_for_duplicates()</span></code></a> in parser.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.parse.parse_request_json">
+<code class="descname">parse_request_json</code><span class="sig-paren">(</span><em>expected_types=(&lt;type 'dict'&gt;</em>, <em>&lt;type 'list'&gt;)</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.parse.parse_request_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a python representation of a JSON POST body.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>raw</strong> (<em>str</em>) – string of raw JSON content</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">TODO</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">UserError</span></code> – if any exception is raised parsing the JSON body</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">UserError</span></code> – if the result is not of the expected type</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If raw is not provided, pull the body from global request object.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.parse.parse_request_yaml">
+<code class="descname">parse_request_yaml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.parse.parse_request_yaml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a python representation of a YAML POST body. Raise UserError if any
+exception is raised parsing the YAML body.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.utils.s3">
+<span id="sheepdog-utils-s3"></span><h2><code class="docutils literal"><span class="pre">sheepdog.utils.s3</span></code><a class="headerlink" href="#module-sheepdog.utils.s3" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+<dl class="function">
+<dt id="sheepdog.utils.s3.get_s3_conn">
+<code class="descname">get_s3_conn</code><span class="sig-paren">(</span><em>host</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.s3.get_s3_conn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a connection to a given storage host based on configuration in the
+current app context.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.s3.get_s3_hosts">
+<code class="descname">get_s3_hosts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.s3.get_s3_hosts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.s3.get_submission_bucket">
+<code class="descname">get_submission_bucket</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.s3.get_submission_bucket" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.s3.make_s3_request">
+<code class="descname">make_s3_request</code><span class="sig-paren">(</span><em>project_id</em>, <em>uuid</em>, <em>data</em>, <em>args</em>, <em>headers</em>, <em>method</em>, <em>action</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.s3.make_s3_request" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.utils.transforms">
+<span id="sheepdog-utils-transforms"></span><h2><code class="docutils literal"><span class="pre">sheepdog.utils.transforms</span></code><a class="headerlink" href="#module-sheepdog.utils.transforms" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+<dl class="class">
+<dt id="sheepdog.utils.transforms.CSVToJSONConverter">
+<em class="property">class </em><code class="descname">CSVToJSONConverter</code><a class="headerlink" href="#sheepdog.utils.transforms.CSVToJSONConverter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sheepdog.utils.transforms.DelimitedConverter" title="sheepdog.utils.transforms.DelimitedConverter"><code class="xref py py-class docutils literal"><span class="pre">sheepdog.utils.transforms.DelimitedConverter</span></code></a></p>
+<dl class="method">
+<dt id="sheepdog.utils.transforms.CSVToJSONConverter.set_reader">
+<code class="descname">set_reader</code><span class="sig-paren">(</span><em>doc</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.CSVToJSONConverter.set_reader" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sheepdog.utils.transforms.DelimitedConverter">
+<em class="property">class </em><code class="descname">DelimitedConverter</code><a class="headerlink" href="#sheepdog.utils.transforms.DelimitedConverter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>TODO</p>
+<dl class="method">
+<dt id="sheepdog.utils.transforms.DelimitedConverter.add_link_value">
+<code class="descname">add_link_value</code><span class="sig-paren">(</span><em>links</em>, <em>cls</em>, <em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.DelimitedConverter.add_link_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.DelimitedConverter.add_row">
+<code class="descname">add_row</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.DelimitedConverter.add_row" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a canonical JSON entity for given a <a href="#id1"><span class="problematic" id="id2">:param:`row`</span></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>row</strong> (<em>dict</em>) – column, value for a given row in delimted file</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.DelimitedConverter.convert">
+<code class="descname">convert</code><span class="sig-paren">(</span><em>doc</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.DelimitedConverter.convert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an entire document to the converter. Return docs and errors
+gathered so far.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="sheepdog.utils.transforms.DelimitedConverter.convert_type">
+<em class="property">static </em><code class="descname">convert_type</code><span class="sig-paren">(</span><em>to_cls</em>, <em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.DelimitedConverter.convert_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cast value based on key.
+TODO</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="sheepdog.utils.transforms.DelimitedConverter.get_unknown_cls_dict">
+<em class="property">static </em><code class="descname">get_unknown_cls_dict</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.DelimitedConverter.get_unknown_cls_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: What?</p>
+<p>Either none or invalid type, don’t know what properties
+to expect, property types, etc, so add a doc with
+non-link properties (i.e. to allow identification the
+error report later) and short circuit.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.utils.transforms.DelimitedConverter.is_valid">
+<code class="descname">is_valid</code><a class="headerlink" href="#sheepdog.utils.transforms.DelimitedConverter.is_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate that the conversion is valid if there are no errors.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.DelimitedConverter.record_error">
+<code class="descname">record_error</code><span class="sig-paren">(</span><em>message</em>, <em>columns=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.DelimitedConverter.record_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record an error message.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>message</strong> (<em>str</em>) – error message to record</li>
+<li><strong>keys</strong> (<em>list</em>) – which keys in the JSON were invalid</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.DelimitedConverter.set_reader">
+<code class="descname">set_reader</code><span class="sig-paren">(</span><em>_</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.DelimitedConverter.set_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement this in a subclass to self.reader to be an iterable of rows
+given a doc.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sheepdog.utils.transforms.TSVToJSONConverter">
+<em class="property">class </em><code class="descname">TSVToJSONConverter</code><a class="headerlink" href="#sheepdog.utils.transforms.TSVToJSONConverter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sheepdog.utils.transforms.DelimitedConverter" title="sheepdog.utils.transforms.DelimitedConverter"><code class="xref py py-class docutils literal"><span class="pre">sheepdog.utils.transforms.DelimitedConverter</span></code></a></p>
+<dl class="method">
+<dt id="sheepdog.utils.transforms.TSVToJSONConverter.set_reader">
+<code class="descname">set_reader</code><span class="sig-paren">(</span><em>doc</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.TSVToJSONConverter.set_reader" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.get_links_from_row">
+<code class="descname">get_links_from_row</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.get_links_from_row" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a dict of key/value pairs that are links.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.get_props_from_row">
+<code class="descname">get_props_from_row</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.get_props_from_row" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a dict of key/value pairs that are props, not links.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.parse_bool_from_string">
+<code class="descname">parse_bool_from_string</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.parse_bool_from_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a boolean given a string value <em>iff</em> <a href="#id3"><span class="problematic" id="id4">:param:`value`</span></a> is a valid
+string representation of a boolean, otherwise return the original
+<a href="#id5"><span class="problematic" id="id6">:param:`value`</span></a> to be handled by later type checking.</p>
+<dl class="docutils">
+<dt>..note:</dt>
+<dd><code class="docutils literal"><span class="pre">bool('maybe')</span> <span class="pre">is</span> <span class="pre">True</span></code>, this is undesirable, but
+<code class="docutils literal"><span class="pre">parse_bool_from_string('maybe')</span> <span class="pre">==</span> <span class="pre">'maybe'</span></code></dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.set_row_type">
+<code class="descname">set_row_type</code><span class="sig-paren">(</span><em>row</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.set_row_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the class for a row dict, setting ‘type’. Coerce ‘’ -&gt; None.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.strip">
+<code class="descname">strip</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.strip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Strip text as unicode (which includes non-ascii whitespace).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.strip_whitespace_from_str_dict">
+<code class="descname">strip_whitespace_from_str_dict</code><span class="sig-paren">(</span><em>dictionary</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.strip_whitespace_from_str_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return new dict with leading/trailing whitespace removed from keys and
+values.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.utils.transforms.bcr_xml_to_json">
+<span id="sheepdog-utils-transforms-bcr-xml-to-json"></span><h2><code class="docutils literal"><span class="pre">sheepdog.utils.transforms.bcr_xml_to_json</span></code><a class="headerlink" href="#module-sheepdog.utils.transforms.bcr_xml_to_json" title="Permalink to this headline">¶</a></h2>
+<p>Defines <a class="reference internal" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser" title="sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser"><code class="xref py py-class docutils literal"><span class="pre">BcrClinicalXmlToJsonParser</span></code></a>, a class (that is instantiated
+with a given project_code) which consumes BCR Clinical XML and produces JSON.</p>
+<p>Pylint <code class="docutils literal"><span class="pre">no-member</span></code> error is disabled because for some reason there are a lot
+of false positives with <code class="docutils literal"><span class="pre">lxml.etree</span></code>.</p>
+<dl class="class">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.AttrDict">
+<em class="property">class </em><code class="descname">AttrDict</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.AttrDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">dict</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser">
+<em class="property">class </em><code class="descname">BcrClinicalXmlToJsonParser</code><span class="sig-paren">(</span><em>project_code</em>, <em>mapping=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.get_xml_roots">
+<code class="descname">get_xml_roots</code><span class="sig-paren">(</span><em>root</em>, <em>path</em>, <em>namespaces</em>, <em>nullable=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.get_xml_roots" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.insert_edges">
+<code class="descname">insert_edges</code><span class="sig-paren">(</span><em>doc</em>, <em>root</em>, <em>edges</em>, <em>namespaces</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.insert_edges" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.insert_edges_by_property">
+<code class="descname">insert_edges_by_property</code><span class="sig-paren">(</span><em>doc</em>, <em>root</em>, <em>edges</em>, <em>namespaces</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.insert_edges_by_property" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.insert_properties">
+<code class="descname">insert_properties</code><span class="sig-paren">(</span><em>doc</em>, <em>roots</em>, <em>properties</em>, <em>namespaces</em>, <em>schema</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.insert_properties" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.json">
+<code class="descname">json</code><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.loads">
+<code class="descname">loads</code><span class="sig-paren">(</span><em>doc</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.loads" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.xpath">
+<code class="descname">xpath</code><span class="sig-paren">(</span><em>root</em>, <em>path</em>, <em>namespaces</em>, <em>nullable=True</em>, <em>suffix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrClinicalXmlToJsonParser.xpath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser">
+<em class="property">class </em><code class="descname">BcrXmlToJsonParser</code><span class="sig-paren">(</span><em>project</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Create a parser to convert XML to GDC JSON.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>project</strong> (<em>str</em>) – the id of the project node to link cases to</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.dumps">
+<code class="descname">dumps</code><span class="sig-paren">(</span><em>indent=2</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.dumps" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_const_properties">
+<code class="descname">get_entity_const_properties</code><span class="sig-paren">(</span><em>root</em>, <em>entity_type</em>, <em>params</em>, <em>entity_id=''</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_const_properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>For each parameter in the setting file that is a constant value, add it
+to the properties dict.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>root</strong> – the lxml root element to treat as a entity</li>
+<li><strong>entity_type</strong> (<em>str</em>) – the entity type to be used as a label in psqlgraph</li>
+<li><strong>params</strong> (<em>dict</em>) – the parameters that govern xpath queries and translation
+from the translation yaml file</li>
+<li><strong>entity_id</strong> (<em>str</em>) – used for logging</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">dictionary of properties</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_datetime_properties">
+<code class="descname">get_entity_datetime_properties</code><span class="sig-paren">(</span><em>root</em>, <em>entity_type</em>, <em>params</em>, <em>entity_id=''</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_datetime_properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>For datetime each parameter in the setting file, try and look it up,
+and add it to the entity properties.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>root</strong> – the lxml root element to treat as a entity</li>
+<li><strong>entity_type</strong> (<em>str</em>) – entity type to be used as a label in psqlgraph</li>
+<li><strong>params</strong> (<em>dict</em>) – the parameters that govern xpath queries and translation from
+the translation yaml file</li>
+<li><strong>entity_id</strong> (<em>str</em>) – used for logging</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the properties dictionary</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_edge_datetime_properties">
+<code class="descname">get_entity_edge_datetime_properties</code><span class="sig-paren">(</span><em>root</em>, <em>edge_type</em>, <em>params</em>, <em>entity_id=''</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_edge_datetime_properties" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_edge_properties">
+<code class="descname">get_entity_edge_properties</code><span class="sig-paren">(</span><em>root</em>, <em>edge_type</em>, <em>params</em>, <em>entity_id=''</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_edge_properties" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_edges">
+<code class="descname">get_entity_edges</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_edges" title="Permalink to this definition">¶</a></dt>
+<dd><p>For each edge type in the settings file, lookup the possible edges.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>root</strong> – the lxml root element to treat as a entity</li>
+<li><strong>entity_type</strong> (<em>str</em>) – entity type to be used as a label in psqlgraph</li>
+<li><strong>params</strong> (<em>dict</em>) – the parameters that govern xpath queries and translation from
+the translation yaml file</li>
+<li><strong>entity_id</strong> (<em>str</em>) – used for logging</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">a dictionary of edges</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_edges_by_id">
+<code class="descname">get_entity_edges_by_id</code><span class="sig-paren">(</span><em>root</em>, <em>entity_type</em>, <em>params</em>, <em>entity_id=''</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_edges_by_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>For each edge type in the settings file, lookup the possible edges
+using the entity id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>root</strong> – the lxml root element to treat as a entity</li>
+<li><strong>entity_type</strong> (<em>str</em>) – entity type to be used as a label in psqlgraph</li>
+<li><strong>params</strong> (<em>dict</em>) – the parameters that govern xpath queries and translation from
+the translation yaml file</li>
+<li><strong>entity_id</strong> (<em>str</em>) – used for logging</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">dictionary mapping edge types to lists of entity ids</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_edges_by_properties">
+<code class="descname">get_entity_edges_by_properties</code><span class="sig-paren">(</span><em>root</em>, <em>entity_type</em>, <em>params</em>, <em>entity_id=''</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_edges_by_properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>For each edge type in the settings file, lookup the possible edges</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>root</strong> – the lxml root element to treat as a entity</li>
+<li><strong>entity_type</strong> (<em>str</em>) – entity type to be used as a label in psqlgraph</li>
+<li><strong>params</strong> (<em>dict</em>) – the parameters that govern xpath queries and translation from
+the translation yaml file</li>
+<li><strong>entity_id</strong> (<em>str</em>) – used for logging</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">dictionary mapping entity ids to (label, edge_type) pairs</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_id">
+<code class="descname">get_entity_id</code><span class="sig-paren">(</span><em>root</em>, <em>entity_type</em>, <em>params</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Look up the id for the entity.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>root</strong> – the lxml root element to treat as a entity</li>
+<li><strong>entity_type</strong> (<em>str</em>) – entity type to be used as a label in psqlgraph</li>
+<li><strong>params</strong> (<em>dict</em>) – the parameters that govern xpath queries and translation from
+the translation yaml file</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the entity id</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_properties">
+<code class="descname">get_entity_properties</code><span class="sig-paren">(</span><em>root</em>, <em>entity_type</em>, <em>params</em>, <em>entity_id=''</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>For each parameter in the setting file, try to look it up, and add
+it to the entity properties.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>root</strong> – the lxml root element to treat as a entity</li>
+<li><strong>entity_type</strong> (<em>str</em>) – the entity type to be used as a label in psqlgraph</li>
+<li><strong>params</strong> (<em>dict</em>) – the parameters that govern xpath queries and translation
+from the translation yaml file</li>
+<li><strong>entity_id</strong> (<em>str</em>) – used for logging</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the entity properties</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_roots">
+<code class="descname">get_entity_roots</code><span class="sig-paren">(</span><em>entity_type</em>, <em>params</em>, <em>root=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.get_entity_roots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of xml entity root elements for a given entity_type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>entity_type</strong> (<em>str</em>) – entity type to be used as a label in psqlgraph</li>
+<li><strong>params</strong> (<em>dict</em>) – parameters that govern xpath queries and translation from the
+translation yaml file</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.json">
+<code class="descname">json</code><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.loads">
+<code class="descname">loads</code><span class="sig-paren">(</span><em>xml</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.loads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take xml string and convert it to a graph to insert into psqlgraph.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>xml</strong> (<em>str</em>) – xml string to convert and insert</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">self</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.munge_property">
+<code class="descname">munge_property</code><span class="sig-paren">(</span><em>prop</em>, <em>_type</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.munge_property" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.parse_entity">
+<code class="descname">parse_entity</code><span class="sig-paren">(</span><em>entity_type</em>, <em>params</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.parse_entity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a subsection of the xml that will be treated as an entity.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>entity_type</strong> (<em>str</em>) – the type of entity to be used as a label</li>
+<li><strong>params</strong> (<em>dict</em>) – the parameters that govern xpath queries and translation from
+the translation yaml file</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.save_entity">
+<code class="descname">save_entity</code><span class="sig-paren">(</span><em>entity_id</em>, <em>label</em>, <em>properties</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.save_entity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a entity to the graph</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.xpath">
+<code class="descname">xpath</code><span class="sig-paren">(</span><em>path</em>, <em>root=None</em>, <em>single=False</em>, <em>nullable=True</em>, <em>expected=True</em>, <em>text=True</em>, <em>label=''</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.BcrXmlToJsonParser.xpath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper to perform the xpath queries on the xml</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> (<em>str</em>) – The xpath location path</li>
+<li><strong>root</strong> – the lxml element to perform query on</li>
+<li><strong>single</strong> (<em>bool</em>) – raise ParsingError if the result is not singular</li>
+<li><strong>nullable</strong> (<em>bool</em>) – raise ParsingError if the result is null</li>
+<li><strong>expected</strong> (<em>bool</em>) – raise ParsingError if the result does not exist</li>
+<li><strong>text</strong> (<em>bool</em>) – whether the return value is the .text str value</li>
+<li><strong>label</strong> (<em>str</em>) – label for logging</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Return:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">ParsingError</span></code> – if <code class="docutils literal"><span class="pre">single</span></code>, <code class="docutils literal"><span class="pre">nullable</span></code>, or <code class="docutils literal"><span class="pre">expected</span></code> are True and their
+respective conditions are violated (see above)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.to_bool">
+<code class="descname">to_bool</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.to_bool" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.unix_time">
+<code class="descname">unix_time</code><span class="sig-paren">(</span><em>dt</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.unix_time" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.bcr_xml_to_json.validated_parse">
+<code class="descname">validated_parse</code><span class="sig-paren">(</span><em>xml</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.bcr_xml_to_json.validated_parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse an XML document or fragment from a string and return the root node.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.utils.transforms.graph_to_doc">
+<span id="sheepdog-utils-transforms-graph-to-doc"></span><h2><code class="docutils literal"><span class="pre">sheepdog.utils.transforms.graph_to_doc</span></code><a class="headerlink" href="#module-sheepdog.utils.transforms.graph_to_doc" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile">
+<em class="property">class </em><code class="descname">ExportFile</code><span class="sig-paren">(</span><em>ids=None</em>, <em>with_children=False</em>, <em>file_format='tsv'</em>, <em>category=None</em>, <em>program=None</em>, <em>project=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Export entities to tsv or csv or json.
+An ExportFile should be intantiated and then call get_response to pass the
+generator to flask response.</p>
+<dl class="attribute">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.filename">
+<code class="descname">filename</code><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.filename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a filename string based on format and number of results.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.get_delimited_response">
+<code class="descname">get_delimited_response</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.get_delimited_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield delimited string per result.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.get_dictionary">
+<code class="descname">get_dictionary</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.get_dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return export as a dictionary.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.get_entity_tree">
+<code class="descname">get_entity_tree</code><span class="sig-paren">(</span><em>node</em>, <em>visited</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.get_entity_tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accumulate child nodes in <a href="#id7"><span class="problematic" id="id8">:param:`visited`</span></a>.</p>
+<p>Walk down spanning tree of graph, traversing to edges_in and filtering
+by self.category.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.get_json_response">
+<code class="descname">get_json_response</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.get_json_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield single json string.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.get_node_dictionary">
+<code class="descname">get_node_dictionary</code><span class="sig-paren">(</span><em>node</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.get_node_dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the json doc for a single node.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.get_nodes">
+<code class="descname">get_nodes</code><span class="sig-paren">(</span><em>ids</em>, <em>with_children</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.get_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Look up nodes and set self.result</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.get_response">
+<code class="descname">get_response</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.get_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return response based on format and number of results.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.get_tabular">
+<code class="descname">get_tabular</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.get_tabular" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the state of self.result[label] to filelike object for label in
+self.result json.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.getvalue">
+<code class="descname">getvalue</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.getvalue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return buffer contents.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.is_delimited">
+<code class="descname">is_delimited</code><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.is_delimited" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return bool whether format is delimited.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.is_json">
+<code class="descname">is_json</code><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.is_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return bool whether format is json.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.is_singular">
+<code class="descname">is_singular</code><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.is_singular" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return bool if there is a single result.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear buffer.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.seek">
+<code class="descname">seek</code><span class="sig-paren">(</span><em>offset</em>, <em>whence=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.seek" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stub to be file-like.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.tell">
+<code class="descname">tell</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.tell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stub to be file-like.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.utils.transforms.graph_to_doc.ExportFile.write">
+<code class="descname">write</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.ExportFile.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data do internal buffer.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.entity_to_template">
+<code class="descname">entity_to_template</code><span class="sig-paren">(</span><em>label</em>, <em>exclude_id=True</em>, <em>file_format='tsv'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.entity_to_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return template dict for given label.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.entity_to_template_delimited">
+<code class="descname">entity_to_template_delimited</code><span class="sig-paren">(</span><em>links</em>, <em>schema</em>, <em>exclude_id</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.entity_to_template_delimited" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return ordered header for delimited export.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.entity_to_template_json">
+<code class="descname">entity_to_template_json</code><span class="sig-paren">(</span><em>links</em>, <em>schema</em>, <em>exclude_id</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.entity_to_template_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.entity_to_template_str">
+<code class="descname">entity_to_template_str</code><span class="sig-paren">(</span><em>label</em>, <em>file_format</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.entity_to_template_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return template based on file_format for a given node label.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_all_template">
+<code class="descname">get_all_template</code><span class="sig-paren">(</span><em>file_format</em>, <em>categories=None</em>, <em>exclude=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_all_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return template in format <cite>file_format</cite> for given categories.</p>
+<p>..note: kwargs absorbs <cite>project</cite>, <cite>program</cite> intended for future use</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_delimited_template">
+<code class="descname">get_delimited_template</code><span class="sig-paren">(</span><em>entity_types</em>, <em>file_format</em>, <em>filename='submission_templates.tar.gz'</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_delimited_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <a href="#id9"><span class="problematic" id="id10">:param:`file_format`</span></a> (TSV or CSV) template for entity types.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_json_template">
+<code class="descname">get_json_template</code><span class="sig-paren">(</span><em>entity_types</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_json_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return json template for entity types</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_link_name">
+<code class="descname">get_link_name</code><span class="sig-paren">(</span><em>key</em>, <em>number</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_link_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return formatted link name over enumerated links.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_link_props">
+<code class="descname">get_link_props</code><span class="sig-paren">(</span><em>props</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_link_props" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return subset of iterable props that are links</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_link_titles">
+<code class="descname">get_link_titles</code><span class="sig-paren">(</span><em>entities</em>, <em>template</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_link_titles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of link tities for given entities and template.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_node_link_json">
+<code class="descname">get_node_link_json</code><span class="sig-paren">(</span><em>node</em>, <em>props</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_node_link_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the fields in the node json from links</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_node_non_link_json">
+<code class="descname">get_node_non_link_json</code><span class="sig-paren">(</span><em>node</em>, <em>props</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_node_non_link_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the fields in the node json that are not links</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_non_link_props">
+<code class="descname">get_non_link_props</code><span class="sig-paren">(</span><em>props</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_non_link_props" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return subset of iterable props that are not links.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_tabular_entity">
+<code class="descname">get_tabular_entity</code><span class="sig-paren">(</span><em>entity</em>, <em>link_titles</em>, <em>non_link_titles</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_tabular_entity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return tsv_dict for a single entity</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_tsv_dict_non_links">
+<code class="descname">get_tsv_dict_non_links</code><span class="sig-paren">(</span><em>entity</em>, <em>non_link_titles</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_tsv_dict_non_links" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return non-link portion of tsv dict for single entity.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_tsv_dict_plural_links">
+<code class="descname">get_tsv_dict_plural_links</code><span class="sig-paren">(</span><em>entity</em>, <em>link_titles</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_tsv_dict_plural_links" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return plural link portion of tsv dict for single entity.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_tsv_dict_singular_links">
+<code class="descname">get_tsv_dict_singular_links</code><span class="sig-paren">(</span><em>entity</em>, <em>link_titles</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_tsv_dict_singular_links" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return singular link portion of tsv dict for single entity.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.get_tsv_dicts">
+<code class="descname">get_tsv_dicts</code><span class="sig-paren">(</span><em>entities</em>, <em>titles</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.get_tsv_dicts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a generator of tsv_dicts given iterable <a href="#id11"><span class="problematic" id="id12">:param:`entities`</span></a>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.is_link_field">
+<code class="descname">is_link_field</code><span class="sig-paren">(</span><em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.is_link_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return boolean whether field should be considered a link.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.is_link_plural">
+<code class="descname">is_link_plural</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.is_link_plural" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return true if link represents a to_many relationship.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.is_property_hidden">
+<code class="descname">is_property_hidden</code><span class="sig-paren">(</span><em>key</em>, <em>schema</em>, <em>exclude_id</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.is_property_hidden" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean whether key should be hidden</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.json_dumps_formatted">
+<code class="descname">json_dumps_formatted</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.json_dumps_formatted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return json string with standard format</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.parse_ids">
+<code class="descname">parse_ids</code><span class="sig-paren">(</span><em>ids</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.parse_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse a list of ids from <cite>ids</cite> of unknown type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ids</strong> – valid types are string, unicode, and list of strings</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">ids from <cite>ids</cite> of unknown type</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">UserError</span></code> – if any ids are invalid</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.split_link">
+<code class="descname">split_link</code><span class="sig-paren">(</span><em>link</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.split_link" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return (link_name, link_alias) given link name.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.split_link_alias">
+<code class="descname">split_link_alias</code><span class="sig-paren">(</span><em>link_alias</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.split_link_alias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return (alias_root, link_id) from link alias.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.utils.transforms.graph_to_doc.tsv_example_row">
+<code class="descname">tsv_example_row</code><span class="sig-paren">(</span><em>label</em>, <em>title</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.utils.transforms.graph_to_doc.tsv_example_row" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return row with entity type column populated</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../entities/index.html" class="btn btn-neutral float-right" title="Entity Usage" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="sheepdog.transactions.html" class="btn btn-neutral" title="sheepdog.transactions" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Center for Data Intensive Science.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,369 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>sheepdog.auth &mdash; sheepdog 0.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="sheepdog 0.1.0 documentation" href="../index.html"/>
+        <link rel="up" title="API Reference" href="index.html"/>
+        <link rel="next" title="sheepdog.blueprint" href="sheepdog.blueprint.html"/>
+        <link rel="prev" title="API Reference" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../contents.html" class="icon icon-home"> sheepdog
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">sheepdog</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal"><span class="pre">sheepdog.auth</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-sheepdog.auth.auth_driver"><code class="docutils literal"><span class="pre">sheepdog.auth.auth_driver</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-sheepdog.auth.federated_user"><code class="docutils literal"><span class="pre">sheepdog.auth.federated_user</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.blueprint.html"><code class="docutils literal"><span class="pre">sheepdog.blueprint</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.dictionary.html"><code class="docutils literal"><span class="pre">sheepdog.dictionary</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.errors.html"><code class="docutils literal"><span class="pre">sheepdog.errors</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.globals.html"><code class="docutils literal"><span class="pre">sheepdog.globals</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.models.html"><code class="docutils literal"><span class="pre">sheepdog.models</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.transactions.html"><code class="docutils literal"><span class="pre">sheepdog.transactions</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sheepdog.utils.html"><code class="docutils literal"><span class="pre">sheepdog.utils</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../entities/index.html">Entity Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../requests/index.html">Requests Schema</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../contents.html">sheepdog</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../contents.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">API Reference</a> &raquo;</li>
+      
+    <li><code class="docutils literal"><span class="pre">sheepdog.auth</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sheepdog.auth">
+<span id="sheepdog-auth"></span><h1><code class="docutils literal"><span class="pre">sheepdog.auth</span></code><a class="headerlink" href="#module-sheepdog.auth" title="Permalink to this headline">¶</a></h1>
+<p>Provides functions for handling user authentication and authorization.</p>
+<dl class="function">
+<dt id="sheepdog.auth.admin_auth">
+<code class="descname">admin_auth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.admin_auth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.auth.authorize_for_project">
+<code class="descname">authorize_for_project</code><span class="sig-paren">(</span><em>*roles</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.authorize_for_project" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap a flask blueprint route to do the following:</p>
+<ol class="arabic simple">
+<li>Allow access to the handler iff the user has at least one of the roles
+requested on the given project</li>
+<li>Set the global Flask variable <cite>g.user</cite> to a <cite>FederatedUser</cite>.</li>
+</ol>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.auth.check_user_credential">
+<code class="descname">check_user_credential</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.check_user_credential" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.auth.get_secret_key_and_user">
+<code class="descname">get_secret_key_and_user</code><span class="sig-paren">(</span><em>access_key</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.get_secret_key_and_user" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.auth.get_user">
+<code class="descname">get_user</code><span class="sig-paren">(</span><em>username</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.get_user" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.auth.require_auth">
+<code class="descname">require_auth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.require_auth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if a request is authenticated.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.auth.role_error_msg">
+<code class="descname">role_error_msg</code><span class="sig-paren">(</span><em>user_name</em>, <em>roles</em>, <em>project</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.role_error_msg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sheepdog.auth.set_global_user">
+<code class="descname">set_global_user</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.set_global_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap a Flask blueprint view function to set the global user.</p>
+</dd></dl>
+
+<div class="section" id="module-sheepdog.auth.auth_driver">
+<span id="sheepdog-auth-auth-driver"></span><h2><code class="docutils literal"><span class="pre">sheepdog.auth.auth_driver</span></code><a class="headerlink" href="#module-sheepdog.auth.auth_driver" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sheepdog.auth.auth_driver.AuthDriver">
+<em class="property">class </em><code class="descname">AuthDriver</code><span class="sig-paren">(</span><em>auth_conf</em>, <em>internal_auth</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.auth_driver.AuthDriver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Responsible for checking user’s access permission and getting user
+information from the token passed to gdcapi.</p>
+<dl class="method">
+<dt id="sheepdog.auth.auth_driver.AuthDriver.check_nodes">
+<code class="descname">check_nodes</code><span class="sig-paren">(</span><em>nodes</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.auth_driver.AuthDriver.check_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if user have access to all of the dids, return 403 if user
+doesn’t have access on any of the file, 404 if any of the file
+is not in psqlgraph, 200 if user can access all dids</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.auth.auth_driver.AuthDriver.filter_nodes">
+<code class="descname">filter_nodes</code><span class="sig-paren">(</span><em>nodes</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.auth_driver.AuthDriver.filter_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filters nodes that are not authorized for the user.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.auth.auth_driver.AuthDriver.get_role">
+<code class="descname">get_role</code><span class="sig-paren">(</span><em>node</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.auth_driver.AuthDriver.get_role" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.auth.auth_driver.AuthDriver.get_user_projects">
+<code class="descname">get_user_projects</code><span class="sig-paren">(</span><em>user</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.auth_driver.AuthDriver.get_user_projects" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.auth.auth_driver.AuthDriver.has_protected">
+<code class="descname">has_protected</code><span class="sig-paren">(</span><em>nodes</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.auth_driver.AuthDriver.has_protected" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if any of the nodes are protected.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-sheepdog.auth.federated_user">
+<span id="sheepdog-auth-federated-user"></span><h2><code class="docutils literal"><span class="pre">sheepdog.auth.federated_user</span></code><a class="headerlink" href="#module-sheepdog.auth.federated_user" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sheepdog.auth.federated_user.FederatedUser">
+<em class="property">class </em><code class="descname">FederatedUser</code><span class="sig-paren">(</span><em>hmac_keypair=None</em>, <em>user=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.federated_user.FederatedUser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="sheepdog.auth.federated_user.FederatedUser.fetch_project_ids">
+<code class="descname">fetch_project_ids</code><span class="sig-paren">(</span><em>role='_member_'</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.federated_user.FederatedUser.fetch_project_ids" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.auth.federated_user.FederatedUser.get_project_ids">
+<code class="descname">get_project_ids</code><span class="sig-paren">(</span><em>role='_member_'</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.federated_user.FederatedUser.get_project_ids" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.auth.federated_user.FederatedUser.get_projects_mapping">
+<code class="descname">get_projects_mapping</code><span class="sig-paren">(</span><em>phsid</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.federated_user.FederatedUser.get_projects_mapping" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.auth.federated_user.FederatedUser.get_role_by_dbgap">
+<code class="descname">get_role_by_dbgap</code><span class="sig-paren">(</span><em>dbgap_no</em><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.federated_user.FederatedUser.get_role_by_dbgap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.auth.federated_user.FederatedUser.logged_in">
+<code class="descname">logged_in</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.federated_user.FederatedUser.logged_in" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.auth.federated_user.FederatedUser.phsids">
+<code class="descname">phsids</code><a class="headerlink" href="#sheepdog.auth.federated_user.FederatedUser.phsids" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sheepdog.auth.federated_user.FederatedUser.roles">
+<code class="descname">roles</code><a class="headerlink" href="#sheepdog.auth.federated_user.FederatedUser.roles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.auth.federated_user.FederatedUser.set_phs_ids">
+<code class="descname">set_phs_ids</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.federated_user.FederatedUser.set_phs_ids" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sheepdog.auth.federated_user.FederatedUser.set_roles">
+<code class="descname">set_roles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sheepdog.auth.federated_user.FederatedUser.set_roles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="sheepdog.blueprint.html" class="btn btn-neutral float-right" title="sheepdog.blueprint" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="API Reference" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Center for Data Intensive Science.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
