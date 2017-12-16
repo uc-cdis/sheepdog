@@ -1,0 +1,3 @@
+source: build/html/
+include:
+  - _static
