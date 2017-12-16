@@ -1,0 +1,23 @@
+h1 code, h2 code, h3 code, h4 code {
+    background: none !important;
+    border: none !important;
+    padding: 0px 0px !important;
+}
+
+dt {
+    font-style: normal !important;
+    font-family: Consolas,"Andale Mono WT","Andale Mono","Lucida Console","Lucida Sans Typewriter","DejaVu Sans Mono","Bitstream Vera Sans Mono","Liberation Mono","Nimbus Mono L",Monaco,"Courier New",Courier,monospace !important;
+}
+
+code + em {
+    padding: 0px 8px 0px 8px !important;
+}
+
+.property + code {
+    padding: 0px 0px 0px 4px !important;
+}
+
+.rst-content dl:not(.docutils) dt {
+    border-top: none !important;
+    border-left: solid 3px #6ab0de !important;
+}
