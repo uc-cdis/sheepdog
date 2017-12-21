@@ -1,0 +1,2 @@
+type	project_id	submitter_id	cases.submitter_id	age_at_diagnosis	classification_of_tumor	days_to_birth	days_to_last_follow_up	days_to_last_known_disease_status	days_to_recurrence	last_known_disease_status	morphology	primary_diagnosis	progression_or_recurrence	site_of_resection_or_biopsy	tissue_or_organ_of_origin	tumor_grade	tumor_stage	vital_status	days_to_death	prior_malignancy
+diagnosis	TCGA-BRCA	test-diagnosis	TCGA-3C-AAAU	null	not reported	null	12	null	null	not reported	test	not reported	not reported	not reported	not reported	not reported	iiia	not reported		

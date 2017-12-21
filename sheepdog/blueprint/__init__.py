@@ -8,7 +8,6 @@ import flask
 from sheepdog import dictionary
 from sheepdog import models
 
-
 def create_blueprint(dictionary_to_use, models_to_use):
     """
     Create the blueprint.

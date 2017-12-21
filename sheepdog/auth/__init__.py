@@ -19,6 +19,17 @@ from sheepdog.errors import (
     AuthError,
 )
 
+SERVICE = 'submission'
+roles = dict(
+    ADMIN='admin',
+    CREATE='create',
+    DELETE='delete',
+    DOWNLOAD='download',
+    GENERAL='_member_',
+    READ='read',
+    RELEASE='release',
+    UPDATE='update',
+)
 
 def admin_auth():
     check_user_credential()
