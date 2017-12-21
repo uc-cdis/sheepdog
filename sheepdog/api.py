@@ -8,7 +8,7 @@ from flask import Flask, jsonify
 from flask.ext.cors import CORS
 from flask_sqlalchemy_session import flask_scoped_session
 import gdcdictionary
-from indexclient.client import IndexClient as SignpostClient
+#from indexclient.client import IndexClient as SignpostClient
 from psqlgraph import PsqlGraphDriver
 from userdatamodel.driver import SQLAlchemyDriver
 import sheepdog

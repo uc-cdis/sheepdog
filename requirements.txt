@@ -13,6 +13,7 @@ requests==2.5.2
 setuptools==36.3.0
 simplejson==3.8.1
 sqlalchemy==0.9.9
+mock==2.0.0
 -e git+https://git@github.com/NCI-GDC/psqlgraph.git@4fbeddeb058ad09741c5d2b9aacbd1c63cfc3dd1#egg=psqlgraph
 -e git+https://git@github.com/uc-cdis/cdis-python-utils.git@0.1.5#egg=cdispyutils
 -e git+https://git@github.com/uc-cdis/userdatamodel.git@f25f5dfb356e80c45153ffd3e91b399be672a81c#egg=userdatamodel
