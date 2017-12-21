@@ -20,31 +20,38 @@ import sheepdog.blueprint
 import sheepdog.transactions
 from .version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
 from gdcdatamodel import models
+import dictionaryutils
 
 # recursion depth is increased for complex graph traversals
 sys.setrecursionlimit(10000)
 DEFAULT_ASYNC_WORKERS = 8
 
-blueprint = sheepdog.create_blueprint(
-        gdcdictionary.gdcdictionary, models
-    )
 
-def app_register_blueprints(app):
+# blueprint = sheepdog.create_blueprint(
+#         gdcdictionary.gdcdictionary, models
+#     )
+
+def app_register_blueprints(app, datadictionary):
     # TODO: (jsm) deprecate the index endpoints on the root path,
     # these are currently duplicated under /index (the ultimate
     # path) for migration
     v0 = '/v0'
     app.url_map.strict_slashes = False
 
+    blueprint = sheepdog.create_blueprint(
+        datadictionary, models
+    )
+
     app.register_blueprint(blueprint, url_prefix=v0+'/submission')
     app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0+'/oauth2')
 
-
-def app_register_duplicate_blueprints(app):
+def app_register_duplicate_blueprints(app, datadictionary):
     # TODO: (jsm) deprecate this v0 version under root endpoint.  This
     # root endpoint duplicates /v0 to allow gradual client migration
-    app.register_blueprint(blueprint, url_prefix='/submission')
-    print('register blue print')
+    blueprint2 = sheepdog.create_blueprint(
+        datadictionary, models
+    )
+
 
 
 def async_pool_init(app):
@@ -103,10 +110,22 @@ def cors_init(app):
         }, headers=accepted_headers, expose_headers=['Content-Disposition'])
 
 
+def app_load_dictionary(url):
+    try:
+        datadictionary = dictionaryutils.DataDictionary(url = url)
+    except Exception:
+        app.logger.error(
+            'dicitionary is not loaded, continue anyway'
+        )
+    return datadictionary
+
+
 def app_init(app):
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
-    # app_register_duplicate_blueprints(app)
+    datadictionary = app_load_dictionary(url = app.config['S3_DICTIONARY_URL'])
+    app_register_blueprints(app, datadictionary)
+    app_register_duplicate_blueprints(app, datadictionary)
     if LEGACY_MODE:
         app_register_legacy_blueprints(app)
         app_register_v0_legacy_blueprints(app)
@@ -130,7 +149,7 @@ app = Flask(__name__)
 app.logger.addHandler(get_handler())
 
 setup_default_handlers(app)
-app_register_blueprints(app)
+#app_register_blueprints(app)
 
 @app.route('/_status', methods=['GET'])
 def health_check():

@@ -8,11 +8,12 @@ import flask
 from sheepdog import dictionary
 from sheepdog import models
 
-def create_blueprint(dictionary_to_use, models_to_use):
+def create_blueprint( dictionary_to_use, models_to_use):
     """
     Create the blueprint.
 
     Args:
+        name: blueprint name
         dictionary_to_use: data dictionary such as gdcdictionary
         models_to_use: data model such as gdcdatamodel
 

@@ -9,7 +9,7 @@ install:
   - pip install -r dev-requirements.txt
 
 script:
-- py.test -vv --cov=sheepdog --cov-report xml tests
+- py.test -vv --cov=sheepdog --cov-report xml tests/submission/test_load_dictionary.py
 
 after_script:
 - python-codacy-coverage -r coverage.xml

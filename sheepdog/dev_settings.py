@@ -3,7 +3,6 @@ from boto.s3.connection import OrdinaryCallingFormat
 from os import environ as env
 
 from .config import LEGACY_MODE
-
 # Signpost
 SIGNPOST = {
    'host': env.get('SIGNPOST_HOST', 'http://localhost:8888'),
@@ -96,6 +95,8 @@ SLICING = {
 # length; 50 is reasonable. For the random generation to be secure, use
 # ``random.SystemRandom()``
 FLASK_SECRET_KEY = 'eCKJOOw3uQBR5pVDz3WIvYk3RsjORYoPRdzSUNJIeUEkm1Uvtq'
+
+S3_DICTIONARY_URL = os.environ.get('S3_DICTIONARY_URL','https://s3.amazonaws.com/mybucket20018/dump.json')
 
 HMAC_ENCRYPTION_KEY = os.environ.get('CDIS_HMAC_ENCRYPTION_KEY', '')
 OAUTH2 = {

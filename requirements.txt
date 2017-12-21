@@ -20,3 +20,4 @@ sqlalchemy==0.9.9
 -e git+https://git@github.com/NCI-GDC/cdisutils.git@8a8e599fdab5ade9bd8c586132d974a102e5d72d#egg=cdisutils
 -e git+https://git@github.com/uc-cdis/datadictionary.git@0.1.1#egg=gdcdictionary
 -e git+https://git@github.com/uc-cdis/gdcdatamodel.git@44108de7b5aaabc33db6f39dda5130e1c2e0a3f6#egg=gdcdatamodel
+-e git+https://git@github.com/uc-cdis/dictionaryutils.git@35899a878381eeb8ba91fd9124d285809d0063e8#egg=dictionaryutils

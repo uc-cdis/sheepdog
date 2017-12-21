@@ -16,6 +16,7 @@ SUBMISSION = {
     "bucket": 'test_submission',
     "host": 'host',
 }
+S3_DICTIONARY_URL = 'S3_DICTIONARY_URL'
 STORAGE = {"s3": {"keys": {}, "kwargs": {}}}
 STORAGE["s3"]["keys"]["host"] = {"access_key": "fake",
                                  "secret_key": "sooper_sekrit"}
