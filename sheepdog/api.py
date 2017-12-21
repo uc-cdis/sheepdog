@@ -114,16 +114,20 @@ def app_load_dictionary(url):
     try:
         datadictionary = dictionaryutils.DataDictionary(url = url)
     except Exception:
-        app.logger.error(
-            'dicitionary is not loaded, continue anyway'
-        )
+        raise
     return datadictionary
 
 
 def app_init(app):
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
-    datadictionary = app_load_dictionary(url = app.config['S3_DICTIONARY_URL'])
+    datadictionary = None
+    try:
+        datadictionary = app_load_dictionary(url = app.config['S3_DICTIONARY_URL'])
+    except Exception:
+        app.logger.error(
+            'dicitionary is not loaded, continue anyway'
+        )
     app_register_blueprints(app, datadictionary)
     app_register_duplicate_blueprints(app, datadictionary)
     if LEGACY_MODE:
