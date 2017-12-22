@@ -25,9 +25,14 @@ def get_parent(path):
     print(path)
     return path[0:path.rfind('/')]
 
+'''
+Test submission endpoints with generated dictionary pulled from S3.
+Since requests does not support to handle local file, we mock the content of the dictionary by
+instantiating DataDictionay with root_dir param
+'''
 PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/sheepdog/schemas'
-
 datadictionary = DataDictionary(root_dir=PATH_TO_SCHEMA_DIR)
+
 def app_register_blueprints(app):
     # TODO: (jsm) deprecate the index endpoints on the root path,
     # these are currently duplicated under /index (the ultimate

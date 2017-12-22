@@ -29,6 +29,7 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
 
 ADMIN_HEADERS = {"X-Auth-Token": auth_conf.ADMIN_TOKEN}
 
+
 @contextlib.contextmanager
 def s3_conn():
     mock = mock_s3()
@@ -502,15 +503,15 @@ def test_catch_internal_errors(monkeypatch, client, pg_driver, submitter):
         raise
 
 
-# def create_file(app, client, submitter, pg_driver, state=DEFAULT_FILE_STATE):
-#     put_cgci_blgsp(client, submitter)
-#     doc = app.signpost.create()
-#     with pg_driver.session_scope() as s:
-#         f = md.File(doc.did)
-#         f.file_state = state
-#         f.project_id = 'CGCI-BLGSP'
-#         s.add(f)
-#     return doc
+def create_file(app, client, submitter, pg_driver, state=DEFAULT_FILE_STATE):
+    put_cgci_blgsp(client, submitter)
+    doc = app.signpost.create()
+    with pg_driver.session_scope() as s:
+        f = md.File(doc.did)
+        f.file_state = state
+        f.project_id = 'CGCI-BLGSP'
+        s.add(f)
+    return doc
 
 
 # def test_file_upload(app, client, pg_driver, submitter):
