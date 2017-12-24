@@ -21,15 +21,10 @@ from userdatamodel.driver import SQLAlchemyDriver
 from cdisutilstest.code.storage_client_mock import get_client
 import os
 import json
-from dictionaryutils import DataDictionary
-import gdcdatamodel
 
 here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, here)
 
-def get_parent(path):
-    print(path)
-    return path[0:path.rfind('/')]
 
 class UserapiTestSettings(object):
     from boto.s3.connection import OrdinaryCallingFormat
