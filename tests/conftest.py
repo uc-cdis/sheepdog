@@ -3,6 +3,7 @@ from cdispyutils.hmac4 import get_auth
 from flask.testing import make_test_environ_builder
 import sys
 from sheepdog.auth import roles
+from signpost import Signpost
 from multiprocessing import Process
 from gdcdatamodel.models import Edge, Node
 from psqlgraph import PsqlGraphDriver
@@ -11,16 +12,32 @@ from tests.api import app as _app, app_init
 from mock import patch
 import requests
 from cdis_oauth2client import OAuth2Client
+from elasticsearch import Elasticsearch
 from sheepdog.test_settings import PSQL_USER_DB_CONNECTION
 from sheepdog.test_settings import Fernet, HMAC_ENCRYPTION_KEY
 from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
 from userdatamodel.driver import SQLAlchemyDriver
+from cdisutilstest.code.storage_client_mock import get_client
 import os
 import json
+from dictionaryutils import DataDictionary
 
 here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, here)
+
+
+'''
+Test submission endpoints with generated dictionary pulled from S3.
+Since requests does not support to handle local file, we mock the content of the dictionary by
+instantiating DataDictionay with root_dir param
+'''
+# PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/sheepdog/schemas'
+# datadictionary = DataDictionary(root_dir=PATH_TO_SCHEMA_DIR)
+
+# url = 'http://127.0.0.1:8000/sheepdog/schemas/dictionary.json'
+# PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/sheepdog/schemas'
+# #datadictionary = DataDictionary(url=url)
 
 
 class UserapiTestSettings(object):

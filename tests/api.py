@@ -33,6 +33,10 @@ instantiating DataDictionay with root_dir param
 PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/sheepdog/schemas'
 datadictionary = DataDictionary(root_dir=PATH_TO_SCHEMA_DIR)
 
+url = 'http://127.0.0.1:8000/sheepdog/schemas/dictionary.json'
+PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/sheepdog/schemas'
+#datadictionary = DataDictionary(url=url)
+
 def app_register_blueprints(app):
     # TODO: (jsm) deprecate the index endpoints on the root path,
     # these are currently duplicated under /index (the ultimate
