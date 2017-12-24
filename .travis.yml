@@ -26,10 +26,6 @@ addons:
     - liblapack-dev
     - gfortran
 
-services:
-  - elasticsearch
-  - docker
-
 install:
   - pip install -r requirements.txt
   - pip install -r dev-requirements.txt
@@ -48,6 +44,9 @@ script:
   set -e
   PYTHONPATH=. py.test -vv tests/system_test.py tests/submission/test_endpoints.py
   set +e
+
+after_script:
+- python-codacy-coverage -r coverage.xml
 
 env:
   global:
