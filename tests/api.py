@@ -16,7 +16,6 @@ from sheepdog.config import LEGACY_MODE
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
 from sheepdog.version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
 from dictionaryutils import DataDictionary
-#from tests.conftest import datadictionary
 
 # recursion depth is increased for complex graph traversals
 sys.setrecursionlimit(10000)
@@ -45,40 +44,6 @@ def app_register_blueprints(app):
 
     app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
     app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0+'/oauth2')
-
-
-def app_register_duplicate_blueprints(app):
-    # TODO: (jsm) deprecate this v0 version under root endpoint.  This
-    # root endpoint duplicates /v0 to allow gradual client migration
-    blueprint2 = sheepdog.create_blueprint(
-         datadictionary, models
-    )
-
-    app.register_blueprint(blueprint2, url_prefix='/submission')
-
-def app_register_legacy_blueprints(app):
-    legacy = '/legacy'
-    app.register_blueprint(index.v0.blueprint, url_prefix=legacy)
-    app.register_blueprint(index.v0.blueprint, url_prefix=legacy+'/index')
-    app.register_blueprint(misc.v0.blueprint, url_prefix=legacy)
-    app.register_blueprint(auth.v0.blueprint, url_prefix=legacy+'/auth')
-    app.register_blueprint(manifest.v0.blueprint, url_prefix=legacy+'/manifest')
-    app.register_blueprint(download.v0.blueprint, url_prefix=legacy+'/data')
-    app.register_blueprint(submission.blueprint, url_prefix=legacy+'/submission')
-    app.register_blueprint(slicing.v0.blueprint, url_prefix=legacy+'/slicing')
-
-
-def app_register_v0_legacy_blueprints(app):
-    v0_legacy = '/v0/legacy'
-    app.register_blueprint(index.v0.blueprint, url_prefix=v0_legacy)
-    app.register_blueprint(index.v0.blueprint, url_prefix=v0_legacy+'/index')
-    app.register_blueprint(misc.v0.blueprint, url_prefix=v0_legacy)
-    app.register_blueprint(auth.v0.blueprint, url_prefix=v0_legacy+'/auth')
-    app.register_blueprint(manifest.v0.blueprint, url_prefix=v0_legacy+'/manifest')
-    app.register_blueprint(download.v0.blueprint, url_prefix=v0_legacy+'/data')
-    app.register_blueprint(submission.blueprint, url_prefix=v0_legacy+'/submission')
-    app.register_blueprint(slicing.v0.blueprint, url_prefix=v0_legacy+'/slicing')
-
 
 def async_pool_init(app):
     """Create and start an pool of workers for async tasks."""
@@ -223,29 +188,3 @@ app.register_error_handler(
     sheepdog.errors.APIError, _log_and_jsonify_exception
 )
 app.register_error_handler(OAuth2Error, _log_and_jsonify_exception)
-
-
-def run_for_development(**kwargs):
-    import logging
-    app.logger.setLevel(logging.INFO)
-    # app.config['PROFILE'] = True
-    # from werkzeug.contrib.profiler import ProfilerMiddleware, MergeStream
-    # f = open('profiler.log', 'w')
-    # stream = MergeStream(sys.stdout, f)
-    # app.wsgi_app = ProfilerMiddleware(app.wsgi_app, f, restrictions=[2000])
-
-    for key in ["http_proxy", "https_proxy"]:
-        if os.environ.get(key):
-            del os.environ[key]
-    app.config.from_object('sheepdog.dev_settings')
-
-    kwargs['port'] = app.config['SHEEPDOG_PORT']
-    kwargs['host'] = app.config['SHEEPDOG_HOST']
-
-    try:
-        app_init(app)
-    except Exception:
-        app.logger.exception(
-            "Couldn't initialize application, continuing anyway"
-        )
-    app.run(**kwargs)

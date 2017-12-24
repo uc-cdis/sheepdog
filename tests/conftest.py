@@ -1,7 +1,8 @@
-
+import sys
+import os
+import json
 from cdispyutils.hmac4 import get_auth
 from flask.testing import make_test_environ_builder
-import sys
 from sheepdog.auth import roles
 from signpost import Signpost
 from multiprocessing import Process
@@ -19,8 +20,6 @@ from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
 from userdatamodel.driver import SQLAlchemyDriver
 from cdisutilstest.code.storage_client_mock import get_client
-import os
-import json
 
 here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, here)
@@ -111,11 +110,6 @@ def run_signpost(port):
 
 @pytest.fixture
 def app(tmpdir, request):
-
-    # import sheepdog
-    # sheepdog_blueprint = sheepdog.blueprint.create_blueprint(
-    #     gdcdictionary.gdcdictionary, gdcdatamodel.models
-    # )
 
     port = 8000
     signpost = Process(target=run_signpost, args=[port])
@@ -263,49 +257,3 @@ def submitter(app, request):
         return request.headers
     return build_header
 
-
-@pytest.fixture(scope='session')
-def es_setup(request):
-    es = Elasticsearch(["localhost"], port=9200)
-
-    def es_teardown():
-        es.indices.delete(
-            index=INDEX,
-            ignore=404,  # ignores error if index doesn't exists
-        )
-    request.addfinalizer(es_teardown)
-
-    es.indices.create(
-        index=INDEX,
-        body=mappings.index_settings(),
-        ignore=400,  # ignores error if index already exists
-    )
-
-    es.indices.put_mapping(index=INDEX, doc_type="file", body=mappings.get_file_es_mapping())
-    es.indices.put_mapping(index=INDEX, doc_type="project", body=mappings.get_project_es_mapping())
-    es.indices.put_mapping(index=INDEX, doc_type="case", body=mappings.get_case_es_mapping())
-    es.indices.put_mapping(index=INDEX, doc_type="annotation", body=mappings.get_annotation_es_mapping())
-
-    json_data = open(os.path.join(os.path.dirname(__file__), 'data/projects.json'))
-    data = json.load(json_data)
-    for p in data["data"]["hits"]:
-        es.index(index=INDEX, doc_type=project_model.doc_type, body=p)
-
-    json_data = open(os.path.join(os.path.dirname(__file__), 'data/files.json'))
-    data = json.load(json_data)
-    for f in data["data"]["hits"]:
-        es.index(index=INDEX, doc_type=f_model.doc_type, body=f)
-
-    json_data = open(os.path.join(os.path.dirname(__file__), 'data/cases.json'))
-    data = json.load(json_data)
-    for pa in data["data"]["hits"]:
-        es.index(index=INDEX, doc_type=case_model.doc_type, body=pa)
-
-    json_data = open(os.path.join(os.path.dirname(__file__), 'data/annotations.json'))
-    data = json.load(json_data)
-    for a in data["data"]["hits"]:
-        es.index(index=INDEX, doc_type=annotation_model.doc_type, body=a)
-
-    es.indices.refresh(index=INDEX)
-
-    json_data.close()
