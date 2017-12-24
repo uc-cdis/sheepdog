@@ -107,20 +107,20 @@ def put_tcga_brca(client, submitter):
     return r
 
 
-# def test_program_creation_endpoint(client, pg_driver, submitter):
-#     resp = put_cgci(client, auth=submitter)
-#     assert resp.status_code == 200, resp.data
-#     print resp.data
-#     resp = client.get('/v0/submission/')
-#     assert resp.json['links'] == ['/v0/submission/CGCI'], resp.json
+def test_program_creation_endpoint(client, pg_driver, submitter):
+    resp = put_cgci(client, auth=submitter)
+    assert resp.status_code == 200, resp.data
+    print resp.data
+    resp = client.get('/v0/submission/')
+    assert resp.json['links'] == ['/v0/submission/CGCI'], resp.json
 
 
-# def test_program_creation_without_admin_token(client, pg_driver, submitter):
-#     path = '/v0/submission/'
-#     headers = submitter(path, 'put', 'member')
-#     data = json.dumps({'name': 'CGCI', 'type': 'program'})
-#     resp = client.put(path, headers=headers, data=data)
-#     assert resp.status_code == 403
+def test_program_creation_without_admin_token(client, pg_driver, submitter):
+    path = '/v0/submission/'
+    headers = submitter(path, 'put', 'member')
+    data = json.dumps({'name': 'CGCI', 'type': 'program'})
+    resp = client.put(path, headers=headers, data=data)
+    assert resp.status_code == 403
 
 
 def test_program_creation_endpoint_for_program_not_supported(

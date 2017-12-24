@@ -26,10 +26,6 @@ sys.setrecursionlimit(10000)
 DEFAULT_ASYNC_WORKERS = 8
 
 
-# blueprint = sheepdog.create_blueprint(
-#         gdcdictionary.gdcdictionary, models
-#     )
-
 def app_register_blueprints(app, datadictionary):
     # TODO: (jsm) deprecate the index endpoints on the root path,
     # these are currently duplicated under /index (the ultimate
@@ -50,6 +46,8 @@ def app_register_duplicate_blueprints(app, datadictionary):
     blueprint2 = sheepdog.create_blueprint(
         datadictionary, models
     )
+    app.register_blueprint(blueprint2, url_prefix='/submission')
+    app.register_blueprint(cdis_oauth2client.blueprint, url_prefix='/oauth2')
 
 
 

@@ -22,23 +22,14 @@ from cdisutilstest.code.storage_client_mock import get_client
 import os
 import json
 from dictionaryutils import DataDictionary
+import gdcdatamodel
 
 here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, here)
 
-
-'''
-Test submission endpoints with generated dictionary pulled from S3.
-Since requests does not support to handle local file, we mock the content of the dictionary by
-instantiating DataDictionay with root_dir param
-'''
-# PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/sheepdog/schemas'
-# datadictionary = DataDictionary(root_dir=PATH_TO_SCHEMA_DIR)
-
-# url = 'http://127.0.0.1:8000/sheepdog/schemas/dictionary.json'
-# PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/sheepdog/schemas'
-# #datadictionary = DataDictionary(url=url)
-
+def get_parent(path):
+    print(path)
+    return path[0:path.rfind('/')]
 
 class UserapiTestSettings(object):
     from boto.s3.connection import OrdinaryCallingFormat

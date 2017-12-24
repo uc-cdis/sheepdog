@@ -16,6 +16,7 @@ from sheepdog.config import LEGACY_MODE
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
 from sheepdog.version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
 from dictionaryutils import DataDictionary
+#from tests.conftest import datadictionary
 
 # recursion depth is increased for complex graph traversals
 sys.setrecursionlimit(10000)
@@ -25,7 +26,8 @@ def get_parent(path):
     print(path)
     return path[0:path.rfind('/')]
 
-url = 'http://127.0.0.1:8000/sheepdog/schemas/dictionary.json'
+
+url = 'http://127.0.0.1:1111/sheepdog/schemas/dictionary.json'
 PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/sheepdog/schemas'
 datadictionary = DataDictionary(url=url)
 
