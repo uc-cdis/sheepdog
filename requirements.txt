@@ -24,3 +24,4 @@ elasticsearch==1.2.0
 -e git+https://git@github.com/uc-cdis/datadictionary.git@0.1.1#egg=gdcdictionary
 -e git+https://git@github.com/NCI-GDC/gdcdatamodel.git@568aa07e686fd06d116f67521bb5c8db672cd1cd#egg=gdcdatamodel
 -e git+https://git@github.com/uc-cdis/indexclient.git@d49134f4626b69a8ef02c189ed0047ad1a635cb0#egg=indexclient
+-e git+https://git@github.com/uc-cdis/dictionaryutils.git@35899a878381eeb8ba91fd9124d285809d0063e8#egg=dictionaryutils
