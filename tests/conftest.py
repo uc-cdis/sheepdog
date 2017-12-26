@@ -13,7 +13,7 @@ from tests.api import app as _app, app_init
 from mock import patch
 import requests
 from cdis_oauth2client import OAuth2Client
-from elasticsearch import Elasticsearch
+#from elasticsearch import Elasticsearch
 from sheepdog.test_settings import PSQL_USER_DB_CONNECTION
 from sheepdog.test_settings import Fernet, HMAC_ENCRYPTION_KEY
 from userdatamodel import models as usermd

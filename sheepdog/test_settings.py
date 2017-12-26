@@ -16,7 +16,7 @@ SUBMISSION = {
     "bucket": 'test_submission',
     "host": 'host',
 }
-S3_DICTIONARY_URL = 'S3_DICTIONARY_URL'
+S3_DICTIONARY_URL = 'http://localhost:1111/sheepdog/schemas/dictionary.json'
 STORAGE = {"s3": {"keys": {}, "kwargs": {}}}
 STORAGE["s3"]["keys"]["host"] = {"access_key": "fake",
                                  "secret_key": "sooper_sekrit"}

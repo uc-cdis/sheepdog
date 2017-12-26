@@ -26,7 +26,7 @@ sys.setrecursionlimit(10000)
 DEFAULT_ASYNC_WORKERS = 8
 
 
-def app_register_blueprints(app, datadictionary):
+def app_register_blueprints(app):
     # TODO: (jsm) deprecate the index endpoints on the root path,
     # these are currently duplicated under /index (the ultimate
     # path) for migration
@@ -34,21 +34,20 @@ def app_register_blueprints(app, datadictionary):
     app.url_map.strict_slashes = False
 
     blueprint = sheepdog.create_blueprint(
-        datadictionary, models
+        'submission', app.datadictionary, models
     )
 
     app.register_blueprint(blueprint, url_prefix=v0+'/submission')
     app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0+'/oauth2')
 
-def app_register_duplicate_blueprints(app, datadictionary):
+def app_register_duplicate_blueprints(app):
     # TODO: (jsm) deprecate this v0 version under root endpoint.  This
     # root endpoint duplicates /v0 to allow gradual client migration
-    blueprint2 = sheepdog.create_blueprint(
-        datadictionary, models
+    blueprint = sheepdog.create_blueprint(
+        'submission2', app.datadictionary, models
     )
-    app.register_blueprint(blueprint2, url_prefix='/submission')
+    app.register_blueprint(blueprint, url_prefix='/submission')
     app.register_blueprint(cdis_oauth2client.blueprint, url_prefix='/oauth2')
-
 
 
 def async_pool_init(app):
@@ -109,24 +108,23 @@ def cors_init(app):
 
 def app_load_dictionary(url):
     try:
-        datadictionary = dictionaryutils.DataDictionary(url = url)
+        app.datadictionary = dictionaryutils.DataDictionary(url=url)
     except Exception:
         raise
-    return datadictionary
 
 
 def app_init(app):
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
-    datadictionary = None
+    app.datadictionary = None
     try:
-        datadictionary = app_load_dictionary(url = app.config['S3_DICTIONARY_URL'])
+        app_load_dictionary(url = app.config['S3_DICTIONARY_URL'])
     except Exception:
         app.logger.error(
-            'dicitionary is not loaded, continue anyway'
+            'Dicitionary is not loaded, continue anyway!!!'
         )
-    app_register_blueprints(app, datadictionary)
-    app_register_duplicate_blueprints(app, datadictionary)
+    app_register_blueprints(app)
+    app_register_duplicate_blueprints(app)
     if LEGACY_MODE:
         app_register_legacy_blueprints(app)
         app_register_v0_legacy_blueprints(app)
@@ -150,7 +148,6 @@ app = Flask(__name__)
 app.logger.addHandler(get_handler())
 
 setup_default_handlers(app)
-#app_register_blueprints(app)
 
 @app.route('/_status', methods=['GET'])
 def health_check():
@@ -212,11 +209,6 @@ app.register_error_handler(OAuth2Error, _log_and_jsonify_exception)
 def run_for_development(**kwargs):
     import logging
     app.logger.setLevel(logging.INFO)
-    # app.config['PROFILE'] = True
-    # from werkzeug.contrib.profiler import ProfilerMiddleware, MergeStream
-    # f = open('profiler.log', 'w')
-    # stream = MergeStream(sys.stdout, f)
-    # app.wsgi_app = ProfilerMiddleware(app.wsgi_app, f, restrictions=[2000])
 
     for key in ["http_proxy", "https_proxy"]:
         if os.environ.get(key):

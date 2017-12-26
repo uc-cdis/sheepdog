@@ -26,7 +26,7 @@ def get_parent(path):
     return path[0:path.rfind('/')]
 
 
-url = 'http://127.0.0.1:1111/sheepdog/schemas/dictionary.json'
+url = 'http://localhost:1111/sheepdog/schemas/dictionary.json'
 PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/sheepdog/schemas'
 datadictionary = DataDictionary(url=url)
 
@@ -39,7 +39,7 @@ def app_register_blueprints(app):
 
     import sheepdog
     sheepdog_blueprint = sheepdog.create_blueprint(
-        datadictionary, gdcdatamodel.models
+        'submission', datadictionary, gdcdatamodel.models
     )
 
     app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')

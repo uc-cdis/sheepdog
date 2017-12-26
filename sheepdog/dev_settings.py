@@ -73,6 +73,10 @@ GDC_PORTAL_ENDPOINT = os.getenv("GDC_PORTAL_ENDPOINT", 'http://gdc-portal.nci.ni
 SHEEPDOG_HOST = os.getenv("SHEEPDOG_HOST", "localhost")
 SHEEPDOG_PORT = int(os.getenv("SHEEPDOG_PORT", "5000"))
 
+#dictionary
+DICTIONARY_HOST = os.getenv("DICTIONARY_HOST", "localhost")
+DICTIONARY_PORT = int(os.getenv("DICTIONARY_PORT", "1111"))
+
 # ES settings
 _default_index = "gdc_legacy_test" if LEGACY_MODE else "gdc_test"
 GDC_ES_INDEX = os.getenv("GDC_ES_INDEX", _default_index)
@@ -96,7 +100,7 @@ SLICING = {
 # ``random.SystemRandom()``
 FLASK_SECRET_KEY = 'eCKJOOw3uQBR5pVDz3WIvYk3RsjORYoPRdzSUNJIeUEkm1Uvtq'
 
-S3_DICTIONARY_URL = os.environ.get('S3_DICTIONARY_URL','https://s3.amazonaws.com/mybucket20018/dump.json')
+S3_DICTIONARY_URL = os.environ.get('S3_DICTIONARY_URL','http://localhost:1111/sheepdog/schemas/dictionary.json')
 
 HMAC_ENCRYPTION_KEY = os.environ.get('CDIS_HMAC_ENCRYPTION_KEY', '')
 OAUTH2 = {
