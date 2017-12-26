@@ -1,11 +1,11 @@
+import datetime
+import pytest
+import httmock
 import json
 import re
 import urlparse
-import pytest
 from sheepdog.auth import AuthDriver
 from sheepdog import test_settings
-import httmock
-import datetime
 
 
 class Config(object):

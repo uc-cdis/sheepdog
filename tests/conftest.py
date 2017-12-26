@@ -1,25 +1,23 @@
 import sys
 import os
+import pytest
 import json
-from cdispyutils.hmac4 import get_auth
+import requests
+from mock import patch
 from flask.testing import make_test_environ_builder
-from sheepdog.auth import roles
 from signpost import Signpost
 from multiprocessing import Process
 from gdcdatamodel.models import Edge, Node
 from psqlgraph import PsqlGraphDriver
-import pytest
-from tests.api import app as _app, app_init
-from mock import patch
-import requests
 from cdis_oauth2client import OAuth2Client
-#from elasticsearch import Elasticsearch
-from sheepdog.test_settings import PSQL_USER_DB_CONNECTION
-from sheepdog.test_settings import Fernet, HMAC_ENCRYPTION_KEY
 from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
 from userdatamodel.driver import SQLAlchemyDriver
 from cdisutilstest.code.storage_client_mock import get_client
+from cdispyutils.hmac4 import get_auth
+from sheepdog.auth import roles
+from sheepdog.test_settings import PSQL_USER_DB_CONNECTION, Fernet, HMAC_ENCRYPTION_KEY
+from tests.api import app as _app, app_init
 
 here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, here)
@@ -134,7 +132,6 @@ def app(tmpdir, request):
     request.addfinalizer(teardown)
 
     app_init(_app)
-    #_app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
 
     _app.logger.setLevel(os.environ.get("GDC_LOG_LEVEL", "WARNING"))
 

@@ -42,7 +42,7 @@ before_script:
 script:
 - |
   set -e
-  PYTHONPATH=. py.test -vv tests/system_test.py tests/submission/test_endpoints.py
+  PYTHONPATH=. py.test -vv --cov=sheepdog tests/system_test.py tests/submission/test_endpoints.py
   set +e
 
 after_script:

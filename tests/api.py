@@ -25,11 +25,6 @@ def get_parent(path):
     print(path)
     return path[0:path.rfind('/')]
 
-
-url = 'http://localhost:1111/sheepdog/schemas/dictionary.json'
-PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/sheepdog/schemas'
-datadictionary = DataDictionary(url=url)
-
 def app_register_blueprints(app):
     # TODO: (jsm) deprecate the index endpoints on the root path,
     # these are currently duplicated under /index (the ultimate
@@ -37,12 +32,19 @@ def app_register_blueprints(app):
     v0 = '/v0'
     app.url_map.strict_slashes = False
 
+    url = app.config['S3_DICTIONARY_URL']
+    datadictionary = DataDictionary(url=url)
+
     import sheepdog
     sheepdog_blueprint = sheepdog.create_blueprint(
         'submission', datadictionary, gdcdatamodel.models
     )
 
-    app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
+    try:
+        app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
+    except AssertionError:
+        print('Blueprint is already registered!!!')
+
     app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0+'/oauth2')
 
 def async_pool_init(app):
@@ -104,7 +106,7 @@ def cors_init(app):
 def app_init(app):
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
-    # app_register_duplicate_blueprints(app)
+    app_register_blueprints(app)
     if LEGACY_MODE:
         app_register_legacy_blueprints(app)
         app_register_v0_legacy_blueprints(app)
@@ -129,7 +131,6 @@ app = Flask(__name__)
 app.logger.addHandler(get_handler())
 
 setup_default_handlers(app)
-app_register_blueprints(app)
 
 
 @app.route('/_status', methods=['GET'])

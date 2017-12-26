@@ -6,7 +6,6 @@ import boto
 import pytest
 from flask import g
 from gdcdatamodel import models as md
-from gdcdictionary import gdcdictionary
 from moto import mock_s3
 
 from sheepdog.transactions.constants import (
@@ -17,10 +16,6 @@ from sheepdog.transactions.upload import UploadTransaction
 from tests.submission.utils import data_fnames, patch_indexclient
 from ..auth_mock import Config as auth_conf
 
-
-definitions = gdcdictionary.resolvers['_definitions.yaml'].source
-SUBMITTED_STATE = definitions['state']['default']
-DEFAULT_FILE_STATE = definitions['file_state']['default']
 
 BLGSP_PATH = '/v0/submission/CGCI/BLGSP/'
 BRCA_PATH = '/v0/submission/TCGA/BRCA/'
@@ -503,15 +498,15 @@ def test_catch_internal_errors(monkeypatch, client, pg_driver, submitter):
         raise
 
 
-def create_file(app, client, submitter, pg_driver, state=DEFAULT_FILE_STATE):
-    put_cgci_blgsp(client, submitter)
-    doc = app.signpost.create()
-    with pg_driver.session_scope() as s:
-        f = md.File(doc.did)
-        f.file_state = state
-        f.project_id = 'CGCI-BLGSP'
-        s.add(f)
-    return doc
+# def create_file(app, client, submitter, pg_driver, state=DEFAULT_FILE_STATE):
+#     put_cgci_blgsp(client, submitter)
+#     doc = app.signpost.create()
+#     with pg_driver.session_scope() as s:
+#         f = md.File(doc.did)
+#         f.file_state = state
+#         f.project_id = 'CGCI-BLGSP'
+#         s.add(f)
+#     return doc
 
 
 # def test_file_upload(app, client, pg_driver, submitter):
