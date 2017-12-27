@@ -1,6 +1,4 @@
-import os
 import sys
-
 import cdis_oauth2client
 from cdis_oauth2client import OAuth2Client, OAuth2Error
 from cdisutils.log import get_handler
@@ -21,9 +19,6 @@ from dictionaryutils import DataDictionary
 sys.setrecursionlimit(10000)
 DEFAULT_ASYNC_WORKERS = 8
 
-def get_parent(path):
-    print(path)
-    return path[0:path.rfind('/')]
 
 def app_register_blueprints(app):
     # TODO: (jsm) deprecate the index endpoints on the root path,
