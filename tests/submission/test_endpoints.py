@@ -5,18 +5,16 @@ import os
 import boto
 import pytest
 from flask import g
-from gdcdatamodel import models as md
 from moto import mock_s3
 
-from sheepdog.transactions.constants import (
-    CACHE_CASES,
-)
-
+from gdcdatamodel import models as md
 from sheepdog.transactions.upload import UploadTransaction
 from tests.submission.utils import data_fnames, patch_indexclient
 from ..auth_mock import Config as auth_conf
 
 
+#: Do we have a cache case setting and should we do it?
+CACHE_CASES = False
 BLGSP_PATH = '/v0/submission/CGCI/BLGSP/'
 BRCA_PATH = '/v0/submission/TCGA/BRCA/'
 

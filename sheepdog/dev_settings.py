@@ -3,6 +3,8 @@ from boto.s3.connection import OrdinaryCallingFormat
 from os import environ as env
 
 from .config import LEGACY_MODE
+
+
 # Signpost
 SIGNPOST = {
    'host': env.get('SIGNPOST_HOST', 'http://localhost:8888'),

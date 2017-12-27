@@ -1,19 +1,24 @@
 import sys
+import gdcdatamodel
 import cdis_oauth2client
-from cdis_oauth2client import OAuth2Client, OAuth2Error
-from cdisutils.log import get_handler
+import sheepdog
+
 from flask import Flask, jsonify
 from flask.ext.cors import CORS
 from flask_sqlalchemy_session import flask_scoped_session
-import gdcdatamodel
-from indexclient.client import IndexClient as SignpostClient
 from psqlgraph import PsqlGraphDriver
+
+from cdis_oauth2client import OAuth2Client, OAuth2Error
+from cdisutils.log import get_handler
+from indexclient.client import IndexClient as SignpostClient
 from userdatamodel.driver import SQLAlchemyDriver
+from dictionaryutils import DataDictionary
+
 from sheepdog.auth import AuthDriver
 from sheepdog.config import LEGACY_MODE
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
 from sheepdog.version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
-from dictionaryutils import DataDictionary
+
 
 # recursion depth is increased for complex graph traversals
 sys.setrecursionlimit(10000)
@@ -30,7 +35,6 @@ def app_register_blueprints(app):
     url = app.config['S3_DICTIONARY_URL']
     datadictionary = DataDictionary(url=url)
 
-    import sheepdog
     sheepdog_blueprint = sheepdog.create_blueprint(
         'submission', datadictionary, gdcdatamodel.models
     )
@@ -179,7 +183,6 @@ def _log_and_jsonify_exception(e):
 
 app.register_error_handler(APIError, _log_and_jsonify_exception)
 
-import sheepdog.errors
 app.register_error_handler(
     sheepdog.errors.APIError, _log_and_jsonify_exception
 )
