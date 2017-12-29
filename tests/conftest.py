@@ -1,9 +1,12 @@
-import sys
 import os
 import json
 
-import pytest
 import requests
+import requests_mock
+import pytest
+
+import gdcdatamodel
+import sheepdog
 
 from mock import patch
 from flask.testing import make_test_environ_builder
@@ -18,14 +21,21 @@ from userdatamodel import Base as usermd_base
 from userdatamodel.driver import SQLAlchemyDriver
 from cdisutilstest.code.storage_client_mock import get_client
 from cdispyutils.hmac4 import get_auth
+from dictionaryutils import DataDictionary
 
 from sheepdog.auth import roles
 from sheepdog.test_settings import PSQL_USER_DB_CONNECTION, Fernet, HMAC_ENCRYPTION_KEY
 from tests.api import app as _app, app_init
 
 
-here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, here)
+# here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# sys.path.insert(0, here)
+
+def get_parent(path):
+    print(path)
+    return path[0:path.rfind('/')]
+
+PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/sheepdog/schemas'
 
 
 class UserapiTestSettings(object):
@@ -257,5 +267,33 @@ def submitter(app, request):
         request.headers = dict(request.headers)
         auth.__call__(request)
         return request.headers
+
     return build_header
 
+
+@pytest.fixture(scope='session')
+def dictionary_setup():
+    def build_dict():
+        try:
+            session = requests.Session()
+            adapter = requests_mock.Adapter()
+            session.mount('s3', adapter)
+            json_dict = json.load(open(PATH_TO_SCHEMA_DIR + '/dictionary.json'))
+            adapter.register_uri('GET', 's3://test.com', json=json_dict, status_code=200)
+            resp = session.get('s3://test.com')
+
+            with patch('requests.get') as get_mocked:
+                get_mocked.return_value = resp
+                datadictionary = DataDictionary(url='fake_url')
+                sheepdog_blueprint = sheepdog.create_blueprint(
+                    'submission', datadictionary, gdcdatamodel.models
+                )
+
+                try:
+                    _app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
+                except AssertionError:
+                    print('Blueprint is already registered!!!')
+        except Exception:
+            print('Exception')
+
+    return build_dict

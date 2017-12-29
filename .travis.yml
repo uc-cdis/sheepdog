@@ -35,8 +35,6 @@ before_script:
   - userdatamodel-init --db test_userapi
   - pip freeze
   - python bin/setup_test_database.py
-  - python -m SimpleHTTPServer 1111 &
-  - sleep 2
 
 # command to run tests
 script:

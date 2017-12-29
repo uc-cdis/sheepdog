@@ -1,5 +1,4 @@
 import sys
-import gdcdatamodel
 import cdis_oauth2client
 import sheepdog
 
@@ -12,10 +11,8 @@ from cdis_oauth2client import OAuth2Client, OAuth2Error
 from cdisutils.log import get_handler
 from indexclient.client import IndexClient as SignpostClient
 from userdatamodel.driver import SQLAlchemyDriver
-from dictionaryutils import DataDictionary
 
 from sheepdog.auth import AuthDriver
-from sheepdog.config import LEGACY_MODE
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
 from sheepdog.version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
 
@@ -24,25 +21,12 @@ from sheepdog.version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
 sys.setrecursionlimit(10000)
 DEFAULT_ASYNC_WORKERS = 8
 
-
 def app_register_blueprints(app):
     # TODO: (jsm) deprecate the index endpoints on the root path,
     # these are currently duplicated under /index (the ultimate
     # path) for migration
     v0 = '/v0'
     app.url_map.strict_slashes = False
-
-    url = app.config['S3_DICTIONARY_URL']
-    datadictionary = DataDictionary(url=url)
-
-    sheepdog_blueprint = sheepdog.create_blueprint(
-        'submission', datadictionary, gdcdatamodel.models
-    )
-
-    try:
-        app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
-    except AssertionError:
-        print('Blueprint is already registered!!!')
 
     app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0+'/oauth2')
 
@@ -106,9 +90,6 @@ def app_init(app):
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
     app_register_blueprints(app)
-    if LEGACY_MODE:
-        app_register_legacy_blueprints(app)
-        app_register_v0_legacy_blueprints(app)
     db_init(app)
     # exclude es init as it's not used yet
     # es_init(app)
