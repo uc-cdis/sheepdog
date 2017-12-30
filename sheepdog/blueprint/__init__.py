@@ -23,7 +23,7 @@ def create_blueprint(name, dictionary_to_use, models_to_use):
     dictionary.init(dictionary_to_use)
     models.init(models_to_use)
 
-    blueprint = flask.Blueprint(name, 'submission_v0')
+    blueprint = flask.Blueprint(name, __name__)
 
     # Add all the routes defined in sheepdog.blueprint.routes to the new
     # blueprint.

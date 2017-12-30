@@ -273,27 +273,24 @@ def submitter(app, request):
 
 @pytest.fixture(scope='session')
 def dictionary_setup():
-    def build_dict():
-        try:
-            session = requests.Session()
-            adapter = requests_mock.Adapter()
-            session.mount('s3', adapter)
-            json_dict = json.load(open(PATH_TO_SCHEMA_DIR + '/dictionary.json'))
-            adapter.register_uri('GET', 's3://test.com', json=json_dict, status_code=200)
-            resp = session.get('s3://test.com')
+    def build_dict(url):
+        session = requests.Session()
+        adapter = requests_mock.Adapter()
+        session.mount('s3', adapter)
+        json_dict = json.load(open(PATH_TO_SCHEMA_DIR + '/dictionary.json'))
+        adapter.register_uri('GET', url, json=json_dict, status_code=200)
+        resp = session.get(url)
 
-            with patch('requests.get') as get_mocked:
-                get_mocked.return_value = resp
-                datadictionary = DataDictionary(url='fake_url')
-                sheepdog_blueprint = sheepdog.create_blueprint(
-                    'submission', datadictionary, gdcdatamodel.models
-                )
+        with patch('requests.get') as get_mocked:
+            get_mocked.return_value = resp
+            datadictionary = DataDictionary(url=url)
+            sheepdog_blueprint = sheepdog.create_blueprint(
+                'submission', datadictionary, gdcdatamodel.models
+            )
 
-                try:
-                    _app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
-                except AssertionError:
-                    print('Blueprint is already registered!!!')
-        except Exception:
-            print('Exception')
+            try:
+                _app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
+            except AssertionError:
+                _app.logger.info('Blueprint is already registered!!!')
 
     return build_dict
