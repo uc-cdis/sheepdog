@@ -265,21 +265,32 @@ def create_delete_entities_viewer(dry_run=False):
 @auth.authorize_for_project(ROLES['READ'])
 def export_entities(program, project):
     """
-    Export endpoint which returns a file with required entities as an attachment.
+    Return a file with the requested entities as an attachment.
 
-    :query ids: one or a list of gdc ids seperated by comma
-    :query format: output format, ``json`` or ``tsv`` or ``csv``, default is tsv
-    :query with_children: recursively find children or not. True or False, default is False
-    :query category: category of node to filter on children. Example: clinical
-    If there is only one entity type in the output,
-    it will return a {node_type}.tsv or {node_type}.json, eg: aliquot.tsv
-    If there are multiple entity types, it returns ``gdc_export_{one_time_sha}.tar.gz``
-    for tsv format, returns ``gdc_export_{one_time_sha}.json`` for json format
+    Omitting the ``ids`` parameter from the query string will return _ALL_
+    nodes under the given project.
 
-    :statuscode 200 Success
-    :statuscode 400 Bad Request
-    :statuscode 404 No id is found
-    :statuscode 403 Unauthorized
+    Otherwise, if there is only one entity type in the output, it will return a
+    {node_type}.tsv or {node_type}.json file, e.g.: aliquot.tsv. If there are
+    multiple entity types, it returns ``gdc_export_{one_time_sha}.tar.gz`` for
+    tsv format, or ``gdc_export_{one_time_sha}.json`` for json format.
+
+    Args:
+        program (str)
+        project (str)
+
+    Query Parameters:
+        ids: one or a list of gdc ids seperated by commas.
+        format: output format, ``json`` or ``tsv`` or ``csv``; default is tsv
+        with_children:
+            whether to recursively find children or not; default is False
+        category: category of node to filter on children. Example: clinical
+
+    Status Codes:
+        200: Success
+        400: Bad Request
+        404: No id is found
+        403: Unauthorized
     """
     if flask.request.method == 'GET':
         # Unpack multidict, or values will unnecessarily be lists.
@@ -287,17 +298,38 @@ def export_entities(program, project):
     else:
         kwargs = utils.parse.parse_request_json()
 
+    # Convert `format` argument to `file_format`.
     if 'format' in kwargs:
         kwargs['file_format'] = kwargs['format']
         del kwargs['format']
-    output = utils.transforms.graph_to_doc.ExportFile(
-        program=program, project=project, **kwargs
-    )
+
+    node_label = kwargs.get('node_label')
+    project_id = '{}-{}'.format(program, project)
+    file_format = kwargs.get('file_format') or 'tsv'
+
     mimetype = 'application/octet-stream'
-    content_disp = 'attachment; filename={}'.format(output.filename)
-    response = flask.Response(output.get_response(), mimetype=mimetype)
-    response.headers["Content-Disposition"] = content_disp
-    return response
+    if not kwargs.get('ids'):
+        if not node_label:
+            raise UserError('expected either `ids` or `node_label` parameter')
+        filename = '{}.{}'.format(node_label, file_format)
+        content_disp = 'attachment; filename={}'.format(filename)
+        headers = {'Content-Disposition': content_disp}
+        return flask.Response(
+            utils.transforms.graph_to_doc.export_all(
+                node_label, project_id, flask.current_app.db
+            ),
+            mimetype=mimetype,
+            headers=headers,
+        )
+    else:
+        output = utils.transforms.graph_to_doc.ExportFile(
+            program=program, project=project, **kwargs
+        )
+        content_disp = 'attachment; filename={}'.format(output.filename)
+        headers = {'Content-Disposition': content_disp}
+        return flask.Response(
+            output.get_response(), mimetype=mimetype, headers=headers
+        )
 
 
 def create_files_viewer(dry_run=False):

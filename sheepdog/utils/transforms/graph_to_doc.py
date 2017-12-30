@@ -13,6 +13,7 @@ import time
 
 from cdispyutils.log import get_logger
 import flask
+import psqlgraph
 
 from sheepdog import dictionary
 from sheepdog.errors import (
@@ -258,8 +259,11 @@ def tsv_example_row(label, title):
 
 def json_dumps_formatted(data):
     """Return json string with standard format"""
-
-    return json.dumps(data, indent=2, separators=(', ', ': '), ensure_ascii=False).encode('utf-8')
+    encoder = json.JSONEncoder(
+        indent=2, separators=(', ', ': '), ensure_ascii=False
+    )
+    for chunk in encoder.iterencode(data):
+        yield chunk.encode('utf-8')
 
 
 def get_json_template(entity_types):
@@ -586,7 +590,9 @@ class ExportFile(object):
     def filename(self):
         """Return a filename string based on format and number of results."""
         if not self.result:
-            raise InternalError("Unable to determine file name with no results")
+            raise InternalError(
+                "Unable to determine file name with no results"
+            )
 
         if self.is_delimited and self.is_singular:
             return '{}.{}'.format(self.result.keys()[0], self.file_format)
@@ -692,3 +698,81 @@ class ExportFile(object):
             node_json = self.get_node_dictionary(node)
             self.result[node.label].append(node_json)
         return self.result
+
+
+def export_all(node_label, project_id, db, **kwargs):
+    """
+    Export all nodes of type with name ``node_label`` to a TSV file and yield
+    rows of the resulting TSV.
+
+    Args:
+        node_label (str): type of nodes to look up, for example ``'case'``
+        project_id (str): project to look under
+        db (psqlgraph.PsqlGraphDriver): database driver to use for queries
+
+    Return:
+        Generator[str]: generator of rows of the TSV file
+
+    Example:
+        Example of streaming a TSV in a Flask response using this function:
+
+        .. code-block:: python
+
+            return flask.Response(export_all(
+                'case', 'acct-test', flask.current_app.db
+            ))
+    """
+    with db.session_scope():
+
+        def format_prop(prop):
+            """
+            Change properties to have 'node_id' instead of 'id', and 'label'
+            instead of 'type', so that the props can be looked up as dictionary
+            entries:
+
+            .. code-block:: python
+
+                node[prop]
+
+            For properties which link to other nodes, convert the link to a
+            tuple such that the linked property can be looked up using the
+            elements of the tuple as indexes. For example, for a ``Case`` node
+            with a link to `experiments.id`:
+
+            .. code-block:: python
+
+                # prop == ('experiments', 0, 'node_id')
+                node[prop[0]][prop[1]][prop[2]]
+            """
+            if prop == 'id':
+                return 'node_id'
+            elif prop == 'type':
+                return 'label'
+            elif is_link_field(prop):
+                link_name, link_alias = split_link(prop)
+                if is_link_plural(prop):
+                    alias_root, link_id = split_link_alias(link_alias)
+                    return (link_name, link_id - 1, format_prop(alias_root))
+                else:
+                    return (link_name, 0, format_prop(link_alias))
+            return prop
+
+        cls = psqlgraph.Node.get_subclass(node_label)
+        nodes = db.nodes(cls).prop('project_id', project_id)
+        titles = entity_to_template(
+            node_label, exclude_id=False, file_format='tsv'
+        )
+        props = map(format_prop, titles)
+
+        yield '{}\n'.format('\t'.join(titles))
+        for node in nodes.yield_per(1000):
+            row = []
+            for prop in props:
+                if type(prop) is tuple:
+                    link = node[prop[0]]
+                    if link:
+                        row.append(link[prop[1]][prop[2]])
+                    row.append('')
+                else:
+                    row.append(node[prop] or '')
+            yield '{}\n'.format('\t'.join(row))
