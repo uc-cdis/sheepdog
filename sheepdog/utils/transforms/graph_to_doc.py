@@ -765,7 +765,7 @@ def export_all(node_label, project_id, db, **kwargs):
         props = map(format_prop, titles)
 
         yield '{}\n'.format('\t'.join(titles))
-        for node in nodes.yield_per(1000):
+        for node in nodes.all():
             row = []
             for prop in props:
                 if type(prop) is tuple:
