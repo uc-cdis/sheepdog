@@ -722,10 +722,41 @@ def export_all(node_label, project_id, db, **kwargs):
                 'case', 'acct-test', flask.current_app.db
             ))
     """
-    with db.session_scope():
+    # Examples in coments throughout function will start from ``'case'`` as an
+    # example ``node_label`` (so ``gdcdatamodel.models.Case`` is the example
+    # class).
+
+    with db.session_scope() as session:
+
+        cls = psqlgraph.Node.get_subclass(node_label)
+
+        # Get the template for this node, which is basically the column
+        # headers in the resulting TSV.
+        template = entity_to_template(
+            node_label, exclude_id=False, file_format='tsv'
+        )
+        # Get the titles so the linked fields are at the end (to match the
+        # structure of the query we will run later).
+        titles_non_linked = []
+        titles_linked = []
+        for title in template:
+            if is_link_field(title):
+                titles_linked.append(title)
+            else:
+                titles_non_linked.append(title)
+        titles = titles_non_linked + titles_linked
+        # Example ``titles``:
+        #
+        #     [
+        #         'type', 'id', 'submitter_id', 'disease_type', 'primary_site',
+        #         'experiments.id', 'experiments.submitter_id'
+        #     ]
 
         def format_prop(prop):
             """
+            Map over ``titles`` to get properties usable for looking up from
+            node instances.
+
             Change properties to have 'node_id' instead of 'id', and 'label'
             instead of 'type', so that the props can be looked up as dictionary
             entries:
@@ -752,27 +783,60 @@ def export_all(node_label, project_id, db, **kwargs):
                 link_name, link_alias = split_link(prop)
                 if is_link_plural(prop):
                     alias_root, link_id = split_link_alias(link_alias)
-                    return (link_name, link_id - 1, format_prop(alias_root))
+                    return (link_name, format_prop(alias_root))
                 else:
-                    return (link_name, 0, format_prop(link_alias))
+                    return (link_name, format_prop(link_alias))
             return prop
 
-        cls = psqlgraph.Node.get_subclass(node_label)
-        nodes = db.nodes(cls).prop('project_id', project_id)
-        titles = entity_to_template(
-            node_label, exclude_id=False, file_format='tsv'
-        )
-        props = map(format_prop, titles)
+        # ``props`` is just a list of strings of the properties of the node
+        # class that should go in the result.
+        props = []
+        # ``linked_props`` is a list of tuples which contain the link name (as
+        # in ``cls._pg_links``, see below) and a string of the property name.
+        linked_props = []
+        # Example ``cls._pg_links`` for reference:
+        #
+        #     Case.pg_links == {
+        #         'experiments': {
+        #             'dst_type': gdcdatamodel.models.Experiment,
+        #             'edge_out': '_CaseMemberOfExperiment_out',
+        #         }
+        #     }
+        #
+        # This is used to look up the classes for the linked nodes.
+        # Now, fill out the properties lists from the titles.
+        for prop in map(format_prop, titles):
+            if type(prop) is tuple:
+                link_name, link_prop = prop
+                link_cls = cls._pg_links[link_name]['dst_type']
+                linked_props.append(getattr(link_cls, link_prop))
+            else:
+                props.append(prop)
 
+        # Build up the query. The query will contain, firstly, the node class,
+        # and secondly, all the relevant properties in linked nodes.
+        query_args = [cls] + linked_props
+        query = session.query(*query_args).prop('project_id', project_id)
+        # Join the related node tables using the links.
+        for link_props in cls._pg_links.values():
+            query = (
+                query
+                .outerjoin(link_props['edge_out'])
+                .outerjoin(link_props['dst_type'])
+            )
+        # The result from the query should look like this:
+        #
+        # Case instance          experiments.id   experiments.submitter_id
+        # (<Case(...[uuid]...)>, u'...[uuid]...', u'exp-01')
+
+        # Yield the lines of the file.
         yield '{}\n'.format('\t'.join(titles))
-        for node in nodes.all():
+        for result in query.yield_per(1000):
             row = []
+            # Write in the properties from just the node.
+            node = result[0]
             for prop in props:
-                if type(prop) is tuple:
-                    link = node[prop[0]]
-                    if link:
-                        row.append(link[prop[1]][prop[2]])
-                    row.append('')
-                else:
-                    row.append(node[prop] or '')
+                row.append(node[prop] or '')
+            # Tack on the linked properties.
+            row.extend(map(lambda col: col or '', result[1:]))
             yield '{}\n'.format('\t'.join(row))
