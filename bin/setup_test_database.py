@@ -7,7 +7,6 @@ Setup test database as required for testing
 """
 
 from setup_transactionlogs import setup as create_transaction_logs_table
-from setup_notifications import setup as create_notifications_table
 
 import argparse
 
