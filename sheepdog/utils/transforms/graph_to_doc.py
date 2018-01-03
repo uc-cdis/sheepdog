@@ -782,7 +782,7 @@ def export_all(node_label, project_id, db, **kwargs):
             elif is_link_field(prop):
                 link_name, link_alias = split_link(prop)
                 if is_link_plural(prop):
-                    alias_root, link_id = split_link_alias(link_alias)
+                    alias_root, _ = split_link_alias(link_alias)
                     return (link_name, format_prop(alias_root))
                 else:
                     return (link_name, format_prop(link_alias))
