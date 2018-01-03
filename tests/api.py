@@ -30,16 +30,6 @@ def app_register_blueprints(app):
 
     app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0+'/oauth2')
 
-def async_pool_init(app):
-    """Create and start an pool of workers for async tasks."""
-    n_async_workers = (
-        app.config
-        .get('ASYNC', {})
-        .get('N_WORKERS', DEFAULT_ASYNC_WORKERS)
-    )
-    app.async_pool = sheepdog.utils.scheduling.AsyncPool()
-    app.async_pool.start(n_async_workers)
-
 
 def db_init(app):
     app.logger.info('Initializing PsqlGraph driver')
@@ -68,10 +58,10 @@ def db_init(app):
         app.logger.exception("Couldn't initialize auth, continuing anyway")
 
 
-def es_init(app):
-    app.logger.info('Initializing Elasticsearch driver')
-    app.es = Elasticsearch([app.config["GDC_ES_HOST"]],
-                           **app.config["GDC_ES_CONF"])
+# def es_init(app):
+#     app.logger.info('Initializing Elasticsearch driver')
+#     app.es = Elasticsearch([app.config["GDC_ES_HOST"]],
+#                            **app.config["GDC_ES_CONF"])
 
 
 # Set CORS options on app configuration
@@ -100,9 +90,6 @@ def app_init(app):
         app.logger.error(
             'Secret key not set in config! Authentication will not work'
         )
-    # slicing.v0.config(app)
-    async_pool_init(app)
-    app.logger.info('Initialization complete.')
 
 
 app = Flask(__name__)

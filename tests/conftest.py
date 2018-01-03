@@ -28,9 +28,6 @@ from sheepdog.test_settings import PSQL_USER_DB_CONNECTION, Fernet, HMAC_ENCRYPT
 from tests.api import app as _app, app_init
 
 
-# here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# sys.path.insert(0, here)
-
 def get_parent(path):
     print(path)
     return path[0:path.rfind('/')]
@@ -151,37 +148,6 @@ def app(tmpdir, request):
     _app.logger.setLevel(os.environ.get("GDC_LOG_LEVEL", "WARNING"))
 
     return _app
-
-
-@pytest.fixture
-def userapi_client(app, request):
-    # fixture to setup userapi client
-    patcher = patch(
-        'userapi.resources.storage.get_client',
-        get_client)
-    patcher.start()
-    userapi_app_init(userapi_app, UserapiTestSettings)
-    userapi_app.test = True
-    userapi_client_obj = userapi_app.test_client()
-    oauth_client = utils.create_client(
-        'internal_service',
-        'https://localhost',
-        app.config['PSQL_USER_DB_CONNECTION'],
-        name='sheepdog', description='', auto_approve=True, is_admin=True
-    )
-    app.config['OAUTH2'] = {
-        'client_id': oauth_client[0],
-        'client_secret': oauth_client[1],
-        'oauth_provider': '/oauth2/',
-        'redirect_uri': 'https://localhost',
-    }
-    app.config['USER_API'] = '/'
-    app.oauth2 = OAuth2Client(**app.config['OAUTH2'])
-
-    def fin():
-        utils.drop_client('sheepdog', app.config['PSQL_USER_DB_CONNECTION'])
-    request.addfinalizer(fin)
-    return userapi_client_obj
 
 
 @pytest.fixture
