@@ -791,12 +791,12 @@ def export_all(node_label, project_id, db, **kwargs):
         # ``props`` is just a list of strings of the properties of the node
         # class that should go in the result.
         props = []
-        # ``linked_props`` is a list of tuples which contain the link name (as
-        # in ``cls._pg_links``, see below) and a string of the property name.
+        # ``linked_props`` is a list of attributes belonging to linked classes
+        # (for example, ``Experiment.node_id``).
         linked_props = []
         # Example ``cls._pg_links`` for reference:
         #
-        #     Case.pg_links == {
+        #     Case._pg_links == {
         #         'experiments': {
         #             'dst_type': gdcdatamodel.models.Experiment,
         #             'edge_out': '_CaseMemberOfExperiment_out',
@@ -818,13 +818,14 @@ def export_all(node_label, project_id, db, **kwargs):
         query_args = [cls] + linked_props
         query = session.query(*query_args).prop('project_id', project_id)
         # Join the related node tables using the links.
-        for link_props in cls._pg_links.values():
+        for link in cls._pg_links.values():
             query = (
                 query
-                .outerjoin(link_props['edge_out'])
-                .outerjoin(link_props['dst_type'])
+                .outerjoin(link['edge_out'])
+                .outerjoin(link['dst_type'])
             )
-        # The result from the query should look like this:
+        # The result from the query should look like this (header just for
+        # example):
         #
         # Case instance          experiments.id   experiments.submitter_id
         # (<Case(...[uuid]...)>, u'...[uuid]...', u'exp-01')
