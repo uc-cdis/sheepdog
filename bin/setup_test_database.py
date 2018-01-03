@@ -40,4 +40,3 @@ if __name__ == '__main__':
     create_tables(args.host, args.user, args.password, args.database)
     create_indexes(args.host, args.user, args.password, args.database)
     create_transaction_logs_table(args.host, args.user, args.password, args.database)
-    create_notifications_table(args.host, args.user, args.password, args.database)
