@@ -31,6 +31,9 @@ install:
   - pip install -r dev-requirements.txt
 
 before_script:
+  - psql -c "create database test_userapi" -U postgres
+  - userdatamodel-init --db test_userapi
+  - pip freeze
   - python bin/setup_test_database.py
 
 # command to run tests

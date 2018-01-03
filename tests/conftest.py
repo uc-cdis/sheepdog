@@ -15,11 +15,9 @@ from psqlgraph import PsqlGraphDriver
 from signpost import Signpost
 from multiprocessing import Process
 from gdcdatamodel.models import Edge, Node
-from cdis_oauth2client import OAuth2Client
 from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
 from userdatamodel.driver import SQLAlchemyDriver
-from cdisutilstest.code.storage_client_mock import get_client
 from cdispyutils.hmac4 import get_auth
 from dictionaryutils import DataDictionary
 
