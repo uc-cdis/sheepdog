@@ -1,0 +1,42 @@
+query getAllNodes {
+  nodes @properties {
+    type
+    ... caseLinks
+    ... sampleLinks
+    ... portionLinks
+    ... analyteLinks
+    ... aliquotLinks
+    ... fileLinks
+  }
+}
+
+fragment caseLinks on case {
+  samples { id submitter_id }
+  diagnoses { id submitter_id }
+  exposures { id submitter_id }
+  family_histories { id submitter_id }
+}
+
+fragment sampleLinks on sample {
+  cases { id submitter_id }
+  portions { id submitter_id }
+}
+
+fragment portionLinks on portion {
+  samples { id submitter_id }
+  analytes { id submitter_id }
+}
+
+fragment analyteLinks on analyte {
+  portions { id submitter_id }
+  aliquots { id submitter_id }
+}
+
+fragment aliquotLinks on aliquot {
+  analytes { id submitter_id }
+  files { id submitter_id }
+}
+
+fragment fileLinks on file {
+  aliquots { id submitter_id }
+}

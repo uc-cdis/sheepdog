@@ -1,9 +1,8 @@
 from setuptools import setup
 
-
 setup(
     name='sheepdog',
-    version='0.1.0',
+    version='0.2.0',
     description='Flask blueprint for herding data submissions',
     url='https://github.com/uc-cdis/sheepdog',
     license='Apache',

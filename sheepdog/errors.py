@@ -3,6 +3,8 @@ TODO
 """
 
 import cdispyutils
+from werkzeug.exceptions import default_exceptions
+from flask import jsonify
 
 from sheepdog.globals import (
     SUPPORTED_FORMATS,
@@ -92,3 +94,18 @@ class SchemaError(Exception):
             log.exception(e)
         message = "{}: {}".format(message, e) if e else message
         super(SchemaError, self).__init__(message)
+
+class UnhealthyCheck(APIError):
+    def __init__(self, message):
+        self.message = str(message)
+        self.code = 500
+
+def make_json_error(ex):
+    response = jsonify(message=str(ex))
+    response.status_code = (
+        ex.code if isinstance(ex, HTTPException) else 500)
+    return response
+
+def setup_default_handlers(app):
+    for code in default_exceptions.iterkeys():
+        app.error_handler_spec[None][code] = make_json_error
