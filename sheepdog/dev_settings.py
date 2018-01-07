@@ -22,7 +22,6 @@ AUTH_ADMIN_CREDS = {
 # Storage
 CLEVERSAFE_HOST = env.get('CLEVERSAFE_HOST', 'cleversafe.service.consul')
 
-
 STORAGE = {"s3": {
     "keys": {
         "cleversafe.service.consul": {
@@ -41,7 +40,10 @@ STORAGE = {"s3": {
             "is_secure": False,
             "calling_format": OrdinaryCallingFormat()},
     }}}
-
+SUBMISSION = {
+    "bucket": 'test_submission',
+    "host": CLEVERSAFE_HOST,
+}
 # Postgres
 PSQLGRAPH = {
     'host': os.getenv("GDC_PG_HOST", "localhost"),
@@ -59,12 +61,16 @@ PSQL_USER_DB_CONNECTION = "postgresql://{name}:{password}@{host}/{db}".format(
     name=PSQL_USER_DB_USERNAME, password=PSQL_USER_DB_PASSWORD, host=PSQL_USER_DB_HOST, db=PSQL_USER_DB_NAME
 )
 
+# API server
+SHEEPDOG_HOST = os.getenv("SHEEPDOG_HOST", "localhost")
+SHEEPDOG_PORT = int(os.getenv("SHEEPDOG_PORT", "5000"))
+
 # FLASK_SECRET_KEY should be set to a secure random string with an appropriate
 # length; 50 is reasonable. For the random generation to be secure, use
 # ``random.SystemRandom()``
 FLASK_SECRET_KEY = 'eCKJOOw3uQBR5pVDz3WIvYk3RsjORYoPRdzSUNJIeUEkm1Uvtq'
 
-S3_DICTIONARY_URL = os.environ.get('S3_DICTIONARY_URL','http://localhost:1111/sheepdog/schemas/dictionary.json')
+S3_DICTIONARY_URL = os.environ.get('S3_DICTIONARY_URL','https://s3.amazonaws.com/dictionary-artifacts/datadictionary/develop/schema.json')
 
 HMAC_ENCRYPTION_KEY = os.environ.get('CDIS_HMAC_ENCRYPTION_KEY', '')
 OAUTH2 = {
@@ -75,7 +81,7 @@ OAUTH2 = {
 }
 
 USER_API = "http://localhost:8000/"
-
+SESSION_COOKIE_NAME = 'sheepdog_session'
 # verify project existence in dbgap or not
 VERIFY_PROJECT = False
 AUTH_SUBMISSION_LIST = False

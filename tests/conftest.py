@@ -1,16 +1,16 @@
 import os
 import json
 
+import pytest
 import requests
 import requests_mock
-import pytest
-
+from multiprocessing import Process
 from mock import patch
 from flask.testing import make_test_environ_builder
 from psqlgraph import PsqlGraphDriver
-
 from signpost import Signpost
-from multiprocessing import Process
+
+import gdcdatamodel
 from gdcdatamodel.models import Edge, Node
 from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base

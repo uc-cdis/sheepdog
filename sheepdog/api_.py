@@ -1,54 +1,63 @@
+import random
 import os
+import string
 import sys
-
-from flask import Flask, jsonify
-from flask.ext.cors import CORS
-from flask_sqlalchemy_session import flask_scoped_session
-from psqlgraph import PsqlGraphDriver
 
 import cdis_oauth2client
 from cdis_oauth2client import OAuth2Client, OAuth2Error
 from cdisutils.log import get_handler
-from dictionaryutils import DataDictionary
+from flask import Flask, jsonify
+from flask.ext.cors import CORS
+from flask_sqlalchemy_session import flask_scoped_session
 import gdcdictionary
-import gdcdatamodel
 from indexclient.client import IndexClient as SignpostClient
+from psqlgraph import PsqlGraphDriver
 from userdatamodel.driver import SQLAlchemyDriver
-
 import sheepdog
-from sheepdog.auth import AuthDriver
-from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
-from sheepdog.version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
-
+import sheepdog.utils
+from .auth import AuthDriver
+from .config import LEGACY_MODE
+from .errors import APIError, setup_default_handlers, UnhealthyCheck
+import sheepdog.blueprint
+import sheepdog.transactions
+from .version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
+from gdcdatamodel import models
 
 # recursion depth is increased for complex graph traversals
 sys.setrecursionlimit(10000)
 DEFAULT_ASYNC_WORKERS = 8
 
+blueprint = sheepdog.create_blueprint(
+        'submission',gdcdictionary.gdcdictionary, models
+    )
+
 def app_register_blueprints(app):
     # TODO: (jsm) deprecate the index endpoints on the root path,
     # these are currently duplicated under /index (the ultimate
     # path) for migration
-
+    v0 = '/v0'
     app.url_map.strict_slashes = False
 
-    if ('S3_DICTIONARY_URL' in app.config):
-        url = app.config['S3_DICTIONARY_URL']
-        datadictionary = DataDictionary(url=url)
-    elif ('PATH_TO_SCHEMA_DIR' in app.config):
-        datadictionary = DataDictionary(root_dir=app.config['PATH_TO_SCHEMA_DIR'])
-    else:
-        datadictionary = gdcdictionary.gdcdictionary
-
-    sheepdog_blueprint = sheepdog.create_blueprint(
-        'submission', datadictionary, gdcdatamodel.models
-        )
-
-    v0 = '/v0'
-    app.register_blueprint(sheepdog_blueprint, url_prefix=v0+'/submission')
-    app.register_blueprint(sheepdog_blueprint, url_prefix='/submission')
+    app.register_blueprint(blueprint, url_prefix=v0+'/submission')
     app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0+'/oauth2')
-    app.register_blueprint(cdis_oauth2client.blueprint, url_prefix='/oauth2')
+
+
+def app_register_duplicate_blueprints(app):
+    # TODO: (jsm) deprecate this v0 version under root endpoint.  This
+    # root endpoint duplicates /v0 to allow gradual client migration
+    app.register_blueprint(blueprint, url_prefix='/submission')
+    print('register blue print')
+
+
+def async_pool_init(app):
+    """Create and start an pool of workers for async tasks."""
+    n_async_workers = (
+        app.config
+        .get('ASYNC', {})
+        .get('N_WORKERS', DEFAULT_ASYNC_WORKERS)
+    )
+    app.async_pool = sheepdog.utils.scheduling.AsyncPool()
+    app.async_pool.start(n_async_workers)
 
 
 def db_init(app):
@@ -77,20 +86,45 @@ def db_init(app):
     except Exception:
         app.logger.exception("Couldn't initialize auth, continuing anyway")
 
+
+def es_init(app):
+    app.logger.info('Initializing Elasticsearch driver')
+    app.es = Elasticsearch([app.config["GDC_ES_HOST"]],
+                           **app.config["GDC_ES_CONF"])
+
+
+# Set CORS options on app configuration
+def cors_init(app):
+    accepted_headers = [
+        'Content-Type',
+        'X-Requested-With',
+        'X-CSRFToken',
+    ]
+    CORS(app, resources={
+        r"/*": {"origins": '*'},
+        }, headers=accepted_headers, expose_headers=['Content-Disposition'])
+
+
 def app_init(app):
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
-    app_register_blueprints(app)
+    # app_register_duplicate_blueprints(app)
+    if LEGACY_MODE:
+        app_register_legacy_blueprints(app)
+        app_register_v0_legacy_blueprints(app)
     db_init(app)
     # exclude es init as it's not used yet
     # es_init(app)
+    cors_init(app)
     try:
         app.secret_key = app.config['FLASK_SECRET_KEY']
     except KeyError:
         app.logger.error(
             'Secret key not set in config! Authentication will not work'
         )
-
+    # slicing.v0.config(app)
+    async_pool_init(app)
+    app.logger.info('Initialization complete.')
 
 app = Flask(__name__)
 
@@ -98,7 +132,7 @@ app = Flask(__name__)
 app.logger.addHandler(get_handler())
 
 setup_default_handlers(app)
-
+app_register_blueprints(app)
 
 @app.route('/_status', methods=['GET'])
 def health_check():
@@ -148,9 +182,9 @@ def _log_and_jsonify_exception(e):
     else:
         return jsonify(message=e.message), e.code
 
-
 app.register_error_handler(APIError, _log_and_jsonify_exception)
 
+import sheepdog.errors
 app.register_error_handler(
     sheepdog.errors.APIError, _log_and_jsonify_exception
 )
@@ -158,7 +192,13 @@ app.register_error_handler(OAuth2Error, _log_and_jsonify_exception)
 
 
 def run_for_development(**kwargs):
-    #app.logger.setLevel(logging.INFO)
+    import logging
+    app.logger.setLevel(logging.INFO)
+    # app.config['PROFILE'] = True
+    # from werkzeug.contrib.profiler import ProfilerMiddleware, MergeStream
+    # f = open('profiler.log', 'w')
+    # stream = MergeStream(sys.stdout, f)
+    # app.wsgi_app = ProfilerMiddleware(app.wsgi_app, f, restrictions=[2000])
 
     for key in ["http_proxy", "https_proxy"]:
         if os.environ.get(key):
