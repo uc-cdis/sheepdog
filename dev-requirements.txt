@@ -9,5 +9,6 @@ sphinxcontrib-httpdomain==1.3.0
 codacy-coverage
 Sphinx==1.6.5
 sphinx_rtd_theme
--e git+https://git@github.com/uc-cdis/cdisutils-test.git@0.0.1#egg=cdisutilstest
--e git+https://git@github.com/uc-cdis/storage-client.git@0.1.1#egg=storageclient
+-e git+https://github.com/uc-cdis/cdisutils-test.git@0.0.1#egg=cdisutilstest
+-e git+https://github.com/uc-cdis/storage-client.git@0.1.5#egg=storageclient
+-e git+https://github.com/uc-cdis/cdis-python-utils.git@0.2.1#egg=cdispyutils
