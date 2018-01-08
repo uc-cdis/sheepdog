@@ -52,7 +52,7 @@ def patch_indexclient(monkeypatch):
         assert 'md5' in hashes
         assert re_md5.match(hashes['md5']) is not None
 
-    def check_uuid4(self, did=None, urls=None, hashes=None, size=None):
+    def check_uuid4(self, did=None, urls=None, hashes=None, size=None, metadata=None):
         """
         Using code from: https://gist.github.com/ShawnMilo/7777304
         """
