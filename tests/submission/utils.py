@@ -44,6 +44,7 @@ def reset_transactions(pg_driver):
         s.query(models.submission.TransactionDocument).delete()
         s.query(models.submission.TransactionLog).delete()
 
+
 def patch_indexclient(monkeypatch):
 
     called = {'create': False, 'create_alias': False}
@@ -52,7 +53,7 @@ def patch_indexclient(monkeypatch):
         assert 'md5' in hashes
         assert re_md5.match(hashes['md5']) is not None
 
-    def check_uuid4(self, did=None, urls=None, hashes=None, size=None, metadata=None):
+    def check_uuid4(self, did=None, urls=None, hashes=None, size=None, metadata=None, file_name=None):
         """
         Using code from: https://gist.github.com/ShawnMilo/7777304
         """
