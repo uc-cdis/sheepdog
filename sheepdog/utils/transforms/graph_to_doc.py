@@ -13,6 +13,7 @@ import time
 
 from cdispyutils.log import get_logger
 import flask
+import psqlgraph
 
 from sheepdog import dictionary
 from sheepdog.errors import (
@@ -258,8 +259,11 @@ def tsv_example_row(label, title):
 
 def json_dumps_formatted(data):
     """Return json string with standard format"""
-
-    return json.dumps(data, indent=2, separators=(', ', ': '), ensure_ascii=False).encode('utf-8')
+    encoder = json.JSONEncoder(
+        indent=2, separators=(', ', ': '), ensure_ascii=False
+    )
+    for chunk in encoder.iterencode(data):
+        yield chunk.encode('utf-8')
 
 
 def get_json_template(entity_types):
@@ -586,7 +590,9 @@ class ExportFile(object):
     def filename(self):
         """Return a filename string based on format and number of results."""
         if not self.result:
-            raise InternalError("Unable to determine file name with no results")
+            raise InternalError(
+                "Unable to determine file name with no results"
+            )
 
         if self.is_delimited and self.is_singular:
             return '{}.{}'.format(self.result.keys()[0], self.file_format)
@@ -692,3 +698,146 @@ class ExportFile(object):
             node_json = self.get_node_dictionary(node)
             self.result[node.label].append(node_json)
         return self.result
+
+
+def export_all(node_label, project_id, db, **kwargs):
+    """
+    Export all nodes of type with name ``node_label`` to a TSV file and yield
+    rows of the resulting TSV.
+
+    Args:
+        node_label (str): type of nodes to look up, for example ``'case'``
+        project_id (str): project to look under
+        db (psqlgraph.PsqlGraphDriver): database driver to use for queries
+
+    Return:
+        Generator[str]: generator of rows of the TSV file
+
+    Example:
+        Example of streaming a TSV in a Flask response using this function:
+
+        .. code-block:: python
+
+            return flask.Response(export_all(
+                'case', 'acct-test', flask.current_app.db
+            ))
+    """
+    # Examples in coments throughout function will start from ``'case'`` as an
+    # example ``node_label`` (so ``gdcdatamodel.models.Case`` is the example
+    # class).
+
+    with db.session_scope() as session:
+
+        cls = psqlgraph.Node.get_subclass(node_label)
+
+        # Get the template for this node, which is basically the column
+        # headers in the resulting TSV.
+        template = entity_to_template(
+            node_label, exclude_id=False, file_format='tsv'
+        )
+        # Get the titles so the linked fields are at the end (to match the
+        # structure of the query we will run later).
+        titles_non_linked = []
+        titles_linked = []
+        for title in template:
+            if is_link_field(title):
+                titles_linked.append(title)
+            else:
+                titles_non_linked.append(title)
+        titles = titles_non_linked + titles_linked
+        # Example ``titles``:
+        #
+        #     [
+        #         'type', 'id', 'submitter_id', 'disease_type', 'primary_site',
+        #         'experiments.id', 'experiments.submitter_id'
+        #     ]
+
+        def format_prop(prop):
+            """
+            Map over ``titles`` to get properties usable for looking up from
+            node instances.
+
+            Change properties to have 'node_id' instead of 'id', and 'label'
+            instead of 'type', so that the props can be looked up as dictionary
+            entries:
+
+            .. code-block:: python
+
+                node[prop]
+
+            For properties which link to other nodes, convert the link to a
+            tuple such that the linked property can be looked up using the
+            elements of the tuple as indexes. For example, for a ``Case`` node
+            with a link to `experiments.id`:
+
+            .. code-block:: python
+
+                # prop == ('experiments', 0, 'node_id')
+                node[prop[0]][prop[1]][prop[2]]
+            """
+            if prop == 'id':
+                return 'node_id'
+            elif prop == 'type':
+                return 'label'
+            elif is_link_field(prop):
+                link_name, link_alias = split_link(prop)
+                if is_link_plural(prop):
+                    alias_root, _ = split_link_alias(link_alias)
+                    return (link_name, format_prop(alias_root))
+                else:
+                    return (link_name, format_prop(link_alias))
+            return prop
+
+        # ``props`` is just a list of strings of the properties of the node
+        # class that should go in the result.
+        props = []
+        # ``linked_props`` is a list of attributes belonging to linked classes
+        # (for example, ``Experiment.node_id``).
+        linked_props = []
+        # Example ``cls._pg_links`` for reference:
+        #
+        #     Case._pg_links == {
+        #         'experiments': {
+        #             'dst_type': gdcdatamodel.models.Experiment,
+        #             'edge_out': '_CaseMemberOfExperiment_out',
+        #         }
+        #     }
+        #
+        # This is used to look up the classes for the linked nodes.
+        # Now, fill out the properties lists from the titles.
+        for prop in map(format_prop, titles):
+            if type(prop) is tuple:
+                link_name, link_prop = prop
+                link_cls = cls._pg_links[link_name]['dst_type']
+                linked_props.append(getattr(link_cls, link_prop))
+            else:
+                props.append(prop)
+
+        # Build up the query. The query will contain, firstly, the node class,
+        # and secondly, all the relevant properties in linked nodes.
+        query_args = [cls] + linked_props
+        query = session.query(*query_args).prop('project_id', project_id)
+        # Join the related node tables using the links.
+        for link in cls._pg_links.values():
+            query = (
+                query
+                .outerjoin(link['edge_out'])
+                .outerjoin(link['dst_type'])
+            )
+        # The result from the query should look like this (header just for
+        # example):
+        #
+        # Case instance          experiments.id   experiments.submitter_id
+        # (<Case(...[uuid]...)>, u'...[uuid]...', u'exp-01')
+
+        # Yield the lines of the file.
+        yield '{}\n'.format('\t'.join(titles))
+        for result in query.yield_per(1000):
+            row = []
+            # Write in the properties from just the node.
+            node = result[0]
+            for prop in props:
+                row.append(node[prop] or '')
+            # Tack on the linked properties.
+            row.extend(map(lambda col: col or '', result[1:]))
+            yield '{}\n'.format('\t'.join(row))

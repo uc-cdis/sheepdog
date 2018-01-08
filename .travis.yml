@@ -1,18 +1,52 @@
+dist: trusty
+
+group: deprecated-2017Q2
+
 language: python
 
 python: "2.7"
 
 sudo: false
 
+cache:
+  # pip: true  # We have overridden the default install step, caching manually
+  # ref: <https://docs.travis-ci.com/user/caching/#Arbitrary-directories>
+  - directories:
+      - /home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages
+      - $HOME/.pip-cache
+  - apt
+
 addons:
   postgresql: '9.4'
+  # fix for scipy inside SurvivalPy
+  apt:
+    packages:
+    - libatlas-dev
+    - libatlas-base-dev
+    - liblapack-dev
+    - gfortran
 
 install:
-  - python setup.py install
+  - pip install -r requirements.txt
   - pip install -r dev-requirements.txt
 
+before_script:
+  - psql -c "create database test_userapi" -U postgres
+  - userdatamodel-init --db test_userapi
+  - pip freeze
+  - python bin/setup_test_database.py
+
+# command to run tests
 script:
-- py.test -vv --cov=sheepdog --cov-report xml tests
+- |
+  set -e
+  PYTHONPATH=. py.test -vv --cov=sheepdog --cov-report xml tests/system_test.py tests/submission/test_endpoints.py
+  set +e
 
 after_script:
 - python-codacy-coverage -r coverage.xml
+
+env:
+  global:
+    - GDC_ES_HOST=localhost
+

@@ -5,9 +5,6 @@ route is constructed with the ``new_route`` function from
 """
 
 from sheepdog.blueprint.routes import views
-from sheepdog.globals import (
-    ROLES,
-)
 
 
 def new_route(rule, view_func, endpoint=None, methods=None, options=None):

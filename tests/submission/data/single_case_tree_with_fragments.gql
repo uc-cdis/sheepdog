@@ -1,0 +1,38 @@
+query tree {
+  cases (id: "1d0b4064-1b68-4d35-9df0-7f3cde95c082") {
+    type
+    id
+    files
+    samples {
+      ... sampleFields
+    }
+  }
+}
+
+fragment sampleFields on sample {
+   type
+   id
+   aliquots {
+     ... aliquotFields
+   }
+   portions {
+     ... portionFields
+  }
+}
+
+fragment portionFields on portion {
+  type
+  id
+  analytes {
+    type
+    id
+    aliquots {
+       ... aliquotFields
+    }
+  }
+}
+
+fragment aliquotFields on aliquot {
+  id
+  files { id }
+}
