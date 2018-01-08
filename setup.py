@@ -54,5 +54,8 @@ setup(
         'git+https://git@github.com/NCI-GDC/cdisutils.git@a79409a0ce5071a81c6997d4ed1549c3544fbdcd#egg=cdisutils',
         'git+https://git@github.com/uc-cdis/datadictionary.git@0.1.1#egg=gdcdictionary',
         'git+https://git@github.com/NCI-GDC/gdcdatamodel.git@755c6d7c380b69dc36dced55700bc9e24a084db1#egg=gdcdatamodel',
+        'git+https://git@github.com/NCI-GDC/signpost.git@c5d499936943e71eefe2ec4b3d4ced6ac48f35c0#egg=signpost',
+        'git+https://git@github.com/uc-cdis/indexclient.git@d49134f4626b69a8ef02c189ed0047ad1a635cb0#egg=indexclient',
+        'git+https://git@github.com/uc-cdis/dictionaryutils.git@35899a878381eeb8ba91fd9124d285809d0063e8#egg=dictionaryutils',
     ],
 )
