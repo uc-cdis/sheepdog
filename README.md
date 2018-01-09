@@ -10,7 +10,6 @@
 To install sheepdog for use with other Gen3 services, running these commands is sufficient.
 
 ```bash
-pip install -r requirements.txt
 python setup.py build
 python setup.py install
 ```
@@ -18,7 +17,6 @@ python setup.py install
 ### For Development
 
 ```bash
-pip install -r requirements.txt
 pip install -r dev-requirements.txt
 python setup.py develop
 ```

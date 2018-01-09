@@ -23,7 +23,7 @@ from dictionaryutils import DataDictionary
 
 from sheepdog.auth import roles
 from sheepdog.test_settings import PSQL_USER_DB_CONNECTION, Fernet, HMAC_ENCRYPTION_KEY
-from tests.api import app as _app, app_init
+from .api import app as _app, app_init
 
 
 def get_parent(path):
