@@ -7,7 +7,7 @@ from contextlib import contextmanager
 
 import flask
 from flask import current_app
-from gdcdatamodel import validators
+from datamodelutils import validators
 
 from sheepdog import models
 from sheepdog import utils

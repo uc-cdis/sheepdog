@@ -4,7 +4,7 @@ Define the ``UploadTransaction`` class.
 
 from collections import Counter
 
-from gdcdatamodel import validators
+from datamodelutils import validators
 import graphene
 from sqlalchemy.orm.attributes import flag_modified
 

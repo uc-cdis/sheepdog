@@ -5,23 +5,19 @@ the data dicitonary and the data models.
 
 import flask
 
-from sheepdog import dictionary
-from sheepdog import models
+from sheepdog import sanity_checks
 
-def create_blueprint(name, dictionary_to_use, models_to_use):
+def create_blueprint(name):
     """
     Create the blueprint.
 
     Args:
         name: blueprint name
-        dictionary_to_use: data dictionary such as gdcdictionary
-        models_to_use: data model such as gdcdatamodel
 
     Return:
         flask.Blueprint: the sheepdog blueprint
     """
-    dictionary.init(dictionary_to_use)
-    models.init(models_to_use)
+    sanity_checks.validate()
 
     blueprint = flask.Blueprint(name, __name__)
 

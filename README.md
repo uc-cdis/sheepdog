@@ -31,10 +31,15 @@ but creates an egg link to the source code.)
 
 ```python
 import sheepdog
+from dictionaryutils import dictionary
+from datamodels import models
 
 # datadictionary = the data dictionary to use, e.g. gdcdictionary
 # datamodels = the data model to use, e.g. gdcdatamodel
-blueprint = sheepdog.create_blueprint(datadictionary, datamodels)
+
+dictionary.init(datadictionary)
+models.init(datamodels)
+blueprint = sheepdog.create_blueprint()
 
 app = Flask(__name__)
 app.register_blueprint(blueprint)
