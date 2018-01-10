@@ -5,9 +5,6 @@ import requests
 import requests_mock
 import pytest
 
-import gdcdatamodel
-import sheepdog
-
 from mock import patch
 from flask.testing import make_test_environ_builder
 from psqlgraph import PsqlGraphDriver
@@ -19,8 +16,10 @@ from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
 from userdatamodel.driver import SQLAlchemyDriver
 from cdispyutils.hmac4 import get_auth
-from dictionaryutils import DataDictionary
+from dictionaryutils import DataDictionary, dictionary
+from datamodelutils import models, validators
 
+import sheepdog
 from sheepdog.auth import roles
 from sheepdog.test_settings import PSQL_USER_DB_CONNECTION, Fernet, HMAC_ENCRYPTION_KEY
 from tests.api import app as _app, app_init
@@ -248,8 +247,13 @@ def dictionary_setup():
         with patch('requests.get') as get_mocked:
             get_mocked.return_value = resp
             datadictionary = DataDictionary(url=url)
+            dictionary.init(datadictionary)
+            from gdcdatamodel import models as md
+            from gdcdatamodel import validators as vd
+            models.init(md)
+            validators.init(vd)
             sheepdog_blueprint = sheepdog.create_blueprint(
-                'submission', datadictionary, gdcdatamodel.models
+                'submission'
             )
 
             try:

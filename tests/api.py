@@ -8,7 +8,7 @@ from flask_sqlalchemy_session import flask_scoped_session
 from psqlgraph import PsqlGraphDriver
 
 from cdis_oauth2client import OAuth2Client, OAuth2Error
-from cdisutils.log import get_handler
+from cdispyutils.log import get_handler
 from indexclient.client import IndexClient as SignpostClient
 from userdatamodel.driver import SQLAlchemyDriver
 
