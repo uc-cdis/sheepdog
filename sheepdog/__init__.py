@@ -9,6 +9,6 @@ Notes on frequently disabled pylint warnings/errors:
   ``sheepdog.dictionary``.
 """
 
-from . import dictionary
-from . import models
+from dictionaryutils import dictionary
+from datamodelutils import models, validators
 from .blueprint import create_blueprint

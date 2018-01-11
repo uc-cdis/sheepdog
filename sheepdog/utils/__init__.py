@@ -443,7 +443,7 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
     if action in ['upload', 'initiate_multipart']:
         update_state(node, UPLOADING_STATE)
     elif action == 'abort_multipart':
-        update_state(node, SUBMITTED_STATE)
+        update_state(node, submitted_state())
     if action not in ['upload', 'upload_part', 'complete_multipart']:
         data = ''
 
@@ -456,7 +456,7 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
             update_state(node, SUCCESS_STATE)
     if action == 'delete':
         if resp.status == 204:
-            update_state(node, SUBMITTED_STATE)
+            update_state(node, submitted_state())
             update_signpost_url(signpost_obj, None)
     return resp
 

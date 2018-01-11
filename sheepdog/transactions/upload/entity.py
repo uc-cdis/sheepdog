@@ -490,6 +490,10 @@ class UploadEntity(EntityBase):
         """
         return node.project_id == self.transaction.project_id
 
+    def get_metadata(self):
+        metadata = {'project_id': self.transaction.project_id}
+        return metadata
+
     def register_index(self):
         """
         Call the "signpost" (index client) for the transaction to register a
@@ -505,6 +509,7 @@ class UploadEntity(EntityBase):
         hashes = {'md5': self.node._props.get('md5sum')}
         size = self.node._props.get('file_size')
         alias = "{}/{}".format(project_id, submitter_id)
+        metadata = self.get_metadata()
         # Check if there is an existing record with this hash and size, i.e.
         # this node already has an index record. Create a new record (with
         # UUID) only if none was found.
@@ -515,7 +520,7 @@ class UploadEntity(EntityBase):
         document = self.transaction.signpost.get_with_params(params)
         if not document:
             self.transaction.signpost.create(
-                did=str(uuid.uuid4()), hashes=hashes, size=size, urls=[]
+                did=str(uuid.uuid4()), hashes=hashes, size=size, urls=[], metadata=metadata
             )
         self.transaction.signpost.create_alias(
             record=alias, hashes=hashes, size=size, release='private'

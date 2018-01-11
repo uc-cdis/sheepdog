@@ -1,4 +1,3 @@
-requests_mock==1.4.0
 pytest-cov==2.5.1
 httmock==1.2.3
 lockfile==0.10.2
@@ -10,5 +9,10 @@ sphinxcontrib-httpdomain==1.3.0
 codacy-coverage
 Sphinx==1.6.5
 sphinx_rtd_theme
--e git+https://github.com/uc-cdis/storage-client.git@0.1.6#egg=storageclient
--e git+https://github.com/uc-cdis/cdis-python-utils.git@0.2.2#egg=cdispyutils
+requests-mock>=1.4.0
+-e git+https://git@github.com/uc-cdis/cdisutils-test.git@0.0.1#egg=cdisutilstest
+-e git+https://git@github.com/uc-cdis/storage-client.git@0.1.1#egg=storageclient
+# required for gdcdatamodel, not required for sheepdog
+-e git+https://git@github.com/NCI-GDC/cdisutils.git@4a75cc05c7ba2174e70cca9c9ea7e93947f7a868#egg=cdisutils
+-e git+https://git@github.com/NCI-GDC/gdcdatamodel.git@1.1.0#egg=gdcdatamodel
+-e git+https://git@github.com/uc-cdis/datadictionary.git@0.1.1#egg=gdcdictionary
