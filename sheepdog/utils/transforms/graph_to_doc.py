@@ -259,11 +259,10 @@ def tsv_example_row(label, title):
 
 def json_dumps_formatted(data):
     """Return json string with standard format"""
-    encoder = json.JSONEncoder(
-        indent=2, separators=(', ', ': '), ensure_ascii=False
-    )
-    for chunk in encoder.iterencode(data):
-        yield chunk.encode('utf-8')
+    return json.dumps(
+        data, indent=2,
+        separators=(', ', ': '), ensure_ascii=False
+        ).encode('utf-8')
 
 
 def get_json_template(entity_types):
