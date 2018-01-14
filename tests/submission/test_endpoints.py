@@ -1,6 +1,7 @@
 import contextlib
 import json
 import os
+import uuid
 
 import boto
 import pytest
@@ -624,3 +625,43 @@ def test_valid_file_index(monkeypatch, client, pg_driver, submitter, dictionary_
 
     assert called['create']
     assert called['create_alias']
+
+def test_export_entity_by_id(client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup('s3://test.com')
+    put_cgci_blgsp(client, submitter)
+    post_example_entities_together(client, pg_driver, submitter)
+    with pg_driver.session_scope():
+        case_id = pg_driver.nodes(md.Case).first().node_id
+    path = '/v0/submission/CGCI/BLGSP/export/?ids={case_id}'.format(case_id=case_id)
+    r = client.get(
+        path,
+        headers=submitter(path, 'get'))
+    assert r.status_code == 200, r.data
+    assert r.headers['Content-Disposition'].endswith('tsv')
+    path += '&format=json'
+    r = client.get(
+        path,
+        headers=submitter(path, 'get'))
+
+    data = r.json
+    assert len(data) == 1
+    assert data[0]['id'] == case_id
+
+def test_export_all_node_types(client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup('s3://test.com')
+    put_cgci_blgsp(client, submitter)
+    post_example_entities_together(client, pg_driver, submitter)
+    with pg_driver.session_scope() as s:
+        case = pg_driver.nodes(md.Case).first()
+        new_case = md.Case(str(uuid.uuid4()))
+        new_case.props = case.props
+        new_case.submitter_id = 'case-2'
+        s.add(new_case)
+        case_count = pg_driver.nodes(md.Case).count()
+    path = '/v0/submission/CGCI/BLGSP/export/?node_label=case'
+    r = client.get(
+        path,
+        headers=submitter(path, 'get'))
+    assert r.status_code == 200, r.data
+    assert r.headers['Content-Disposition'].endswith('tsv')
+    assert len(r.data.strip().split('\n')) == case_count + 1
