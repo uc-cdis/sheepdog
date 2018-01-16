@@ -11,7 +11,7 @@ import StringIO
 import tarfile
 import time
 
-from cdispyutils.log import get_logger
+from cdislogging import get_logger
 import flask
 import psqlgraph
 

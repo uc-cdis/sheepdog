@@ -46,7 +46,6 @@ setup(
         'dictionaryutils',
         'indexclient',
         'psqlgraph',
-        'signpost',
         'userdatamodel',
     ],
     dependency_links=[
@@ -56,7 +55,6 @@ setup(
         'git+https://git@github.com/uc-cdis/cdiserrors.git@0.0.4#egg=cdiserrors',
         'git+https://git@github.com/uc-cdis/cdis-python-utils.git@0.2.2#egg=cdispyutils',
         'git+https://git@github.com/uc-cdis/dictionaryutils.git@1.1.0#egg=dictionaryutils',
-        'git+https://git@github.com/NCI-GDC/signpost.git@c8e2aa5ff572c808cba9b522b64f7b497e79c524#egg=signpost',
         'git+https://git@github.com/uc-cdis/datamodelutils.git@0.2.0#egg=datamodelutils',
         'git+https://git@github.com/uc-cdis/indexclient.git@d49134f4626b69a8ef02c189ed0047ad1a635cb0#egg=indexclient',
     ],

@@ -14,7 +14,7 @@ import math
 import pkg_resources
 from uuid import uuid5, UUID
 
-from cdispyutils.log import get_logger
+from cdislogging import get_logger
 import flask
 from lxml import etree
 import requests
