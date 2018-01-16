@@ -39,25 +39,25 @@ setup(
         'setuptools==36.3.0',
         'simplejson==3.8.1',
         'sqlalchemy==0.9.9',
+        'cdiserrors',
         'cdis_oauth2client',
         'cdispyutils',
         'datamodelutils',
         'dictionaryutils',
-        # 'gdcdatamodel',
-        # 'gdcdictionary',
         'indexclient',
         'psqlgraph',
         'signpost',
         'userdatamodel',
     ],
     dependency_links=[
-        'git+https://git@github.com/uc-cdis/userdatamodel.git@cb7143c709a1173c84de4577d3e866318a2cc834#egg=userdatamodel', # OK
-        'git+https://git@github.com/uc-cdis/cdis_oauth2client.git@0.1.2#egg=cdis_oauth2client', # OK
-        'git+https://git@github.com/NCI-GDC/psqlgraph.git@1.2.0#egg=psqlgraph', # OK
-        'git+https://git@github.com/uc-cdis/cdis-python-utils.git@0.2.2#egg=cdispyutils', # OK?
-        'git+https://git@github.com/uc-cdis/dictionaryutils.git@1.1.0#egg=dictionaryutils', # OK
-        'git+https://git@github.com/NCI-GDC/signpost.git@c8e2aa5ff572c808cba9b522b64f7b497e79c524#egg=signpost', # OK
-        'git+https://git@github.com/uc-cdis/datamodelutils.git@0.2.0#egg=datamodelutils', # OK
-        'git+https://git@github.com/uc-cdis/indexclient.git@d49134f4626b69a8ef02c189ed0047ad1a635cb0#egg=indexclient', # OK
+        'git+https://git@github.com/uc-cdis/userdatamodel.git@cb7143c709a1173c84de4577d3e866318a2cc834#egg=userdatamodel',
+        'git+https://git@github.com/uc-cdis/cdis_oauth2client.git@0.1.2#egg=cdis_oauth2client',
+        'git+https://git@github.com/NCI-GDC/psqlgraph.git@1.2.0#egg=psqlgraph',
+        'git+https://git@github.com/uc-cdis/cdiserrors.git@0.0.4#egg=cdiserrors',
+        'git+https://git@github.com/uc-cdis/cdis-python-utils.git@0.2.2#egg=cdispyutils',
+        'git+https://git@github.com/uc-cdis/dictionaryutils.git@1.1.0#egg=dictionaryutils',
+        'git+https://git@github.com/NCI-GDC/signpost.git@c8e2aa5ff572c808cba9b522b64f7b497e79c524#egg=signpost',
+        'git+https://git@github.com/uc-cdis/datamodelutils.git@0.2.0#egg=datamodelutils',
+        'git+https://git@github.com/uc-cdis/indexclient.git@d49134f4626b69a8ef02c189ed0047ad1a635cb0#egg=indexclient',
     ],
 )
