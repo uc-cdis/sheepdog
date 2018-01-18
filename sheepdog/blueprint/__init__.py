@@ -1,6 +1,6 @@
 """
 Defines the sheepdog blueprint, which must be initialized with modules defining
-the data dicitonary and the data models.
+the data dictionary and the data models.
 """
 
 import flask
