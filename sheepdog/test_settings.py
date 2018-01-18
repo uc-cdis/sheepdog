@@ -16,7 +16,7 @@ SUBMISSION = {
     "bucket": 'test_submission',
     "host": 'host',
 }
-S3_DICTIONARY_URL = 'http://localhost:1111/sheepdog/schemas/dictionary.json'
+S3_DICTIONARY_URL = 'https://testdictionary.json'
 STORAGE = {"s3": {"keys": {}, "kwargs": {}}}
 STORAGE["s3"]["keys"]["host"] = {"access_key": "fake",
                                  "secret_key": "sooper_sekrit"}
@@ -29,18 +29,6 @@ PSQLGRAPH = {
     'database': "automated_test",
 }
 
-GDC_ES_INDEX = "gdc_legacy_test" if LEGACY_MODE else "gdc_test"
-GDC_ES_HOST = "localhost"
-GDC_ES_CONF = {"port": 9200}
-GDC_ES_STATS_INDEX = "gdc_stats_test"
-
-GEO_API = 'http://fake_geolocation_service'
-
-# Slicing settings
-SLICING = {
-    'host': 'localhost',
-    'gencode': 'REPLACEME',
-}
 PSQL_USER_DB_NAME = 'test_userapi'
 PSQL_USER_DB_USERNAME = 'postgres'
 PSQL_USER_DB_PASSWORD = 'postgres'
