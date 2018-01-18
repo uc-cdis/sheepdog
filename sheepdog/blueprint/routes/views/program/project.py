@@ -480,12 +480,7 @@ def create_open_project_viewer(dry_run=False):
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
-        # TODO: remove `raise` when triple database setup is complete and
-        # /submit clones project data to Submitted database
-        raise APINotImplemented("Project submission not implemented. Coming soon.")
-        #return handle_open_transaction(program, project, dry_run=dry_run)
-
-    return open_project
+        return handle_open_transaction(program, project, dry_run=dry_run)
 
 
 def create_release_project_viewer(dry_run=False):
@@ -509,12 +504,7 @@ def create_release_project_viewer(dry_run=False):
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
-        # TODO: remove `raise` when triple database setup is complete and
-        # /submit clones project data to Submitted database
-        raise APINotImplemented("Project release not implemented. Coming soon.")
-        #return handle_release_transaction(program, project, dry_run=dry_run)
-
-    return release_project
+        return handle_release_transaction(program, project, dry_run=dry_run)
 
 
 def create_review_project_viewer(dry_run=False):
@@ -542,12 +532,8 @@ def create_review_project_viewer(dry_run=False):
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
-        # TODO: remove `raise` when triple database setup is complete and
-        # /submit clones project data to Submitted database
-        raise APINotImplemented("Project submission not implemented. Coming soon.")
-        #return handle_review_transaction(program, project, dry_run=dry_run)
+        return handle_review_transaction(program, project, dry_run=dry_run)
 
-    return review_project
 
 
 def create_submit_project_viewer(dry_run=False):
@@ -576,12 +562,7 @@ def create_submit_project_viewer(dry_run=False):
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
-        # TODO: remove `raise` when triple database setup is complete and
-        # /submit clones project data to Submitted database
-        raise APINotImplemented("Project submission not implemented. Coming soon.")
-        #return handle_submission_transaction(program, project, dry_run=dry_run)
-
-    return submit_project
+        return handle_submission_transaction(program, project, dry_run=dry_run)
 
 
 @utils.assert_project_exists
