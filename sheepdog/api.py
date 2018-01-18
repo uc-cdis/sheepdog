@@ -2,16 +2,16 @@ import os
 import sys
 
 from flask import Flask, jsonify
-from flask.ext.cors import CORS
 from flask_sqlalchemy_session import flask_scoped_session
 from psqlgraph import PsqlGraphDriver
 
 import cdis_oauth2client
 from cdis_oauth2client import OAuth2Client, OAuth2Error
 from cdisutils.log import get_handler
-from dictionaryutils import DataDictionary
-import gdcdictionary
-import gdcdatamodel
+from dictionaryutils import DataDictionary, dictionary
+from datamodelutils import models, validators
+
+
 from indexclient.client import IndexClient as SignpostClient
 from userdatamodel.driver import SQLAlchemyDriver
 
@@ -40,9 +40,14 @@ def app_register_blueprints(app):
     else:
         datadictionary = gdcdictionary.gdcdictionary
 
+    dictionary.init(datadictionary)
+    from gdcdatamodel import models as md
+    from gdcdatamodel import validators as vd
+    models.init(md)
+    validators.init(vd)
     sheepdog_blueprint = sheepdog.create_blueprint(
-        'submission', datadictionary, gdcdatamodel.models
-        )
+        'submission'
+    )
 
     v0 = '/v0'
     app.register_blueprint(sheepdog_blueprint, url_prefix=v0+'/submission')

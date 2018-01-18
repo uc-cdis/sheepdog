@@ -10,7 +10,6 @@ from flask.testing import make_test_environ_builder
 from psqlgraph import PsqlGraphDriver
 from signpost import Signpost
 
-import gdcdatamodel
 from gdcdatamodel.models import Edge, Node
 from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
