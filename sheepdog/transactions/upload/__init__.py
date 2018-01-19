@@ -160,7 +160,7 @@ def _add_wrapper_to_bulk_transaction(transaction, wrapper, index):
     name, doc, doc_format = unpack_bulk_wrapper(wrapper)
 
     # Parse doc
-    doc_format = wrapper['doc_format'].upper()
+    doc_format = wrapper['doc_format'].lower()
     if doc_format == 'json':
         try:
             data = utils.parse.parse_json(doc)
