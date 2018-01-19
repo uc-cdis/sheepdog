@@ -6,8 +6,9 @@ TODO
 import uuid
 
 import psqlgraph
-from psqlgraph.exc import ValidationError
 import sqlalchemy
+from flask import current_app
+from psqlgraph.exc import ValidationError
 
 from sheepdog import dictionary
 from sheepdog import models
@@ -174,6 +175,17 @@ class UploadEntity(EntityBase):
                     keys=['id'],
                     type=EntityErrors.INVALID_VALUE,
                 )
+            # ################################################################
+            # SignpostClient is used instead of IndexClient for the GDCAPI.
+            # This means that the client doesn't have access to IndexClient's
+            # methods, causing exceptions to occur.
+            #
+            # Temporary workaround until gdcapi uses indexd
+            # ################################################################
+            # no ID and working in gdcapi
+            elif current_app.config.get('IS_GDC', False):
+                doc = self.transaction.signpost.create()
+                self.entity_id = doc.did
 
         if not self.entity_id:
             self.entity_id = str(uuid.uuid4())
@@ -517,14 +529,27 @@ class UploadEntity(EntityBase):
         # document: indexclient.Document
         # if `document` exists, `document.did` is the UUID that is already
         # registered in indexd for this entity.
-        document = self.transaction.signpost.get_with_params(params)
-        if not document:
-            self.transaction.signpost.create(
-                did=str(uuid.uuid4()), hashes=hashes, size=size, urls=[], metadata=metadata
+
+        # ################################################################
+        # SignpostClient is used instead of IndexClient for the GDCAPI.
+        # This means that the client doesn't have access to IndexClient's
+        # methods, causing exceptions to occur.
+        #
+        # Temporary workaround until gdcapi uses indexd
+        # ################################################################
+        if not current_app.config.get('IS_GDC', False):
+            # IndexClient
+            document = self.transaction.signpost.get_with_params(params)
+            if not document:
+                self.transaction.signpost.create(did=str(uuid.uuid4()),
+                                                 hashes=hashes,
+                                                 size=size,
+                                                 urls=[],
+                                                 metadata=metadata)
+
+            self.transaction.signpost.create_alias(
+                record=alias, hashes=hashes, size=size, release='private'
             )
-        self.transaction.signpost.create_alias(
-            record=alias, hashes=hashes, size=size, release='private'
-        )
 
     def flush_to_session(self):
         if not self.node:

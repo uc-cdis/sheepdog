@@ -48,6 +48,7 @@ setup(
         'gdcdatamodel',
         'gdcdictionary',
         'indexclient',
+        'signpostclient',
         'psqlgraph',
         'userdatamodel',
     ],
@@ -64,5 +65,6 @@ setup(
         'git+https://git@github.com/NCI-GDC/gdcdatamodel.git@1.1.0#egg=gdcdatamodel',
         'git+https://git@github.com/uc-cdis/datadictionary.git@0.1.1#egg=gdcdictionary',
         'git+https://git@github.com/NCI-GDC/cdisutils.git@4a75cc05c7ba2174e70cca9c9ea7e93947f7a868#egg=cdisutils',
+        'git+ssh://git@github.com/NCI-GDC/python-signpostclient.git@dc8fb6e97e25905d0a3c8d2de7579aa8a3056ba0#egg=signpostclient',
     ],
 )
