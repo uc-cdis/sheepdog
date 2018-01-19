@@ -30,7 +30,6 @@ from sheepdog.errors import (
 from sheepdog.globals import (
     submitted_state,
     DELIMITERS,
-    SUPPORTED_FORMATS,
     TEMPLATE_NAME,
     UPLOADING_STATE,
     SUCCESS_STATE,

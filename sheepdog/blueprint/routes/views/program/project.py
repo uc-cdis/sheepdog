@@ -480,7 +480,9 @@ def create_open_project_viewer(dry_run=False):
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
-        return handle_open_transaction(program, project, dry_run=dry_run)
+        return transactions.review.handle_open_transaction(program, project, dry_run=dry_run)
+
+    return open_project
 
 
 def create_release_project_viewer(dry_run=False):
@@ -504,8 +506,9 @@ def create_release_project_viewer(dry_run=False):
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
-        return handle_release_transaction(program, project, dry_run=dry_run)
+        return transactions.submission.handle_release_transaction(program, project, dry_run=dry_run)
 
+    return release_project
 
 def create_review_project_viewer(dry_run=False):
     """
@@ -532,8 +535,9 @@ def create_review_project_viewer(dry_run=False):
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
-        return handle_review_transaction(program, project, dry_run=dry_run)
+        return transactions.review.handle_review_transaction(program, project, dry_run=dry_run)
 
+    return review_project
 
 
 def create_submit_project_viewer(dry_run=False):
@@ -562,7 +566,9 @@ def create_submit_project_viewer(dry_run=False):
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
-        return handle_submission_transaction(program, project, dry_run=dry_run)
+        return transactions.submission.handle_submission_transaction(program, project, dry_run=dry_run)
+
+    return submit_project
 
 
 @utils.assert_project_exists

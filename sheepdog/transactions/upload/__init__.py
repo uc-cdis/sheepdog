@@ -20,7 +20,6 @@ from sheepdog.errors import (
 from sheepdog.globals import (
     FLAG_IS_ASYNC,
     PROJECT_SEED,
-    SUPPORTED_FORMATS,
 )
 from sheepdog.transactions.upload.entity import UploadEntity
 from sheepdog.transactions.upload.transaction import (
