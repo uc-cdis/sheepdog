@@ -23,6 +23,7 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
 
 ADMIN_HEADERS = {"X-Auth-Token": auth_conf.ADMIN_TOKEN}
 
+
 @contextlib.contextmanager
 def s3_conn():
     mock = mock_s3()
@@ -98,6 +99,7 @@ def put_tcga_brca(client, submitter):
     assert r.status_code == 200, r.data
     del g.user
     return r
+
 
 def test_program_creation_endpoint(client, pg_driver, submitter, dictionary_setup):
     dictionary_setup('s3://test.com')
@@ -321,6 +323,7 @@ def test_post_example_entities_together(client, pg_driver, submitter, dictionary
         assert resp.json['entities'][2]['related_cases'][0]['submitter_id'] \
                == case_sid, resp.data
 
+
 @pytest.mark.skipif(not CACHE_CASES, reason="This dictionary does not cache cases")
 def test_related_cases(client, pg_driver, submitter):
     assert put_cgci_blgsp(client, submitter).status_code == 200
@@ -362,6 +365,7 @@ def test_top_level_dictionary_list_entries(client, pg_driver, submitter, diction
            in json.loads(resp.data)['links']
     assert "/v0/submission/_dictionary/aliquot" \
            in json.loads(resp.data)['links']
+
 
 def test_dictionary_get_entries(client, pg_driver, submitter, dictionary_setup):
     dictionary_setup('s3://test.com')

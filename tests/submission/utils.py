@@ -48,6 +48,7 @@ def reset_transactions(pg_driver):
 def patch_indexclient(monkeypatch):
 
     called = {'create': False, 'create_alias': False}
+
     def check_hashes(hashes):
         assert hashes is not None
         assert 'md5' in hashes
