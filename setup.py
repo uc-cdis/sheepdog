@@ -6,7 +6,7 @@ setup(
     description='Flask blueprint for herding data submissions',
     url='https://github.com/uc-cdis/sheepdog',
     license='Apache',
-    packages=find_packages(),
+    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     install_requires=[
         'boto==2.36.0',
         'psycopg2>=2.7.3',
@@ -21,6 +21,7 @@ setup(
         'PyYAML==3.11',
         'requests==2.7',
         'setuptools==30.1.0',
+        'cdispyutils',
         'datamodelutils',
         'dictionaryutils',
         'gdcdatamodel',

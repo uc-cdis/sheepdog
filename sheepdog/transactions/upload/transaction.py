@@ -26,14 +26,6 @@ from sheepdog.transactions.upload.entity import (
 from sheepdog.transactions.transaction_base import TransactionBase
 
 
-class TransactionSnapshot(graphene.ObjectType):
-    id = graphene.ID()
-    transaction_id = graphene.Int()
-    action = graphene.String()
-    old_props = graphene.String()
-    new_props = graphene.String()
-
-
 class UploadTransaction(TransactionBase):
     """
     An UploadTransaction should be used as a context manager. This way, we can
@@ -445,7 +437,7 @@ class BulkUploadTransaction(TransactionBase):
             tx_log.submitter = self.user.username
             if self.success:
                 for entity in self.entities:
-                    snapshot = TransactionSnapshot()
+                    snapshot = models.submission.TransactionSnapshot()
                     snapshot.id = entity.node.node_id
                     snapshot.old_props = entity.old_props
                     snapshot.new_props = entity.node.props
