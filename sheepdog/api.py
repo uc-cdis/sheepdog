@@ -38,6 +38,7 @@ def app_register_blueprints(app):
     elif ('PATH_TO_SCHEMA_DIR' in app.config):
         datadictionary = DataDictionary(root_dir=app.config['PATH_TO_SCHEMA_DIR'])
     else:
+        import gdcdictionary
         datadictionary = gdcdictionary.gdcdictionary
 
     dictionary.init(datadictionary)
