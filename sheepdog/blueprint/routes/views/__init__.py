@@ -8,10 +8,8 @@ import flask
 from flask import current_app
 import requests
 
-from sheepdog import auth
-from sheepdog import dictionary
-from sheepdog import models
-from sheepdog import utils
+from sheepdog import auth, dictionary, models, utils
+from sheepdog.utils import manifest, parse
 from sheepdog.blueprint.routes.views import program
 from sheepdog.errors import (
     AuthError,
@@ -112,7 +110,7 @@ def root_create():
     auth.admin_auth()
     message = None
     node_id = None
-    doc = utils.parse.parse_request_json()
+    doc = parse.parse_request_json()
     if not isinstance(doc, dict):
         raise UserError('Root endpoint only supports single documents')
     if doc.get('type') != 'program':
@@ -215,10 +213,10 @@ def get_template(entity):
 def validate_upload_manifest():
     content_type = flask.request.headers.get('Content-Type', '').lower()
     if content_type == 'application/json':
-        manifest_doc = utils.parse.parse_request_json()
+        manifest_doc = parse.parse_request_json()
     else:
-        manifest_doc = utils.parse.parse_request_yaml()
-    errors = utils.manifest.validate_upload_manifest(manifest_doc)
+        manifest_doc = parse.parse_request_yaml()
+    errors = manifest.validate_upload_manifest(manifest_doc)
     if errors:
         return flask.jsonify({"valid": False, "errors": errors})
     else:

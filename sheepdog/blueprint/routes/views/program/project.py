@@ -506,7 +506,7 @@ def create_release_project_viewer(dry_run=False):
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
-        return transactions.submission.handle_release_transaction(program, project, dry_run=dry_run)
+        return transactions.release.handle_release_transaction(program, project, dry_run=dry_run)
 
     return release_project
 
