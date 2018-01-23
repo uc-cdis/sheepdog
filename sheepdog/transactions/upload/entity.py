@@ -12,6 +12,7 @@ from psqlgraph.exc import ValidationError
 
 from sheepdog import dictionary
 from sheepdog import models
+from sheepdog.auth import InternalError
 from sheepdog.globals import (
     REGEX_UUID,
     UNVERIFIED_PROGRAM_NAMES,
@@ -162,6 +163,29 @@ class UploadEntity(EntityBase):
                     keys=['id'],
                     type=EntityErrors.NOT_UNIQUE,
                 )
+
+        # Check to see if it's registered in dbGaP is is an exception
+        # to the rule
+        if self.entity_type == 'case':
+            submitter_id = self.doc.get("submitter_id")
+
+            try:
+                allowed = self.is_case_creation_allowed(submitter_id)
+
+            except InternalError as e:
+                return self.record_error(
+                    "Unable to validate case against dbGaP. {}"
+                    .format(str(e)),
+                    keys=['submitter_id'],
+                    type=EntityErrors.NOT_FOUND)
+
+            else:
+                if not allowed:
+                    return self.record_error(
+                        "Case submitter_id '{}' not found in dbGaP."
+                        .format(submitter_id),
+                        keys=['submitter_id'],
+		        type=EntityErrors.NOT_FOUND)
 
         # Create the node and populate its properties
         cls = psqlgraph.Node.get_subclass(self.entity_type)

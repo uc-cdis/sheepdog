@@ -4,8 +4,11 @@ Define the ``UploadTransaction`` class.
 
 from collections import Counter
 
-from datamodelutils import validators
 import graphene
+
+# Validating Entity Existence in dbGaP
+from cdisutils.dbgap import dbGaPXReferencer
+from datamodelutils import validators
 from sqlalchemy.orm.attributes import flag_modified
 
 from sheepdog import models
@@ -56,6 +59,14 @@ class UploadTransaction(TransactionBase):
         self.json_validator = validators.GDCJSONValidator()
         #: HTTP[S] proxies used for requests to external services
         self.external_proxies = kwargs.pop('external_proxies', {})
+
+        # The dbGapXReferencer conditionally requires cases to exist in
+        # dbGaP prior to submission to the GDC
+        self.dbgap_x_referencer = dbGaPXReferencer(
+            self.db_driver,
+            self.logger,
+            proxies=self.external_proxies,
+	)
 
     def get_phsids(self):
         """Fetch the phsids for the current project."""

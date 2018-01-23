@@ -442,6 +442,8 @@ def create_files_viewer(dry_run=False):
             mimetype='text/xml'
         )
 
+    return file_operations
+
 
 @auth.authorize_for_project(ROLES['READ'])
 def get_manifest(program, project):
