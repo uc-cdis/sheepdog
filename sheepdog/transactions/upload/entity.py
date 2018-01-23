@@ -183,7 +183,7 @@ class UploadEntity(EntityBase):
             # Temporary workaround until gdcapi uses indexd
             # ################################################################
             # no ID and working in gdcapi
-            elif current_app.config.get('IS_GDC', False):
+            elif current_app.config.get('USE_SIGNPOST', False):
                 doc = self.transaction.signpost.create()
                 self.entity_id = doc.did
 
@@ -537,7 +537,7 @@ class UploadEntity(EntityBase):
         #
         # Temporary workaround until gdcapi uses indexd
         # ################################################################
-        if not current_app.config.get('IS_GDC', False):
+        if not current_app.config.get('USE_SIGNPOST', False):
             # IndexClient
             document = self.transaction.signpost.get_with_params(params)
             if not document:
