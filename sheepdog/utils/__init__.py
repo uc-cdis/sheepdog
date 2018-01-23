@@ -164,6 +164,8 @@ def assert_project_exists(func):
             )
             if not project_node:
                 raise NotFoundError('Project {} not found'.format(project))
+            flask.g.dbgap_accession_numbers = "{},{}".format(program_node.dbgap_accession_number,
+                                                             project_node.dbgap_accession_number)
         return func(program, project, *args, **kwargs)
     return check_and_call
 

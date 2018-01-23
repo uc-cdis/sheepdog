@@ -6,10 +6,12 @@ TODO
 import uuid
 
 import psqlgraph
+import flask
 import sqlalchemy
 from flask import current_app
 from psqlgraph.exc import ValidationError
 
+from psqlgraph.exc import ValidationError
 from sheepdog import dictionary
 from sheepdog import models
 from sheepdog.auth import InternalError
@@ -527,7 +529,7 @@ class UploadEntity(EntityBase):
         return node.project_id == self.transaction.project_id
 
     def get_metadata(self):
-        metadata = {'project_id': self.transaction.project_id}
+        metadata = {'acls': flask.g.dbgap_accession_numbers}
         return metadata
 
     def register_index(self):

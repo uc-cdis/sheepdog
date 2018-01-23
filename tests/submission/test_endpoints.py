@@ -1,6 +1,7 @@
 import contextlib
 import json
 import os
+import uuid
 
 import boto
 import pytest
@@ -21,6 +22,7 @@ BRCA_PATH = '/v0/submission/TCGA/BRCA/'
 DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
 
 ADMIN_HEADERS = {"X-Auth-Token": auth_conf.ADMIN_TOKEN}
+
 
 @contextlib.contextmanager
 def s3_conn():
@@ -97,6 +99,7 @@ def put_tcga_brca(client, submitter):
     assert r.status_code == 200, r.data
     del g.user
     return r
+
 
 def test_program_creation_endpoint(client, pg_driver, submitter, dictionary_setup):
     dictionary_setup('s3://test.com')
@@ -320,6 +323,7 @@ def test_post_example_entities_together(client, pg_driver, submitter, dictionary
         assert resp.json['entities'][2]['related_cases'][0]['submitter_id'] \
                == case_sid, resp.data
 
+
 @pytest.mark.skipif(not CACHE_CASES, reason="This dictionary does not cache cases")
 def test_related_cases(client, pg_driver, submitter):
     assert put_cgci_blgsp(client, submitter).status_code == 200
@@ -361,6 +365,7 @@ def test_top_level_dictionary_list_entries(client, pg_driver, submitter, diction
            in json.loads(resp.data)['links']
     assert "/v0/submission/_dictionary/aliquot" \
            in json.loads(resp.data)['links']
+
 
 def test_dictionary_get_entries(client, pg_driver, submitter, dictionary_setup):
     dictionary_setup('s3://test.com')
@@ -624,3 +629,43 @@ def test_valid_file_index(monkeypatch, client, pg_driver, submitter, dictionary_
 
     assert called['create']
     assert called['create_alias']
+
+def test_export_entity_by_id(client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup('s3://test.com')
+    put_cgci_blgsp(client, submitter)
+    post_example_entities_together(client, pg_driver, submitter)
+    with pg_driver.session_scope():
+        case_id = pg_driver.nodes(md.Case).first().node_id
+    path = '/v0/submission/CGCI/BLGSP/export/?ids={case_id}'.format(case_id=case_id)
+    r = client.get(
+        path,
+        headers=submitter(path, 'get'))
+    assert r.status_code == 200, r.data
+    assert r.headers['Content-Disposition'].endswith('tsv')
+    path += '&format=json'
+    r = client.get(
+        path,
+        headers=submitter(path, 'get'))
+
+    data = r.json
+    assert len(data) == 1
+    assert data[0]['id'] == case_id
+
+def test_export_all_node_types(client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup('s3://test.com')
+    put_cgci_blgsp(client, submitter)
+    post_example_entities_together(client, pg_driver, submitter)
+    with pg_driver.session_scope() as s:
+        case = pg_driver.nodes(md.Case).first()
+        new_case = md.Case(str(uuid.uuid4()))
+        new_case.props = case.props
+        new_case.submitter_id = 'case-2'
+        s.add(new_case)
+        case_count = pg_driver.nodes(md.Case).count()
+    path = '/v0/submission/CGCI/BLGSP/export/?node_label=case'
+    r = client.get(
+        path,
+        headers=submitter(path, 'get'))
+    assert r.status_code == 200, r.data
+    assert r.headers['Content-Disposition'].endswith('tsv')
+    assert len(r.data.strip().split('\n')) == case_count + 1

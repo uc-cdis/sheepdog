@@ -58,24 +58,6 @@ def db_init(app):
         app.logger.exception("Couldn't initialize auth, continuing anyway")
 
 
-# def es_init(app):
-#     app.logger.info('Initializing Elasticsearch driver')
-#     app.es = Elasticsearch([app.config["GDC_ES_HOST"]],
-#                            **app.config["GDC_ES_CONF"])
-
-
-# Set CORS options on app configuration
-def cors_init(app):
-    accepted_headers = [
-        'Content-Type',
-        'X-Requested-With',
-        'X-CSRFToken',
-    ]
-    CORS(app, resources={
-        r"/*": {"origins": '*'},
-        }, headers=accepted_headers, expose_headers=['Content-Disposition'])
-
-
 def app_init(app):
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
@@ -83,7 +65,6 @@ def app_init(app):
     db_init(app)
     # exclude es init as it's not used yet
     # es_init(app)
-    cors_init(app)
     try:
         app.secret_key = app.config['FLASK_SECRET_KEY']
     except KeyError:
