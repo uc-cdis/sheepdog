@@ -15,7 +15,6 @@ setup(
         'Flask-SQLAlchemy-Session==1.1',
         'Flask==0.10.1',
         'fuzzywuzzy==0.6.1',
-        'graphene==0.10.2',
         'jsonschema==2.5.1',
         'lxml==3.8.0',
         'PyYAML==3.11',

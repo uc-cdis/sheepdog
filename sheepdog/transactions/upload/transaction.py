@@ -4,8 +4,6 @@ Define the ``UploadTransaction`` class.
 
 from collections import Counter
 
-import graphene
-
 # Validating Entity Existence in dbGaP
 from cdisutils.dbgap import dbGaPXReferencer
 from datamodelutils import validators
