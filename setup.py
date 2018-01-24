@@ -20,6 +20,7 @@ setup(
         'PyYAML==3.11',
         'requests==2.7',
         'setuptools==30.1.0',
+        'simplejson==3.8.1',
         'authutils',
         'cdispyutils',
         'datamodelutils',
@@ -43,7 +44,7 @@ setup(
         'git+https://git@github.com/uc-cdis/indexclient.git@d49134f4626b69a8ef02c189ed0047ad1a635cb0#egg=indexclient',
         'git+https://git@github.com/NCI-GDC/gdcdatamodel.git@1.1.0#egg=gdcdatamodel',
         'git+https://git@github.com/uc-cdis/datadictionary.git@0.1.1#egg=gdcdictionary',
-        'git+https://git@github.com/NCI-GDC/cdisutils.git@4a75cc05c7ba2174e70cca9c9ea7e93947f7a868#egg=cdisutils',
+        'git+https://git@github.com/NCI-GDC/cdisutils.git@863ce13772116b51bcf5ce7e556f5df3cb9e6f63#egg=cdisutils',
         'git+https://git@github.com/NCI-GDC/python-signpostclient.git@ca686f55772e9a7f839b4506090e7d2bb0de5f15#egg=signpostclient',
     ],
 )

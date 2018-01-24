@@ -5,7 +5,7 @@ Define the ``UploadTransaction`` class.
 from collections import Counter
 
 # Validating Entity Existence in dbGaP
-from cdisutils.dbgap import dbGaPXReferencer
+from sheepdog.auth import dbgap
 from datamodelutils import validators
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -60,7 +60,7 @@ class UploadTransaction(TransactionBase):
 
         # The dbGapXReferencer conditionally requires cases to exist in
         # dbGaP prior to submission to the GDC
-        self.dbgap_x_referencer = dbGaPXReferencer(
+        self.dbgap_x_referencer = dbgap.dbGaPXReferencer(
             self.db_driver,
             self.logger,
             proxies=self.external_proxies,

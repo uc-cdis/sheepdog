@@ -14,7 +14,7 @@ from psqlgraph.exc import ValidationError
 from psqlgraph.exc import ValidationError
 from sheepdog import dictionary
 from sheepdog import models
-from sheepdog.auth import InternalError
+from sheepdog.errors import InternalError
 from sheepdog.globals import (
     REGEX_UUID,
     UNVERIFIED_PROGRAM_NAMES,
