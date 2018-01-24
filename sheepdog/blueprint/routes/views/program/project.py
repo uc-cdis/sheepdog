@@ -255,8 +255,9 @@ def create_delete_entities_viewer(dry_run=False):
         :statuscode 403: Unauthorized request.
         """
         ids_list = ids.split(',')
+        fields = flask.request.args.get('fields')
         return transactions.deletion.handle_deletion_request(
-            program, project, ids_list, dry_run=dry_run
+            program, project, ids_list, dry_run=dry_run, fields=fields
         )
 
     return delete_entities
