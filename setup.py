@@ -20,6 +20,7 @@ setup(
         'PyYAML==3.11',
         'requests==2.7',
         'setuptools==30.1.0',
+        'authutils',
         'cdispyutils',
         'datamodelutils',
         'dictionaryutils',
