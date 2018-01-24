@@ -70,7 +70,7 @@ SHEEPDOG_PORT = int(os.getenv("SHEEPDOG_PORT", "5000"))
 # ``random.SystemRandom()``
 FLASK_SECRET_KEY = 'eCKJOOw3uQBR5pVDz3WIvYk3RsjORYoPRdzSUNJIeUEkm1Uvtq'
 
-S3_DICTIONARY_URL = os.environ.get('S3_DICTIONARY_URL','https://s3.amazonaws.com/dictionary-artifacts/datadictionary/develop/schema.json')
+DICTIONARY_URL = os.environ.get('DICTIONARY_URL','https://s3.amazonaws.com/dictionary-artifacts/datadictionary/develop/schema.json')
 
 HMAC_ENCRYPTION_KEY = os.environ.get('CDIS_HMAC_ENCRYPTION_KEY', '')
 OAUTH2 = {

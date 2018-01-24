@@ -7,7 +7,7 @@ from psqlgraph import PsqlGraphDriver
 
 import cdis_oauth2client
 from cdis_oauth2client import OAuth2Client, OAuth2Error
-from cdisutils.log import get_handler
+from cdispyutils.log import get_handler
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
 
@@ -32,8 +32,8 @@ def app_register_blueprints(app):
 
     app.url_map.strict_slashes = False
 
-    if ('S3_DICTIONARY_URL' in app.config):
-        url = app.config['S3_DICTIONARY_URL']
+    if ('DICTIONARY_URL' in app.config):
+        url = app.config['DICTIONARY_URL']
         datadictionary = DataDictionary(url=url)
     elif ('PATH_TO_SCHEMA_DIR' in app.config):
         datadictionary = DataDictionary(root_dir=app.config['PATH_TO_SCHEMA_DIR'])

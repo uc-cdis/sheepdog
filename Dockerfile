@@ -37,10 +37,7 @@ COPY ./deployment/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
 COPY ./deployment/nginx/uwsgi.conf /etc/nginx/sites-available/
 WORKDIR /sheepdog
 
-ARG GDCDICT="uc-cdis/datadictionary.git@0.1.1"
-
-RUN sed -i.bak -e "s#uc-cdis/datadictionary.git@[0-9]\+\.[0-9]\+\.[0-9]\+#$GDCDICT#g" requirements.txt \
-    && pip install -r requirements.txt \
+RUN pip install -r requirements.txt \
     && COMMIT=`git rev-parse HEAD` && echo "COMMIT=\"${COMMIT}\"" >sheepdog/version_data.py \
     && VERSION=`git describe --always --tags` && echo "VERSION=\"${VERSION}\"" >>sheepdog/version_data.py \
     && DICTCOMMIT=`git rev-parse HEAD` && echo "DICTCOMMIT=\"${DICTCOMMIT}\"" >>/sheepdog/sheepdog/version_data.py \
