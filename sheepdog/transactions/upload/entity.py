@@ -305,7 +305,8 @@ class UploadEntity(EntityBase):
         # ``validated``.  This means that this version of the node has
         # not been submitted and will not be displayed on the portal.
         # The node is now essential a draft.
-        node.state = 'validated'
+        if node.state is None:
+            node.state = 'validated'
 
         # Fill in default system property values
         for key in self.get_system_property_defaults():

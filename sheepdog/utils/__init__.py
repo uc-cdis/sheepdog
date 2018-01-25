@@ -479,3 +479,27 @@ def update_signpost_url(signpost_obj, key_name):
     else:
         signpost_obj.urls = []
     signpost_obj.patch()
+
+def is_node_file(node):
+    """Returns True if the object is a file (i.e. it may have
+    corresponding data in the object store)
+    """
+
+    return node._dictionary['category'].endswith("_file")
+
+def should_send_email(config):
+    """Only opt to send an email if the following are provided
+
+    You must set these variables in your flask curren_app's config
+    """
+
+    required_email_fields = [
+        'EMAIL_FROM_ADDRESS',               # from
+        'EMAIL_SUPPORT_ADDRESS',            # to
+        'EMAIL_NOTIFICATION_SUBMISSION',    # email body
+    ]
+
+    for field in required_email_fields:
+        if field not in config:
+            return False
+    return True

@@ -35,5 +35,11 @@ class ReleaseTransaction(TransactionBase):
         project = utils.lookup_project(self.db_driver, self.program, self.project)
         if project.released:
             return self.record_error('Project is already released.')
+
+        if project.releasable is not True:
+            message = 'Project is not releasable. '\
+                      'Project must be submitted at least once first.'
+            return self.record_error(message)
+
         project.released = True
         self.commit(assert_has_entities=False)

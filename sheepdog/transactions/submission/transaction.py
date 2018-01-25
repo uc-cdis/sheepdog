@@ -1,5 +1,7 @@
+import envelopes
 import psqlgraph
 import sqlalchemy
+from flask import current_app as capp
 
 from sheepdog import utils
 from sheepdog.globals import (
@@ -13,7 +15,6 @@ from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.submission.entity import SubmissionEntity
 from sheepdog.transactions.transaction_base import TransactionBase
 
-
 class SubmissionTransaction(TransactionBase):
 
     """Models a transaction to mark all nodes in a project submitted."""
@@ -26,8 +27,12 @@ class SubmissionTransaction(TransactionBase):
         'annotation',
     ]
 
-    def __init__(self, **kwargs):
+    def __init__(self, smtp_conf=None, **kwargs):
         super(SubmissionTransaction, self).__init__(role='submit', **kwargs)
+
+        self.app_config = capp.config
+        if utils.should_send_email(self.app_config):
+            self.smtp_conf = smtp_conf
 
         if ROLE_SUBMIT not in self.user.roles.get(self.project_id, []):
             self.record_error(
@@ -136,8 +141,70 @@ class SubmissionTransaction(TransactionBase):
         ]
         for entity in self.entities:
             entity.submit()
-        self.session.merge(self.project_node).state = 'submitted'
+
+        project_node = self.session.merge(self.project_node)
+        project_node.state = 'submitted'
+        project_node.releasable = True
+
+        if self.success and utils.should_send_email(self.app_config):
+            self.send_submission_notification_email()
+
         self.commit()
+
+    def send_submission_notification_email(self):
+        """Sends an email notification
+
+        This is used in the GDC to notify the user services team
+        about submitting a project
+        """
+
+        from_addr = self.app_config.get('EMAIL_FROM_ADDRESS')
+        to_addr = self.app_config.get('EMAIL_SUPPORT_ADDRESS')
+        preformatted = self.app_config.get('EMAIL_NOTIFICATION_SUBMISSION')
+        subject = (
+            "[SUBMISSION] Project {project_id} has been submitted by {user}"
+            .format(project_id=self.project_id, user=self.user.username))
+
+        number_of_cases = 0
+        number_of_submitted_files = 0
+        experimental_strategies = set()
+        for entity in self.entities:
+            if entity.node.label == 'case':
+                number_of_cases += 1
+
+            if utils.is_node_file(entity.node):
+                ex_strategy = entity.node.props.get('experimental_strategy')
+                if ex_strategy:
+                    experimental_strategies.add(ex_strategy)
+
+
+        # Construct body
+        text_body = preformatted.format(
+            project_id=self.project_id,
+            user_id=self.user.username,
+            number_of_cases=number_of_cases,
+            number_of_submitted_files=number_of_submitted_files,
+            experimental_strategies=','.join(experimental_strategies),
+        )
+
+        # Construct email
+        envelope = envelopes.Envelope(
+            from_addr=from_addr,
+            to_addr=to_addr,
+            subject=subject,
+            text_body=text_body,
+        )
+
+        description = "email '{}' to {}".format(subject, to_addr)
+        self.logger.info("Sending " + description)
+
+        # Send email (synchronous)
+        connection = envelopes.SMTP(**self.smtp_conf)
+        connection.send(envelope)
+
+        self.logger.info("Sent " + description)
+
+
 
     def write_transaction_log(self):
         """Save a log noting this project was opened."""
