@@ -211,7 +211,7 @@ class UploadEntity(EntityBase):
         node = cls(self.entity_id)
         if is_data_file:
             # check if open_acl is requested and the node type can be set open
-            if self.doc.get('open_acl', None):
+            if self.doc.get('open_acl', None) and current_app.config.get('IS_GDC', False):
                 if self.entity_type in POSSIBLE_OPEN_FILE_NODES:
                     node.acl = [u'open']
                 else:
