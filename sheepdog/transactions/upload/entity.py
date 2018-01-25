@@ -20,6 +20,19 @@ from sheepdog.globals import (
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.utils import get_suggestion
 
+# TODO: This should probably go into the dictionary and be
+# read from there. For now, these are the only nodes that will
+# be allowed to be set to 'open'.
+POSSIBLE_OPEN_FILE_NODES = [
+    'biospecimen_supplement',
+    'clinical_supplement',
+    'copy_number_segment',
+    'gene_expression'
+    'masked_somatic_mutation',
+    'methylation_beta_value',
+    'mirna_expression',
+    'file'
+]
 
 def lookup_node(psql_driver, label, node_id=None, secondary_keys=None):
     """Return a query for nodes by id and secondary keys."""
@@ -197,7 +210,14 @@ class UploadEntity(EntityBase):
 
         node = cls(self.entity_id)
         if is_data_file:
-            node.acl = self.transaction.get_phsids()
+            # check if open_acl is requested and the node type can be set open
+            if self.doc.get('open_acl', None):
+                if self.entity_type in POSSIBLE_OPEN_FILE_NODES:
+                    node.acl = [u'open']
+                else:
+                    node.acl = self.transaction.get_phsids()
+            else:
+                node.acl = self.transaction.get_phsids()
 
         self.action = 'create'
 
