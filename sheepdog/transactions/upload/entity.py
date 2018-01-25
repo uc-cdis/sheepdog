@@ -827,7 +827,10 @@ class UploadEntity(EntityBase):
                     'Tumor Adjacent Normal - Post Neo-adjuvant Therapy',
                     'Tumor', 'Xenograft Tissue'
                 ]
-                if (self.node == models.Sample) and (self.node._pg_links[name]['dst_type'] == models.Sample):
+                if (self.node == models.Sample)\
+                    and (self.node._pg_links[name]['dst_type'] == models.Sample)\
+                    and current_app.config.get('IS_GDC', False):
+
                     # check if it's linking to a parent node
                     if nodes[0].sample_type not in parent_sample_types:
                         self.record_error(
