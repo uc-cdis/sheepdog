@@ -458,7 +458,7 @@ def entity_to_template_delimited(links, schema, exclude_id):
     ordered.extend(sorted(unordered_required))
     ordered.extend(sorted(unordered_optional))
 
-    # TODO FIXME ordered is not ordered at this point. 
+    # TODO FIXME ordered is not ordered at this point.
     # just the concatenation of 4 ordered lists
     keys = []
     visible_keys = [
