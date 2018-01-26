@@ -11,7 +11,6 @@ import sqlalchemy
 from flask import current_app
 from psqlgraph.exc import ValidationError
 
-from psqlgraph.exc import ValidationError
 from sheepdog import dictionary
 from sheepdog import models
 from sheepdog.errors import InternalError

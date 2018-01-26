@@ -1,6 +1,5 @@
 import sys
 import cdis_oauth2client
-import sheepdog
 
 from flask import Flask, jsonify
 from flask.ext.cors import CORS
