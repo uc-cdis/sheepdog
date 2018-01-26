@@ -23,6 +23,19 @@ from sheepdog.globals import (
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.utils import get_suggestion
 
+# TODO: This should probably go into the dictionary and be
+# read from there. For now, these are the only nodes that will
+# be allowed to be set to 'open'.
+POSSIBLE_OPEN_FILE_NODES = [
+    'biospecimen_supplement',
+    'clinical_supplement',
+    'copy_number_segment',
+    'gene_expression'
+    'masked_somatic_mutation',
+    'methylation_beta_value',
+    'mirna_expression',
+    'file'
+]
 
 def lookup_node(psql_driver, label, node_id=None, secondary_keys=None):
     """Return a query for nodes by id and secondary keys."""
@@ -223,7 +236,14 @@ class UploadEntity(EntityBase):
 
         node = cls(self.entity_id)
         if is_data_file:
-            node.acl = self.transaction.get_phsids()
+            # check if open_acl is requested and the node type can be set open
+            if self.doc.get('open_acl', None) and current_app.config.get('IS_GDC', False):
+                if self.entity_type in POSSIBLE_OPEN_FILE_NODES:
+                    node.acl = [u'open']
+                else:
+                    node.acl = self.transaction.get_phsids()
+            else:
+                node.acl = self.transaction.get_phsids()
 
         self.action = 'create'
 
@@ -833,6 +853,44 @@ class UploadEntity(EntityBase):
                     self.record_error(
                         msg, keys=[name], type=EntityErrors.INVALID_LINK)
                     continue
+
+                # TT-273, check if we're doing sample->sample for restrictions
+                # TODO: This should be encoded in the dictionary somehow, not here
+                parent_sample_types = [
+                    'Additional Metastatic', 'Additional - New Primary',
+                    'Blood Derived Cancer - Bone Marrow, Post-treatment',
+                    'Blood Derived Cancer - Peripheral Blood, Post-treatment',
+                    'Blood Derived Normal', 'Buccal Cell Normal',
+                    'Fibroblasts from Bone Marrow Normal',
+                    'Granulocytes', 'Human Tumor Original Cells',
+                    'Lymphoid Normal', 'Metastatic',
+                    'Mononuclear Cells from Bone Marrow Normal',
+                    'Primary Blood Derived Cancer - Peripheral Blood',
+                    'Recurrent Blood Derived Cancer - Peripheral Blood',
+                    'Primary Blood Derived Cancer - Bone Marrow',
+                    'Primary Tumor', 'Primary Xenograft Tissue',
+                    'Recurrent Blood Derived Cancer - Bone Marrow',
+                    'Recurrent Tumor', 'Solid Tissue Normal',
+                    'Tumor Adjacent Normal - Post Neo-adjuvant Therapy',
+                    'Tumor', 'Xenograft Tissue'
+                ]
+                if (self.node == models.Sample)\
+                    and (self.node._pg_links[name]['dst_type'] == models.Sample)\
+                    and current_app.config.get('IS_GDC', False):
+
+                    # check if it's linking to a parent node
+                    if nodes[0].sample_type not in parent_sample_types:
+                        self.record_error(
+                            'Unable to link to {} Sample of type {}, not a parent Sample'
+                            .format(nodes[0].node_id, nodes[0].sample_type),
+                            type=EntityErrors.INVALID_LINK,
+                        )
+                    elif len(nodes[0].samples == 10):
+                        self.record_error(
+                            'Unable to link to {} Sample, would create links over allowed amount (10)'
+                            .format(nodes[0].node_id),
+                            type=EntityErrors.INVALID_LINK,
+                        )
 
                 # Finally, add the target to the association proxy list
                 for n in nodes:
