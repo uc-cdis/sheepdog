@@ -20,8 +20,6 @@ from lxml import etree
 import requests
 import yaml
 
-import pkg_resources
-
 from sheepdog import dictionary
 from sheepdog.errors import (
     ParsingError,
@@ -33,19 +31,7 @@ from sheepdog.globals import (
 
 
 log = get_logger(__name__)
-
-possible_true_values = [
-    'true',
-    'yes',
-]
-
-possible_false_values = [
-    'false',
-    'no',
-]
-
 SCHEMA_LOCATION_WHITELIST = ["https://github.com/nchbcr/xsd", "http://tcga-data.nci.nih.gov"]
-
 
 def _parse_schema_location(root):
     """Get all schema locations from xml."""
@@ -127,6 +113,9 @@ class AttrDict(dict):
 
 
 def to_bool(val):
+    possible_true_values = ['true', 'yes']
+    possible_false_values = ['false', 'no']
+
     if val is None:
         return None
     if val.lower() in possible_true_values:
@@ -339,20 +328,6 @@ class BcrXmlToJsonParser(object):
             entity_id = None
         return entity_id
 
-    def munge_property(self, prop, _type):
-        types = {
-            'int': int,
-            'long': long,
-            'float': float,
-            'str': str,
-            'str.lower': lambda x: str(x).lower(),
-        }
-        if _type == 'bool':
-            prop = to_bool(prop)
-        else:
-            prop = types[_type](prop) if prop else prop
-        return prop
-
     def get_entity_properties(self, root, entity_type, params, entity_id=''):
         """
         For each parameter in the setting file, try to look it up, and add
@@ -393,7 +368,7 @@ class BcrXmlToJsonParser(object):
             if result is None and prop not in\
                     dictionary.schema[entity_type].get('required', []):
                 continue
-            props[prop] = self.munge_property(result, _type)
+            props[prop] = munge_property(result, _type)
         return props
 
     def get_entity_const_properties(self, root, entity_type, params, entity_id=''):
@@ -417,7 +392,7 @@ class BcrXmlToJsonParser(object):
             return {}
         props = {}
         for prop, args in params.const_properties.items():
-            props[prop] = self.munge_property(args['value'], args['type'])
+            props[prop] = munge_property(args['value'], args['type'])
         return props
 
     def get_entity_datetime_properties(
@@ -556,7 +531,7 @@ class BcrXmlToJsonParser(object):
                 path, root, single=True, text=True,
                 expected=(not self.ignore_missing_properties),
                 label='{}: {}'.format(edge_type, entity_id))
-            props[prop] = self.munge_property(result, _type)
+            props[prop] = munge_property(result, _type)
         return props
 
     def get_entity_edge_datetime_properties(
@@ -723,14 +698,23 @@ class BcrClinicalXmlToJsonParser(object):
                         elif 'null' in key_type:
                             doc[key] = None
                     continue
-                types = {
-                    'int': int,
-                    'long': long,
-                    'float': int,
-                    'str': str,
-                    'str.lower': lambda x: str(x).lower(),
-                }
-                if _type == 'bool':
-                    doc[key] = to_bool(value)
-                else:
-                    doc[key] = types[_type](value) if value else value
+                doc[key] = munge_property(value, _type)
+
+
+def munge_property(prop, _type):
+
+    types = {
+        'int': int,
+        'long': long,
+        'float': float,
+        'str': str,
+        'str.lower': lambda x: str(x).lower(),
+    }
+
+    if _type == 'bool':
+        prop = to_bool(prop)
+    else:
+        prop = types[_type](prop) if prop else prop
+    return prop
+
+
