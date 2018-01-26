@@ -11,6 +11,7 @@ setup(
         'boto==2.36.0',
         'psycopg2>=2.7.3',
         'cryptography==2.1.2',
+        'Envelopes==0.4',
         'Flask-Cors==1.9.0',
         'Flask-SQLAlchemy-Session==1.1',
         'Flask==0.10.1',
