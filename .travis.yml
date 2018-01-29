@@ -27,6 +27,7 @@ addons:
     - gfortran
 
 install:
+  - pip install --upgrade pip
   - python setup.py install
   - pip install -r dev-requirements.txt
 

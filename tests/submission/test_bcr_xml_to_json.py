@@ -1,10 +1,9 @@
-import pytest
 from sheepdog.utils.transforms.bcr_xml_to_json import BcrXmlToJsonParser
 
 
-def test_gdc_type_mappings(pg_driver):
+def test_gdc_type_mappings():
 
-       parser = BcrXmlToJsonParser("SAMPLE", psqlgraph=pg_driver)
+       parser = BcrXmlToJsonParser("SAMPLE")
 
        # parse float
        float_val = parser.map_to_gdc_types("float", "38.3")
