@@ -22,6 +22,7 @@ setup(
         'requests==2.7',
         'setuptools==30.1.0',
         'simplejson==3.8.1',
+        'python-keystoneclient==1.8.1',
         'authutils',
         'cdispyutils',
         'cdislogging',
