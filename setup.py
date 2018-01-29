@@ -41,7 +41,7 @@ setup(
         'git+https://git@github.com/uc-cdis/cdiserrors.git@0.0.4#egg=cdiserrors',
         'git+https://git@github.com/uc-cdis/cdis-python-utils.git@0.2.2#egg=cdispyutils',
         'git+https://git@github.com/uc-cdis/cdislogging.git@master#egg=cdislogging',
-        'git+https://git@github.com/uc-cdis/dictionaryutils.git@1.1.0#egg=dictionaryutils',
+        'git+https://git@github.com/uc-cdis/dictionaryutils.git@1.2.1#egg=dictionaryutils',
         'git+https://git@github.com/uc-cdis/datamodelutils.git@0.2.0#egg=datamodelutils',
         'git+https://git@github.com/uc-cdis/authutils.git@feat/api-373-separate-authutils#egg=authutils',
         'git+https://git@github.com/uc-cdis/indexclient.git@d49134f4626b69a8ef02c189ed0047ad1a635cb0#egg=indexclient',
