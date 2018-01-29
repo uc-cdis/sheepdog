@@ -43,6 +43,7 @@ def handle_deletion_request(program, project, ids, **tx_kwargs):
     """
     is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
     db_driver = tx_kwargs.pop('db_driver', flask.current_app.db)
+    
 
     transaction = DeletionTransaction(
         program=program,

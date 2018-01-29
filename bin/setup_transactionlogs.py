@@ -26,7 +26,7 @@ if __name__ == '__main__':
     parser.add_argument("--password", type=str, action="store",
                         default='test', help="psql test password")
     parser.add_argument("--database", type=str, action="store",
-                        default='automated_test', help="psql test database")
+                        default='sheepdog_automated_test', help="psql test database")
 
     args = parser.parse_args()
     setup(args.host, args.user, args.password, args.database)

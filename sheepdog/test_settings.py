@@ -26,7 +26,7 @@ PSQLGRAPH = {
     'host': "localhost",
     'user': "test",
     'password': "test",
-    'database': "automated_test",
+    'database': "sheepdog_automated_test",
 }
 
 PSQL_USER_DB_NAME = 'test_userapi'

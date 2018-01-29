@@ -47,7 +47,7 @@ PSQLGRAPH = {
     'host': os.getenv("GDC_PG_HOST", "localhost"),
     'user': os.getenv("GDC_PG_USER", "test"),
     'password': os.getenv("GDC_PG_PASSWORD", "test"),
-    'database': os.getenv("GDC_PG_DBNAME", "automated_test")
+    'database': os.getenv("GDC_PG_DBNAME", "sheepdog_automated_test")
 }
 
 PSQL_USER_DB_NAME = 'userapi'
