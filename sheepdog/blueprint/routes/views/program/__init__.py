@@ -186,18 +186,20 @@ def create_project(program):
             program=program,
             project=project,
             role=ROLES['UPDATE'],
+            flask_config=flask.current_app.config
         )
 
         with UploadTransaction(**transaction_args) as trans:
             node = session.merge(node)
             session.commit()
-            entity = UploadEntity(trans)
+            entity = UploadEntity(trans, flask.current_app.config)
             entity.action = action
             entity.doc = doc
             entity.entity_type = 'project'
             entity.unique_keys = node._secondary_keys_dicts
             entity.node = node
             entity.entity_id = entity.node.node_id
+            flask_config=flask.current_app.config,
             trans.entities = [entity]
             return flask.jsonify(trans.json)
 

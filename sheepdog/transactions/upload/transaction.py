@@ -5,15 +5,14 @@ Define the ``UploadTransaction`` class.
 from collections import Counter
 
 # Validating Entity Existence in dbGaP
-from sheepdog.auth import dbgap
 from datamodelutils import validators
+from flask import current_app
 from sqlalchemy.orm.attributes import flag_modified
 
+from sheepdog.auth import dbgap
 from sheepdog import models
 from sheepdog import utils
-from sheepdog.errors import (
-    UserError,
-)
+from sheepdog.errors import UserError
 from sheepdog.globals import (
     case_cache_enabled,
     TX_LOG_STATE_ERRORED,
@@ -65,6 +64,8 @@ class UploadTransaction(TransactionBase):
             self.logger,
             proxies=self.external_proxies,
 	)
+
+        self._config = kwargs['flask_config']
 
     def get_phsids(self):
         """Fetch the phsids for the current project."""
@@ -275,7 +276,7 @@ class UploadTransaction(TransactionBase):
             None
         """
         try:
-            entity = UploadEntity(self)
+            entity = UploadEntity(self, self._config)
             self.entities.append(entity)
             entity.parse(doc)
         except Exception as e:  # pylint: disable=broad-except
@@ -340,6 +341,7 @@ class BulkUploadTransaction(TransactionBase):
             logger=self.logger,
             transaction_id=self.transaction_id,
             signpost=self.signpost,
+            flask_config=self.config,
             external_proxies=self.external_proxies,
         )
         sub_transaction.parse_doc(name, doc_format, doc, data)
