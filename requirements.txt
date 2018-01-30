@@ -1,5 +1,5 @@
 boto==2.36.0
-setuputils==30.1.0
+setuptools==30.1.0
 psycopg2==2.7.3.2
 cryptography>=2.1.2,<3.0.0
 envelopes==0.4
