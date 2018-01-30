@@ -1,4 +1,5 @@
 boto==2.36.0
+setuputils==30.1.0
 psycopg2==2.7.3.2
 cryptography>=2.1.2,<3.0.0
 envelopes==0.4
@@ -33,3 +34,4 @@ dictionaryutils
 -e git+https://git@github.com/uc-cdis/cdislogging.git@master#egg=cdislogging
 -e git+https://git@github.com/uc-cdis/authutils.git@0.0.1#egg=authutils
 -e git+https://git@github.com/NCI-GDC/python-signpostclient.git@ca686f55772e9a7f839b4506090e7d2bb0de5f15#egg=signpostclient
+-e git+https://git@github.com/uc-cdis/storage-client.git@0.1.1#egg=storageclient
