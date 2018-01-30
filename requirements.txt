@@ -32,5 +32,5 @@ xmltodict==0.9.2
 -e git+https://git@github.com/uc-cdis/datadictionary.git@0.1.1#egg=gdcdictionary
 -e git+https://git@github.com/uc-cdis/cdiserrors.git@0.0.4#egg=cdiserrors
 -e git+https://git@github.com/uc-cdis/cdislogging.git@master#egg=cdislogging
--e git+https://git@github.com/uc-cdis/authutils.git@feat/api-373-separate-authutils#egg=authutils
+-e git+https://git@github.com/uc-cdis/authutils.git@0.0.1#egg=authutils
 -e git+https://git@github.com/NCI-GDC/python-signpostclient.git@ca686f55772e9a7f839b4506090e7d2bb0de5f15#egg=signpostclient
