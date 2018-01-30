@@ -9,7 +9,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'boto',
-        'psycopg2>=2.7.3',
+        'psycopg2',
         'cryptography',
         'Envelopes',
         'Flask-Cors',
