@@ -10,7 +10,6 @@
 To install sheepdog for use with other Gen3 services, running these commands is sufficient.
 
 ```bash
-pip install -r requirements.txt
 python setup.py build
 python setup.py install
 ```
@@ -18,7 +17,6 @@ python setup.py install
 ### For Development
 
 ```bash
-pip install -r requirements.txt
 pip install -r dev-requirements.txt
 python setup.py develop
 ```
@@ -31,15 +29,15 @@ but creates an egg link to the source code.)
 
 ```python
 import sheepdog
+import datamodelutils
 from dictionaryutils import dictionary
-from datamodels import models
+from gdcdictionary import gdcdictionary
+from gdcdatamodel import models, validators
 
-# datadictionary = the data dictionary to use, e.g. gdcdictionary
-# datamodels = the data model to use, e.g. gdcdatamodel
-
-dictionary.init(datadictionary)
-models.init(datamodels)
-blueprint = sheepdog.create_blueprint()
+dictionary.init(gdcdictionary)
+datamodelutils.validators.init(validators)
+datamodelutils.models.init(models)
+blueprint = sheepdog.create_blueprint(name='submission')
 
 app = Flask(__name__)
 app.register_blueprint(blueprint)

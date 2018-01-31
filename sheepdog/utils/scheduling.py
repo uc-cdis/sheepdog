@@ -1,7 +1,7 @@
 from Queue import Queue, Full
 from threading import Thread
 
-import cdispyutils
+from cdislogging import get_logger
 
 from sheepdog.errors import (
     InternalError,
@@ -12,7 +12,7 @@ from sheepdog.globals import (
 )
 
 
-logger = cdispyutils.log.get_logger("submission.scheduling")
+logger = get_logger("submission.scheduling")
 
 
 def async_pool_consumer(task_queue):

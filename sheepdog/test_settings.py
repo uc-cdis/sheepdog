@@ -28,7 +28,7 @@ PSQLGRAPH = {
     'host': "localhost",
     'user': "test",
     'password': "test",
-    'database': "automated_test",
+    'database': "sheepdog_automated_test",
 }
 
 SHEEPDOG_HOST = "localhost"

@@ -17,7 +17,6 @@ from sheepdog import models
 from sheepdog import transactions
 from sheepdog import utils
 from sheepdog.errors import (
-    APINotImplemented,
     AuthError,
     NotFoundError,
     UserError,
@@ -255,8 +254,9 @@ def create_delete_entities_viewer(dry_run=False):
         :statuscode 403: Unauthorized request.
         """
         ids_list = ids.split(',')
+        fields = flask.request.args.get('fields')
         return transactions.deletion.handle_deletion_request(
-            program, project, ids_list, dry_run=dry_run
+            program, project, ids_list, dry_run=dry_run, fields=fields
         )
 
     return delete_entities
@@ -442,6 +442,8 @@ def create_files_viewer(dry_run=False):
             mimetype='text/xml'
         )
 
+    return file_operations
+
 
 @auth.authorize_for_project(ROLES['READ'])
 def get_manifest(program, project):
@@ -480,10 +482,7 @@ def create_open_project_viewer(dry_run=False):
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
-        # TODO: remove `raise` when triple database setup is complete and
-        # /submit clones project data to Submitted database
-        raise APINotImplemented("Project submission not implemented. Coming soon.")
-        #return handle_open_transaction(program, project, dry_run=dry_run)
+        return transactions.review.handle_open_transaction(program, project, dry_run=dry_run)
 
     return open_project
 
@@ -509,13 +508,9 @@ def create_release_project_viewer(dry_run=False):
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
-        # TODO: remove `raise` when triple database setup is complete and
-        # /submit clones project data to Submitted database
-        raise APINotImplemented("Project release not implemented. Coming soon.")
-        #return handle_release_transaction(program, project, dry_run=dry_run)
+        return transactions.release.handle_release_transaction(program, project, dry_run=dry_run)
 
     return release_project
-
 
 def create_review_project_viewer(dry_run=False):
     """
@@ -542,10 +537,7 @@ def create_review_project_viewer(dry_run=False):
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
-        # TODO: remove `raise` when triple database setup is complete and
-        # /submit clones project data to Submitted database
-        raise APINotImplemented("Project submission not implemented. Coming soon.")
-        #return handle_review_transaction(program, project, dry_run=dry_run)
+        return transactions.review.handle_review_transaction(program, project, dry_run=dry_run)
 
     return review_project
 
@@ -576,10 +568,7 @@ def create_submit_project_viewer(dry_run=False):
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
-        # TODO: remove `raise` when triple database setup is complete and
-        # /submit clones project data to Submitted database
-        raise APINotImplemented("Project submission not implemented. Coming soon.")
-        #return handle_submission_transaction(program, project, dry_run=dry_run)
+        return transactions.submission.handle_submission_transaction(program, project, dry_run=dry_run)
 
     return submit_project
 

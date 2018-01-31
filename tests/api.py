@@ -1,6 +1,5 @@
 import sys
 import cdis_oauth2client
-import sheepdog
 
 from flask import Flask, jsonify
 from flask.ext.cors import CORS
@@ -133,6 +132,6 @@ def _log_and_jsonify_exception(e):
 app.register_error_handler(APIError, _log_and_jsonify_exception)
 
 app.register_error_handler(
-    sheepdog.errors.APIError, _log_and_jsonify_exception
+    APIError, _log_and_jsonify_exception
 )
 app.register_error_handler(OAuth2Error, _log_and_jsonify_exception)

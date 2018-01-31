@@ -21,7 +21,7 @@ from datamodelutils import models, validators
 import sheepdog
 from sheepdog.auth import roles
 from sheepdog.test_settings import PSQL_USER_DB_CONNECTION, Fernet, HMAC_ENCRYPTION_KEY
-from tests.api import app as _app, app_init
+from .api import app as _app, app_init
 
 
 def get_parent(path):
@@ -80,7 +80,7 @@ def pg_config():
     test_host = 'localhost'
     test_user = 'test'
     test_pass = 'test'
-    test_db = 'automated_test'
+    test_db = 'sheepdog_automated_test'
     return dict(
         host=test_host,
         user=test_user,

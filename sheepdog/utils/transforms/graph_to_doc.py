@@ -11,7 +11,7 @@ import StringIO
 import tarfile
 import time
 
-from cdispyutils.log import get_logger
+from cdislogging import get_logger
 import flask
 import psqlgraph
 
@@ -385,7 +385,8 @@ def is_property_hidden(key, schema, exclude_id):
 
     is_system_prop = (
         key in schema['systemProperties'] and
-        key not in ['id'])
+        key not in ['id', 'project_id'])
+        # TODO Make this a configurable blacklist
 
     if is_system_prop:
         return True
@@ -457,6 +458,8 @@ def entity_to_template_delimited(links, schema, exclude_id):
     ordered.extend(sorted(unordered_required))
     ordered.extend(sorted(unordered_optional))
 
+    # TODO FIXME ordered is not ordered at this point.
+    # just the concatenation of 4 ordered lists
     keys = []
     visible_keys = [
         key

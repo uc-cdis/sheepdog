@@ -20,9 +20,7 @@ from sheepdog.errors import (
 from sheepdog.globals import (
     FLAG_IS_ASYNC,
     PROJECT_SEED,
-    SUPPORTED_FORMATS,
 )
-from sheepdog.transactions.upload.entity import UploadEntity
 from sheepdog.transactions.upload.transaction import (
     BulkUploadTransaction,
     UploadTransaction,
@@ -71,6 +69,7 @@ def _single_transaction(role, program, project, *doc_args, **tx_kwargs):
         user=flask.g.user,
         logger=flask.current_app.logger,
         signpost=flask.current_app.signpost,
+        flask_config=flask.current_app.config,
         db_driver=db_driver,
         external_proxies=utils.get_external_proxies(),
         **tx_kwargs
@@ -117,12 +116,16 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
     doc_args = [name, doc_format, doc, data]
     is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
     db_driver = tx_kwargs.pop('db_driver', flask.current_app.db)
-    transaction = UploadTransaction(
-        program=program, project=project, role=role, user=flask.g.user,
-        logger=flask.current_app.logger, signpost=flask.current_app.signpost,
-        external_proxies=utils.get_external_proxies(),
-        db_driver=db_driver, **tx_kwargs
-    )
+    transaction = UploadTransaction(program=program,
+                                    project=project,
+                                    role=role,
+                                    user=flask.g.user,
+                                    logger=flask.current_app.logger,
+                                    flask_config=flask.current_app.config,
+                                    signpost=flask.current_app.signpost,
+                                    external_proxies=utils.get_external_proxies(),
+                                    db_driver=db_driver,
+                                    **tx_kwargs)
     if is_async:
         session = transaction.db_driver.session_scope(can_inherit=False)
         with session, transaction:
@@ -161,7 +164,7 @@ def _add_wrapper_to_bulk_transaction(transaction, wrapper, index):
     name, doc, doc_format = unpack_bulk_wrapper(wrapper)
 
     # Parse doc
-    doc_format = wrapper['doc_format'].upper()
+    doc_format = wrapper['doc_format'].lower()
     if doc_format == 'json':
         try:
             data = utils.parse.parse_json(doc)

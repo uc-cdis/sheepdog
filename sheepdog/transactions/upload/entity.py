@@ -8,10 +8,11 @@ import uuid
 import psqlgraph
 import flask
 import sqlalchemy
-
 from psqlgraph.exc import ValidationError
+
 from sheepdog import dictionary
 from sheepdog import models
+from sheepdog.errors import InternalError
 from sheepdog.globals import (
     REGEX_UUID,
     UNVERIFIED_PROGRAM_NAMES,
@@ -50,7 +51,7 @@ class UploadEntity(EntityBase):
     session.
     """
 
-    def __init__(self, transaction):
+    def __init__(self, transaction, config=None):
         """
         Args:
             transaction (UploadTransaction): the associated transaction
@@ -59,6 +60,7 @@ class UploadEntity(EntityBase):
         self.doc = {}
         self.parents = {}
         self._secondary_keys = None
+        self._config = config
 
     @property
     def secondary_keys(self):
@@ -163,6 +165,31 @@ class UploadEntity(EntityBase):
                     type=EntityErrors.NOT_UNIQUE,
                 )
 
+        # Check to see if it's registered in dbGaP is is an exception
+        # to the rule
+        if self.entity_type == 'case':
+            submitter_id = self.doc.get("submitter_id")
+
+            allowed = True
+            try:
+                if self._config.get('USE_DBGAP', False):
+                    allowed = self.is_case_creation_allowed(submitter_id)
+
+            except InternalError as e:
+                return self.record_error(
+                    "Unable to validate case against dbGaP. {}"
+                    .format(str(e)),
+                    keys=['submitter_id'],
+                    type=EntityErrors.NOT_FOUND)
+
+            else:
+                if not allowed:
+                    return self.record_error(
+                        "Case submitter_id '{}' not found in dbGaP."
+                        .format(submitter_id),
+                        keys=['submitter_id'],
+		        type=EntityErrors.NOT_FOUND)
+
         # Create the node and populate its properties
         cls = psqlgraph.Node.get_subclass(self.entity_type)
         self.logger.debug('Creating new {}'.format(cls.__name__))
@@ -175,6 +202,17 @@ class UploadEntity(EntityBase):
                     keys=['id'],
                     type=EntityErrors.INVALID_VALUE,
                 )
+            # ################################################################
+            # SignpostClient is used instead of IndexClient for the GDCAPI.
+            # This means that the client doesn't have access to IndexClient's
+            # methods, causing exceptions to occur.
+            #
+            # Temporary workaround until gdcapi uses indexd
+            # ################################################################
+            # no ID and working in gdcapi
+            elif self._config.get('USE_SIGNPOST', False):
+                doc = self.transaction.signpost.create()
+                self.entity_id = doc.did
 
         if not self.entity_id:
             self.entity_id = str(uuid.uuid4())
@@ -268,7 +306,8 @@ class UploadEntity(EntityBase):
         # ``validated``.  This means that this version of the node has
         # not been submitted and will not be displayed on the portal.
         # The node is now essential a draft.
-        node.state = 'validated'
+        if node.state is None:
+            node.state = 'validated'
 
         # Fill in default system property values
         for key in self.get_system_property_defaults():
@@ -518,14 +557,27 @@ class UploadEntity(EntityBase):
         # document: indexclient.Document
         # if `document` exists, `document.did` is the UUID that is already
         # registered in indexd for this entity.
-        document = self.transaction.signpost.get_with_params(params)
-        if not document:
-            self.transaction.signpost.create(
-                did=str(uuid.uuid4()), hashes=hashes, size=size, urls=[], metadata=metadata
+
+        # ################################################################
+        # SignpostClient is used instead of IndexClient for the GDCAPI.
+        # This means that the client doesn't have access to IndexClient's
+        # methods, causing exceptions to occur.
+        #
+        # Temporary workaround until gdcapi uses indexd
+        # ################################################################
+        if not self._config.get('USE_SIGNPOST', False):
+            # IndexClient
+            document = self.transaction.signpost.get_with_params(params)
+            if not document:
+                self.transaction.signpost.create(did=str(uuid.uuid4()),
+                                                 hashes=hashes,
+                                                 size=size,
+                                                 urls=[],
+                                                 metadata=metadata)
+
+            self.transaction.signpost.create_alias(
+                record=alias, hashes=hashes, size=size, release='private'
             )
-        self.transaction.signpost.create_alias(
-            record=alias, hashes=hashes, size=size, release='private'
-        )
 
     def flush_to_session(self):
         if not self.node:

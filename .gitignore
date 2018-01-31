@@ -9,6 +9,8 @@ __pycache__/
 # Distribution / packaging
 .Python
 env/
+venv/
+.venv/
 build/
 develop-eggs/
 dist/
@@ -20,6 +22,10 @@ lib64/
 parts/
 sdist/
 var/
+*.egg-info/
+.installed.cfg
+*.egg
+
 wheels/
 *.egg-info/
 .installed.cfg
@@ -39,6 +45,9 @@ pip-delete-this-directory.txt
 htmlcov/
 .tox/
 .coverage
+.cache
+nosetests.xml
+coverage.xml
 .coverage.*
 .cache
 nosetests.xml
@@ -66,6 +75,24 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# IDEs
+.idea/
+*.iml
+.DS_Store
+.project
+.pydevproject
+
+# JS
+node_modules/
+gulpfile.js
+package.json
+
+# vim
+*.swp
+
+# prevent committing key after building docker image
+id_rsa
 
 # Jupyter Notebook
 .ipynb_checkpoints

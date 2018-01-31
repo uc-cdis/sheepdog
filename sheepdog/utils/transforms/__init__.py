@@ -41,11 +41,19 @@ def set_row_type(row):
 
 
 def strip(text):
-    """Strip text as unicode (which includes non-ascii whitespace)."""
-    if isinstance(text, unicode):
-        return text.strip()
-    else:
+    """Strip text as unicode (which includes non-ascii whitespace).
+
+    this will cover a case if the value is NoneType
+    """
+
+    if not isinstance(text, basestring):
+        return text
+
+    elif not isinstance(text, unicode):
         return unicode(text, "UTF-8").strip()
+
+    else:
+        return text.strip()
 
 
 def strip_whitespace_from_str_dict(dictionary):
@@ -81,7 +89,7 @@ class DelimitedConverter(object):
         Implement this in a subclass to self.reader to be an iterable of rows
         given a doc.
         """
-        msg = 'get_reader generator not implemented for {}'.format(type(self))
+        msg = 'set_reader generator not implemented for {}'.format(type(self))
         raise NotImplementedError(msg)
 
     def convert(self, doc):
@@ -114,7 +122,7 @@ class DelimitedConverter(object):
         Add a canonical JSON entity for given a :param:`row`.
 
         Args:
-            row (dict): column, value for a given row in delimted file
+            row (dict): column, value for a given row in delimited file
 
         Return:
             None
@@ -197,7 +205,7 @@ class DelimitedConverter(object):
         Cast value based on key.
         TODO
         """
-        key, value = key.strip(), value.strip()
+        key, value = strip(key), strip(value)
         types = to_cls.__pg_properties__.get(key, (str,))
         types = types or (str,)
         value_type = types[0]
@@ -235,12 +243,11 @@ class DelimitedConverter(object):
             **kwargs
         ))
 
-
 class TSVToJSONConverter(DelimitedConverter):
 
     def set_reader(self, doc):
-        # Standardize the newline format.
-        doc = '\n'.join(doc.splitlines())
+        # Standardize the new line format
+        doc = '\n'.join(strip(doc).splitlines())
         f = StringIO.StringIO(doc)
         self.reader = csv.DictReader(f, delimiter='\t')
 
@@ -248,7 +255,7 @@ class TSVToJSONConverter(DelimitedConverter):
 class CSVToJSONConverter(DelimitedConverter):
 
     def set_reader(self, doc):
-        # Standardize the newline format.
-        doc = '\n'.join(doc.splitlines())
+        # Standardize the new line format
+        doc = '\n'.join(strip(doc).splitlines())
         f = StringIO.StringIO(doc)
         self.reader = csv.DictReader(f, delimiter=',')

@@ -22,7 +22,12 @@ def handle_submission_transaction(program, project, *doc_args, **tx_kwargs):
     is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
     db_driver = tx_kwargs.pop('db_driver', flask.current_app.db)
 
+    smtp_conf = None
+    if utils.should_send_email(flask.current_app.config):
+        smtp_conf = flask.current_app.get_smtp_conf()
+
     transaction = SubmissionTransaction(
+        smtp_conf=smtp_conf,
         program=program,
         project=project,
         user=flask.g.user,

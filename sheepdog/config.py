@@ -1,5 +1,5 @@
 import os
-from cdispyutils.log import get_logger
+from cdislogging import get_logger
 
 logger = get_logger(__name__)
 

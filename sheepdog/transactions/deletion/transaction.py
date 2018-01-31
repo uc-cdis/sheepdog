@@ -17,6 +17,7 @@ class DeletionTransaction(TransactionBase):
 
     def __init__(self, **kwargs):
         super(DeletionTransaction, self).__init__(role='delete', **kwargs)
+        self.fields_to_delete = kwargs.get('fields', None)
 
         # see DeletionEntity.related_cases() docstring for details
         self.related_cases = {
@@ -71,14 +72,37 @@ class DeletionTransaction(TransactionBase):
         if self.success:
             map(self.session.delete, [e.node for e in self.valid_entities])
 
-    def test_deletion(self):
-        """Delete nodes from session, and always rollback"""
+    def _delete_fields(self):
+        """
+        Sets each field value to None for each field in self.fields_to_delete
+        """
+        if not self.fields_to_delete:
+            raise Exception(
+                'Something went terribly wrong,'
+                ' DeletionTransaction()._delete_fields is expected'
+                ' to be called only when fields_to_delete are set'
+            )
+
+        if self.success:
+            for e in self.valid_entities:
+                for field in self.fields_to_delete.split(','):
+                    if field in e.node.props:
+                        e.node.props[field] = None
+                    else:
+                        raise UserError(
+                            'Attempted to delete non-existing field "{}" in a node {}'
+                            .format(field, e.node)
+                        )
+
+    def test_deletion(self, delete_function):
+        """Delete nodes or fields from session, and always rollback"""
 
         try:
-            self._delete_entities()
+            delete_function()
 
-            for entity in self.valid_entities:
-                entity.test_deletion()
+            if not self.fields_to_delete:
+                for entity in self.valid_entities:
+                    entity.test_deletion()
 
         finally:
             # ==== THIS LINE IS VERY IMPORTANT ====
@@ -87,13 +111,18 @@ class DeletionTransaction(TransactionBase):
             self.session.rollback()
 
     def delete(self, ids):
-        """Delete nodes from session and commit if successful"""
+        """Delete nodes or fields from session and commit if successful"""
+
+        if self.fields_to_delete:
+            delete_function = self._delete_fields
+        else:
+            delete_function = self._delete_entities
 
         self.get_nodes(ids)
-        self.test_deletion()
+        self.test_deletion(delete_function)
 
         if self.success:
-            self._delete_entities()
+            delete_function()
             self.commit()
         else:
             self.session.rollback()

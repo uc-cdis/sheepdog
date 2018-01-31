@@ -223,12 +223,12 @@ routes = [
         methods=['GET'],
     ),
     new_route(
-        '/<program>/<project>/transactions/<int:tx_id>/close',
+        '/<program>/<project>/transactions/<int:transaction_id>/close',
         views.program.project.close_transaction,
         methods=['PUT', 'POST'],
     ),
     new_route(
-        '/<program>/<project>/transactions/<int:tx_id>/commit',
+        '/<program>/<project>/transactions/<int:transaction_id>/commit',
         views.program.project.commit_dry_run_transaction,
         methods=['PUT', 'POST'],
     ),
