@@ -35,3 +35,4 @@ dictionaryutils
 -e git+https://git@github.com/uc-cdis/authutils.git@0.0.1#egg=authutils
 -e git+https://git@github.com/NCI-GDC/python-signpostclient.git@ca686f55772e9a7f839b4506090e7d2bb0de5f15#egg=signpostclient
 -e git+https://git@github.com/uc-cdis/storage-client.git@0.1.1#egg=storageclient
+-e git+https://git@github.com/uc-cdis/dictionaryutils@1.2.2#egg=dictionaryutils
