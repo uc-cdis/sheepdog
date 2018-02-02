@@ -205,6 +205,9 @@ class DelimitedConverter(object):
         Cast value based on key.
         TODO
         """
+        if value is None:
+            return None
+
         key, value = strip(key), strip(value)
         types = to_cls.__pg_properties__.get(key, (str,))
         types = types or (str,)
@@ -212,7 +215,7 @@ class DelimitedConverter(object):
         try:
             if value_type == bool:
                 return parse_bool_from_string(value)
-            if value.strip() == '':
+            elif strip(value) == '':
                 return None
             else:
                 return value_type(value)
