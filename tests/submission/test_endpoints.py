@@ -234,7 +234,7 @@ def test_check_multiple_samples(client, pg_driver, submitter, dictionary_setup):
     resp = client.put(
         BLGSP_PATH, headers=headers, data=data_payload)
 
-    assert res.status_code == 200
+    assert resp.status_code == 200
     resp_json = json.loads(resp.data)
     assert resp_json['entity_error_count'] == 0
     #assert resp_json['created_entity_count'] == 1
@@ -256,7 +256,7 @@ def test_check_setting_node_open(client, pg_driver, submitter, dictionary_setup)
     resp = client.put(
         BLGSP_PATH, headers=headers, data=submitted_data)
 
-    assert res.status_code == 200
+    assert resp.status_code == 200
     resp_json = json.loads(resp.data)
     assert resp_json['entity_error_count'] == 0
     #assert resp_json['created_entity_count'] == 1
@@ -278,7 +278,7 @@ def test_check_setting_node_closed(client, pg_driver, submitter, dictionary_setu
     resp = client.put(
         BLGSP_PATH, headers=headers, data=submitted_data)
 
-    assert res.status_code == 200
+    assert resp.status_code == 200
     resp_json = json.loads(resp.data)
     assert resp_json['entity_error_count'] == 0
     #assert resp_json['created_entity_count'] == 1
@@ -300,7 +300,7 @@ def test_check_setting_disallowed_node_open(client, pg_driver, submitter, dictio
     resp = client.put(
         BLGSP_PATH, headers=headers, data=data_payload)
 
-    assert res.status_code == 200
+    assert resp.status_code == 200
     resp_json = json.loads(resp.data)
     assert resp_json['entity_error_count'] >= 1
     #assert resp_json['created_entity_count'] == 1
