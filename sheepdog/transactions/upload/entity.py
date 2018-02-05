@@ -874,23 +874,20 @@ class UploadEntity(EntityBase):
                     'Tumor Adjacent Normal - Post Neo-adjuvant Therapy',
                     'Tumor', 'Xenograft Tissue'
                 ]
+                max_parent_sample_children = 10
                 if (self.node == models.Sample)\
                     and (self.node._pg_links[name]['dst_type'] == models.Sample)\
                     and current_app.config.get('IS_GDC', False):
 
                     # check if it's linking to a parent node
-                    if nodes[0].sample_type not in parent_sample_types:
-                        self.record_error(
-                            'Unable to link to {} Sample of type {}, not a parent Sample'
-                            .format(nodes[0].node_id, nodes[0].sample_type),
-                            type=EntityErrors.INVALID_LINK,
-                        )
-                    elif len(nodes[0].samples == 10):
-                        self.record_error(
-                            'Unable to link to {} Sample, would create links over allowed amount (10)'
-                            .format(nodes[0].node_id),
-                            type=EntityErrors.INVALID_LINK,
-                        )
+                    if nodes[0].sample_type in parent_sample_types:
+                        # if so, only allow 10 children to the parent
+                        if len(nodes[0].samples == max_parent_sample_children):
+                            self.record_error(
+                                'Unable to link to {} Sample, would create links over allowed amount ({})'
+                                .format(nodes[0].node_id, max_parent_sample_children),
+                                type=EntityErrors.INVALID_LINK,
+                            )
 
                 # Finally, add the target to the association proxy list
                 for n in nodes:
