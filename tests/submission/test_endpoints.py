@@ -505,6 +505,57 @@ def test_delete_entity(client, pg_driver, submitter, dictionary_setup):
     assert resp.status_code == 200, resp.data
 
 
+def test_fields_deletion(client, pg_driver, submitter, dictionary_setup):
+    # Put test data into the database
+    dictionary_setup('s3://test.com')
+    put_cgci_blgsp(client, submitter)
+    post_example_entities_together(client, pg_driver, submitter)
+
+    # Gather sample ids and properties for test data
+    with pg_driver.session_scope():
+        samples_props = {
+            n.node_id: n.props for n in pg_driver.nodes(md.Sample)
+            .filter(md.Node._props.has_key('project_id'))
+            .all()
+        }
+
+    # Delete some fields for all gathered samples
+    fields_to_delete = ['shortest_dimension', 'longest_dimension']
+
+    def delete_fields(node_ids, fields):
+        path = '{}entities/{}/?fields={}'.format(
+            BLGSP_PATH, ','.join(node_ids), ','.join(fields)
+        )
+        return client.delete(path, headers=submitter(path, 'delete'))
+
+    r = delete_fields(samples_props.keys(), fields_to_delete)
+    assert r.status_code == 200, r.data
+
+    # Check if detetion was successful
+    with pg_driver.session_scope():
+        for ID, props in samples_props.items():
+            # Get the node by id
+            nd = pg_driver.nodes().get(ID)
+            actual_props = nd.props
+
+            # Create expected properties dict
+            expected_props = props
+            for field in fields_to_delete:
+                expected_props[field] = None
+
+            # Check that props after deletion are as expected
+            expected_props.pop('updated_datetime')
+            actual_props.pop('updated_datetime')
+            assert actual_props == expected_props
+
+    # Try deleting protected fields. Make sure it fails to do that
+    protected_fields = ['project_id', 'submitter_id', 'state', 'created_datetime']
+    for key in protected_fields:
+        r = delete_fields(samples_props.keys(), [key])
+        assert r.status_code == 400
+        assert 'Unable to delete protected field' in r.data
+
+
 def test_catch_internal_errors(monkeypatch, client, pg_driver, submitter):
     """
     Monkey patch an essential function to just raise an error and assert that
@@ -563,6 +614,7 @@ def test_invalid_json(client, pg_driver, submitter, dictionary_setup):
     print resp.data
     assert resp.status_code == 400
     assert 'Expecting value' in resp.json['message']
+
 
 def test_get_entity_by_id(client, pg_driver, submitter, dictionary_setup):
     dictionary_setup('s3://test.com')
@@ -633,6 +685,7 @@ def test_valid_file_index(monkeypatch, client, pg_driver, submitter, dictionary_
     assert called['create']
     assert called['create_alias']
 
+
 def test_export_entity_by_id(client, pg_driver, submitter, dictionary_setup):
     dictionary_setup('s3://test.com')
     put_cgci_blgsp(client, submitter)
@@ -653,6 +706,7 @@ def test_export_entity_by_id(client, pg_driver, submitter, dictionary_setup):
     data = r.json
     assert len(data) == 1
     assert data[0]['id'] == case_id
+
 
 def test_export_all_node_types(client, pg_driver, submitter, dictionary_setup):
     dictionary_setup('s3://test.com')

@@ -289,7 +289,6 @@ def handle_clinical_bcr_xml_transaction(role, program, project, **tx_kwargs):
     return handle_xml_transaction(role, program, project, parser, **tx_kwargs)
 
 
-
 def handle_xml_transaction(role, program, project, parser, **tx_kwargs):
     """
     Handle XML transactions. Provide a parser that has a function with the
