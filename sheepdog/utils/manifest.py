@@ -31,7 +31,7 @@ UPLOAD_MANIFEST_SCHEMA = {
                         "type": "string"
                     },
                     "file_size": {
-                        "type": "integer"
+                        "type": "number"
                     },
                     "md5sum": {
                         "type": "string",
