@@ -232,7 +232,7 @@ def test_check_multiple_samples(client, pg_driver, submitter, dictionary_setup):
 
     headers = submitter(BLGSP_PATH, 'put')
     resp = client.put(
-        BLGSP_PATH, headers=headers, data=data_payload)
+        BLGSP_PATH, headers=headers, data=json.dumps(data_payload))
 
     assert resp.status_code == 200
     resp_json = json.loads(resp.data)
@@ -254,7 +254,7 @@ def test_check_setting_node_open(client, pg_driver, submitter, dictionary_setup)
 
     headers = submitter(BLGSP_PATH, 'put')
     resp = client.put(
-        BLGSP_PATH, headers=headers, data=submitted_data)
+        BLGSP_PATH, headers=headers, data=json.dumps(data_payload))
 
     assert resp.status_code == 200
     resp_json = json.loads(resp.data)
@@ -276,7 +276,7 @@ def test_check_setting_node_closed(client, pg_driver, submitter, dictionary_setu
 
     headers = submitter(BLGSP_PATH, 'put')
     resp = client.put(
-        BLGSP_PATH, headers=headers, data=submitted_data)
+        BLGSP_PATH, headers=headers, data=json.dumps(data_payload))
 
     assert resp.status_code == 200
     resp_json = json.loads(resp.data)
@@ -285,7 +285,6 @@ def test_check_setting_node_closed(client, pg_driver, submitter, dictionary_setu
 
 
 def test_check_setting_disallowed_node_open(client, pg_driver, submitter, dictionary_setup):
-
 
     dictionary_setup('s3://test.com')
     put_cgci_blgsp(client, submitter)
@@ -298,7 +297,7 @@ def test_check_setting_disallowed_node_open(client, pg_driver, submitter, dictio
 
     headers = submitter(BLGSP_PATH, 'put')
     resp = client.put(
-        BLGSP_PATH, headers=headers, data=data_payload)
+        BLGSP_PATH, headers=headers, data=json.dumps(data_payload))
 
     assert resp.status_code == 200
     resp_json = json.loads(resp.data)
