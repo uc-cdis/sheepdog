@@ -230,7 +230,7 @@ def test_check_multiple_samples(client, pg_driver, submitter, dictionary_setup):
 
         data_payload.append(new_sample)
 
-    headers = submitter(BLGSP_PATH, 'post', 'member')
+    headers = submitter(BLGSP_PATH, 'put')
     resp = client.post(
         BLGSP_PATH, headers=headers, data=data_payload)
 
@@ -252,7 +252,7 @@ def test_check_setting_node_open(client, pg_driver, submitter, dictionary_setup)
             entry['open_acl'] = True
             break
 
-    headers = submitter(BLGSP_PATH, 'post', 'member')
+    headers = submitter(BLGSP_PATH, 'put')
     resp = client.post(
         BLGSP_PATH, headers=headers, data=submitted_data)
 
@@ -274,7 +274,7 @@ def test_check_setting_node_closed(client, pg_driver, submitter, dictionary_setu
             entry['open_acl'] = False
             break
 
-    headers = submitter(BLGSP_PATH, 'post', 'member')
+    headers = submitter(BLGSP_PATH, 'put')
     resp = client.post(
         BLGSP_PATH, headers=headers, data=submitted_data)
 
@@ -296,7 +296,7 @@ def test_check_setting_disallowed_node_open(client, pg_driver, submitter, dictio
         file_data = json.loads(f.read())
     file_data['open_acl'] = True
 
-    headers = submitter(BLGSP_PATH, 'post', 'member')
+    headers = submitter(BLGSP_PATH, 'put')
     resp = client.post(
         BLGSP_PATH, headers=headers, data=data_payload)
 
