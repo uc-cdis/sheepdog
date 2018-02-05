@@ -28,7 +28,7 @@ addons:
 
 install:
   - pip install -r requirements.txt
-  - python setup.py install
+  - python setup.py develop
   - pip install -r dev-requirements.txt
 
 before_script:
@@ -39,10 +39,7 @@ before_script:
 
 # command to run tests
 script:
-- |
-  set -e
-  PYTHONPATH=. py.test -vv --cov=sheepdog --cov-report xml tests/system_test.py tests/submission/test_endpoints.py
-  set +e
+- py.test -vv --cov=sheepdog --cov-report xml tests/
 
 after_script:
 - python-codacy-coverage -r coverage.xml
