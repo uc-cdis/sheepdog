@@ -206,7 +206,8 @@ def test_unauthorized_post_with_incorrect_role(client, pg_driver, submitter, dic
 
 def test_check_multiple_samples(client, pg_driver, submitter, dictionary_setup):
     dictionary_setup('s3://test.com')
-    put_cgci_blgsp(client, submitter)
+    resp = put_cgci_blgsp(client, auth=submitter)
+    assert resp.status_code == 200
 
     data_payload = []
 
@@ -234,6 +235,7 @@ def test_check_multiple_samples(client, pg_driver, submitter, dictionary_setup):
     resp = client.put(
         BLGSP_PATH, headers=headers, data=json.dumps(data_payload))
 
+    print json.loads(resp.data)
     assert resp.status_code == 200
     resp_json = json.loads(resp.data)
     assert resp_json['entity_error_count'] == 0
@@ -243,7 +245,8 @@ def test_check_multiple_samples(client, pg_driver, submitter, dictionary_setup):
 def test_check_setting_node_open(client, pg_driver, submitter, dictionary_setup):
 
     dictionary_setup('s3://test.com')
-    put_cgci_blgsp(client, submitter)
+    resp = put_cgci_blgsp(client, auth=submitter)
+    assert resp.status_code == 200
 
     with open(os.path.join(DATA_DIR, 'biospec1.json'), 'r') as f:
         submitted_data = json.loads(f.read())
@@ -256,6 +259,7 @@ def test_check_setting_node_open(client, pg_driver, submitter, dictionary_setup)
     resp = client.put(
         BLGSP_PATH, headers=headers, data=json.dumps(submitted_data))
 
+    print json.loads(resp.data)
     assert resp.status_code == 200
     resp_json = json.loads(resp.data)
     assert resp_json['entity_error_count'] == 0
@@ -265,7 +269,8 @@ def test_check_setting_node_open(client, pg_driver, submitter, dictionary_setup)
 def test_check_setting_node_closed(client, pg_driver, submitter, dictionary_setup):
 
     dictionary_setup('s3://test.com')
-    put_cgci_blgsp(client, submitter)
+    resp = put_cgci_blgsp(client, auth=submitter)
+    assert resp.status_code == 200
 
     with open(os.path.join(DATA_DIR, 'biospec1.json'), 'r') as f:
         submitted_data = json.loads(f.read())
@@ -278,6 +283,7 @@ def test_check_setting_node_closed(client, pg_driver, submitter, dictionary_setu
     resp = client.put(
         BLGSP_PATH, headers=headers, data=json.dumps(submitted_data))
 
+    print json.loads(resp.data)
     assert resp.status_code == 200
     resp_json = json.loads(resp.data)
     assert resp_json['entity_error_count'] == 0
@@ -287,7 +293,8 @@ def test_check_setting_node_closed(client, pg_driver, submitter, dictionary_setu
 def test_check_setting_disallowed_node_open(client, pg_driver, submitter, dictionary_setup):
 
     dictionary_setup('s3://test.com')
-    put_cgci_blgsp(client, submitter)
+    resp = put_cgci_blgsp(client, auth=submitter)
+    assert resp.status_code == 200
 
     with open(os.path.join(DATA_DIR, 'submitted_unaligned_reads.json'), 'r') as f:
         file_data = json.loads(f.read())
@@ -297,6 +304,7 @@ def test_check_setting_disallowed_node_open(client, pg_driver, submitter, dictio
     resp = client.put(
         BLGSP_PATH, headers=headers, data=json.dumps(file_data))
 
+    print json.loads(resp.data)
     assert resp.status_code == 200
     resp_json = json.loads(resp.data)
     assert resp_json['entity_error_count'] >= 1
