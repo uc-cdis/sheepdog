@@ -204,6 +204,108 @@ def test_unauthorized_post_with_incorrect_role(client, pg_driver, submitter, dic
     assert resp.status_code == 403
 
 
+def test_check_multiple_samples(client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup('s3://test.com')
+    put_cgci_blgsp(client, submitter)
+
+    data_payload = []
+
+    with open(os.path.join(DATA_DIR, 'case.json'), 'r') as f:
+        case_data = json.loads(f.read())
+
+    data_payload.append(case_data)
+
+    with open(os.path.join(DATA_DIR, 'sample.json'), 'r') as f:
+        base_sample = json.loads(f.read())
+
+    data_payload.append(base_sample)
+    
+    for i in range(0, 10):
+        new_sample = dict(base_sample)
+        new_sample['parent_samples'] = {
+            'submitter_id': new_sample['submitter_id']
+        }
+        new_sample['sample_type'] = 'DNA'
+        new_sample['submitter_id'] = new_sample['submitter_id'] + '_{}'.format(i)
+
+        data_payload.append(new_samples)
+
+    headers = submitter(BLGSP_PATH, 'post', 'member')
+    resp = client.post(
+        BLGSP_PATH, headers=headers, data=data_payload)
+
+    assert res.status_code = 200
+    resp_json = json.loads(resp.data)
+    assert resp_json['entity_error_count'] == 0
+    assert resp_json['created_entity_count'] == 1
+
+
+def test_check_setting_node_open(client, pg_driver, submitter, dictionary_setup):
+
+    dictionary_setup('s3://test.com')
+    put_cgci_blgsp(client, submitter)
+
+    with open(os.path.join(DATA_DIR, 'biospec1.json'), 'r') as f:
+        submitted_data = json.loads(f.read())
+    for entry in submitted_data:
+        if entry['type'] == 'file':
+            entry['open_acl'] = True
+            break
+
+    headers = submitter(BLGSP_PATH, 'post', 'member')
+    resp = client.post(
+        BLGSP_PATH, headers=headers, data=submitted_data)
+
+    assert res.status_code = 200
+    resp_json = json.loads(resp.data)
+    assert resp_json['entity_error_count'] == 0
+    #assert resp_json['created_entity_count'] == 1
+
+
+def test_check_setting_node_closed(client, pg_driver, submitter, dictionary_setup):
+
+    dictionary_setup('s3://test.com')
+    put_cgci_blgsp(client, submitter)
+
+    with open(os.path.join(DATA_DIR, 'biospec1.json'), 'r') as f:
+        submitted_data = json.loads(f.read())
+    for entry in submitted_data:
+        if entry['type'] == 'file':
+            entry['open_acl'] = False
+            break
+
+    headers = submitter(BLGSP_PATH, 'post', 'member')
+    resp = client.post(
+        BLGSP_PATH, headers=headers, data=submitted_data)
+
+    assert res.status_code = 200
+    resp_json = json.loads(resp.data)
+    assert resp_json['entity_error_count'] == 0
+    #assert resp_json['created_entity_count'] == 1
+
+
+def test_check_setting_disallowed_node_open(client, pg_driver, submitter, dictionary_setup):
+
+
+    dictionary_setup('s3://test.com')
+    put_cgci_blgsp(client, submitter)
+
+    data_payload = []
+
+    with open(os.path.join(DATA_DIR, 'submitted_unaligned_reads.json'), 'r') as f:
+        file_data = json.loads(f.read())
+    file_data['open_acl'] = True
+
+    headers = submitter(BLGSP_PATH, 'post', 'member')
+    resp = client.post(
+        BLGSP_PATH, headers=headers, data=data_payload)
+
+    assert res.status_code = 200
+    resp_json = json.loads(resp.data)
+    assert resp_json['entity_error_count'] == 0
+    assert resp_json['created_entity_count'] == 1
+
+
 def test_put_valid_entity_missing_target(client, pg_driver, submitter, dictionary_setup):
     dictionary_setup('s3://test.com')
     put_cgci_blgsp(client, submitter)
