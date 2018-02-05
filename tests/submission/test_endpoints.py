@@ -254,7 +254,7 @@ def test_check_setting_node_open(client, pg_driver, submitter, dictionary_setup)
 
     headers = submitter(BLGSP_PATH, 'put')
     resp = client.put(
-        BLGSP_PATH, headers=headers, data=json.dumps(data_payload))
+        BLGSP_PATH, headers=headers, data=json.dumps(submitted_data))
 
     assert resp.status_code == 200
     resp_json = json.loads(resp.data)
@@ -276,7 +276,7 @@ def test_check_setting_node_closed(client, pg_driver, submitter, dictionary_setu
 
     headers = submitter(BLGSP_PATH, 'put')
     resp = client.put(
-        BLGSP_PATH, headers=headers, data=json.dumps(data_payload))
+        BLGSP_PATH, headers=headers, data=json.dumps(submitted_data))
 
     assert resp.status_code == 200
     resp_json = json.loads(resp.data)
@@ -289,15 +289,13 @@ def test_check_setting_disallowed_node_open(client, pg_driver, submitter, dictio
     dictionary_setup('s3://test.com')
     put_cgci_blgsp(client, submitter)
 
-    data_payload = []
-
     with open(os.path.join(DATA_DIR, 'submitted_unaligned_reads.json'), 'r') as f:
         file_data = json.loads(f.read())
     file_data['open_acl'] = True
 
     headers = submitter(BLGSP_PATH, 'put')
     resp = client.put(
-        BLGSP_PATH, headers=headers, data=json.dumps(data_payload))
+        BLGSP_PATH, headers=headers, data=json.dumps(file_data))
 
     assert resp.status_code == 200
     resp_json = json.loads(resp.data)
