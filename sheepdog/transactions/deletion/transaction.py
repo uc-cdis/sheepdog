@@ -1,6 +1,5 @@
-import flask
-
-from sheepdog import utils
+from sheepdog import dictionary
+from sheepdog.errors import UserError
 from sheepdog.globals import (
     case_cache_enabled,
     FLAG_IS_ASYNC,
@@ -87,7 +86,17 @@ class DeletionTransaction(TransactionBase):
             for e in self.valid_entities:
                 for field in self.fields_to_delete.split(','):
                     if field in e.node.props:
-                        e.node.props[field] = None
+                        field_is_protected = any(
+                            [field in dictionary.schema[e.node.label][protected_category]
+                             for protected_category in ['required', 'systemProperties']]
+                        )
+                        if field_is_protected:
+                            raise UserError(
+                                'Unable to delete protected field "{}" in a {} node'
+                                .format(field, e.node.label)
+                            )
+                        else:
+                            e.node.props[field] = None
                     else:
                         raise UserError(
                             'Attempted to delete non-existing field "{}" in a node {}'
