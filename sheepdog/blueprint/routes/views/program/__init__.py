@@ -186,12 +186,13 @@ def create_project(program):
             program=program,
             project=project,
             role=ROLES['UPDATE'],
+            flask_config=flask.current_app.config
         )
 
         with UploadTransaction(**transaction_args) as trans:
             node = session.merge(node)
             session.commit()
-            entity = UploadEntity(trans)
+            entity = UploadEntity(trans, flask.current_app.config)
             entity.action = action
             entity.doc = doc
             entity.entity_type = 'project'
@@ -200,69 +201,6 @@ def create_project(program):
             entity.entity_id = entity.node.node_id
             trans.entities = [entity]
             return flask.jsonify(trans.json)
-
-
-def create_files_viewer(dry_run=False):
-    auth_roles = [
-        ROLES['CREATE'], ROLES['UPDATE'], ROLES['DELETE'], ROLES['DOWNLOAD'],
-        ROLES['READ']
-    ]
-
-    @utils.assert_project_exists
-    @auth.authorize_for_project(*auth_roles)
-    def files_viewer(program, project, file_uuid):
-        headers = {
-            k: v
-            for k, v in flask.request.headers.iteritems()
-            if v and k != 'X-Auth-Token'
-        }
-        url = flask.request.url.split('?')
-        args = url[-1] if len(url) > 1 else ""
-        if flask.request.method == 'GET':
-            if flask.request.args.get('uploadId'):
-                action = 'list_parts'
-            else:
-                raise UserError("Method GET not allowed on file", code=405)
-        elif flask.request.method == 'POST':
-            if flask.request.args.get('uploadId'):
-                action = 'complete_multipart'
-            elif flask.request.args.get('uploads') is not None:
-                action = 'initiate_multipart'
-            else:
-                action = 'upload'
-        elif flask.request.method == 'PUT':
-            if flask.request.args.get('partNumber'):
-                action = 'upload_part'
-            else:
-                action = 'upload'
-        elif flask.request.method == 'DELETE':
-            if flask.request.args.get('uploadId'):
-                action = 'abort_multipart'
-            else:
-                action = 'delete'
-        else:
-            raise UserError('Unsupported file operation', code=405)
-
-
-        project_id = program + '-' + project
-        role = PERMISSIONS[action]
-        if role not in flask.g.user.roles[project_id]:
-            raise AuthError(
-                "You don't have {} role to do '{}'".format(role, action)
-            )
-
-        resp = utils.proxy_request(
-            project_id, file_uuid, flask.request.stream, args, headers,
-            flask.request.method, action, dry_run
-        )
-
-        if dry_run:
-            return resp
-
-        return flask.Response(
-            resp.read(), status=resp.status, headers=resp.getheaders(),
-            mimetype='text/xml'
-        )
 
 
 def create_transactions_viewer(operation, dry_run=False):

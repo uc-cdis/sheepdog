@@ -1,16 +1,21 @@
+import os
 import sys
-import cdis_oauth2client
 
 from flask import Flask, jsonify
-from flask.ext.cors import CORS
 from flask_sqlalchemy_session import flask_scoped_session
 from psqlgraph import PsqlGraphDriver
 
+import cdis_oauth2client
 from cdis_oauth2client import OAuth2Client, OAuth2Error
 from cdispyutils.log import get_handler
+from dictionaryutils import DataDictionary, dictionary
+from datamodelutils import models, validators
+
+
 from indexclient.client import IndexClient as SignpostClient
 from userdatamodel.driver import SQLAlchemyDriver
 
+import sheepdog
 from sheepdog.auth import AuthDriver
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
 from sheepdog.version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
@@ -24,10 +29,32 @@ def app_register_blueprints(app):
     # TODO: (jsm) deprecate the index endpoints on the root path,
     # these are currently duplicated under /index (the ultimate
     # path) for migration
-    v0 = '/v0'
+
     app.url_map.strict_slashes = False
 
+    if ('DICTIONARY_URL' in app.config):
+        url = app.config['DICTIONARY_URL']
+        datadictionary = DataDictionary(url=url)
+    elif ('PATH_TO_SCHEMA_DIR' in app.config):
+        datadictionary = DataDictionary(root_dir=app.config['PATH_TO_SCHEMA_DIR'])
+    else:
+        import gdcdictionary
+        datadictionary = gdcdictionary.gdcdictionary
+
+    dictionary.init(datadictionary)
+    from gdcdatamodel import models as md
+    from gdcdatamodel import validators as vd
+    models.init(md)
+    validators.init(vd)
+    sheepdog_blueprint = sheepdog.create_blueprint(
+        'submission'
+    )
+
+    v0 = '/v0'
+    app.register_blueprint(sheepdog_blueprint, url_prefix=v0+'/submission')
+    app.register_blueprint(sheepdog_blueprint, url_prefix='/submission')
     app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0+'/oauth2')
+    app.register_blueprint(cdis_oauth2client.blueprint, url_prefix='/oauth2')
 
 
 def db_init(app):
@@ -55,7 +82,6 @@ def db_init(app):
         app.auth = AuthDriver(app.config["AUTH_ADMIN_CREDS"], app.config["INTERNAL_AUTH"])
     except Exception:
         app.logger.exception("Couldn't initialize auth, continuing anyway")
-
 
 def app_init(app):
     # Register duplicates only at runtime
@@ -132,6 +158,26 @@ def _log_and_jsonify_exception(e):
 app.register_error_handler(APIError, _log_and_jsonify_exception)
 
 app.register_error_handler(
-    APIError, _log_and_jsonify_exception
+    sheepdog.errors.APIError, _log_and_jsonify_exception
 )
 app.register_error_handler(OAuth2Error, _log_and_jsonify_exception)
+
+
+def run_for_development(**kwargs):
+    #app.logger.setLevel(logging.INFO)
+
+    for key in ["http_proxy", "https_proxy"]:
+        if os.environ.get(key):
+            del os.environ[key]
+    app.config.from_object('sheepdog.dev_settings')
+
+    kwargs['port'] = app.config['SHEEPDOG_PORT']
+    kwargs['host'] = app.config['SHEEPDOG_HOST']
+
+    try:
+        app_init(app)
+    except Exception:
+        app.logger.exception(
+            "Couldn't initialize application, continuing anyway"
+        )
+    app.run(**kwargs)

@@ -17,7 +17,6 @@ from sheepdog import models
 from sheepdog import transactions
 from sheepdog import utils
 from sheepdog.errors import (
-    APINotImplemented,
     AuthError,
     NotFoundError,
     UserError,

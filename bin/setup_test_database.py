@@ -27,7 +27,7 @@ if __name__ == '__main__':
     parser.add_argument("--password", type=str, action="store",
                         default='test', help="psql test password")
     parser.add_argument("--database", type=str, action="store",
-                        default='automated_test', help="psql test database")
+                        default='sheepdog_automated_test', help="psql test database")
     parser.add_argument("--no-drop", action="store_true",
                         default=False, help="do not drop any data")
     parser.add_argument("--no-user", action="store_true",

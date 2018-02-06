@@ -8,10 +8,8 @@ import uuid
 import psqlgraph
 import flask
 import sqlalchemy
-from flask import current_app
 from psqlgraph.exc import ValidationError
 
-from psqlgraph.exc import ValidationError
 from sheepdog import dictionary
 from sheepdog import models
 from sheepdog.errors import InternalError
@@ -66,7 +64,7 @@ class UploadEntity(EntityBase):
     session.
     """
 
-    def __init__(self, transaction):
+    def __init__(self, transaction, config=None):
         """
         Args:
             transaction (UploadTransaction): the associated transaction
@@ -75,6 +73,7 @@ class UploadEntity(EntityBase):
         self.doc = {}
         self.parents = {}
         self._secondary_keys = None
+        self._config = config
 
     @property
     def secondary_keys(self):
@@ -184,8 +183,10 @@ class UploadEntity(EntityBase):
         if self.entity_type == 'case':
             submitter_id = self.doc.get("submitter_id")
 
+            allowed = True
             try:
-                allowed = self.is_case_creation_allowed(submitter_id)
+                if self._config.get('USE_DBGAP', False):
+                    allowed = self.is_case_creation_allowed(submitter_id)
 
             except InternalError as e:
                 return self.record_error(
@@ -222,7 +223,7 @@ class UploadEntity(EntityBase):
             # Temporary workaround until gdcapi uses indexd
             # ################################################################
             # no ID and working in gdcapi
-            elif current_app.config.get('USE_SIGNPOST', False):
+            elif self._config.get('USE_SIGNPOST', False):
                 doc = self.transaction.signpost.create()
                 self.entity_id = doc.did
 
@@ -584,7 +585,7 @@ class UploadEntity(EntityBase):
         #
         # Temporary workaround until gdcapi uses indexd
         # ################################################################
-        if not current_app.config.get('USE_SIGNPOST', False):
+        if not self._config.get('USE_SIGNPOST', False):
             # IndexClient
             document = self.transaction.signpost.get_with_params(params)
             if not document:
