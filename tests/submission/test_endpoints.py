@@ -226,6 +226,7 @@ def test_check_multiple_samples(client, pg_driver, submitter, dictionary_setup):
         }
         new_sample['sample_type'] = 'DNA'
         new_sample['submitter_id'] = new_sample['submitter_id'] + '_{}'.format(i)
+        new_sample['type'] = 'sample'
 
         data_payload.append(new_sample)
 
@@ -246,7 +247,7 @@ def test_check_setting_node_open(client, pg_driver, submitter, dictionary_setup)
     resp = put_cgci_blgsp(client, auth=submitter)
     assert resp.status_code == 200
 
-    with open(os.path.join(DATA_DIR, 'biospec1.json'), 'r') as f:
+    with open(os.path.join(DATA_DIR, 'open_file.json'), 'r') as f:
         submitted_data = json.loads(f.read())
     for entry in submitted_data:
         if entry['type'] == 'file':
@@ -270,7 +271,7 @@ def test_check_setting_node_closed(client, pg_driver, submitter, dictionary_setu
     resp = put_cgci_blgsp(client, auth=submitter)
     assert resp.status_code == 200
 
-    with open(os.path.join(DATA_DIR, 'biospec1.json'), 'r') as f:
+    with open(os.path.join(DATA_DIR, 'open_file.json'), 'r') as f:
         submitted_data = json.loads(f.read())
     for entry in submitted_data:
         if entry['type'] == 'file':

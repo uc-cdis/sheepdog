@@ -6,11 +6,13 @@
             "code": "BLGSP"
         }
     }, {
-        "type": "sample",
+        "type": "file",
         "cases": {
             "submitter_id": "BLGSP-71-06-00005"
         },
-        "sample_type": "Blood Derived Normal",
-        "submitter_id": "BLGSP-71-06-00005-01A"
+        "submitter_id": "CGCI-file-2",
+        "file_size": 5962718282,
+        "file_name": "C500.CGCI-file1.bam",
+        "md5sum": "35b39360cc41a7b635980159aef265ba
     }
 ]
