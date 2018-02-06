@@ -211,15 +211,13 @@ def test_check_multiple_samples(client, pg_driver, submitter, dictionary_setup):
 
     data_payload = []
 
-    with open(os.path.join(DATA_DIR, 'case.json'), 'r') as f:
-        case_data = json.loads(f.read())
+    with open(os.path.join(DATA_DIR, 'multi_sample.json'), 'r') as f:
+        base_sample_data = json.loads(f.read())
 
-    data_payload.append(case_data)
+    data_payload.append(base_sample_data)
 
     with open(os.path.join(DATA_DIR, 'sample.json'), 'r') as f:
         base_sample = json.loads(f.read())
-
-    data_payload.append(base_sample)
     
     for i in range(0, 10):
         new_sample = dict(base_sample)
@@ -239,7 +237,7 @@ def test_check_multiple_samples(client, pg_driver, submitter, dictionary_setup):
     assert resp.status_code == 200
     resp_json = json.loads(resp.data)
     assert resp_json['entity_error_count'] == 0
-    #assert resp_json['created_entity_count'] == 1
+    assert resp_json['created_entity_count'] == 11
 
 
 def test_check_setting_node_open(client, pg_driver, submitter, dictionary_setup):
@@ -305,7 +303,7 @@ def test_check_setting_disallowed_node_open(client, pg_driver, submitter, dictio
         BLGSP_PATH, headers=headers, data=json.dumps(file_data))
 
     print json.loads(resp.data)
-    assert resp.status_code == 200
+    assert resp.status_code == 400
     resp_json = json.loads(resp.data)
     assert resp_json['entity_error_count'] >= 1
     #assert resp_json['created_entity_count'] == 1

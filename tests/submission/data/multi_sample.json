@@ -1,0 +1,19 @@
+[
+    {
+        "type": "case",
+        "submitter_id": "BLGSP-71-06-00005",
+        "projects": {
+            "code": "BLGSP"
+        }
+    }, {
+        "type": "sample",
+        "cases": {
+            "submitter_id": "BLGSP-71-06-00005"
+        },
+        "sample_type_id": "10",
+        "oct_embedded": "false",
+        "is_ffpe": false,
+        "sample_type": "Blood Derived Normal",
+        "submitter_id": "BLGSP-71-06-00005-01A"
+    }
+]
