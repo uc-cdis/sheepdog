@@ -776,7 +776,7 @@ def commit_dry_run_transaction(program, project, transaction_id):
                 .format(tx_log.id, program, project)
             )
 
-        response, code = resubmit_transaction(tx_log)
+        response = resubmit_transaction(tx_log)
         response_data = json.loads(response.get_data())
         tx_log.committed_by = response_data['transaction_id']
 
