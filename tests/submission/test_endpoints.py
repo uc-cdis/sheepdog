@@ -214,7 +214,7 @@ def test_check_multiple_samples(client, pg_driver, submitter, dictionary_setup):
     with open(os.path.join(DATA_DIR, 'multi_sample.json'), 'r') as f:
         base_sample_data = json.loads(f.read())
 
-    data_payload.append(base_sample_data)
+    data_payload.extend(base_sample_data)
 
     with open(os.path.join(DATA_DIR, 'sample.json'), 'r') as f:
         base_sample = json.loads(f.read())
