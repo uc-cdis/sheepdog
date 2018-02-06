@@ -780,7 +780,7 @@ def commit_dry_run_transaction(program, project, transaction_id):
         response_data = json.loads(response.get_data())
         tx_log.committed_by = response_data['transaction_id']
 
-        return response, code
+        return response
 
 
 def create_biospecimen_viewer(dry_run=False):
