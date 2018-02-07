@@ -5,8 +5,9 @@ from flask import Flask, jsonify
 from flask_sqlalchemy_session import flask_scoped_session
 from psqlgraph import PsqlGraphDriver
 
-import cdis_oauth2client
-from cdis_oauth2client import OAuth2Client, OAuth2Error
+from authutils.oauth2 import client as oauth2_client
+from authutils.oauth2.client import blueprint as oauth2_blueprint
+from authutils import AuthError
 from cdispyutils.log import get_handler
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
@@ -53,8 +54,8 @@ def app_register_blueprints(app):
     v0 = '/v0'
     app.register_blueprint(sheepdog_blueprint, url_prefix=v0+'/submission')
     app.register_blueprint(sheepdog_blueprint, url_prefix='/submission')
-    app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0+'/oauth2')
-    app.register_blueprint(cdis_oauth2client.blueprint, url_prefix='/oauth2')
+    app.register_blueprint(oauth2_blueprint.blueprint, url_prefix=v0+'/oauth2')
+    app.register_blueprint(oauth2_blueprint.blueprint, url_prefix='/oauth2')
 
 
 def db_init(app):
@@ -70,7 +71,7 @@ def db_init(app):
     app.userdb = SQLAlchemyDriver(app.config['PSQL_USER_DB_CONNECTION'])
     flask_scoped_session(app.userdb.Session, app)
 
-    app.oauth2 = OAuth2Client(**app.config['OAUTH2'])
+    app.oauth_client = oauth2_client.OAuthClient(**app.config['OAUTH2'])
 
     app.logger.info('Initializing Signpost driver')
     app.signpost = SignpostClient(
