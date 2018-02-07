@@ -101,8 +101,8 @@ def put_tcga_brca(client, submitter):
     return r
 
 
-def test_program_creation_endpoint(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_program_creation_endpoint(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     resp = put_cgci(client, auth=submitter)
     assert resp.status_code == 200, resp.data
     print resp.data
@@ -110,8 +110,8 @@ def test_program_creation_endpoint(client, pg_driver, submitter, dictionary_setu
     assert resp.json['links'] == ['/v0/submission/CGCI'], resp.json
 
 
-def test_program_creation_without_admin_token(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_program_creation_without_admin_token(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     path = '/v0/submission/'
     headers = submitter(path, 'put', 'member')
     data = json.dumps({'name': 'CGCI', 'type': 'program'})
@@ -120,15 +120,15 @@ def test_program_creation_without_admin_token(client, pg_driver, submitter, dict
 
 
 def test_program_creation_endpoint_for_program_not_supported(
-        client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+        app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     path = '/v0/submission/abc/'
     resp = client.post(path, headers=submitter(path, 'post'))
     assert resp.status_code == 404
 
 
-def test_project_creation_endpoint(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_project_creation_endpoint(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     resp = put_cgci_blgsp(client, auth=submitter)
     assert resp.status_code == 200
     resp = client.get('/v0/submission/CGCI/')
@@ -144,8 +144,8 @@ def test_project_creation_endpoint(client, pg_driver, submitter, dictionary_setu
     assert resp.json['links'] == ['/v0/submission/CGCI/BLGSP'], resp.json
 
 
-def test_project_creation_without_admin_token(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_project_creation_without_admin_token(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci(client, submitter)
     path = '/v0/submission/CGCI/'
     resp = client.put(
@@ -158,8 +158,8 @@ def test_project_creation_without_admin_token(client, pg_driver, submitter, dict
     assert resp.status_code == 403
 
 
-def test_put_entity_creation_valid(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_put_entity_creation_valid(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     headers = submitter(BLGSP_PATH, 'put')
     data = json.dumps({
@@ -173,8 +173,8 @@ def test_put_entity_creation_valid(client, pg_driver, submitter, dictionary_setu
     assert resp.status_code == 200, resp.data
 
 
-def test_unauthorized_post(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_unauthorized_post(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     # token for TCGA
     headers = {'X-Auth-Token': auth_conf.SUBMITTER_TOKEN_A}
@@ -189,8 +189,8 @@ def test_unauthorized_post(client, pg_driver, submitter, dictionary_setup):
     assert resp.status_code == 403
 
 
-def test_unauthorized_post_with_incorrect_role(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_unauthorized_post_with_incorrect_role(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     # token only has _member_ role in CGCI
     headers = submitter(BLGSP_PATH, 'post', 'member')
@@ -204,11 +204,8 @@ def test_unauthorized_post_with_incorrect_role(client, pg_driver, submitter, dic
     assert resp.status_code == 403
 
 
-
-
-
-def test_put_valid_entity_missing_target(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_put_valid_entity_missing_target(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
 
     with open(os.path.join(DATA_DIR, 'sample.json'), 'r') as f:
@@ -232,8 +229,8 @@ def test_put_valid_entity_missing_target(client, pg_driver, submitter, dictionar
     )
 
 
-def test_put_valid_entity_invalid_type(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_put_valid_entity_invalid_type(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     r = client.put(
         BLGSP_PATH,
@@ -276,8 +273,8 @@ def test_put_valid_entity_invalid_type(client, pg_driver, submitter, dictionary_
             == 'INVALID_VALUE'), r.data
 
 
-def test_post_example_entities(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_post_example_entities(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     path = BLGSP_PATH
     with open(os.path.join(DATA_DIR, 'case.json'), 'r') as f:
@@ -314,8 +311,8 @@ def put_example_entities_together(client, pg_driver, submitter):
     return client.put(path, headers=submitter(path, 'put'), data=json.dumps(data))
 
 
-def test_post_example_entities_together(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_post_example_entities_together(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     with open(os.path.join(DATA_DIR, 'case.json'), 'r') as f:
         case_sid = json.loads(f.read())['submitter_id']
@@ -344,8 +341,8 @@ def test_related_cases(client, pg_driver, submitter):
     assert resp.json["cases_related_to_updated_entities_count"] == 1, resp.data
 
 
-def test_dictionary_list_entries(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_dictionary_list_entries(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     resp = client.get('/v0/submission/CGCI/BLGSP/_dictionary')
     print resp.data
@@ -357,8 +354,8 @@ def test_dictionary_list_entries(client, pg_driver, submitter, dictionary_setup)
            in json.loads(resp.data)['links']
 
 
-def test_top_level_dictionary_list_entries(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_top_level_dictionary_list_entries(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     resp = client.get('/v0/submission/_dictionary')
     print resp.data
@@ -370,29 +367,29 @@ def test_top_level_dictionary_list_entries(client, pg_driver, submitter, diction
            in json.loads(resp.data)['links']
 
 
-def test_dictionary_get_entries(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_dictionary_get_entries(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     resp = client.get('/v0/submission/CGCI/BLGSP/_dictionary/aliquot')
     assert json.loads(resp.data)['id'] == 'aliquot'
 
 
-def test_top_level_dictionary_get_entries(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_top_level_dictionary_get_entries(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     resp = client.get('/v0/submission/_dictionary/aliquot')
     assert json.loads(resp.data)['id'] == 'aliquot'
 
 
-def test_dictionary_get_definitions(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_dictionary_get_definitions(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     resp = client.get('/v0/submission/CGCI/BLGSP/_dictionary/_definitions')
     assert 'UUID' in resp.json
 
 
-def test_put_dry_run(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_put_dry_run(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     path = '/v0/submission/CGCI/BLGSP/_dry_run/'
     resp = client.put(
@@ -412,8 +409,8 @@ def test_put_dry_run(client, pg_driver, submitter, dictionary_setup):
         assert not pg_driver.nodes(md.Experiment).first()
 
 
-def test_incorrect_project_error(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_incorrect_project_error(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     put_tcga_brca(client, submitter)
     resp = client.put(
@@ -443,8 +440,8 @@ def test_incorrect_project_error(client, pg_driver, submitter, dictionary_setup)
             == 'INVALID_PERMISSIONS')
 
 
-def test_timestamps(client, pg_driver, submitter, dictionary_setup):
-    test_post_example_entities(client, pg_driver, submitter, dictionary_setup)
+def test_timestamps(app, client, pg_driver, submitter, dictionary_setup):
+    test_post_example_entities(app, client, pg_driver, submitter, dictionary_setup)
     with pg_driver.session_scope():
         case = pg_driver.nodes(md.Case).first()
         ct = case.created_datetime
@@ -452,8 +449,8 @@ def test_timestamps(client, pg_driver, submitter, dictionary_setup):
         assert ct is not None, case.props
 
 
-def test_disallow_cross_project_references(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_disallow_cross_project_references(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_tcga_brca(client, submitter)
     put_cgci_blgsp(client, submitter)
     data = {
@@ -486,8 +483,8 @@ def test_disallow_cross_project_references(client, pg_driver, submitter, diction
     assert resp.status_code == 400, resp.data
 
 
-def test_delete_entity(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_delete_entity(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     resp = client.put(
         BLGSP_PATH,
@@ -523,8 +520,8 @@ def test_catch_internal_errors(monkeypatch, client, pg_driver, submitter):
         raise
 
 
-def test_validator_error_types(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_validator_error_types(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     assert put_cgci_blgsp(client, submitter).status_code == 200
     assert put_example_entities_together(client, pg_driver, submitter).status_code == 200
 
@@ -550,8 +547,8 @@ def test_validator_error_types(client, pg_driver, submitter, dictionary_setup):
     assert errors['longest_dimension'] == 'INVALID_VALUE'
 
 
-def test_invalid_json(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_invalid_json(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     resp = client.put(
         BLGSP_PATH,
@@ -564,8 +561,8 @@ def test_invalid_json(client, pg_driver, submitter, dictionary_setup):
     assert resp.status_code == 400
     assert 'Expecting value' in resp.json['message']
 
-def test_get_entity_by_id(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_get_entity_by_id(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     post_example_entities_together(client, pg_driver, submitter)
     with pg_driver.session_scope():
@@ -578,12 +575,12 @@ def test_get_entity_by_id(client, pg_driver, submitter, dictionary_setup):
     assert r.json['entities'][0]['properties']['id'] == case_id, r.data
 
 
-def test_invalid_file_index(monkeypatch, client, pg_driver, submitter, dictionary_setup):
+def test_invalid_file_index(monkeypatch, app, client, pg_driver, submitter, dictionary_setup):
     """
     Test that submitting an invalid data file doesn't create an index and an
     alias.
     """
-    dictionary_setup('s3://test.com')
+    dictionary_setup(app, 's3://test.com')
     def fail_index_test(_):
         raise AssertionError('IndexClient tried to create index or alias')
 
@@ -609,14 +606,14 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, submitter, dictionar
     print(resp)
 
 
-def test_valid_file_index(monkeypatch, client, pg_driver, submitter, dictionary_setup):
+def test_valid_file_index(monkeypatch, app, client, pg_driver, submitter, dictionary_setup):
     """
     Test that submitting a valid data file creates an index and an alias.
     """
 
     # Update this dictionary in the patched functions to check that they are
     # called.
-    dictionary_setup('s3://test.com')
+    dictionary_setup(app, 's3://test.com')
     called = patch_indexclient(monkeypatch)
 
     # Attempt to post the valid entities.
@@ -633,8 +630,8 @@ def test_valid_file_index(monkeypatch, client, pg_driver, submitter, dictionary_
     assert called['create']
     assert called['create_alias']
 
-def test_export_entity_by_id(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_export_entity_by_id(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     post_example_entities_together(client, pg_driver, submitter)
     with pg_driver.session_scope():
@@ -654,8 +651,8 @@ def test_export_entity_by_id(client, pg_driver, submitter, dictionary_setup):
     assert len(data) == 1
     assert data[0]['id'] == case_id
 
-def test_export_all_node_types(client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup('s3://test.com')
+def test_export_all_node_types(app, client, pg_driver, submitter, dictionary_setup):
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
     post_example_entities_together(client, pg_driver, submitter)
     with pg_driver.session_scope() as s:

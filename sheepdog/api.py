@@ -96,6 +96,64 @@ def app_init():
     app.logger.addHandler(get_handler())
 
     setup_default_handlers(app)
+    app.config.from_object('sheepdog.dev_settings')
+
+    @app.route('/_status', methods=['GET'])
+    def health_check():
+        with app.db.session_scope() as session:
+            try:
+                session.execute('SELECT 1')
+            except Exception:
+                raise UnhealthyCheck('Unhealthy')
+
+        return 'Healthy', 200
+
+    @app.route('/_version', methods=['GET'])
+    def version():
+        dictver = {
+            'version': DICTVERSION,
+            'commit': DICTCOMMIT,
+        }
+        base = {
+            'version': VERSION,
+            'commit': COMMIT,
+            'dictionary': dictver,
+        }
+
+        return jsonify(base), 200
+
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return jsonify(message=e.description), e.code
+
+
+    @app.errorhandler(500)
+    def server_error(e):
+        app.logger.exception(e)
+        return jsonify(message="internal server error"), 500
+
+
+    def _log_and_jsonify_exception(e):
+        """
+        Log an exception and return the jsonified version along with the code.
+
+        This is the error handling mechanism for ``APIErrors`` and
+        ``OAuth2Errors``.
+        """
+        app.logger.exception(e)
+        if hasattr(e, 'json') and e.json:
+            return jsonify(**e.json), e.code
+        else:
+            return jsonify(message=e.message), e.code
+
+
+    app.register_error_handler(APIError, _log_and_jsonify_exception)
+
+    app.register_error_handler(
+        sheepdog.errors.APIError, _log_and_jsonify_exception
+    )
+    app.register_error_handler(OAuth2Error, _log_and_jsonify_exception)
+
 
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
@@ -111,63 +169,6 @@ def app_init():
         )
 
     return app
-
-@app.route('/_status', methods=['GET'])
-def health_check():
-    with app.db.session_scope() as session:
-        try:
-            session.execute('SELECT 1')
-        except Exception:
-            raise UnhealthyCheck('Unhealthy')
-
-    return 'Healthy', 200
-
-@app.route('/_version', methods=['GET'])
-def version():
-    dictver = {
-        'version': DICTVERSION,
-        'commit': DICTCOMMIT,
-    }
-    base = {
-        'version': VERSION,
-        'commit': COMMIT,
-        'dictionary': dictver,
-    }
-
-    return jsonify(base), 200
-
-@app.errorhandler(404)
-def page_not_found(e):
-    return jsonify(message=e.description), e.code
-
-
-@app.errorhandler(500)
-def server_error(e):
-    app.logger.exception(e)
-    return jsonify(message="internal server error"), 500
-
-
-def _log_and_jsonify_exception(e):
-    """
-    Log an exception and return the jsonified version along with the code.
-
-    This is the error handling mechanism for ``APIErrors`` and
-    ``OAuth2Errors``.
-    """
-    app.logger.exception(e)
-    if hasattr(e, 'json') and e.json:
-        return jsonify(**e.json), e.code
-    else:
-        return jsonify(message=e.message), e.code
-
-
-app.register_error_handler(APIError, _log_and_jsonify_exception)
-
-app.register_error_handler(
-    sheepdog.errors.APIError, _log_and_jsonify_exception
-)
-app.register_error_handler(OAuth2Error, _log_and_jsonify_exception)
-
 
 def run_for_development(**kwargs):
     #app.logger.setLevel(logging.INFO)

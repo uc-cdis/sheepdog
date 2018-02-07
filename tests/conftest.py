@@ -21,7 +21,7 @@ from datamodelutils import models, validators
 import sheepdog
 from sheepdog.auth import roles
 from sheepdog.test_settings import PSQL_USER_DB_CONNECTION, Fernet, HMAC_ENCRYPTION_KEY
-from .api import app as _app, app_init
+from tests.api import app_init
 
 
 def get_parent(path):
@@ -134,11 +134,9 @@ def app(tmpdir, request):
         signpost.terminate()
         wait_for_signpost_not_alive(port)
 
-    _app.config.from_object("sheepdog.test_settings")
+    _app = app_init()
 
     request.addfinalizer(teardown)
-
-    app_init(_app)
 
     _app.logger.setLevel(os.environ.get("GDC_LOG_LEVEL", "WARNING"))
 
@@ -234,7 +232,7 @@ def submitter(app, request):
 
 @pytest.fixture(scope='session')
 def dictionary_setup():
-    def build_dict(url):
+    def build_dict(app, url):
         session = requests.Session()
         adapter = requests_mock.Adapter()
         session.mount('s3', adapter)
@@ -255,8 +253,8 @@ def dictionary_setup():
             )
 
             try:
-                _app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
+                app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
             except AssertionError:
-                _app.logger.info('Blueprint is already registered!!!')
+                app.logger.info('Blueprint is already registered!!!')
 
     return build_dict
