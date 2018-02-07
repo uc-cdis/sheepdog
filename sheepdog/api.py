@@ -83,7 +83,20 @@ def db_init(app):
     except Exception:
         app.logger.exception("Couldn't initialize auth, continuing anyway")
 
-def app_init(app):
+def app_init():
+    """Instantiate flask app
+
+    Returns:
+        Flask: App that's set up to be run as a standalone service
+    """
+
+    app = Flask(__name__)
+
+    # Setup logger
+    app.logger.addHandler(get_handler())
+
+    setup_default_handlers(app)
+
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
     app_register_blueprints(app)
@@ -97,14 +110,7 @@ def app_init(app):
             'Secret key not set in config! Authentication will not work'
         )
 
-
-app = Flask(__name__)
-
-# Setup logger
-app.logger.addHandler(get_handler())
-
-setup_default_handlers(app)
-
+    return app
 
 @app.route('/_status', methods=['GET'])
 def health_check():
