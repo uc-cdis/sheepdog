@@ -86,7 +86,7 @@ def _single_transaction(role, program, project, *doc_args, **tx_kwargs):
         flask.current_app.async_pool.schedule(
             single_transaction_worker, transaction, *doc_args
         )
-        return flask.jsonify(response)
+        return flask.jsonify(response), 200
     else:
         response, code = single_transaction_worker(transaction, *doc_args)
         return flask.jsonify(response), code
