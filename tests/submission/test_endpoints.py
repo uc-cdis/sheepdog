@@ -502,11 +502,12 @@ def test_delete_entity(app, client, pg_driver, submitter, dictionary_setup):
     assert resp.status_code == 200, resp.data
 
 
-def test_catch_internal_errors(monkeypatch, client, pg_driver, submitter):
+def test_catch_internal_errors(monkeypatch, app, client, pg_driver, submitter, dictionary_setup):
     """
     Monkey patch an essential function to just raise an error and assert that
     this error is caught and recorded as a transactional_error.
     """
+    dictionary_setup(app, 's3://test.com')
     put_cgci_blgsp(client, submitter)
 
     def just_raise_exception(self):
