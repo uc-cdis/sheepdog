@@ -551,7 +551,7 @@ class UploadEntity(EntityBase):
         return node.project_id == self.transaction.project_id
 
     def get_metadata(self):
-        metadata = {'acls': flask.g.dbgap_accession_numbers}
+        metadata = {'acls': self.transaction.get_phsids()}
         return metadata
 
     def register_index(self):
