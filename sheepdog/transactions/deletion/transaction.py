@@ -87,7 +87,7 @@ class DeletionTransaction(TransactionBase):
                 for field in self.fields_to_delete.split(','):
                     if field in e.node.props:
                         field_is_protected = any(
-                            [field in dictionary.schema[e.node.label][protected_category]
+                            [field in dictionary.schema[e.node.label].get(protected_category, [])
                              for protected_category in ['required', 'systemProperties']]
                         )
                         if field_is_protected:
