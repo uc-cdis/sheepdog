@@ -147,7 +147,7 @@ def _log_and_jsonify_exception(e):
     Log an exception and return the jsonified version along with the code.
 
     This is the error handling mechanism for ``APIErrors`` and
-    ``OAuth2Errors``.
+    ``AuthError``.
     """
     app.logger.exception(e)
     if hasattr(e, 'json') and e.json:
@@ -161,7 +161,7 @@ app.register_error_handler(APIError, _log_and_jsonify_exception)
 app.register_error_handler(
     sheepdog.errors.APIError, _log_and_jsonify_exception
 )
-app.register_error_handler(OAuth2Error, _log_and_jsonify_exception)
+app.register_error_handler(AuthError, _log_and_jsonify_exception)
 
 
 def run_for_development(**kwargs):

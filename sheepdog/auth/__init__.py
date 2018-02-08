@@ -11,6 +11,7 @@ or
 """
 
 from authutils import AuthDriver
+from authutils import admin_auth
 from authutils.token import current_token
 # import modules from authutils
 from authutils import dbgap
