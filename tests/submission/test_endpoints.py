@@ -191,8 +191,6 @@ def test_unauthorized_post_with_incorrect_role(client, pg_driver, cgci_blgsp, me
 
 
 def test_put_valid_entity_missing_target(client, pg_driver, cgci_blgsp, submitter):
-    
-
     with open(os.path.join(DATA_DIR, 'sample.json'), 'r') as f:
         sample = json.loads(f.read())
         sample['cases'] = {"submitter_id": "missing-case"}
@@ -215,7 +213,6 @@ def test_put_valid_entity_missing_target(client, pg_driver, cgci_blgsp, submitte
 
 
 def test_put_valid_entity_invalid_type(client, pg_driver, cgci_blgsp, submitter):
-    
     r = client.put(
         BLGSP_PATH,
         headers=submitter,
@@ -258,7 +255,6 @@ def test_put_valid_entity_invalid_type(client, pg_driver, cgci_blgsp, submitter)
 
 
 def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
-    
     path = BLGSP_PATH
     with open(os.path.join(DATA_DIR, 'case.json'), 'r') as f:
         case_sid = json.loads(f.read())['submitter_id']
@@ -535,7 +531,6 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
     Test that submitting an invalid data file doesn't create an index and an
     alias.
     """
-    
     def fail_index_test(_):
         raise AssertionError('IndexClient tried to create index or alias')
 

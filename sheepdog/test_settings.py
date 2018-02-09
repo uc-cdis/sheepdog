@@ -62,7 +62,7 @@ OAUTH2 = {
 }
 
 USER_API = "localhost"
-HOSTNAME = "localhost"
+BASE_URL = "localhost"
 
 VERIFY_PROJECT = False
 AUTH_SUBMISSION_LIST = False
