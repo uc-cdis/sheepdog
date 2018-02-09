@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from .config import LEGACY_MODE
 
 SIGNPOST = {
@@ -61,6 +62,18 @@ OAUTH2 = {
 }
 
 USER_API = "localhost"
+HOSTNAME = "localhost"
 
 VERIFY_PROJECT = False
 AUTH_SUBMISSION_LIST = False
+
+JWT_KEYPAIR_FILES = OrderedDict([
+    (
+        'key-test',
+        ('resources/keys/test_public_key.pem', 'resources/keys/test_private_key.pem'),
+    ),
+    (
+        'key-test-2',
+        ('resources/keys/test_public_key_2.pem', 'resources/keys/test_private_key_2.pem'),
+    ),
+])
