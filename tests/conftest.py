@@ -201,7 +201,7 @@ def encoded_jwt(private_key, user):
         kid, private_key, user, 3600, scopes, forced_exp_time=None)
 
 
-def create_user_header(app, request, pg_driver, username):
+def create_user_header(pg_driver, username):
     private_key = utils.read_file('resources/keys/test_private_key.pem')
 
     user_driver = SQLAlchemyDriver(PSQL_USER_DB_CONNECTION)
@@ -212,18 +212,18 @@ def create_user_header(app, request, pg_driver, username):
 
 
 @pytest.fixture()
-def submitter(app, request, pg_driver):
-    return create_user_header(app, request, pg_driver, 'submitter')
+def submitter(pg_driver):
+    return create_user_header(pg_driver, 'submitter')
 
 
 @pytest.fixture()
-def admin(app, request, pg_driver):
-    return create_user_header(app, request, pg_driver, 'admin')
+def admin(pg_driver):
+    return create_user_header(pg_driver, 'admin')
 
 
 @pytest.fixture()
-def member(app, request, pg_driver):
-    return create_user_header(app, request, pg_driver, 'member')
+def member(pg_driver):
+    return create_user_header(pg_driver, 'member')
 
 
 @pytest.fixture()
