@@ -12,3 +12,8 @@ Sphinx==1.6.5
 sphinx_rtd_theme
 -e git+https://git@github.com/uc-cdis/cdisutils-test.git@0.0.1#egg=cdisutilstest
 -e git+https://git@github.com/NCI-GDC/signpost.git@c8e2aa5ff572c808cba9b522b64f7b497e79c524#egg=signpost
+# these two are required by fence -> cirrus -> google_cloud
+pyasn1-modules==0.0.11
+urllib3==1.22
+-e git+https://github.com/uc-cdis/cirrus.git@0.0.0#egg=cirrus-0.0.0
+-e git+https://git@github.com/uc-cdis/fence.git@1.0.1#egg=fence
