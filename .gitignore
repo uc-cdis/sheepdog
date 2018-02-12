@@ -128,3 +128,7 @@ ENV/
 # mypy
 .mypy_cache/
 coverage.xml
+
+# jwt keys
+keys/*.pem
+tests/resources/keys/*.pem
