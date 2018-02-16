@@ -10,7 +10,6 @@ Essentially, there are only 2 cases being handled:
     2) no id is provided, create a new file in the index regardless of whether
        or not that file already exists in the index
 """
-import json
 import flask
 import copy
 
@@ -51,21 +50,22 @@ DEFAULT_METADATA_FILE = {
     'data_category': 'data_file',
     'file_size': DEFAULT_FILE_SIZE,
     'state_comment': '',
-    'url': DEFAULT_URL
+    'urls': DEFAULT_URL
 }
 
-@patch('sheepdog.transactions.upload.entity.UploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.entity.UploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.entity.UploadEntity._create_index')
-@patch('sheepdog.transactions.upload.entity.UploadEntity._create_alias')
+
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_not_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, submitter, dictionary_setup, monkeypatch):
+        client, pg_driver, admin, submitter, cgci_blgsp, monkeypatch):
     """
     Test node and data file creation when neither exist and no ID is provided.
     """
     monkeypatch.setitem(flask.current_app.config, 'USE_SIGNPOST', True)
-    submit_first_experiment(client, pg_driver, submitter, dictionary_setup)
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
 
     get_index_uuid.return_value = None
     get_index_hash.return_value = None
@@ -75,7 +75,7 @@ def test_data_file_not_indexed(
     document.did = '14fd1746-61bb-401a-96d2-342cfaf70000'
     create_index.return_value = document
 
-    resp = submit_metadata_file(client, pg_driver, submitter, dictionary_setup)
+    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
 
     # index creation should be called with no args for SIGNPOST
     assert create_index.call_count == 1
@@ -92,13 +92,13 @@ def test_data_file_not_indexed(
     assert entity['action'] == 'create'
 
 
-@patch('sheepdog.transactions.upload.entity.UploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.entity.UploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.entity.UploadEntity._create_index')
-@patch('sheepdog.transactions.upload.entity.UploadEntity._create_alias')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_not_indexed_id_provided(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, submitter, dictionary_setup, monkeypatch):
+        client, pg_driver, admin, submitter, cgci_blgsp, monkeypatch):
     """
     Test node and data file creation when neither exist and an ID is provided.
 
@@ -106,7 +106,7 @@ def test_data_file_not_indexed_id_provided(
           is provided
     """
     monkeypatch.setitem(flask.current_app.config, 'USE_SIGNPOST', True)
-    submit_first_experiment(client, pg_driver, submitter, dictionary_setup)
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
 
     get_index_uuid.return_value = None
     get_index_hash.return_value = None
@@ -119,7 +119,7 @@ def test_data_file_not_indexed_id_provided(
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
     file['id'] = DEFAULT_UUID
     resp = submit_metadata_file(
-        client, pg_driver, submitter, dictionary_setup, data=file)
+        client, pg_driver, admin, submitter, cgci_blgsp, data=file)
 
     # no index creation
     assert not create_index.called
@@ -132,13 +132,13 @@ def test_data_file_not_indexed_id_provided(
     assert_single_entity_from_response(resp)
 
 
-@patch('sheepdog.transactions.upload.entity.UploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.entity.UploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.entity.UploadEntity._create_index')
-@patch('sheepdog.transactions.upload.entity.UploadEntity._create_alias')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_already_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, submitter, dictionary_setup, monkeypatch):
+        client, pg_driver, admin, submitter, cgci_blgsp, monkeypatch):
     """
     Test submitting when the file is already indexed in the index client and
     no ID is provided. sheepdog should fall back on the hash/size of the file
@@ -149,7 +149,7 @@ def test_data_file_already_indexed(
           have capabilities of searching for files based on hash/size
     """
     monkeypatch.setitem(flask.current_app.config, 'USE_SIGNPOST', True)
-    submit_first_experiment(client, pg_driver, submitter, dictionary_setup)
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
 
     # signpostclient cannot find by hash/size
     get_index_hash.return_value = None
@@ -160,7 +160,7 @@ def test_data_file_already_indexed(
     document.did = '14fd1746-61bb-401a-96d2-342cfaf70000'
     create_index.return_value = document
 
-    resp = submit_metadata_file(client, pg_driver, submitter, dictionary_setup)
+    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
 
     # index creation should be called with no args for SIGNPOST
     assert create_index.call_count == 1
@@ -177,13 +177,13 @@ def test_data_file_already_indexed(
     assert entity['action'] == 'create'
 
 
-@patch('sheepdog.transactions.upload.entity.UploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.entity.UploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.entity.UploadEntity._create_index')
-@patch('sheepdog.transactions.upload.entity.UploadEntity._create_alias')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_already_indexed_id_provided(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, submitter, dictionary_setup, monkeypatch):
+        client, pg_driver, admin, submitter, cgci_blgsp, monkeypatch):
     """
     Test submitting when the file is already indexed in the index client and
     an id is provided in the submission.
@@ -192,7 +192,7 @@ def test_data_file_already_indexed_id_provided(
           is provided
     """
     monkeypatch.setitem(flask.current_app.config, 'USE_SIGNPOST', True)
-    submit_first_experiment(client, pg_driver, submitter, dictionary_setup)
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
 
     document = MagicMock()
     document.did = '14fd1746-61bb-401a-96d2-342cfaf70000'
@@ -216,7 +216,7 @@ def test_data_file_already_indexed_id_provided(
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
     file['id'] = document.did
     resp = submit_metadata_file(
-        client, pg_driver, submitter, dictionary_setup, data=file)
+        client, pg_driver, admin, submitter, cgci_blgsp, data=file)
 
     # no index or alias creation
     assert not create_index.called

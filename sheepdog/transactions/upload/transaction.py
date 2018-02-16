@@ -6,7 +6,6 @@ from collections import Counter
 
 # Validating Entity Existence in dbGaP
 from datamodelutils import validators
-from flask import current_app
 from sqlalchemy.orm.attributes import flag_modified
 
 from sheepdog.auth import dbgap
@@ -19,11 +18,9 @@ from sheepdog.globals import (
     TX_LOG_STATE_FAILED,
     TX_LOG_STATE_SUCCEEDED,
 )
-from sheepdog.transactions.upload.entity import (
-    EntityErrors,
-    UploadEntity,
-)
+from sheepdog.transactions.upload.entity import EntityErrors
 from sheepdog.transactions.transaction_base import TransactionBase
+from sheepdog.transactions.upload.entity_factory import UploadEntityFactory
 
 
 class UploadTransaction(TransactionBase):
@@ -63,7 +60,7 @@ class UploadTransaction(TransactionBase):
             self.db_driver,
             self.logger,
             proxies=self.external_proxies,
-	)
+        )
 
         self._config = kwargs['flask_config']
 
@@ -276,9 +273,9 @@ class UploadTransaction(TransactionBase):
             None
         """
         try:
-            entity = UploadEntity(self, self._config)
-            self.entities.append(entity)
+            entity = UploadEntityFactory.create(self, doc, self._config)
             entity.parse(doc)
+            self.entities.append(entity)
         except Exception as e:  # pylint: disable=broad-except
             self.logger.exception(e)
             self.record_error('Unable to parse entity')
