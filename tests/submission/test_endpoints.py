@@ -10,7 +10,8 @@ from moto import mock_s3
 
 from gdcdatamodel import models as md
 from sheepdog.transactions.upload import UploadTransaction
-from tests.submission.utils import data_fnames, patch_indexclient
+from indexd.index.drivers.alchemy import SQLAlchemyIndexDriver
+from tests.submission.utils import data_fnames
 
 
 #: Do we have a cache case setting and should we do it?
@@ -19,8 +20,6 @@ BLGSP_PATH = '/v0/submission/CGCI/BLGSP/'
 BRCA_PATH = '/v0/submission/TCGA/BRCA/'
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
-
-
 
 @contextlib.contextmanager
 def s3_conn():
@@ -269,10 +268,7 @@ def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
                 assert (case['submitter_id'] == case_sid), (fname, resp.data)
 
 
-def post_example_entities_together(
-        client, pg_driver, cgci_blgsp, submitter, data_fnames2=None):
-    if data_fnames2 is None:
-        data_fnames2 =  data_fnames
+def post_example_entities_together(client, submitter, data_fnames2=data_fnames):
     path = BLGSP_PATH
     data = []
     for fname in data_fnames2:
@@ -281,19 +277,19 @@ def post_example_entities_together(
     return client.post(path, headers=submitter, data=json.dumps(data))
 
 
-def put_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
+def put_example_entities_together(client, headers):
     path = BLGSP_PATH
     data = []
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), 'r') as f:
             data.append(json.loads(f.read()))
-    return client.put(path, headers=submitter, data=json.dumps(data))
+    return client.put(path, headers=headers, data=json.dumps(data))
 
 
 def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
     with open(os.path.join(DATA_DIR, 'case.json'), 'r') as f:
         case_sid = json.loads(f.read())['submitter_id']
-    resp = post_example_entities_together(client, pg_driver, cgci_blgsp, submitter)
+    resp = post_example_entities_together(client, submitter)
     print resp.data
     assert resp.status_code == 201, resp.data
     if CACHE_CASES:
@@ -306,13 +302,13 @@ def test_related_cases(client, pg_driver, cgci_blgsp, submitter):
     with open(os.path.join(DATA_DIR, 'case.json'), 'r') as f:
         case_id = json.loads(f.read())['submitter_id']
 
-    resp = post_example_entities_together(client, pg_driver, cgci_blgsp, submitter)
+    resp = post_example_entities_together(client, submitter)
     assert resp.json["cases_related_to_created_entities_count"] == 1, resp.data
     assert resp.json["cases_related_to_updated_entities_count"] == 0, resp.data
     for e in resp.json['entities']:
         for c in e['related_cases']:
             assert c['submitter_id'] == case_id, resp.data
-    resp = put_example_entities_together(client, pg_driver, cgci_blgsp, submitter)
+    resp = put_example_entities_together(client, submitter)
     assert resp.json["cases_related_to_created_entities_count"] == 0, resp.data
     assert resp.json["cases_related_to_updated_entities_count"] == 1, resp.data
 
@@ -471,14 +467,14 @@ def test_catch_internal_errors(monkeypatch, client, pg_driver, cgci_blgsp, submi
 
     monkeypatch.setattr(UploadTransaction, 'pre_validate', just_raise_exception)
     try:
-        r = put_example_entities_together(client, pg_driver, cgci_blgsp, submitter)
+        r = put_example_entities_together(client, submitter)
         assert len(r.json['transactional_errors']) == 1, r.data
     except:
         raise
 
 
 def test_validator_error_types(client, pg_driver, cgci_blgsp, submitter):
-    assert put_example_entities_together(client, pg_driver, cgci_blgsp, submitter).status_code == 200
+    assert put_example_entities_together(client, submitter).status_code == 200
 
     r = client.put(
         BLGSP_PATH,
@@ -515,7 +511,7 @@ def test_invalid_json(client, pg_driver, cgci_blgsp, submitter):
     assert 'Expecting value' in resp.json['message']
 
 def test_get_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
-    post_example_entities_together(client, pg_driver, cgci_blgsp, submitter)
+    post_example_entities_together(client, submitter)
     with pg_driver.session_scope():
         case_id = pg_driver.nodes(md.Case).first().node_id
     path = '/v0/submission/CGCI/BLGSP/entities/{case_id}'.format(case_id=case_id)
@@ -550,19 +546,18 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
         + ['read_group.json', 'submitted_unaligned_reads_invalid.json']
     )
     resp = post_example_entities_together(
-        client, pg_driver, cgci_blgsp, submitter, data_fnames2=test_fnames
+        client, submitter, data_fnames2=test_fnames
     )
     print(resp)
 
 
-def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter):
+def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter, index_client):
     """
     Test that submitting a valid data file creates an index and an alias.
     """
 
     # Update this dictionary in the patched functions to check that they are
     # called.
-    called = patch_indexclient(monkeypatch)
 
     # Attempt to post the valid entities.
     test_fnames = (
@@ -570,15 +565,21 @@ def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter)
         + ['read_group.json', 'submitted_unaligned_reads.json']
     )
     resp = post_example_entities_together(
-        client, pg_driver, cgci_blgsp, submitter, data_fnames2=test_fnames
+        client, submitter, data_fnames2=test_fnames
     )
-    print(resp)
+    assert resp.status_code == 201, resp.data
 
-    assert called['create']
-    assert called['create_alias']
+    # this is a node that will have an indexd entry
+    sur_entity = None
+    for entity in resp.json['entities']:
+        if entity['type'] == 'submitted_unaligned_reads':
+            sur_entity = entity
+
+    assert sur_entity, 'No submitted_unaligned_reads entity created'
+    assert index_client.get(sur_entity['id']), 'No indexd document created'
 
 def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
-    post_example_entities_together(client, pg_driver, cgci_blgsp, submitter)
+    post_example_entities_together(client, submitter)
     with pg_driver.session_scope():
         case_id = pg_driver.nodes(md.Case).first().node_id
     path = '/v0/submission/CGCI/BLGSP/export/?ids={case_id}'.format(case_id=case_id)
@@ -597,7 +598,7 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     assert data[0]['id'] == case_id
 
 def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
-    post_example_entities_together(client, pg_driver, cgci_blgsp, submitter)
+    post_example_entities_together(client, submitter)
     with pg_driver.session_scope() as s:
         case = pg_driver.nodes(md.Case).first()
         new_case = md.Case(str(uuid.uuid4()))

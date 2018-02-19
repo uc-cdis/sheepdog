@@ -17,6 +17,7 @@ dist/
 downloads/
 eggs/
 .eggs/
+.pytest_cache
 lib/
 lib64/
 parts/
@@ -128,3 +129,6 @@ ENV/
 # mypy
 .mypy_cache/
 coverage.xml
+
+# testing
+*.sq3

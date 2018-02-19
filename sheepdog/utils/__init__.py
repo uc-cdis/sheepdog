@@ -1,5 +1,6 @@
 # pylint: disable=unsubscriptable-object
-"""
+"""sheepdog.utils
+
 Provide utility functions primarily for code in ``sheepdog.blueprint``
 (though some are also used in ``sheepdog.upload``).
 """
@@ -307,6 +308,15 @@ def get_node(project_id, uuid, db=None):
 
 
 def get_signpost(uuid):
+    """Get signpost doc for a given UUID
+
+    Args:
+        uuid (string): UUID that is possibly in the system
+        passive (bool): if a uuid doesn't exist, that's ok
+    Returns:
+        doc: Signpost doc to be modified later
+    """
+
     signpost_obj = flask.current_app.signpost.get(uuid)
     if signpost_obj is None:
         raise InternalError(
@@ -445,8 +455,30 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
         update_state(node, UPLOADING_STATE)
     elif action == 'abort_multipart':
         update_state(node, submitted_state())
-    if action not in ['upload', 'upload_part', 'complete_multipart']:
+
+    if action not in ['upload', 'upload_part', 'complete_multipart', 'reassign']:
         data = ''
+
+    if action == 'reassign':
+        try:
+            # data.read() works like a file pointer.
+            # When you .read() again it will be pointing at the end of the stream
+            json_data = data.read()
+
+            # if it comes in as a string, convert it to dict
+            if not isinstance(json_data, dict):
+                json_data = json.loads(json_data)
+
+            new_url = json_data['s3_url']
+
+        except Exception as e:
+            message = 'Unable to parse json. Use the format {\'s3_url\':\'s3/://...\'}'
+            return flask.Response(json.dumps({'message': message}), status=400)
+
+        update_signpost_url(signpost_obj, s3_url=new_url)
+        update_state(node, SUCCESS_STATE)
+        message = ('URL successfully reassigned. New url: {}'.format(new_url))
+        return flask.Response(json.dumps({'message': message}), status=200)
 
     resp = s3.make_s3_request(
         project_id, uuid, data, args, headers, method, action
@@ -468,7 +500,16 @@ def update_state(node, state):
         node.file_state = state
 
 
-def update_signpost_url(signpost_obj, key_name):
+def update_signpost_url(signpost_obj, key_name=None, s3_url=None):
+    """Update a signpost document with a new URL.
+
+    Args:
+        signpost_obj (Signpost Doc): Signpost object that will be modified
+            with a new URL.
+        key_name (string): Name of the s3 key to update a signpost object with.
+        s3_url (string): The URL you wish assign a signpost object with.
+    """
+
     if key_name:
         url = "s3://{host}/{bucket}/{name}".format(
             host=flask.current_app.config['SUBMISSION']['host'],
@@ -476,6 +517,8 @@ def update_signpost_url(signpost_obj, key_name):
             name=key_name
         )
         signpost_obj.urls = [url]
+    elif s3_url:
+        signpost_obj.urls = [s3_url]
     else:
         signpost_obj.urls = []
     signpost_obj.patch()

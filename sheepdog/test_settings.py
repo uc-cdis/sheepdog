@@ -2,8 +2,10 @@ from collections import OrderedDict
 from .config import LEGACY_MODE
 
 SIGNPOST = {
-    "host": "http://localhost:8000/", 'version': 'v0',
-    "auth": None}
+    "host": "http://localhost:8000",
+    'version': 'v0',
+    "auth": ('fake_user', 'fake_password'),
+}
 AUTH = 'https://fake_auth_url'
 INTERNAL_AUTH = 'https://fake_auth_url'
 AUTH_ADMIN_CREDS = {

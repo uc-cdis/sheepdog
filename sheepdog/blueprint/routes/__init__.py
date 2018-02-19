@@ -1,4 +1,5 @@
-"""
+"""sheepdog.blueprint.routes
+
 List routes to be added to the blueprint in ``sheepdog.blueprint``. Each
 route is constructed with the ``new_route`` function from
 ``sheepdog.blueprint.routes.route_utils``.
@@ -241,25 +242,25 @@ routes = [
         '/<program>/<project>/xml/biospecimen/bcr',
         views.program.project.create_biospecimen_viewer(),
         endpoint='update_entities_biospecimen',
-        methods=['PUT']
+        methods=['PUT'],
     ),
     new_route(
         '/<program>/<project>/xml/biospecimen/bcr/_dry_run',
         views.program.project.create_biospecimen_viewer(dry_run=True),
         endpoint='update_entities_biospecimen_dry_run',
-        methods=['PUT']
+        methods=['PUT'],
     ),
     new_route(
         '/<program>/<project>/xml/clinical/bcr',
         views.program.project.create_clinical_viewer(),
         endpoint='update_entities_clinical_bcr',
-        methods=['PUT']
+        methods=['PUT'],
     ),
     new_route(
         '/<program>/<project>/xml/clinical/bcr/_dry_run',
         views.program.project.create_clinical_viewer(dry_run=True),
         endpoint='update_entities_clinical_bcr_dry_run',
-        methods=['PUT']
+        methods=['PUT'],
     ),
     new_route(
         '/template',
@@ -269,11 +270,23 @@ routes = [
     new_route(
         '/template/<entity>',
         views.get_template,
-        methods=['GET']
+        methods=['GET'],
     ),
     new_route(
         '/validation/upload_manifest',
         views.validate_upload_manifest,
         methods=['POST'],
     ),
+    new_route(
+        '/admin/<program>/<project>/files/<file_uuid>/reassign',
+        views.program.project.create_files_viewer(reassign=True),
+        endpoint='file_operations_admin',
+        methods=['PUT'],
+    ),
+    new_route(
+        '/admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>',
+        views.program.project.create_delete_entities_viewer(),
+        endpoint='delete_entities_admin',
+        methods=['DELETE']
+    )
 ]
