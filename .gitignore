@@ -130,5 +130,10 @@ ENV/
 .mypy_cache/
 coverage.xml
 
+
 # testing
 *.sq3
+
+# jwt keys
+keys/*.pem
+tests/resources/keys/*.pem
