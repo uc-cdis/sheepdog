@@ -1,3 +1,7 @@
+# this is for interpreting fixtures as parameters that don't do anything
+# pylint: disable=unused-argument
+# pylint: disable=superfluous-parens
+# pylint: disable=no-member
 import contextlib
 import json
 import os
@@ -10,7 +14,6 @@ from moto import mock_s3
 
 from gdcdatamodel import models as md
 from sheepdog.transactions.upload import UploadTransaction
-from indexd.index.drivers.alchemy import SQLAlchemyIndexDriver
 from tests.submission.utils import data_fnames
 
 
@@ -128,9 +131,9 @@ def test_project_creation_endpoint(client, pg_driver, admin):
         assert pg_driver.nodes(md.Project).count() == 1
         n_cgci = (
             pg_driver.nodes(md.Project)
-                .path('programs')
-                .props(name='CGCI')
-                .count()
+            .path('programs')
+            .props(name='CGCI')
+            .count()
         )
         assert n_cgci == 1
     assert resp.json['links'] == ['/v0/submission/CGCI/BLGSP'], resp.json
@@ -268,7 +271,9 @@ def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
                 assert (case['submitter_id'] == case_sid), (fname, resp.data)
 
 
-def post_example_entities_together(client, submitter, data_fnames2=data_fnames):
+def post_example_entities_together(client, submitter, data_fnames2=None):
+    if not data_fnames2:
+        data_fnames2 = data_fnames
     path = BLGSP_PATH
     data = []
     for fname in data_fnames2:

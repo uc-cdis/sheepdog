@@ -1,6 +1,5 @@
 # pylint: disable=unsubscriptable-object
-"""sheepdog.utils
-
+"""
 Provide utility functions primarily for code in ``sheepdog.blueprint``
 (though some are also used in ``sheepdog.upload``).
 """
@@ -396,8 +395,7 @@ def jsonify_check_errors(data_and_errors, error_code=400):
     data, errors = data_and_errors
     if errors:
         return flask.jsonify({'data': data, 'errors': errors}), error_code
-    else:
-        return flask.jsonify({'data': data}), 200
+    return flask.jsonify({'data': data}), 200
 
 
 @contextmanager
@@ -471,7 +469,7 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
 
             new_url = json_data['s3_url']
 
-        except Exception as e:
+        except Exception:
             message = 'Unable to parse json. Use the format {\'s3_url\':\'s3/://...\'}'
             return flask.Response(json.dumps({'message': message}), status=400)
 

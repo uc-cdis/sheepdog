@@ -1,25 +1,28 @@
+# pylint: disable=superfluous-parens
+# pylint: disable=redefined-outer-name
+"""tests.api
+
+Complimentary to conftest.py it sets up certain functionality
+"""
+
 import sqlite3
 import sys
+
 import cdis_oauth2client
-
-from flask import Flask, jsonify
-from flask.ext.cors import CORS
-from flask_sqlalchemy_session import flask_scoped_session
-from psqlgraph import PsqlGraphDriver
-
 from cdis_oauth2client import OAuth2Client, OAuth2Error
 from cdispyutils.log import get_handler
+from flask import Flask, jsonify
+from flask_sqlalchemy_session import flask_scoped_session
 from indexclient.client import IndexClient
+from indexd.index.drivers.alchemy import SQLAlchemyIndexDriver
+from indexd.alias.drivers.alchemy import SQLAlchemyAliasDriver
+from indexd.auth.drivers.alchemy import SQLAlchemyAuthDriver
+from psqlgraph import PsqlGraphDriver
 from userdatamodel.driver import SQLAlchemyDriver
 
 from sheepdog.auth import AuthDriver
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
 from sheepdog.version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
-
-from indexd.index.drivers.alchemy import SQLAlchemyIndexDriver
-from indexd.alias.drivers.alchemy import SQLAlchemyAliasDriver
-from indexd.auth.drivers.alchemy import SQLAlchemyAuthDriver
-
 
 # recursion depth is increased for complex graph traversals
 sys.setrecursionlimit(10000)
@@ -130,8 +133,7 @@ def _log_and_jsonify_exception(e):
     app.logger.exception(e)
     if hasattr(e, 'json') and e.json:
         return jsonify(**e.json), e.code
-    else:
-        return jsonify(message=e.message), e.code
+    return jsonify(message=e.message), e.code
 
 
 app.register_error_handler(APIError, _log_and_jsonify_exception)
@@ -200,18 +202,18 @@ def setup_sqlite3_index_tables():
     SQLAlchemyIndexDriver('sqlite:///index.sq3')
 
     with sqlite3.connect(INDEX_HOST) as conn:
-        c = conn.execute('''
+        connection = conn.execute('''
             SELECT name FROM sqlite_master WHERE type = 'table'
         ''')
 
-        tables = [i[0] for i in c]
+        tables = [i[0] for i in connection]
 
         for table in INDEX_TABLES:
             assert table in tables, '{table} not created'.format(table=table)
 
-        for table, schema in INDEX_TABLES.items():
+        for table, _ in INDEX_TABLES.items():
             # NOTE PRAGMA's don't work with parameters...
-            c = conn.execute('''
+            connection = conn.execute('''
                 PRAGMA table_info ('{table}')
             '''.format(table=table))
 
@@ -221,18 +223,18 @@ def setup_sqlite3_alias_tables():
     SQLAlchemyAliasDriver('sqlite:///alias.sq3')
 
     with sqlite3.connect(ALIAS_HOST) as conn:
-        c = conn.execute('''
+        connection = conn.execute('''
             SELECT name FROM sqlite_master WHERE type = 'table'
         ''')
 
-        tables = [i[0] for i in c]
+        tables = [i[0] for i in connection]
 
         for table in ALIAS_TABLES:
             assert table in tables, '{table} not created'.format(table=table)
 
-        for table, schema in ALIAS_TABLES.items():
+        for table, _ in ALIAS_TABLES.items():
             # NOTE PRAGMA's don't work with parameters...
-            c = conn.execute('''
+            connection = conn.execute('''
                 PRAGMA table_info ('{table}')
             '''.format(table=table))
 
@@ -241,9 +243,9 @@ def setup_sqlite3_auth_tables(username, password):
     auth_driver = SQLAlchemyAuthDriver('sqlite:///auth.sq3')
     try:
         auth_driver.add(username, password)
-        print('User {} created'.format(username))
-    except Exception as e:
-        print('oh no')
+    except Exception as error:
+        print('Unable to create auth tables')
+        print(error)
 
 def indexd_init(username, password):
     setup_sqlite3_index_tables()

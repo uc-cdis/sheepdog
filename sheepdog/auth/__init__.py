@@ -1,5 +1,4 @@
-"""sheepdog.auth
-
+"""
 This module will depend on the downstream authutils dependency.
 
 eg:

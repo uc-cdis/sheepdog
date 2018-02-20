@@ -1,5 +1,3 @@
-"""sheepdog.transactions.deletion.transaction"""
-
 from flask import request
 
 from sheepdog.errors import UserError

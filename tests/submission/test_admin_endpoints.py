@@ -1,17 +1,12 @@
-"""tests.submission.test_admin_endpoints
-
+"""
 Tests for admin endpoint functionality.
 """
 # pylint: disable=unused-argument, no-member
 
 import json
-import os.path
 
 from gdcdatamodel import models as md
-from tests.submission.test_endpoints import (
-    BLGSP_PATH,
-    post_example_entities_together,
-)
+from tests.submission.test_endpoints import post_example_entities_together
 from tests.submission.utils import data_fnames
 
 def create_blgsp_url(path):

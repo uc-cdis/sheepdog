@@ -1,8 +1,7 @@
 # pylint: disable=protected-access
 # pylint: disable=unsubscriptable-object
 # pylint: disable=unsupported-membership-test
-"""sheepdog.blueprint.routes.views.program.project
-
+"""
 View functions for routes in the blueprint for '/<program>/<project>' paths.
 """
 
