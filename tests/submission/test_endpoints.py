@@ -590,10 +590,10 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
     # file is invalid, change the ``create`` and ``create_alias`` methods to
     # raise an error.
     monkeypatch.setattr(
-        UploadTransaction, 'signpost.create', fail_index_test, raising=False
+        UploadTransaction, 'indexd.create', fail_index_test, raising=False
     )
     monkeypatch.setattr(
-        UploadTransaction, 'signpost.create_alias', fail_index_test,
+        UploadTransaction, 'indexd.create_alias', fail_index_test,
         raising=False
     )
     # Attempt to post the invalid entities.
