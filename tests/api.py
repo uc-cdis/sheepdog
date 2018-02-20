@@ -18,6 +18,10 @@ from indexd.index.drivers.alchemy import SQLAlchemyIndexDriver
 from indexd.alias.drivers.alchemy import SQLAlchemyAliasDriver
 from indexd.auth.drivers.alchemy import SQLAlchemyAuthDriver
 from psqlgraph import PsqlGraphDriver
+
+from cdis_oauth2client import OAuth2Client, OAuth2Error
+from cdispyutils.log import get_handler
+from indexclient.client import IndexClient
 from userdatamodel.driver import SQLAlchemyDriver
 
 from sheepdog.auth import AuthDriver
@@ -54,10 +58,10 @@ def db_init(app):
     app.oauth2 = OAuth2Client(**app.config['OAUTH2'])
 
     app.logger.info('Initializing Indexd driver')
-    app.signpost = IndexClient(
-        app.config['SIGNPOST']['host'],
-        version=app.config['SIGNPOST']['version'],
-        auth=app.config['SIGNPOST']['auth'])
+    app.indexd = IndexClient(
+        app.config['INDEXD']['host'],
+        version=app.config['INDEXD']['version'],
+        auth=app.config['INDEXD']['auth'])
     try:
         app.logger.info('Initializing Auth driver')
         app.auth = AuthDriver(app.config["AUTH_ADMIN_CREDS"], app.config["INTERNAL_AUTH"])

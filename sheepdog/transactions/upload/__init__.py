@@ -69,7 +69,7 @@ def _single_transaction(role, program, project, *doc_args, **tx_kwargs):
         role=role,
         user=flask.g.user,
         logger=flask.current_app.logger,
-        signpost=flask.current_app.signpost,
+        indexd=flask.current_app.indexd,
         flask_config=flask.current_app.config,
         db_driver=db_driver,
         external_proxies=utils.get_external_proxies(),
@@ -123,7 +123,7 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
                                     user=flask.g.user,
                                     logger=flask.current_app.logger,
                                     flask_config=flask.current_app.config,
-                                    signpost=flask.current_app.signpost,
+                                    indexd=flask.current_app.indexd,
                                     external_proxies=utils.get_external_proxies(),
                                     db_driver=db_driver,
                                     **tx_kwargs)
@@ -249,7 +249,7 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
         role=role,
         user=flask.g.user,
         logger=flask.current_app.logger,
-        signpost=flask.current_app.signpost,
+        indexd=flask.current_app.indexd,
         db_driver=flask.current_app.db,
         external_proxies=utils.get_external_proxies(),
         **tx_kwargs

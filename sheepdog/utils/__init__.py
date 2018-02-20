@@ -306,22 +306,22 @@ def get_node(project_id, uuid, db=None):
         )
 
 
-def get_signpost(uuid):
-    """Get signpost doc for a given UUID
+def get_indexd(uuid):
+    """Get indexd doc for a given UUID
 
     Args:
         uuid (string): UUID that is possibly in the system
         passive (bool): if a uuid doesn't exist, that's ok
     Returns:
-        doc: Signpost doc to be modified later
+        doc: Indexd doc to be modified later
     """
 
-    signpost_obj = flask.current_app.signpost.get(uuid)
-    if signpost_obj is None:
+    indexd_obj = flask.current_app.indexd.get(uuid)
+    if indexd_obj is None:
         raise InternalError(
-            "Signpost entry for {} doesn't exist".format(uuid)
+            "Indexd entry for {} doesn't exist".format(uuid)
         )
-    return signpost_obj
+    return indexd_obj
 
 
 def get_suggestion(value, choices):
@@ -440,7 +440,7 @@ def lookup_program(psql_driver, program):
 def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run=False):
     node = get_node(project_id, uuid)
     check_action_allowed_in_state(action, node.file_state)
-    signpost_obj = get_signpost(uuid)
+    indexd_obj = get_indexd(uuid)
 
     if dry_run:
         message = (
@@ -483,12 +483,12 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
     )
     if action in ['upload', 'complete_multipart']:
         if resp.status == 200:
-            update_signpost_url(signpost_obj, project_id + '/' + uuid)
+            update_indexd_url(indexd_obj, project_id + '/' + uuid)
             update_state(node, SUCCESS_STATE)
     if action == 'delete':
         if resp.status == 204:
             update_state(node, submitted_state())
-            update_signpost_url(signpost_obj, None)
+            update_indexd_url(indexd_obj, None)
     return resp
 
 
@@ -498,14 +498,14 @@ def update_state(node, state):
         node.file_state = state
 
 
-def update_signpost_url(signpost_obj, key_name=None, s3_url=None):
-    """Update a signpost document with a new URL.
+def update_indexd_url(indexd_obj, key_name=None, s3_url=None):
+    """Update indexd document with a new URL.
 
     Args:
-        signpost_obj (Signpost Doc): Signpost object that will be modified
+        indexd_obj (Indexd Doc): Indexd object that will be modified
             with a new URL.
-        key_name (string): Name of the s3 key to update a signpost object with.
-        s3_url (string): The URL you wish assign a signpost object with.
+        key_name (string): Name of the s3 key to update indexd object with.
+        s3_url (string): The URL you wish assign indexd object with.
     """
 
     if key_name:
@@ -514,12 +514,13 @@ def update_signpost_url(signpost_obj, key_name=None, s3_url=None):
             bucket=flask.current_app.config['SUBMISSION']['bucket'],
             name=key_name
         )
-        signpost_obj.urls = [url]
+        indexd_obj.urls = [url]
     elif s3_url:
-        signpost_obj.urls = [s3_url]
+        indexd_obj.urls = [s3_url]
     else:
-        signpost_obj.urls = []
-    signpost_obj.patch()
+        indexd_obj.urls = []
+    indexd_obj.patch()
+
 
 def is_node_file(node):
     """Returns True if the object is a file (i.e. it may have
@@ -527,6 +528,7 @@ def is_node_file(node):
     """
 
     return node._dictionary['category'].endswith("_file")
+
 
 def should_send_email(config):
     """Only opt to send an email if the following are provided

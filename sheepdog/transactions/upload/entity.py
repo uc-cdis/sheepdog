@@ -215,17 +215,6 @@ class UploadEntity(EntityBase):
                     keys=['id'],
                     type=EntityErrors.INVALID_VALUE,
                 )
-            # ################################################################
-            # SignpostClient is used instead of IndexClient for the GDCAPI.
-            # This means that the client doesn't have access to IndexClient's
-            # methods, causing exceptions to occur.
-            #
-            # Temporary workaround until gdcapi uses indexd
-            # ################################################################
-            # no ID and working in gdcapi
-            elif self._config.get('USE_SIGNPOST', False):
-                doc = self.transaction.signpost.create()
-                self.entity_id = doc.did
 
         if not self.entity_id:
             self.entity_id = str(uuid.uuid4())
@@ -556,7 +545,7 @@ class UploadEntity(EntityBase):
 
     def register_index(self):
         """
-        Call the "signpost" (index client) for the transaction to register a
+        Call the index client for the transaction to register a
         new index record for this entity.
 
         NOTE:
@@ -578,6 +567,7 @@ class UploadEntity(EntityBase):
         # if `document` exists, `document.did` is the UUID that is already
         # registered in indexd for this entity.
 
+<<<<<<< HEAD
         # ################################################################
         # SignpostClient is used instead of IndexClient for the GDCAPI.
         # This means that the client doesn't have access to IndexClient's
@@ -604,6 +594,8 @@ class UploadEntity(EntityBase):
                 record=alias, hashes=hashes, size=size, release='private'
             )
 
+=======
+>>>>>>> feat(to-indexd): [TT-311] Moved to indexd completely
     def flush_to_session(self):
         if not self.node:
             return

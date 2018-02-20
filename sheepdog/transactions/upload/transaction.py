@@ -340,7 +340,7 @@ class BulkUploadTransaction(TransactionBase):
             document_name=name,
             logger=self.logger,
             transaction_id=self.transaction_id,
-            signpost=self.signpost,
+            indexd=self.indexd,
             flask_config=self.config,
             external_proxies=self.external_proxies,
         )
