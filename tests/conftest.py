@@ -185,11 +185,11 @@ def user_setup():
         for phsid in projects:
             p = usermd.Project(
                 name=phsid, auth_id=phsid)
-            ua = usermd.AccessPrivilege(
+            usermd.AccessPrivilege(
                 user=user, project=p, privilege=roles.values())
-            ua = usermd.AccessPrivilege(
+            usermd.AccessPrivilege(
                 user=member, project=p, privilege=['_member_'])
-            ua = usermd.AccessPrivilege(
+            usermd.AccessPrivilege(
                 user=admin, project=p, privilege=roles.values())
 
     return user_driver

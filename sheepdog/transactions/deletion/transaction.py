@@ -1,5 +1,3 @@
-from flask import request
-
 from sheepdog.errors import UserError
 from sheepdog.globals import (
     case_cache_enabled,

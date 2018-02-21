@@ -1,8 +1,5 @@
 import os
 import re
-import uuid
-
-import indexclient
 
 from gdcdatamodel import models
 
