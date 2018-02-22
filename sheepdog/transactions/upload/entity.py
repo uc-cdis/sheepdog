@@ -238,7 +238,7 @@ class UploadEntity(EntityBase):
         node = cls(self.entity_id)
         if is_data_file:
             # check if open_acl is requested and the node type can be set open
-            if self.doc.get('open_acl', None) and current_app.config.get('IS_GDC', False):
+            if self.doc.get('open_acl', None) and self._config.get('IS_GDC', False):
                 if self.entity_type in POSSIBLE_OPEN_FILE_NODES:
                     node.acl = [u'open']
                 else:
@@ -878,7 +878,7 @@ class UploadEntity(EntityBase):
                 max_parent_sample_children = 10
                 if (self.node == models.Sample)\
                     and (self.node._pg_links[name]['dst_type'] == models.Sample)\
-                    and current_app.config.get('IS_GDC', False):
+                    and self._config.get('IS_GDC', False):
 
                     # check if it's linking to a parent node
                     if nodes[0].sample_type in parent_sample_types:
