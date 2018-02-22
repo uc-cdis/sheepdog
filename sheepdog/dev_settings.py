@@ -52,7 +52,7 @@ PSQLGRAPH = {
     'database': os.getenv("GDC_PG_DBNAME", "sheepdog_automated_test")
 }
 
-PSQL_USER_DB_NAME = 'userapi'
+PSQL_USER_DB_NAME = 'fence'
 PSQL_USER_DB_USERNAME = 'test'
 PSQL_USER_DB_PASSWORD = 'test'
 PSQL_USER_DB_HOST = 'localhost'
