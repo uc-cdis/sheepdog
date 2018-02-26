@@ -5,8 +5,9 @@ from flask import Flask, jsonify
 from flask_sqlalchemy_session import flask_scoped_session
 from psqlgraph import PsqlGraphDriver
 
-import cdis_oauth2client
-from cdis_oauth2client import OAuth2Client, OAuth2Error
+from authutils.oauth2 import client as oauth2_client
+from authutils.oauth2.client import blueprint as oauth2_blueprint
+from authutils import AuthError
 from cdispyutils.log import get_handler
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
@@ -53,8 +54,8 @@ def app_register_blueprints(app):
     v0 = '/v0'
     app.register_blueprint(sheepdog_blueprint, url_prefix=v0+'/submission')
     app.register_blueprint(sheepdog_blueprint, url_prefix='/submission')
-    app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0+'/oauth2')
-    app.register_blueprint(cdis_oauth2client.blueprint, url_prefix='/oauth2')
+    app.register_blueprint(oauth2_blueprint.blueprint, url_prefix=v0+'/oauth2')
+    app.register_blueprint(oauth2_blueprint.blueprint, url_prefix='/oauth2')
 
 
 def db_init(app):
@@ -70,7 +71,7 @@ def db_init(app):
     app.userdb = SQLAlchemyDriver(app.config['PSQL_USER_DB_CONNECTION'])
     flask_scoped_session(app.userdb.Session, app)
 
-    app.oauth2 = OAuth2Client(**app.config['OAUTH2'])
+    app.oauth_client = oauth2_client.OAuthClient(**app.config['OAUTH2'])
 
     app.logger.info('Initializing Signpost driver')
     app.signpost = SignpostClient(
@@ -83,92 +84,70 @@ def db_init(app):
     except Exception:
         app.logger.exception("Couldn't initialize auth, continuing anyway")
 
-def app_init():
-    """Instantiate flask app
 
-    Returns:
-        Flask: App that's set up to be run as a standalone service
+app = Flask(__name__)
+
+# Setup logger
+app.logger.addHandler(get_handler())
+
+setup_default_handlers(app)
+
+
+@app.route('/_status', methods=['GET'])
+def health_check():
+    with app.db.session_scope() as session:
+        try:
+            session.execute('SELECT 1')
+        except Exception:
+            raise UnhealthyCheck('Unhealthy')
+
+    return 'Healthy', 200
+
+@app.route('/_version', methods=['GET'])
+def version():
+    dictver = {
+        'version': DICTVERSION,
+        'commit': DICTCOMMIT,
+    }
+    base = {
+        'version': VERSION,
+        'commit': COMMIT,
+        'dictionary': dictver,
+    }
+
+    return jsonify(base), 200
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return jsonify(message=e.description), e.code
+
+
+@app.errorhandler(500)
+def server_error(e):
+    app.logger.exception(e)
+    return jsonify(message="internal server error"), 500
+
+
+def _log_and_jsonify_exception(e):
     """
-
-    app = Flask(__name__)
-
-    # Setup logger
-    app.logger.addHandler(get_handler())
-
-    setup_default_handlers(app)
-    app.config.from_object('sheepdog.dev_settings')
-
-    @app.route('/_status', methods=['GET'])
-    def health_check():
-        with app.db.session_scope() as session:
-            try:
-                session.execute('SELECT 1')
-            except Exception:
-                raise UnhealthyCheck('Unhealthy')
-
-        return 'Healthy', 200
-
-    @app.route('/_version', methods=['GET'])
-    def version():
-        dictver = {
-            'version': DICTVERSION,
-            'commit': DICTCOMMIT,
-        }
-        base = {
-            'version': VERSION,
-            'commit': COMMIT,
-            'dictionary': dictver,
-        }
-
-        return jsonify(base), 200
-
-    @app.errorhandler(404)
-    def page_not_found(e):
-        return jsonify(message=e.description), e.code
+    Log an exception and return the jsonified version along with the code.
+    This is the error handling mechanism for ``APIErrors`` and
+    ``AuthError``.
+    """
+    app.logger.exception(e)
+    if hasattr(e, 'json') and e.json:
+        return jsonify(**e.json), e.code
+    else:
+        return jsonify(message=e.message), e.code
 
 
-    @app.errorhandler(500)
-    def server_error(e):
-        app.logger.exception(e)
-        return jsonify(message="internal server error"), 500
+app.register_error_handler(APIError, _log_and_jsonify_exception)
 
+app.register_error_handler(
+    sheepdog.errors.APIError, _log_and_jsonify_exception
+)
+app.register_error_handler(AuthError, _log_and_jsonify_exception)
 
-    def _log_and_jsonify_exception(e):
-        """
-        Log an exception and return the jsonified version along with the code.
-
-        This is the error handling mechanism for ``APIErrors`` and
-        ``OAuth2Errors``.
-        """
-        app.logger.exception(e)
-        if hasattr(e, 'json') and e.json:
-            return jsonify(**e.json), e.code
-        else:
-            return jsonify(message=e.message), e.code
-
-
-    app.register_error_handler(APIError, _log_and_jsonify_exception)
-
-    app.register_error_handler(
-        sheepdog.errors.APIError, _log_and_jsonify_exception
-    )
-    app.register_error_handler(OAuth2Error, _log_and_jsonify_exception)
-
-
-    # Register duplicates only at runtime
-    app.logger.info('Initializing app')
-    app_register_blueprints(app)
-    db_init(app)
-    # exclude es init as it's not used yet
-    # es_init(app)
-    try:
-        app.secret_key = app.config['FLASK_SECRET_KEY']
-    except KeyError:
-        app.logger.error(
-            'Secret key not set in config! Authentication will not work'
-        )
-
-    return app
 
 def run_for_development(**kwargs):
     #app.logger.setLevel(logging.INFO)
@@ -187,4 +166,4 @@ def run_for_development(**kwargs):
         app.logger.exception(
             "Couldn't initialize application, continuing anyway"
         )
-    app.run(**kwargs)
+app.run(**kwargs)
