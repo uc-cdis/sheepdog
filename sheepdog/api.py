@@ -84,6 +84,19 @@ def db_init(app):
     except Exception:
         app.logger.exception("Couldn't initialize auth, continuing anyway")
 
+def app_init(app):
+    # Register duplicates only at runtime
+    app.logger.info('Initializing app')
+    app_register_blueprints(app)
+    db_init(app)
+    # exclude es init as it's not used yet
+    # es_init(app)
+    try:
+        app.secret_key = app.config['FLASK_SECRET_KEY']
+    except KeyError:
+        app.logger.error(
+            'Secret key not set in config! Authentication will not work'
+    )
 
 app = Flask(__name__)
 
