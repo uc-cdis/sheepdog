@@ -124,9 +124,9 @@ def app(tmpdir, request):
 
     _app.logger.setLevel(os.environ.get("GDC_LOG_LEVEL", "WARNING"))
 
-    _app.jwt_public_keys = {
+    _app.jwt_public_keys = {_app.config['USER_API']: {
             'key-test': utils.read_file('resources/keys/test_public_key.pem')
-    }
+    }}
     return _app
 
 
