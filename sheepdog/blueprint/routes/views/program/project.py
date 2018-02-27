@@ -245,6 +245,10 @@ def create_delete_entities_viewer(dry_run=False):
         :param str ids:
             A comma separated list of ids specifying the entities to delete.
             These ids must be official GDC ids.
+        :param bool to_delete:
+            Set the to_delete sysan as true or false. If none, then don't try
+            to set the sysan, and instead delete the node.
+        :param str ids:
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
@@ -455,14 +459,16 @@ def create_files_viewer(dry_run=False, reassign=False):
                 "You don't have {} role to do '{}'".format(role, action)
             )
 
-        resp = utils.proxy_request(project_id,
-                                   file_uuid,
-                                   flask.request.stream,
-                                   args,
-                                   headers,
-                                   flask.request.method,
-                                   action,
-                                   dry_run)
+        resp = utils.proxy_request(
+            project_id,
+            file_uuid,
+            flask.request.stream,
+            args,
+            headers,
+            flask.request.method,
+            action,
+            dry_run,
+        )
 
 
         if dry_run or action == 'reassign':
