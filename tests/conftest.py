@@ -245,6 +245,7 @@ def admin(pg_driver):
 def member(pg_driver):
     return create_user_header(pg_driver, 'member')
 
+
 @pytest.fixture()
 def cgci_blgsp(client, admin):
     put_cgci_blgsp(client, admin)
