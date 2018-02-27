@@ -5,6 +5,8 @@ Tests for admin endpoint functionality.
 
 import json
 
+import pytest
+
 from gdcdatamodel import models as md
 from tests.submission.test_endpoints import post_example_entities_together
 from tests.submission.utils import data_fnames
@@ -46,65 +48,56 @@ def post_blgsp_files(client, headers):
 
     return submitted_entities
 
-def test_to_delete_with_admin(client, pg_driver, cgci_blgsp, submitter, admin):
+@pytest.mark.parametrize("headers,status_code,to_delete", [
+    ('submitter', 403, None),
+    ('admin', 200, True),
+    ('admin', 200, False),
+])
+def test_to_delete(headers, status_code, to_delete, request, client,
+    pg_driver, cgci_blgsp, submitter):
     """Try to set the sysan of a node with admin credentials
 
     Url:
         DELETE: /admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>
     """
 
+    headers = request.getfixturevalue(headers)
+
+    # submit files as submitter
     entities = post_blgsp_files(client, submitter)
     did = entities['submitted_unaligned_reads']
 
     base_delete_path = create_blgsp_url('/entities/{}/to_delete/'.format(did))
-    to_delete_true = base_delete_path + 'true'
-    to_delete_false = base_delete_path + 'false'
+    to_delete_path = base_delete_path + str(to_delete).lower()
 
-    resp = client.delete(to_delete_true, headers=admin)
-    assert resp.status_code == 200, resp.data
+    resp = client.delete(to_delete_path, headers=headers)
+    assert resp.status_code == status_code, resp.data
     with pg_driver.session_scope():
         sur_node = pg_driver.nodes(md.SubmittedUnalignedReads).first()
         assert sur_node
-        assert sur_node.sysan.get('to_delete') is True
+        assert sur_node.sysan.get('to_delete') is to_delete
 
-    resp = client.delete(to_delete_false, headers=admin)
-    assert resp.status_code == 200, resp.data
-    with pg_driver.session_scope():
-        sur_node = pg_driver.nodes(md.SubmittedUnalignedReads).first()
-        assert sur_node
-        assert sur_node.sysan.get('to_delete') is False
+def do_reassign(client, headers):
+    """Perform the http reassign action
 
-def test_to_delete_without_admin(client, pg_driver, cgci_blgsp, submitter):
-    """Try to set the sysan of a node without having admin credentials
+    Args:
+        client (pytest.Fixture): Allows you to mock http requests through flask
+        headers (dict): http headers with token
 
-    Url:
-        DELETE: /admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>
+    Returns:
+        requests.Response: http response from doing reassign request
+        string: did
+        string: s3 url that you changed it to
     """
 
-    entities = post_blgsp_files(client, submitter)
+    entities = post_blgsp_files(client, headers)
     did = entities['submitted_unaligned_reads']
+    s3_url = 's3://whatever/you/want'
 
-    base_delete_path = create_blgsp_url('/entities/{}/to_delete/'.format(did))
-    to_delete_true = base_delete_path + 'true'
-    to_delete_false = base_delete_path + 'false'
+    reassign_path = create_blgsp_url('/files/{}/reassign'.format(did))
+    data = json.dumps({'s3_url': s3_url})
 
-    resp = client.delete(to_delete_true, headers=submitter)
-    # has no access to the endpoint
-    assert resp.status_code == 403, resp.data
-    # is not deleted and has no to_delete sysan set
-    with pg_driver.session_scope():
-        sur_node = pg_driver.nodes(md.SubmittedUnalignedReads).first()
-        assert sur_node
-        assert sur_node.sysan.get('to_delete') is None
-
-    resp = client.delete(to_delete_false, headers=submitter)
-    # has no access to the endpoint
-    assert resp.status_code == 403, resp.data
-    # is not deleted and has no sysan set
-    with pg_driver.session_scope():
-        sur_node = pg_driver.nodes(md.SubmittedUnalignedReads).first()
-        assert sur_node
-        assert sur_node.sysan.get('to_delete') is None
+    return client.put(reassign_path, headers=headers, data=data), did, s3_url
 
 def test_reassign_with_admin(client, pg_driver, cgci_blgsp, submitter, index_client, admin):
     """Try to reassign a node's remote URL
@@ -114,14 +107,7 @@ def test_reassign_with_admin(client, pg_driver, cgci_blgsp, submitter, index_cli
         data: {"s3_url": "s3://whatever/you/want"}
     """
 
-    entities = post_blgsp_files(client, submitter)
-    did = entities['submitted_unaligned_reads']
-    s3_url = 's3://whatever/you/want'
-
-    reassign_path = create_blgsp_url('/files/{}/reassign'.format(did))
-    data = json.dumps({'s3_url': s3_url})
-
-    resp = client.put(reassign_path, headers=admin, data=data)
+    resp, did, s3_url  = do_reassign(client, admin)
     assert resp.status_code == 200, resp.data
     assert index_client.get(did), 'Did not register with indexd?'
     assert s3_url in index_client.get(did).urls, 'Did not successfully reassign'
@@ -134,14 +120,7 @@ def test_reassign_without_admin(client, pg_driver, cgci_blgsp, submitter, index_
         data: {"s3_url": "s3://whatever/you/want"}
     """
 
-    entities = post_blgsp_files(client, submitter)
-    did = entities['submitted_unaligned_reads']
-    s3_url = 's3://whatever/you/want'
-
-    reassign_path = create_blgsp_url('/files/{}/reassign'.format(did))
-    data = json.dumps({'s3_url': s3_url})
-
-    resp = client.put(reassign_path, headers=submitter, data=data)
+    resp, did, s3_url = do_reassign(client, submitter)
     assert resp.status_code == 403, resp.data
     assert index_client.get(did), 'Index should have been created.'
     assert len(index_client.get(did).urls) == 0, 'No files have been uploaded'
