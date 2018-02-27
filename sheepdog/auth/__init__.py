@@ -36,11 +36,6 @@ def _log_import_error(module_name):
 # instantiated yet (application out of context error)
 
 try:
-    from authutils.token import current_token
-except ImportError:
-    _log_import_error('current_token')
-
-try:
     from authutils import require_auth
 except ImportError:
     _log_import_error('require_auth')
