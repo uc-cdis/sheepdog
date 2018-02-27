@@ -1,5 +1,6 @@
 # pylint: disable=no-member
-"""
+"""sheepdog.transactions.upload
+
 Pylint ``no-member`` error disabled because of false positives with
 ``lxml.etree``.
 """

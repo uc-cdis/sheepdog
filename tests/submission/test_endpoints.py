@@ -1,3 +1,7 @@
+# this is for interpreting fixtures as parameters that don't do anything
+# pylint: disable=unused-argument
+# pylint: disable=superfluous-parens
+# pylint: disable=no-member
 import contextlib
 import json
 import os
@@ -10,7 +14,7 @@ from moto import mock_s3
 
 from gdcdatamodel import models as md
 from sheepdog.transactions.upload import UploadTransaction
-from tests.submission.utils import data_fnames, patch_indexclient
+from tests.submission.utils import data_fnames
 
 
 #: Do we have a cache case setting and should we do it?
@@ -19,8 +23,6 @@ BLGSP_PATH = '/v0/submission/CGCI/BLGSP/'
 BRCA_PATH = '/v0/submission/TCGA/BRCA/'
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
-
-
 
 @contextlib.contextmanager
 def s3_conn():
@@ -129,9 +131,9 @@ def test_project_creation_endpoint(client, pg_driver, admin):
         assert pg_driver.nodes(md.Project).count() == 1
         n_cgci = (
             pg_driver.nodes(md.Project)
-                .path('programs')
-                .props(name='CGCI')
-                .count()
+            .path('programs')
+            .props(name='CGCI')
+            .count()
         )
         assert n_cgci == 1
     assert resp.json['links'] == ['/v0/submission/CGCI/BLGSP'], resp.json
@@ -270,8 +272,8 @@ def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
 
 
 def post_example_entities_together(client, submitter, data_fnames2=None):
-    if data_fnames2 is None:
-        data_fnames2 =  data_fnames
+    if not data_fnames2:
+        data_fnames2 = data_fnames
     path = BLGSP_PATH
     data = []
     for fname in data_fnames2:
@@ -280,13 +282,13 @@ def post_example_entities_together(client, submitter, data_fnames2=None):
     return client.post(path, headers=submitter, data=json.dumps(data))
 
 
-def put_example_entities_together(client, submitter):
+def put_example_entities_together(client, headers):
     path = BLGSP_PATH
     data = []
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), 'r') as f:
             data.append(json.loads(f.read()))
-    return client.put(path, headers=submitter, data=json.dumps(data))
+    return client.put(path, headers=headers, data=json.dumps(data))
 
 
 def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
@@ -604,14 +606,13 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
     print(resp)
 
 
-def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter):
+def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter, index_client):
     """
     Test that submitting a valid data file creates an index and an alias.
     """
 
     # Update this dictionary in the patched functions to check that they are
     # called.
-    called = patch_indexclient(monkeypatch)
 
     # Attempt to post the valid entities.
     test_fnames = (
@@ -621,10 +622,16 @@ def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter)
     resp = post_example_entities_together(
         client, submitter, data_fnames2=test_fnames
     )
-    print(resp)
+    assert resp.status_code == 201, resp.data
 
-    assert called['create']
-    assert called['create_alias']
+    # this is a node that will have an indexd entry
+    sur_entity = None
+    for entity in resp.json['entities']:
+        if entity['type'] == 'submitted_unaligned_reads':
+            sur_entity = entity
+
+    assert sur_entity, 'No submitted_unaligned_reads entity created'
+    assert index_client.get(sur_entity['id']), 'No indexd document created'
 
 def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
