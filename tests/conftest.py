@@ -1,18 +1,16 @@
 import os
 import json
+from multiprocessing import Process
 
+from indexd import default_settings, get_app as get_indexd_app
+from indexclient.client import IndexClient
 import pytest
 import requests
 import requests_mock
-from multiprocessing import Process
 from mock import patch
 from flask.testing import make_test_environ_builder
-
-
 from fence.jwt.token import generate_signed_access_token
 from psqlgraph import PsqlGraphDriver
-from signpost import Signpost
-
 from gdcdatamodel.models import Edge, Node
 from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
@@ -22,13 +20,25 @@ from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
 
 import sheepdog
-from sheepdog.auth import roles
-from sheepdog.test_settings import PSQL_USER_DB_CONNECTION, Fernet, HMAC_ENCRYPTION_KEY
-from sheepdog.test_settings import JWT_KEYPAIR_FILES
-from .api import app as _app, app_init
 import utils
-from .submission.test_endpoints import put_cgci_blgsp
+from sheepdog.auth import roles
+from sheepdog.test_settings import (
+    PSQL_USER_DB_CONNECTION,
+    Fernet,
+    HMAC_ENCRYPTION_KEY,
+    JWT_KEYPAIR_FILES,
+    SIGNPOST,
+)
+from tests.api import app as _app, app_init, indexd_init
+from tests.submission.test_endpoints import put_cgci_blgsp
 
+try:
+    reload  # Python 2.7
+except NameError:
+    try:
+        from importlib import reload  # Python 3.4+
+    except ImportError:
+        from imp import reload # Python 3.0 - 3.3
 
 def get_parent(path):
     print(path)
@@ -50,38 +60,44 @@ def pg_config():
     )
 
 
-def wait_for_signpost_alive(port):
-    url = 'http://localhost:{}'.format(port)
+def wait_for_indexd_alive(port):
+    url = 'http://localhost:{}/_status'.format(port)
     try:
         requests.get(url)
     except requests.ConnectionError:
-        return wait_for_signpost_alive(port)
+        return wait_for_indexd_alive(port)
     else:
         return
 
 
-def wait_for_signpost_not_alive(port):
-    url = 'http://localhost:{}'.format(port)
+def wait_for_indexd_not_alive(port):
+    url = 'http://localhost:{}/_status'.format(port)
     try:
         requests.get(url)
     except requests.ConnectionError:
         return
     else:
-        return wait_for_signpost_not_alive(port)
-
-
-def run_signpost(port):
-    Signpost({"driver": "inmemory", "layers": ["validator"]}).run(
-        host="localhost", port=port, debug=False)
+        return wait_for_indexd_not_alive(port)
 
 
 @pytest.fixture
 def app(tmpdir, request):
 
     port = 8000
-    signpost = Process(target=run_signpost, args=[port])
-    signpost.start()
-    wait_for_signpost_alive(port)
+    # this is to make sure sqlite is initialized
+    # for every unit test
+    reload(default_settings)
+
+    # fresh files before running
+    for filename in ['auth.sq3', 'index.sq3', 'alias.sq3']:
+        if os.path.exists(filename):
+            os.remove(filename)
+    indexd_app = get_indexd_app()
+
+    indexd_init(*SIGNPOST['auth'])
+    indexd = Process(target=indexd_app.run, args=['localhost', port])
+    indexd.start()
+    wait_for_indexd_alive(port)
 
     gencode_json = tmpdir.mkdir("slicing").join("test_gencode.json")
     gencode_json.write(json.dumps({
@@ -92,8 +108,12 @@ def app(tmpdir, request):
     }))
 
     def teardown():
-        signpost.terminate()
-        wait_for_signpost_not_alive(port)
+        for filename in ['auth.sq3', 'index.sq3', 'alias.sq3']:
+            if os.path.exists(filename):
+                os.remove(filename)
+
+        indexd.terminate()
+        wait_for_indexd_not_alive(port)
 
     _app.config.from_object("sheepdog.test_settings")
 
@@ -165,12 +185,12 @@ def user_setup():
         for phsid in projects:
             p = usermd.Project(
                 name=phsid, auth_id=phsid)
-            ua = usermd.AccessPrivilege(
+            usermd.AccessPrivilege(
                 user=user, project=p, privilege=roles.values())
-            s.add(ua)
-            ua = usermd.AccessPrivilege(
+            usermd.AccessPrivilege(
                 user=member, project=p, privilege=['_member_'])
-            s.add(ua)
+            usermd.AccessPrivilege(
+                user=admin, project=p, privilege=roles.values())
 
     return user_driver
 
@@ -225,11 +245,13 @@ def admin(pg_driver):
 def member(pg_driver):
     return create_user_header(pg_driver, 'member')
 
-
 @pytest.fixture()
 def cgci_blgsp(client, admin):
     put_cgci_blgsp(client, admin)
 
+@pytest.fixture()
+def index_client():
+    return IndexClient(SIGNPOST['host'], SIGNPOST['version'], SIGNPOST['auth'])
 
 def dictionary_setup(_app):
     url = 's3://testurl'
