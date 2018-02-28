@@ -38,6 +38,44 @@ class FileUploadEntity(UploadEntity):
        #. pre_validate
        #. instantiate
        #. post_validate
+
+    Some things to note about data files and the index service:
+    - submitter_id/project should be unique per graph node
+    - submitter_id/project are used to create an alias in the index service to
+        a data file
+    - when sheepdog attempts to find out if a file exists in index service it
+      has TWO methods of determining
+        FIXME At the moment, there is a 1:1 mapping of id's between graph nodes and
+              indexed files. eventually, there'll be a file_id attr in the graph node
+        1) If a file uuid exists in the graph node or is provided in the submission,
+           we can look up that uuid in index service
+        2) The hash/file_size combo should be unique in the index service for each
+           file
+
+    Here are a few submission examples and how we currently handle. The
+    examples here refer to whether or not an "id" field is included during
+    the submission.
+
+    - "id" NOT provided , file NOT in index service
+        - A new uuid is generated and used for both the graph and indexed file
+
+    - "id" NOT provided , file in index service
+        - uuid from the file in the index service is used for the graph id
+
+    - "id" provided     , file NOT in index service
+        - id provided is used for the indexed file
+
+    - "id" provided     , file in index service
+        - Make sure the uuids match
+
+    ERROR cases handled:
+        - If you attempt to submit the same data again with a different "id"
+            it will fail. At the moment we are maintaining a 1:1 between indexed
+            files and graph nodes
+        - Attempting to submit new data (new file) when the node has already
+            been created with a previous file will fail. We don't currently
+            allow updating the linkage to a new file since we're forcing
+            a 1:1 between uuids in graph and index service
     """
     def __init__(self, *args, **kwargs):
         super(FileUploadEntity, self).__init__(*args, **kwargs)

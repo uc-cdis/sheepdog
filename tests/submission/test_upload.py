@@ -1,19 +1,6 @@
 """
 Test upload entities (mostly data file handling and communication with
 index service).
-
-Some things to note about data files and the index service:
-- submitter_id/project should be unique per graph node
-- submitter_id/project are used to create an alias in the index service to
-  a data file
-- when sheepdog attempts to find out if a file exists in index service it
-  has TWO methods of determining
-    FIXME At the moment, there is a 1:1 mapping of id's between graph nodes and
-          indexed files. eventually, there'll be a file_id attr in the graph node
-    1) If a file uuid exists in the graph node or is provided in the submission,
-       we can look up that uuid in index service
-    2) The hash/file_size combo should be unique in the index service for each
-       file
 """
 import json
 import copy
