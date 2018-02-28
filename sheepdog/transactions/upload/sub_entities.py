@@ -93,7 +93,7 @@ class FileUploadEntity(UploadEntity):
                 self.entity_id = doc.did
                 self.file_exists = True
         else:
-            self._check_index_for_file(self.entity_id)
+            self._populate_files_from_index(self.entity_id)
             self._set_node_and_file_ids()
 
         # call to super must happen after setting node and file ids here
@@ -136,7 +136,7 @@ class FileUploadEntity(UploadEntity):
         if self._config.get('USE_SIGNPOST', False):
             pass
         else:
-            self._check_index_for_file(self.entity_id)
+            self._populate_files_from_index(self.entity_id)
             self._is_valid_index_id_for_graph()
 
         return node
@@ -259,7 +259,7 @@ class FileUploadEntity(UploadEntity):
 
         return is_updateable
 
-    def _check_index_for_file(self, uuid=None):
+    def _populate_files_from_index(self, uuid=None):
         """
         Populate information about file existence in index service.
         Will first check provided uuid, then check by hash/size.
