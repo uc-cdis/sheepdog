@@ -844,7 +844,7 @@ def export_all(node_label, project_id, db, **kwargs):
             row.extend(map(lambda col: col or '', result[1:]))
             # Convert row elements to string if they are not
             for idx, val in enumerate(row):
-                if ~isinstance(val, str):
+                if not isinstance(val, str):
                     row[idx] = str(row[idx])
 
             yield '{}\n'.format('\t'.join(row))
