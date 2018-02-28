@@ -1,5 +1,7 @@
 import os
 import re
+import uuid
+import indexclient
 
 from gdcdatamodel import models
 
@@ -40,3 +42,66 @@ def reset_transactions(pg_driver):
         s.query(models.submission.TransactionSnapshot).delete()
         s.query(models.submission.TransactionDocument).delete()
         s.query(models.submission.TransactionLog).delete()
+
+
+def patch_indexclient(monkeypatch):
+
+    called = {'create': False, 'create_alias': False}
+
+    def check_hashes(hashes):
+        assert hashes is not None
+        assert 'md5' in hashes
+        assert re_md5.match(hashes['md5']) is not None
+
+    def check_uuid4(self, did=None, urls=None, hashes=None, size=None, metadata=None, file_name=None):
+        """
+        Using code from: https://gist.github.com/ShawnMilo/7777304
+        """
+        called['create'] = True
+        # Check for valid UUID.
+        try:
+            val = uuid.UUID(did, version=4)
+            assert val.hex == did.replace('-', '')
+        except Exception:
+            raise AssertionError('invalid uuid')
+        check_hashes(hashes)
+
+    def check_alias(
+            self, record, size=None, hashes=None, release=None,
+            metastring=None, host_authorities=None, keeper_authority=None):
+        called['create_alias'] = True
+        check_hashes(hashes)
+        assert isinstance(record, str)
+
+    monkeypatch.setattr(
+        indexclient.client.IndexClient, 'create', check_uuid4
+    )
+    monkeypatch.setattr(
+        indexclient.client.IndexClient, 'create_alias', check_alias
+    )
+    return called
+
+
+def assert_positive_response(resp):
+    assert resp.status_code == 200, resp.data
+    entities = resp.json['entities']
+    for entity in entities:
+        assert not entity['errors']
+    assert resp.json['success'] is True
+
+
+def assert_negative_response(resp):
+    assert resp.status_code != 200, resp.data
+    entities = resp.json['entities']
+
+    # check if at least one entity has an error
+    entity_errors = [entity['errors'] for entity in entities if entity['errors']]
+    assert entity_errors
+
+    assert resp.json['success'] is False
+
+
+def assert_single_entity_from_response(resp):
+    entities = resp.json['entities']
+    assert len(entities) == 1
+    return entities[0]

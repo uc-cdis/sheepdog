@@ -24,6 +24,7 @@ BRCA_PATH = '/v0/submission/TCGA/BRCA/'
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
 
+
 @contextlib.contextmanager
 def s3_conn():
     mock = mock_s3()

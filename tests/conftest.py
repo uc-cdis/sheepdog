@@ -173,7 +173,7 @@ def user_setup():
         users = s.query(usermd.User).all()
         test_user = s.query(usermd.User).filter(
             usermd.User.username == 'test').first()
-        test_user.is_admin =True
+        test_user.is_admin = True
         projects = ['phs000218', 'phs000235', 'phs000178']
         admin = s.query(usermd.User).filter(
             usermd.User.username == 'admin').first()
