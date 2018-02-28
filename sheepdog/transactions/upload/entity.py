@@ -569,7 +569,12 @@ class UploadEntity(EntityBase):
             # IndexClient
             document = self.transaction.signpost.get_with_params(params)
             if not document:
-                self.transaction.signpost.create(did=str(uuid.uuid4()),
+                if not self.node:
+                    did = str(uuid.uuid4())
+                else:
+                    did = self.node.node_id
+
+                self.transaction.signpost.create(did=did,
                                                  hashes=hashes,
                                                  size=size,
                                                  urls=[],
