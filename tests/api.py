@@ -19,9 +19,6 @@ from indexd.alias.drivers.alchemy import SQLAlchemyAliasDriver
 from indexd.auth.drivers.alchemy import SQLAlchemyAuthDriver
 from psqlgraph import PsqlGraphDriver
 
-from cdis_oauth2client import OAuth2Client, OAuth2Error
-from cdispyutils.log import get_handler
-from indexclient.client import IndexClient
 from userdatamodel.driver import SQLAlchemyDriver
 
 from sheepdog.auth import AuthDriver
@@ -31,6 +28,7 @@ from sheepdog.version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
 # recursion depth is increased for complex graph traversals
 sys.setrecursionlimit(10000)
 DEFAULT_ASYNC_WORKERS = 8
+
 
 def app_register_blueprints(app):
     # TODO: (jsm) deprecate the index endpoints on the root path,
@@ -102,6 +100,7 @@ def health_check():
 
     return 'Healthy', 200
 
+
 @app.route('/_version', methods=['GET'])
 def version():
     dictver = {
@@ -115,6 +114,7 @@ def version():
     }
 
     return jsonify(base), 200
+
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -200,6 +200,7 @@ ALIAS_CONFIG = {
     'driver': SQLAlchemyAliasDriver('sqlite:///alias.sq3'),
 }
 
+
 def setup_sqlite3_index_tables():
     """Setup the SQLite3 index database."""
 
@@ -220,6 +221,7 @@ def setup_sqlite3_index_tables():
             connection = conn.execute('''
                 PRAGMA table_info ('{table}')
             '''.format(table=table))
+
 
 def setup_sqlite3_alias_tables():
     """Setup the SQLite3 alias database."""
@@ -242,6 +244,7 @@ def setup_sqlite3_alias_tables():
                 PRAGMA table_info ('{table}')
             '''.format(table=table))
 
+
 def setup_sqlite3_auth_tables(username, password):
     """Setup the SQLite3 auth database."""
     auth_driver = SQLAlchemyAuthDriver('sqlite:///auth.sq3')
@@ -250,6 +253,7 @@ def setup_sqlite3_auth_tables(username, password):
     except Exception as error:
         print('Unable to create auth tables')
         print(error)
+
 
 def indexd_init(username, password):
     setup_sqlite3_index_tables()

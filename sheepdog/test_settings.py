@@ -2,7 +2,7 @@ from collections import OrderedDict
 from .config import LEGACY_MODE
 
 INDEXD = {
-    "host": "http://localhost:8000/", 'version': 'v0',
+    "host": "http://localhost:8000", 'version': 'v0',
     "auth": ('fake_user', 'fake_password')}
 AUTH = 'https://fake_auth_url'
 INTERNAL_AUTH = 'https://fake_auth_url'

@@ -566,6 +566,7 @@ def test_invalid_json(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 400
     assert 'Expecting value' in resp.json['message']
 
+
 def test_get_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope():
@@ -634,6 +635,7 @@ def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter,
     assert sur_entity, 'No submitted_unaligned_reads entity created'
     assert index_client.get(sur_entity['id']), 'No indexd document created'
 
+
 def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope():
@@ -652,6 +654,7 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     data = r.json
     assert len(data) == 1
     assert data[0]['id'] == case_id
+
 
 def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)

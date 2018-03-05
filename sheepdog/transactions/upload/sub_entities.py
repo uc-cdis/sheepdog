@@ -112,27 +112,8 @@ class FileUploadEntity(UploadEntity):
         Return:
             psqlgraph.Node
         """
-        # ################################################################
-        # SignpostClient is used instead of IndexClient for the GDCAPI.
-        # This means that the client doesn't have access to IndexClient's
-        # methods, causing exceptions to occur.
-        #
-        # Temporary workaround until gdcapi uses indexd
-        # ################################################################
-        if self._config.get('USE_SIGNPOST', False):
-            if self.entity_id:
-                self.record_error(
-                    'Cannot assign ID to file, these are system generated. ',
-                    keys=['id'],
-                    type=EntityErrors.INVALID_VALUE,
-                )
-            else:
-                doc = self._create_index()
-                self.entity_id = doc.did
-                self.file_exists = True
-        else:
-            self._populate_files_from_index(self.entity_id)
-            self._set_node_and_file_ids()
+        self._populate_files_from_index(self.entity_id)
+        self._set_node_and_file_ids()
 
         # call to super must happen after setting node and file ids here
         node = super(FileUploadEntity, self).get_node_create(
@@ -164,18 +145,8 @@ class FileUploadEntity(UploadEntity):
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
 
-        # ################################################################
-        # SignpostClient is used instead of IndexClient for the GDCAPI.
-        # This means that the client doesn't have access to IndexClient's
-        # methods, causing exceptions to occur.
-        #
-        # Temporary workaround until gdcapi uses indexd
-        # ################################################################
-        if self._config.get('USE_SIGNPOST', False):
-            pass
-        else:
-            self._populate_files_from_index(self.entity_id)
-            self._is_valid_index_id_for_graph()
+        self._populate_files_from_index(self.entity_id)
+        self._is_valid_index_id_for_graph()
 
         return node
 
@@ -186,50 +157,40 @@ class FileUploadEntity(UploadEntity):
         flush_to_session.
         """
 
-        # ################################################################
-        # SignpostClient is used instead of IndexClient for the GDCAPI.
-        # This means that the client doesn't have access to IndexClient's
-        # methods, causing exceptions to occur.
-        #
-        # Temporary workaround until gdcapi uses indexd
-        # ################################################################
-        if self._config.get('USE_SIGNPOST', False):
-            pass
-        else:
-            if not self.node:
-                return
+        if not self.node:
+            return
 
-            role = self.action
-            try:
-                if role == 'create':
-                    # Check if the category for the node is data_file or
-                    # metadata_file, in which case, register a UUID and alias in
-                    # the index service.
-                    if not self.file_exists:
-                        self._register_index()
+        role = self.action
+        try:
+            if role == 'create':
+                # Check if the category for the node is data_file or
+                # metadata_file, in which case, register a UUID and alias in
+                # the index service.
+                if not self.file_exists:
+                    self._register_index()
 
-                elif role == 'update':
-                    # Check if the category for the node is data_file or
-                    # metadata_file, in which case, register a UUID and alias in
-                    # the index service.
-                    if self.file_exists:
-                        self._update_index()
-                else:
-                    message = 'Unknown role {}'.format(role)
-                    self.logger.error(message)
-                    self.record_error(
-                        message, type=EntityErrors.INVALID_PERMISSIONS
-                    )
-            except Exception as e:
-                self.logger.exception(e)
-                self.record_error(str(e))
+            elif role == 'update':
+                # Check if the category for the node is data_file or
+                # metadata_file, in which case, register a UUID and alias in
+                # the index service.
+                if self.file_exists:
+                    self._update_index()
+            else:
+                message = 'Unknown role {}'.format(role)
+                self.logger.error(message)
+                self.record_error(
+                    message, type=EntityErrors.INVALID_PERMISSIONS
+                )
+        except Exception as e:
+            self.logger.exception(e)
+            self.record_error(str(e))
 
         # next do node creation
         super(FileUploadEntity, self).flush_to_session()
 
     def _register_index(self):
         """
-        Call the "signpost" (index client) for the transaction to register a
+        Call the index client for the transaction to register a
         new index record for this entity.
         """
         project_id = self.transaction.project_id
@@ -256,7 +217,7 @@ class FileUploadEntity(UploadEntity):
 
     def _update_index(self):
         """
-        Call the "signpost" (index client) for the transaction to update an
+        Call the index client for the transaction to update an
         index record for this entity.
         """
         document = self.file_by_uuid
@@ -424,7 +385,7 @@ class FileUploadEntity(UploadEntity):
 
     def get_file_from_index_by_hash(self):
         """
-        Return the record entity from "signpost" (index client)
+        Return the record entity from index client
 
         NOTE:
         - Should only ever be called for data and metadata files.
@@ -433,27 +394,19 @@ class FileUploadEntity(UploadEntity):
         """
         document = None
 
-        # ################################################################
-        # SignpostClient is used instead of IndexClient for the GDCAPI.
-        # This means that the client doesn't have access to IndexClient's
-        # methods, causing exceptions to occur.
-        #
-        # Temporary workaround until gdcapi uses indexd
-        # ################################################################
-        if not self._config.get('USE_SIGNPOST', False):
-            # Check if there is an existing record with this hash and size, i.e.
-            # this node already has an index record.
-            params = self._get_file_hashes_and_size()
-            # document: indexclient.Document
-            # if `document` exists, `document.did` is the UUID that is already
-            # registered in indexd for this entity.
-            document = self.transaction.signpost.get_with_params(params)
+        # Check if there is an existing record with this hash and size, i.e.
+        # this node already has an index record.
+        params = self._get_file_hashes_and_size()
+        # document: indexclient.Document
+        # if `document` exists, `document.did` is the UUID that is already
+        # registered in indexd for this entity.
+        document = self.transaction.indexd.get_with_params(params)
 
         return document
 
     def get_file_from_index_by_uuid(self, uuid):
         """
-        Return the record entity from "signpost" (index client)
+        Return the record entity from index client
 
         NOTE:
         - Should only ever be called for data and metadata files.
@@ -463,7 +416,7 @@ class FileUploadEntity(UploadEntity):
         document = None
 
         if uuid:
-            document = self.transaction.signpost.get(uuid)
+            document = self.transaction.indexd.get(uuid)
 
         return document
 
@@ -484,7 +437,7 @@ class FileUploadEntity(UploadEntity):
         return size
 
     def _create_alias(self, **kwargs):
-        return self.transaction.signpost.create_alias(**kwargs)
+        return self.transaction.indexd.create_alias(**kwargs)
 
     def _create_index(self, **kwargs):
-        return self.transaction.signpost.create(**kwargs)
+        return self.transaction.indexd.create(**kwargs)
