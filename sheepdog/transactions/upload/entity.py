@@ -272,20 +272,7 @@ class UploadEntity(EntityBase):
                         "Case submitter_id '{}' not found in dbGaP."
                         .format(submitter_id),
                         keys=['submitter_id'],
-		        type=EntityErrors.NOT_FOUND)
-
-        # Create the node and populate its properties
-        cls = psqlgraph.Node.get_subclass(self.entity_type)
-        self.logger.debug('Creating new {}'.format(cls.__name__))
-        category = dictionary.schema.get(cls.label)['category']
-        is_data_file = category == 'data_file'
-        if is_data_file:
-            if self.entity_id:
-                self.record_error(
-                    'Cannot assign ID to file, these are system generated. ',
-                    keys=['id'],
-                    type=EntityErrors.INVALID_VALUE,
-                )
+                        type=EntityErrors.NOT_FOUND)
 
         if not self.entity_id:
             self.entity_id = str(uuid.uuid4())
@@ -618,20 +605,21 @@ class UploadEntity(EntityBase):
         # if `document` exists, `document.did` is the UUID that is already
         # registered in indexd for this entity.
 
-        document = self.transaction.signpost.get_with_params(params)
+        # IndexClient
+        document = self.transaction.indexd.get_with_params(params)
         if not document:
             if not self.node:
                 did = str(uuid.uuid4())
             else:
                 did = self.node.node_id
 
-            self.transaction.signpost.create(did=did,
-                                             hashes=hashes,
-                                             size=size,
-                                             urls=[],
-                                             metadata=metadata)
+            self.transaction.indexd.create(did=did,
+                                           hashes=hashes,
+                                           size=size,
+                                           urls=[],
+                                           metadata=metadata)
 
-        self.transaction.signpost.create_alias(
+        self.transaction.indexd.create_alias(
             record=alias, hashes=hashes, size=size, release='private'
         )
 

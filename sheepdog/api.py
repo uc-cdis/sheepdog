@@ -89,7 +89,6 @@ def app_init(app):
     app.logger.info('Initializing app')
 
     # explicit options set for compatibility with gdc's api
-    app.config['USE_SIGNPOST'] = False
     app.config['AUTH_SUBMISSION_LIST'] = True
     app.config['USE_DBGAP'] = False
     app.config['IS_GDC'] = False

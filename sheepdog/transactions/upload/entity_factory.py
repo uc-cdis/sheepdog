@@ -19,6 +19,8 @@ def get_node_category(node_type):
         str: node category
     """
     cls = psqlgraph.Node.get_subclass(node_type)
+    if cls is None:
+        return None
     return cls._dictionary.get('category')
 
 

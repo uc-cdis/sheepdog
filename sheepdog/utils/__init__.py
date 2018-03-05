@@ -473,7 +473,7 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
             message = 'Unable to parse json. Use the format {\'s3_url\':\'s3/://...\'}'
             return flask.Response(json.dumps({'message': message}), status=400)
 
-        update_signpost_url(signpost_obj, s3_url=new_url)
+        update_indexd_url(indexd_obj, s3_url=new_url)
         update_state(node, SUCCESS_STATE)
         message = ('URL successfully reassigned. New url: {}'.format(new_url))
         return flask.Response(json.dumps({'message': message}), status=200)
