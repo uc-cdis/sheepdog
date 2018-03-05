@@ -61,8 +61,8 @@ def handle_deletion_request(program, project, ids, to_delete=None, **tx_kwargs):
         project=project,
         user=flask.g.user,
         logger=flask.current_app.logger,
-        signpost=flask.current_app.signpost,
         to_delete=to_delete,
+        indexd=flask.current_app.indexd,
         db_driver=db_driver,
         **tx_kwargs
     )
