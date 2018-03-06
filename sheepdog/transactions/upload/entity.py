@@ -303,6 +303,12 @@ class UploadEntity(EntityBase):
         self.logger.debug('Creating new {}'.format(cls.__name__))
         node = cls(self.entity_id)
 
+        # Get node category
+        node_class = psqlgraph.Node.get_subclass(self.entity_type)
+        category = dictionary.schema.get(node_class.label)['category']
+
+        is_data_file = category == 'data_file'
+
         if is_data_file:
             # check if open_acl is requested and the node type can be set open
             if self.doc.get('open_acl', None) and self._config.get('IS_GDC', False):
@@ -312,7 +318,6 @@ class UploadEntity(EntityBase):
                     node.acl = self.transaction.get_phsids()
             else:
                 node.acl = self.transaction.get_phsids()
-
 
         self.action = 'create'
 
@@ -636,8 +641,8 @@ class UploadEntity(EntityBase):
                 # Check if the category for the node is data_file or
                 # metadata_file, in which case, register a UUID and alias in
                 # the index service.
-                cls = psqlgraph.Node.get_subclass(self.entity_type)
-                category = dictionary.schema.get(cls.label)['category']
+                node_class = psqlgraph.Node.get_subclass(self.entity_type)
+                category = dictionary.schema.get(node_class.label)['category']
                 if category == 'data_file' or category == 'metadata_file':
                     self.register_index()
                 self.transaction.session.add(self.node)
