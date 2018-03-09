@@ -26,6 +26,7 @@ from sheepdog.version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
 sys.setrecursionlimit(10000)
 DEFAULT_ASYNC_WORKERS = 8
 
+
 def app_register_blueprints(app):
     # TODO: (jsm) deprecate the index endpoints on the root path,
     # these are currently duplicated under /index (the ultimate
@@ -83,6 +84,7 @@ def db_init(app):
         app.auth = AuthDriver(app.config["AUTH_ADMIN_CREDS"], app.config["INTERNAL_AUTH"])
     except Exception:
         app.logger.exception("Couldn't initialize auth, continuing anyway")
+
 
 def app_init(app):
     # Register duplicates only at runtime
