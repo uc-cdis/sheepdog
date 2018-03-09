@@ -79,7 +79,6 @@ class FileUploadEntity(UploadEntity):
     """
     def __init__(self, *args, **kwargs):
         super(FileUploadEntity, self).__init__(*args, **kwargs)
-        self.file_exists = False
         self.file_index = None
         self.file_by_uuid = None
         self.file_by_hash = None
@@ -112,7 +111,6 @@ class FileUploadEntity(UploadEntity):
         Return:
             psqlgraph.Node
         """
-        self._populate_files_from_index(self.entity_id)
         self._set_node_and_file_ids()
 
         # call to super must happen after setting node and file ids here
@@ -145,7 +143,6 @@ class FileUploadEntity(UploadEntity):
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
 
-        self._populate_files_from_index(self.entity_id)
         self._is_valid_index_id_for_graph()
 
         return node
@@ -163,18 +160,10 @@ class FileUploadEntity(UploadEntity):
         role = self.action
         try:
             if role == 'create':
-                # Check if the category for the node is data_file or
-                # metadata_file, in which case, register a UUID and alias in
-                # the index service.
-                if not self.file_exists:
-                    self._register_index()
+                self._register_index()
 
             elif role == 'update':
-                # Check if the category for the node is data_file or
-                # metadata_file, in which case, register a UUID and alias in
-                # the index service.
-                if self.file_exists:
-                    self._update_index()
+                self._update_index()
             else:
                 message = 'Unknown role {}'.format(role)
                 self.logger.error(message)
@@ -204,12 +193,25 @@ class FileUploadEntity(UploadEntity):
         if self.urls:
             urls.extend(self.urls)
 
-        # IndexClient
-        self._create_index(did=self.file_index,
-                           hashes=hashes,
-                           size=size,
-                           urls=urls,
-                           metadata=metadata)
+        if flask.current_app.config.get('ENFORCE_FILE_HASH_UNIQUENESS', True):
+            # Check if there is an existing record with this hash and size, i.e.
+            # this node already has an index record. Create a new record (with
+            # UUID) only if none was found.
+            params = {'hashes': hashes, 'size': size}
+            document = self.transaction.indexd.get_with_params(params)
+        else:
+            # Check if there is a record with same id
+            document = self.transaction.indexd.get(getattr(self.node, 'node_id', None))
+
+        if not document:
+            did = getattr(self.node, 'node_id', str(uuid.uuid4()))
+
+            # IndexClient
+            self._create_index(did=did,
+                               hashes=hashes,
+                               size=size,
+                               urls=urls,
+                               metadata=metadata)
 
         self._create_alias(
             record=alias, hashes=hashes, size=size, release='private'
@@ -258,34 +260,18 @@ class FileUploadEntity(UploadEntity):
 
         return is_updateable
 
-    def _populate_files_from_index(self, uuid=None):
-        """
-        Populate information about file existence in index service.
-        Will first check provided uuid, then check by hash/size.
-
-        Returns:
-            TYPE: Description
-        """
-        self.file_by_hash = self.get_file_from_index_by_hash()
-        self.file_by_uuid = self.get_file_from_index_by_uuid(uuid)
-
-        if self.file_by_uuid or self.file_by_hash:
-            self.file_exists = True
-
     def _set_node_and_file_ids(self):
         """
         Set the node uuid and indexed file uuid accordingly based on
         information provided and whether or not the file exists in the
         index service.
         """
-        if not self.file_exists:
-            if self.entity_id:
-                # use entity_id for file creation
-                self.file_index = self.entity_id
-            else:
-                # use same id for both node entity id and file index
+        if not self.get_file_from_index():
+            # generate entity_id if not provided
+            if not self.entity_id:
                 self.entity_id = str(uuid.uuid4())
-                self.file_index = self.entity_id
+            # use same id for both node entity id and file index
+            self.file_index = self.entity_id
         else:
             if self.entity_id:
                 # check to make sure that when file exists
@@ -367,7 +353,7 @@ class FileUploadEntity(UploadEntity):
             self.secondary_keys
         ).all()
         if len(nodes) == 1:
-            if self.file_exists:
+            if self.get_file_from_index():
                 file_by_uuid_index = getattr(self.file_by_uuid, 'did', None)
                 file_by_hash_index = getattr(self.file_by_hash, 'did', None)
                 if ((file_by_uuid_index != nodes[0].node_id) or
@@ -419,6 +405,21 @@ class FileUploadEntity(UploadEntity):
             document = self.transaction.indexd.get(uuid)
 
         return document
+
+    def get_file_from_index(self):
+        """
+        Checks whether the record exists in indexd, returns if so
+
+        If ENFORCE_FILE_HASH_UNIQUENESS is set, will search indexd records by hashes and size
+        otherwise will search by node_id
+        """
+        if flask.current_app.config.get('ENFORCE_FILE_HASH_UNIQUENESS', True):
+            return self.get_file_from_index_by_hash()
+        else:
+            file_id = getattr(self.node, 'node_id', None)
+            if file_id:
+                return self.get_file_from_index_by_uuid(file_id)
+        return None
 
     def get_metadata(self):
         metadata = {'acls': flask.g.dbgap_accession_numbers}
