@@ -44,6 +44,11 @@ class UploadEntityFactory():
             return UploadEntity(transaction, config)
 
         node_type = doc.get('type')
+        if node_type is None:
+            # Handle missing node_type in submission json. This will make
+            # the return errors be what we expect from the client-side.
+            return UploadEntity(transaction, config)
+
         node_category = get_node_category(node_type)
 
         if node_category in UploadEntity.DATA_FILE_CATEGORIES:
