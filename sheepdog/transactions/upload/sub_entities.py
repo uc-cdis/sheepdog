@@ -236,6 +236,7 @@ class FileUploadEntity(UploadEntity):
         submitter_id = self.node._props.get('submitter_id')
         hashes = {'md5': self.node._props.get('md5sum')}
         size = self.node._props.get('file_size')
+        file_name = self.node._props.get('file_name')
         alias = "{}/{}".format(project_id, submitter_id)
         metadata = self.get_metadata()
 
@@ -248,6 +249,7 @@ class FileUploadEntity(UploadEntity):
                            hashes=hashes,
                            size=size,
                            urls=urls,
+                           file_name=file_name,
                            metadata=metadata)
 
         self._create_alias(
