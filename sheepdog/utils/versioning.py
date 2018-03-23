@@ -1,34 +1,49 @@
 """
 Utility functions for handling common tasks in versioning
 """
+from indexclient.client import Document
 
 
 class IndexVersionHelper:
 
     def __init__(self, index_client):
         """
-        :type index_client: indexclient.client.IndexClient
-        :param index_client:
+        Args:
+            index_client (indexclient.client.IndexClient):
         """
         self.index_client = index_client
 
-    def add_node_version(self, did):
+    def add_node_version(self, family_member_gdc_id, hashes, size, file_name=None, urls=None, metadata=None):
         """
-        Queries IndexD to get the latest version for the specified did,
-        updates the version number for this revision and finally adds the revision
-        :type did: str
-        :param did: Digital document id
-        :rtype: indexclient.client.IndexClient
-        :return: a revised version of the specified index id containing the latest version number
+        Adds a node version to indexd
+
+        Args:
+            family_member_gdc_id (str): the gdc id of a family of nodes
+            hashes (dict): hashes for the new version, this is required to have at least one hash entry
+            size (int): file size
+            file_name (str): name of the file
+            urls (lst[str]): URLs for this file
+            metadata (dict): key value pairs
+        Returns:
+            indexclient.client.Document: the new version
         """
+
+        index_json = dict(hashes=hashes, size=size, file_name=file_name, urls=urls, metadata=metadata)
+
+        # dummy document object, used merely for passing values
+        versioned_doc = Document(None, None, index_json)
+
         # get latest revision for this node
-        revision = self.index_client.get(did)
+        # this is to ensure we don't add multiple unversioned entries ito indexd
+        revision = self.index_client.get(family_member_gdc_id)
 
         if revision and revision.version:
-            # create revision
-            revision = self.index_client.add_version(did)
+            # create a version
+            revision = self.index_client.add_version(family_member_gdc_id, versioned_doc)
         elif revision.version is None:
-            revision.version = "1"
+            # there's already a version than can be updated as often as desired
+
+            # TODO: update document entries - clarify if replace all fields is the way to go
             revision.patch()
         return revision
 
@@ -64,15 +79,5 @@ class IndexVersionHelper:
             latest_unversioned.version = latest_version_number + 1
             latest_unversioned.metadata["gdc_release_number"] = gdc_release_number
             latest_version_number.patch()
-
-    def add_bulk_revisions(self, did_list):
-        """
-        :type did_list: list[str]
-        :param did_list: list of document ids
-        :rtype: list[indexclient.client.IndexClient]
-        :return: list of updated revisions
-        """
-        revisions = []
-        for did in did_list:
-            revisions.append(self.add_node_revision(did))
-        return revisions
+            return True
+        return False
