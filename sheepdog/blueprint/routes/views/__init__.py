@@ -10,7 +10,7 @@ import requests
 
 from sheepdog import auth, dictionary, models, utils
 from sheepdog.utils import manifest, parse
-from sheepdog.blueprint.routes.views import program
+from sheepdog.blueprint.routes.views import program, release
 from sheepdog.errors import (
     AuthError,
     NotFoundError,
