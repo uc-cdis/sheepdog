@@ -2,20 +2,18 @@ import os
 import json
 from multiprocessing import Process
 
+from cdisutilstest.code.conftest import indexd_server, indexd_client
 from indexd import default_settings, get_app as get_indexd_app
-from indexclient.client import IndexClient
 import pytest
 import requests
 import requests_mock
 from mock import patch
-from flask.testing import make_test_environ_builder
 from fence.jwt.token import generate_signed_access_token
 from psqlgraph import PsqlGraphDriver
 from gdcdatamodel.models import Edge, Node
 from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
 from userdatamodel.driver import SQLAlchemyDriver
-from cdispyutils.hmac4 import get_auth
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
 
@@ -45,6 +43,7 @@ def get_parent(path):
     return path[0:path.rfind('/')]
 
 PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/tests/schemas'
+
 
 @pytest.fixture(scope='session')
 def pg_config():
@@ -250,9 +249,10 @@ def member(pg_driver):
 def cgci_blgsp(client, admin):
     put_cgci_blgsp(client, admin)
 
-@pytest.fixture()
-def index_client():
-    return IndexClient(SIGNPOST['host'], SIGNPOST['version'], SIGNPOST['auth'])
+
+@pytest.fixture(scope="function")
+def index_client(indexd_client):
+    return indexd_client
 
 def dictionary_setup(_app):
     url = 's3://testurl'

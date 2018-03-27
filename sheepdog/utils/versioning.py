@@ -28,7 +28,7 @@ class IndexVersionHelper:
             indexclient.client.Document: the new version
         """
 
-        index_json = dict(hashes=hashes, size=size, file_name=file_name, urls=urls, metadata=metadata)
+        index_json = dict(hashes=hashes, size=size, file_name=file_name, urls=urls, metadata=metadata, form="object")
 
         # dummy document object, used merely for passing values
         versioned_doc = Document(None, None, index_json)
@@ -72,12 +72,29 @@ class IndexVersionHelper:
             if version.version is None:
                 # there can only be one of this
                 latest_unversioned = version
-            elif int(version) > latest_version_number:
+            elif int(version.version) > latest_version_number:
                 latest_version_number = int(version.version)
 
         if latest_unversioned is not None:
-            latest_unversioned.version = latest_version_number + 1
+            latest_unversioned.version = str(latest_version_number + 1)
             latest_unversioned.metadata["gdc_release_number"] = gdc_release_number
-            latest_version_number.patch()
+            latest_unversioned.patch()
             return True
         return False
+
+    def do_release(self, gdc_release_number):
+        """
+        WIP: go through all entries on indexd and perform a node release
+        Args:
+            gdc_release_number (str): the current gdc release number
+
+        Returns:
+             int: number of nodes updated
+        """
+        print("Performing GDC Release: {}".format(gdc_release_number))
+        unversioned = self.index_client.list_with_params(params={"version": None})
+        released_count = 0
+        for version in unversioned:
+            if self.release_node(gdc_release_number, version.did):
+                released_count += 1
+        return released_count
