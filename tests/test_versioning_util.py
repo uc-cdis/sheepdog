@@ -65,7 +65,7 @@ class VersionHelperTest(unittest.TestCase):
         self.assertEquals(latest.version, "2")
 
         # TODO: fails cos IndexD does not allow updating metadata
-        self.assertEquals(latest.metadata["gdc_release_number"], "11")
+        self.assertEquals(latest.metadata["release_number"], "11")
         self.assertEquals(doc.baseid, latest.baseid)
 
     def test_add_new_node_revision(self):
@@ -78,32 +78,6 @@ class VersionHelperTest(unittest.TestCase):
         self.assertIsNone(ver.version)
         self.assertEquals(doc.baseid, ver.baseid)
         self.assertFalse(ver.hashes.has_key("md5"))
-
-    def test_do_release(self):
-        # add a new node index
-        doc1 = self.create_dummy_entry(add_version=False)
-        doc2 = self.create_dummy_entry(add_version=False)
-
-        release_count = self.vh.do_release("10")
-        self.assertEquals(release_count, 2)
-
-        # add versions
-        self.add_dummy_version(doc1.did)
-        self.add_dummy_version(doc2.did)
-        doc3 = self.create_dummy_entry(add_version=False)
-
-        release_count = self.vh.do_release("11")
-        self.assertEquals(release_count, 3)
-
-        # check latest versions
-        latest = self.client.get_latest_version(doc1.did)
-        self.assertEquals(latest.version, "2")
-
-        latest = self.client.get_latest_version(doc2.did)
-        self.assertEquals(latest.version, "2")
-
-        latest = self.client.get_latest_version(doc3.did)
-        self.assertEquals(latest.version, "1")
 
 
 if __name__ == '__main__':
