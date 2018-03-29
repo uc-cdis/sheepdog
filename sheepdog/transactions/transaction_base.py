@@ -2,7 +2,7 @@
 Define the ``TransactionBase`` class, which ``UploadTransaction`` inherits
 from.
 """
-
+from psqlgraph import PsqlGraphDriver
 from contextlib import contextmanager
 
 import flask
@@ -73,14 +73,14 @@ class TransactionBase(object):
         # To be pulled from flask request context if not provided
         self.logger = kwargs.pop('logger', None) or current_app.logger
         self.indexd = kwargs.pop('indexd', None) or current_app.indexd
-        self.db_driver = kwargs.pop('db_driver', None) or current_app.db
+        self.db_driver = kwargs.pop('db_driver', None) or current_app.db  # type: PsqlGraphDriver
         self.config =  kwargs.pop('flask_config', None) or current_app.config
         #: Create a transaction log, this will be created and committed to the
         #: database during claim_transaction_log()
         self.transaction_id = kwargs.pop('transaction_id', None)
         if kwargs:
             self.logger.warn('Unused arguments: %s', kwargs.keys())
-
+        self.indexd
         self.graph_validator = validators.GDCGraphValidator()
         self.transactional_errors = []
 

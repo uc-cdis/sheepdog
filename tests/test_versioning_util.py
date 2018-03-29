@@ -57,7 +57,7 @@ class VersionHelperTest(unittest.TestCase):
 
         # add a new version
         ver = self.add_dummy_version(doc.did)
-        released = self.vh.release_node("11", doc.did)
+        released = self.vh.release_node("11", doc.did, )
         self.assertTrue(released)
 
         # validation, get the latest version
