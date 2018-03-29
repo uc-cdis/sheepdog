@@ -212,7 +212,7 @@ class DelimitedConverter(object):
         # Though it needs to be <type 'int'> only as indexd allows only integer size
         # Per Joe, The change of the model will require a full database migration and a maintanance shutdown
         # Below is a sad temporary workaround:
-        if current_app.config.get('IS_GDC', True):
+        if current_app.config.get('IS_GDC', False):
             if key == 'file_size':
                 return int(value)
 
