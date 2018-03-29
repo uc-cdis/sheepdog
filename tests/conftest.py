@@ -25,7 +25,7 @@ from sheepdog.test_settings import (
     Fernet,
     HMAC_ENCRYPTION_KEY,
     JWT_KEYPAIR_FILES,
-    SIGNPOST,
+    INDEXD,
 )
 from tests.api import app as _app, app_init, indexd_init
 from tests.submission.test_endpoints import put_cgci_blgsp
@@ -38,9 +38,11 @@ except NameError:
     except ImportError:
         from imp import reload # Python 3.0 - 3.3
 
+
 def get_parent(path):
     print(path)
     return path[0:path.rfind('/')]
+
 
 PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/tests/schemas'
 
@@ -93,7 +95,7 @@ def app(tmpdir, request):
             os.remove(filename)
     indexd_app = get_indexd_app()
 
-    indexd_init(*SIGNPOST['auth'])
+    indexd_init(*INDEXD['auth'])
     indexd = Process(target=indexd_app.run, args=['localhost', port])
     indexd.start()
     wait_for_indexd_alive(port)
@@ -253,6 +255,7 @@ def cgci_blgsp(client, admin):
 @pytest.fixture(scope="function")
 def index_client(indexd_client):
     return indexd_client
+
 
 def dictionary_setup(_app):
     url = 's3://testurl'

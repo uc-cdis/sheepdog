@@ -98,7 +98,7 @@ class DeletionTransaction(TransactionBase):
                         # Below is a sad workaround for inconsistent gdcdictionary :|
                         # Will be safe to remove once 'required' fields is a
                         # complete and tested set for all node types in gdcdictionary.schemas
-                        if current_app.config.get('IS_GDC', True):
+                        if current_app.config.get('IS_GDC', False):
                             if field in ['submitter_id', 'project_id', 'state', 'file_state']:
                                 field_is_protected = True
 
