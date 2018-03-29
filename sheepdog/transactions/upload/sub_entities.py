@@ -266,7 +266,7 @@ class FileUploadEntity(UploadEntity):
         self.file_by_hash = self.get_file_from_index_by_hash()
         self.file_by_uuid = self.get_file_from_index_by_uuid(self.entity_id)
 
-        if flask.current_app.config.get('ENFORCE_FILE_HASH_UNIQUENESS', True):
+        if flask.current_app.config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
             self.file_exists = self.file_by_uuid or self.file_by_hash
         else:
             self.file_exists = self.file_by_uuid
@@ -284,8 +284,8 @@ class FileUploadEntity(UploadEntity):
             # use same id for both node entity id and file index
             self.file_index = self.entity_id
         else:
-            # If hash uniqueness not enforced, do nothing
-            if not flask.current_app.config.get('ENFORCE_FILE_HASH_UNIQUENESS', True):
+            # If hash and size uniqueness not enforced, do nothing
+            if not flask.current_app.config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
                 return
 
             if self.entity_id:
@@ -358,8 +358,8 @@ class FileUploadEntity(UploadEntity):
         return is_valid
 
     def _is_valid_index_id_for_graph(self):
-        # Do not check by hash if hash uniqueness is not enforced (for ex. GDC)
-        if not flask.current_app.config.get('ENFORCE_FILE_HASH_UNIQUENESS', True):
+        # Do not check by hash and size if uniqueness is not enforced (for ex. GDC)
+        if not flask.current_app.config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
             return True
 
         is_valid = True
