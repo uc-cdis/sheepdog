@@ -2,8 +2,10 @@
 Test upload entities (mostly data file handling and communication with
 index service).
 """
+import flask
 import json
 import copy
+import pytest
 
 from test_endpoints import put_cgci_blgsp
 
@@ -642,3 +644,38 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     # response
     assert_negative_response(resp)
     assert_single_entity_from_response(resp)
+
+
+@pytest.mark.config_toggle(parameter='ENFORCE_FILE_HASH_SIZE_UNIQUENESS', value=False)
+def test_dont_enforce_file_hash_size_uniqueness(
+        client_toggled, pg_driver, admin, submitter, cgci_blgsp):
+    """
+    Check that able to submit two files with different did and urls but duplicate hash and size
+    if ENFORCE_FILE_HASH_SIZE_UNIQUENESS set to False
+    """
+
+    submit_first_experiment(client_toggled, pg_driver, admin, submitter, cgci_blgsp)
+
+    file_ = DEFAULT_METADATA_FILE
+    file_['id'] = DEFAULT_UUID
+
+    submit_metadata_file(client_toggled, pg_driver, admin, submitter, cgci_blgsp,
+                         data=file_)
+
+    # now submit again but change url and id
+    new_url = 'some/new/url/location/to/add'
+    new_id = DEFAULT_UUID.replace('1', '2')
+
+    updated_file = copy.deepcopy(file_)
+    updated_file['urls'] = new_url
+    updated_file['id'] = new_id
+    submit_metadata_file(client_toggled, pg_driver, admin, submitter,
+                         cgci_blgsp, data=updated_file)
+
+    # check that both are incerted into indexd and have correct urls
+    assert flask.current_app.indexd.get(DEFAULT_UUID).to_json()['urls'] == [
+        DEFAULT_METADATA_FILE['urls']
+    ]
+    assert flask.current_app.indexd.get(new_id).to_json()['urls'] == [
+        new_url
+    ]

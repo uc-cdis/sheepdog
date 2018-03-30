@@ -130,7 +130,29 @@ def app(tmpdir, request):
     _app.jwt_public_keys = {_app.config['USER_API']: {
             'key-test': utils.read_file('resources/keys/test_public_key.pem')
     }}
+
     return _app
+
+
+@pytest.fixture(scope='function')
+def client_toggled(app, request):
+    """
+    Will toggle app config parameter for the test using this and return test client
+
+    USAGE:
+    @pytest.mark.config_toggle(parameter='PARAM', value=VAL)
+    def test_mytest(client_toggled):
+        ...
+
+    NOTE: App config gets reset each time function-scoped app fixture is executed,
+    no need to reset here
+    """
+    params = request.node.get_marker('config_toggle')
+
+    app.config[params.kwargs['parameter']] = params.kwargs['value']
+
+    with app.test_client() as client:
+        yield client
 
 
 @pytest.fixture
