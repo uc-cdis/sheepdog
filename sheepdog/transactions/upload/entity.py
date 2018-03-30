@@ -34,7 +34,18 @@ POSSIBLE_OPEN_FILE_NODES = [
 ]
 
 def lookup_node(psql_driver, label, node_id=None, secondary_keys=None):
-    """Return a query for nodes by id and secondary keys."""
+    """Return a query for nodes by id and secondary keys.
+
+    Args:
+        psql_driver (psqlgraph.psqlgraph.PsqlGraphDriver): Connection to graph
+        label (str): Node type label
+        node_id (str): UUID of node
+        secondary_keys (tuple): filter by node type secondary keys property
+
+    Returns:
+        psqlgraph.query.GraphQuery: sqlalchemy query object
+    """
+
     cls = psqlgraph.Node.get_subclass(label)
     query = psql_driver.nodes(cls)
     if node_id is None and not secondary_keys:
@@ -73,6 +84,13 @@ class UploadEntity(EntityBase):
         self.parents = {}
         self._secondary_keys = None
         self._config = config
+
+        ####################################################################
+        # Some projects allow for an entity to be updated partially or fully
+        # as many times as needed without creating a new version of the
+        # doc in indexd
+        ####################################################################
+        self._is_replaceable = self._config.get('CREATE_REPLACEABLE', False)
 
     @property
     def secondary_keys(self):
@@ -170,6 +188,10 @@ class UploadEntity(EntityBase):
             return
 
         self._set_node_properties()
+        indexd_doc = self.transaction.indexd.get(self.node.node_id)
+        if indexd_doc:
+            # import pdb; pdb.set_trace()
+            self._update_indexd_doc(indexd_doc)
 
     def flush_to_session(self):
         """
@@ -325,28 +347,29 @@ class UploadEntity(EntityBase):
 
     def get_node_merge(self):
         """
-        This is called for a PATCH operation and supports upsert. It will
+        This is called for a PUT operation and supports upsert. It will
         lookup an existing node or create one if it doesn't exist.
 
         Return:
             psqlgraph.Node:
         """
-        nodes = lookup_node(
+
+        query = lookup_node(
             self.transaction.db_driver,
             self.entity_type,
             self.entity_id,
             self.secondary_keys
-        ).all()
+        )
 
-        if len(nodes) > 1:
+        if query.count() > 1:
             return self.record_error(
                 'Entity is not unique, {} entities found with {}'
-                .format(len(nodes), self.secondary_keys),
+                .format(query.count(), self.secondary_keys),
                 type=EntityErrors.NOT_UNIQUE,
             )
 
         # If no node was found, create a new one
-        if len(nodes) == 0:
+        if query.count() == 0:
             return self.get_node_create()
 
         # Check user permissions for updating nodes
@@ -357,7 +380,7 @@ class UploadEntity(EntityBase):
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
 
-        node = nodes.pop()
+        node = query.one()
         self.old_props = {k: v for k, v in node.props.iteritems()}
 
         if node.label != self.entity_type:
@@ -411,6 +434,35 @@ class UploadEntity(EntityBase):
 
         return node
 
+    def _update_indexd_doc(self, indexd_doc):
+        """Update an entry in indexd if applicable for a project
+
+        Currently there is no way to update all the fields a document in indexd.
+        For projects that permit it, a submitter can update the node metadata
+        as many times as they want but that means a change in file size,
+        file name, hashes, etc. To get around this we collect the metadata from
+        indexd, delete the entry, and re-create it with the same did and baseid.
+
+        Args:
+            indexd_doc (indexclient.client.Document):
+                IndexClient representation of document in indexd
+        """
+
+        # order is important here
+        # to_json will raise an exception if the doc is deleted
+        doc_props = indexd_doc.to_json()
+        indexd_doc.delete()
+
+        self.transaction.indexd.create(
+            hashes={'md5': self.doc['md5sum']}, # new/updated
+            size=self.doc['file_size'],         # new/updated
+            file_name=self.doc['file_name'],    # new/updated
+            did=doc_props['did'],               # old/carried over
+            urls=doc_props['urls'],             # old/carried over
+            metadata=doc_props['metadata'],     # old/carried over
+            baseid=doc_props['baseid'],         # old/carried over
+        )
+
     def _merge_doc_links(self, node):
         """
         For all links that exist in the database, add them to the document if
@@ -427,9 +479,7 @@ class UploadEntity(EntityBase):
             self.doc[name] = doc_links
 
             # Get set of node ids in the link document
-            map(doc_ids.add, [
-                l.get('id') for l in doc_links if l.get('id')
-            ])
+            map(doc_ids.add, [l.get('id') for l in doc_links if l.get('id')])
 
             # Get set of secondary_keys in the link document
             for link in doc_links:

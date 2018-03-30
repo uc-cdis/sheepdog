@@ -71,6 +71,8 @@ def app_init(app):
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
     app_register_blueprints(app)
+
+    # also registers indexd connection (IndexClient)
     db_init(app)
     # exclude es init as it's not used yet
     # es_init(app)

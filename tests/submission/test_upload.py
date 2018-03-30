@@ -488,7 +488,7 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     submitted data for the given ID. The file hash/size provided does NOT
     match an already indexed file. e.g. The file is not yet indexed.
 
-    The asssumption is that the user is attempting to UPDATE the index
+    The assumption is that the user is attempting to UPDATE the index
     with a new file.
 
     FIXME At the moment, we do not allow updating like this
@@ -543,7 +543,7 @@ def test_data_file_update_url_different_file_not_indexed(
     submitted data. The file hash/size provided does NOT
     match an already indexed file. e.g. The file is not yet indexed.
 
-    The asssumption is that the user is attempting to UPDATE the index
+    The assumption is that the user is attempting to UPDATE the index
     with a new file but didn't provide a full id, just the same submitter_id
     as before.
 
@@ -558,7 +558,7 @@ def test_data_file_update_url_different_file_not_indexed(
     document.urls = [DEFAULT_URL]
     get_index_uuid.return_value = document
 
-    # index yeilds no match given hash/size
+    # index yields no match given hash/size
     get_index_hash.return_value = None
 
     submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
@@ -599,7 +599,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     HOWEVER the file hash and size in the new data MATCH A DIFFERENT
     FILE in the index service that does NOT have the id provided.
 
-    The asssumption is that the user is attempting to UPDATE the index
+    The assumption is that the user is attempting to UPDATE the index
     with a new file they've already submitted under a different id.
 
     FIXME At the moment, we do not allow updating like this

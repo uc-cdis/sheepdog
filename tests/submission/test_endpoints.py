@@ -283,10 +283,12 @@ def post_example_entities_together(client, submitter, data_fnames2=None):
     return client.post(path, headers=submitter, data=json.dumps(data))
 
 
-def put_example_entities_together(client, headers):
+def put_example_entities_together(client, headers, data_fnames2=None):
+    if not data_fnames2:
+        data_fnames2 = data_fnames
     path = BLGSP_PATH
     data = []
-    for fname in data_fnames:
+    for fname in data_fnames2:
         with open(os.path.join(DATA_DIR, fname), 'r') as f:
             data.append(json.loads(f.read()))
     return client.put(path, headers=headers, data=json.dumps(data))
@@ -587,16 +589,6 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
     def fail_index_test(_):
         raise AssertionError('IndexClient tried to create index or alias')
 
-    # Since the IndexClient should never be called to register anything if the
-    # file is invalid, change the ``create`` and ``create_alias`` methods to
-    # raise an error.
-    monkeypatch.setattr(
-        UploadTransaction, 'indexd.create', fail_index_test, raising=False
-    )
-    monkeypatch.setattr(
-        UploadTransaction, 'indexd.create_alias', fail_index_test,
-        raising=False
-    )
     # Attempt to post the invalid entities.
     test_fnames = (
         data_fnames

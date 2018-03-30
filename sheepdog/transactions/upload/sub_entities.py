@@ -81,6 +81,8 @@ class FileUploadEntity(UploadEntity):
     """
     def __init__(self, *args, **kwargs):
         super(FileUploadEntity, self).__init__(*args, **kwargs)
+
+        # file exists in indexd
         self.file_exists = False
         self.file_index = None
         self.file_by_uuid = None
@@ -126,7 +128,7 @@ class FileUploadEntity(UploadEntity):
 
     def get_node_merge(self):
         """
-        This is called for a PATCH operation and supports upsert. It will
+        This is called for a PUT operation and supports upsert. It will
         lookup an existing node or create one if it doesn't exist.
 
         Return:
@@ -263,13 +265,15 @@ class FileUploadEntity(UploadEntity):
         """
         Populate information about file existence in index service.
         Will first check provided uuid, then check by hash/size.
-
-        Returns:
-            TYPE: Description
         """
+
         self.file_by_hash = self.get_file_from_index_by_hash()
         self.file_by_uuid = self.get_file_from_index_by_uuid(self.entity_id)
 
+        #######################################################################
+        # need to find out if this causes application working outside
+        # of context error
+        #######################################################################
         if flask.current_app.config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
             self.file_exists = self.file_by_uuid or self.file_by_hash
         else:
@@ -281,6 +285,7 @@ class FileUploadEntity(UploadEntity):
         information provided and whether or not the file exists in the
         index service.
         """
+
         if not self.file_exists:
             # generate entity_id if not provided
             if not self.entity_id:
@@ -363,29 +368,33 @@ class FileUploadEntity(UploadEntity):
 
     def _is_valid_index_id_for_graph(self):
         # Do not check by hash and size if uniqueness is not enforced (for ex. GDC)
-        if not flask.current_app.config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
+
+        if self._is_replaceable:
             return True
 
         is_valid = True
         # if a single match exists in the graph, check to see if
         # file exists in index service
-        nodes = lookup_node(
+        query = lookup_node(
             self.transaction.db_driver,
             self.entity_type,
             self.entity_id,
             self.secondary_keys
-        ).all()
-        if len(nodes) == 1:
+        )
+        if query.count() == 1:
             if self.file_exists:
+                node = query.one()
                 file_by_uuid_index = getattr(self.file_by_uuid, 'did', None)
                 file_by_hash_index = getattr(self.file_by_hash, 'did', None)
-                if ((file_by_uuid_index != nodes[0].node_id) or
-                        (file_by_hash_index != nodes[0].node_id)):
+
+                # if ((file_by_uuid_index != node.node_id) or
+                        # (file_by_hash_index != node.node_id)):
+                if node.node_id in (file_by_uuid_index, file_by_hash_index):
                     self.record_error(
                         'Graph ID and index file ID found in index service do not match, '
                         'which is currently not permitted. Graph ID: {}. '
                         'Index ID: {}. Index ID found using hash/size: {}.'
-                        .format(nodes[0].node_id, file_by_hash_index, file_by_uuid_index),
+                        .format(node.node_id, file_by_hash_index, file_by_uuid_index),
                         type=EntityErrors.NOT_UNIQUE,
                     )
                     is_valid = False
@@ -421,7 +430,11 @@ class FileUploadEntity(UploadEntity):
         - Should only ever be called for data and metadata files.
         - If there is already a record matching the hash and size for this
           file, then return none.
+
+        Args:
+            uuid (str): unique digital id for a node in the database
         """
+
         document = None
 
         if uuid:

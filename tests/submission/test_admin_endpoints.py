@@ -53,7 +53,7 @@ def post_blgsp_files(client, headers):
     ('admin', 200, True),
     ('admin', 200, False),
 ])
-def test_to_delete(headers, status_code, to_delete, request, client,
+def test_to_delete(headers, status_code, to_delete, request, client, indexd_server, indexd_client,
     pg_driver, cgci_blgsp, submitter):
     """Try to set the sysan of a node with admin credentials
 
@@ -99,7 +99,7 @@ def do_reassign(client, headers):
 
     return client.put(reassign_path, headers=headers, data=data), did, s3_url
 
-def test_reassign_with_admin(client, pg_driver, cgci_blgsp, submitter, index_client, admin):
+def test_reassign_with_admin(client, pg_driver, cgci_blgsp, submitter, indexd_server, indexd_client, admin):
     """Try to reassign a node's remote URL
 
     Url:
@@ -109,10 +109,10 @@ def test_reassign_with_admin(client, pg_driver, cgci_blgsp, submitter, index_cli
 
     resp, did, s3_url  = do_reassign(client, admin)
     assert resp.status_code == 200, resp.data
-    assert index_client.get(did), 'Did not register with indexd?'
-    assert s3_url in index_client.get(did).urls, 'Did not successfully reassign'
+    assert indexd_client.get(did), 'Did not register with indexd?'
+    assert s3_url in indexd_client.get(did).urls, 'Did not successfully reassign'
 
-def test_reassign_without_admin(client, pg_driver, cgci_blgsp, submitter, index_client):
+def test_reassign_without_admin(client, pg_driver, cgci_blgsp, submitter, indexd_server, indexd_client):
     """Try to reassign a node's remote URL
 
     Url:
@@ -122,6 +122,6 @@ def test_reassign_without_admin(client, pg_driver, cgci_blgsp, submitter, index_
 
     resp, did, s3_url = do_reassign(client, submitter)
     assert resp.status_code == 403, resp.data
-    assert index_client.get(did), 'Index should have been created.'
-    assert len(index_client.get(did).urls) == 0, 'No files have been uploaded'
-    assert s3_url not in index_client.get(did).urls, 'Should not have reassigned'
+    assert indexd_client.get(did), 'Index should have been created.'
+    assert len(indexd_client.get(did).urls) == 0, 'No files have been uploaded'
+    assert s3_url not in indexd_client.get(did).urls, 'Should not have reassigned'

@@ -2,8 +2,8 @@ from collections import OrderedDict
 from .config import LEGACY_MODE
 
 INDEXD = {
-    "host": "http://localhost:8000", 'version': 'v0',
-    "auth": ('fake_user', 'fake_password')}
+    "host": "http://localhost:8001", 'version': 'v0',
+    "auth": ('admin', 'admin')}
 AUTH = 'https://fake_auth_url'
 INTERNAL_AUTH = 'https://fake_auth_url'
 AUTH_ADMIN_CREDS = {
