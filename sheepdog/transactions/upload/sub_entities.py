@@ -3,12 +3,14 @@ Subclasses for UploadEntity that handle different types of
 uploaded entites.
 """
 import uuid
+
 import flask
 
 from sheepdog.transactions.entity_base import EntityErrors
 
 from sheepdog.transactions.upload.entity import UploadEntity
 from sheepdog.transactions.upload.entity import lookup_node
+from sheepdog.utils import stringify_acls
 
 
 class NonFileUploadEntity(UploadEntity):
@@ -428,7 +430,7 @@ class FileUploadEntity(UploadEntity):
         return document
 
     def get_metadata(self):
-        metadata = {'acls': flask.g.dbgap_accession_numbers}
+        metadata = {'acls': stringify_acls(self.transaction.get_phsids())}
         return metadata
 
     def _get_file_hashes_and_size(self):
