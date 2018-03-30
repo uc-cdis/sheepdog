@@ -18,7 +18,7 @@ class VersionHelperTest(unittest.TestCase):
         self.client = index_client
         self.vh = IndexVersionHelper(index_client)
 
-    def create_dummy_entry(self, add_version=True):
+    def create_dummy_entry(self, add_version_number=True):
         did = str(uuid.uuid4())
 
         md5 = hashlib.md5()
@@ -33,7 +33,7 @@ class VersionHelperTest(unittest.TestCase):
         )
 
         # give it a version number
-        if add_version:
+        if add_version_number:
             doc.version = "1"
             doc.patch()
 
@@ -54,10 +54,10 @@ class VersionHelperTest(unittest.TestCase):
     def test_release_node(self):
         # add a new node index
         doc = self.create_dummy_entry()
-
+        print(doc.to_json())
         # add a new version
         ver = self.add_dummy_version(doc.did)
-        released = self.vh.release_node("11", doc.did, )
+        released = self.vh.release_node("11", doc.did)
         self.assertTrue(released)
 
         # validation, get the latest version
@@ -65,8 +65,9 @@ class VersionHelperTest(unittest.TestCase):
         self.assertEquals(latest.version, "2")
 
         # TODO: fails cos IndexD does not allow updating metadata
+        print(latest.to_json())
         self.assertEquals(latest.metadata["release_number"], "11")
-        self.assertEquals(doc.baseid, latest.baseid)
+        self.assertEquals(latest.metadata["file_state"], "submitted")
 
     def test_add_new_node_revision(self):
         # add a new node index

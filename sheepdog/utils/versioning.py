@@ -53,6 +53,8 @@ class IndexVersionHelper:
         """
         Performs a GDC release action on a given node
 
+        raises a HTTPError if node_id not found in indexd
+
         * Using the node id, retrieve all versions from indexd
         * filter out the latest unversioned and the latest version number
             * the latest unversioned is an entry with version set to None (there should be only one of this)

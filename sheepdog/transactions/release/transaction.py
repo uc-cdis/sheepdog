@@ -1,3 +1,5 @@
+from requests import HTTPError
+
 from sheepdog import utils, models
 from sheepdog.transactions.transaction_base import TransactionBase
 from sheepdog.utils.versioning import IndexVersionHelper
@@ -14,6 +16,7 @@ class ReleaseTransaction(TransactionBase):
 
     def __init__(self, **kwargs):
         super(ReleaseTransaction, self).__init__(role='release', **kwargs)
+        self.partial_release = None
         self.released_count = 0
         self.versioning_helper = IndexVersionHelper(self.indexd)
 
@@ -40,9 +43,6 @@ class ReleaseTransaction(TransactionBase):
         release_version = "{}.{}".format(release_node.major_version, release_node.minor_version)
         return release_version
 
-    def is_project_released(self, total_unreleased):
-        return self.released_count == total_unreleased
-
     def take_action(self):
         """Attempt to transition the current project state to ``release``."""
         project = utils.lookup_project(self.db_driver, self.program, self.project)
@@ -57,17 +57,34 @@ class ReleaseTransaction(TransactionBase):
 
         # performing release action
         project_id = "{}-{}".format(self.program, self.project)
-        release_number = self.get_latest_release_number()
-
         submitted_nodes = self.db_driver.nodes().props(project_id=project_id, state="submitted")
-        for node in submitted_nodes:
-            _, release_no = self.versioning_helper.release_node(release_number=release_number, node_id=node.id,
-                                                                dry_run=self.dry_run)
-            if release_no == release_number:
-                node.props["state"] = "released"
-                self.entities.append(node)
-                self.released_count += 1
 
-        if self.is_project_released(len(submitted_nodes)):
+        released_count = self.perform_release(submitted_nodes)
+        if released_count == len(submitted_nodes):
             project.released = True
+        else:
+            self.record_error("Incomplete release {}/{}".format(self.released_count, len(submitted_nodes)))
         self.commit()
+
+    def perform_release(self, submitted_nodes):
+        """
+        Performs the release of nodes, both on the graph and on the index server.
+        Args:
+            submitted_nodes (list[Node]): list of nodes to be released
+        Returns:
+             int: Number of nodes successfully released
+        """
+        released = 0
+        release_number = self.get_latest_release_number()
+        for node in submitted_nodes:
+            try:
+                _, release_no = self.versioning_helper.release_node(release_number=release_number, node_id=node.id,
+                                                                    dry_run=self.dry_run)
+                if release_no == release_number:
+                    node.props["state"] = "released"
+                    self.entities.append(node)
+                    released += 1
+            except HTTPError:
+                self.record_error("Node ID: {} could not be loaded from indexd".format(node.id))
+                self.logger.error("Node ID: {} could not be loaded from indexd".format(node.id), exc_info=1)
+        return released

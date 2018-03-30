@@ -59,7 +59,7 @@ def pg_config():
 
 
 @pytest.fixture
-def app(tmpdir, request):
+def app(tmpdir, index_client):
 
     gencode_json = tmpdir.mkdir("slicing").join("test_gencode.json")
     gencode_json.write(json.dumps({
@@ -71,7 +71,7 @@ def app(tmpdir, request):
 
     _app.config.from_object("sheepdog.test_settings")
 
-    app_init(_app)
+    app_init(_app, index_client)
     dictionary_setup(_app)
 
     _app.logger.setLevel(os.environ.get("GDC_LOG_LEVEL", "WARNING"))
@@ -204,7 +204,7 @@ def cgci_blgsp(client, admin):
 
 
 @pytest.fixture(scope="function")
-def index_client(indexd_client):
+def index_client(indexd_client, indexd_server):
     return indexd_client
 
 

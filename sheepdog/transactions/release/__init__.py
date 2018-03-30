@@ -10,7 +10,6 @@ from sheepdog import utils
 from sheepdog.globals import (
     FLAG_IS_ASYNC,
 )
-from sheepdog.transactions.transaction_base import TransactionBase
 from sheepdog.transactions.release.transaction import ReleaseTransaction
 
 

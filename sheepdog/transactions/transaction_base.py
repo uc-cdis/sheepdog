@@ -80,7 +80,7 @@ class TransactionBase(object):
         self.transaction_id = kwargs.pop('transaction_id', None)
         if kwargs:
             self.logger.warn('Unused arguments: %s', kwargs.keys())
-        self.indexd
+
         self.graph_validator = validators.GDCGraphValidator()
         self.transactional_errors = []
 
