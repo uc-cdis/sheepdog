@@ -13,7 +13,7 @@ from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
 
 
-from indexclient.client import IndexClient as SignpostClient
+from indexclient.client import IndexClient
 from userdatamodel.driver import SQLAlchemyDriver
 
 import sheepdog
@@ -25,6 +25,7 @@ from sheepdog.version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
 # recursion depth is increased for complex graph traversals
 sys.setrecursionlimit(10000)
 DEFAULT_ASYNC_WORKERS = 8
+
 
 def app_register_blueprints(app):
     # TODO: (jsm) deprecate the index endpoints on the root path,
@@ -73,23 +74,23 @@ def db_init(app):
 
     app.oauth_client = oauth2_client.OAuthClient(**app.config['OAUTH2'])
 
-    app.logger.info('Initializing Signpost driver')
-    app.signpost = SignpostClient(
-        app.config['SIGNPOST']['host'],
-        version=app.config['SIGNPOST']['version'],
-        auth=app.config['SIGNPOST']['auth'])
+    app.logger.info('Initializing Indexd driver')
+    app.indexd = IndexClient(
+        app.config['INDEXD']['host'],
+        version=app.config['INDEXD']['version'],
+        auth=app.config['INDEXD']['auth'])
     try:
         app.logger.info('Initializing Auth driver')
         app.auth = AuthDriver(app.config["AUTH_ADMIN_CREDS"], app.config["INTERNAL_AUTH"])
     except Exception:
         app.logger.exception("Couldn't initialize auth, continuing anyway")
 
+
 def app_init(app):
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
 
     # explicit options set for compatibility with gdc's api
-    app.config['USE_SIGNPOST'] = False
     app.config['AUTH_SUBMISSION_LIST'] = True
     app.config['USE_DBGAP'] = False
     app.config['IS_GDC'] = False

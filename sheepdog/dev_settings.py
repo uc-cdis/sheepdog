@@ -2,9 +2,9 @@ import os
 from boto.s3.connection import OrdinaryCallingFormat
 from os import environ as env
 
-# Signpost
-SIGNPOST = {
-   'host': env.get('SIGNPOST_HOST', 'http://localhost:8888'),
+# Indexd
+INDEXD = {
+   'host': env.get('INDEXD_HOST', 'http://localhost:8888'),
    'version': 'v0',
    'auth': None}
 
@@ -97,3 +97,6 @@ VERIFY_PROJECT = False
 AUTH_SUBMISSION_LIST = False
 # dev setup use http
 os.environ['AUTHLIB_INSECURE_TRANSPORT'] = 'true'
+
+# if False, there will be 2 indexd entries created for file entities with different ids but with same hash and size insead of one
+ENFORCE_FILE_HASH_SIZE_UNIQUENESS = True
