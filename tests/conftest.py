@@ -154,6 +154,9 @@ def client_toggled(app, request):
     with app.test_client() as client:
         yield client
 
+    # reset app config just in case
+    app.config.from_object("sheepdog.test_settings")
+
 
 @pytest.fixture
 def pg_driver(request, client):
