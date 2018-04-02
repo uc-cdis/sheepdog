@@ -1,3 +1,4 @@
+import os
 from collections import OrderedDict
 from .config import LEGACY_MODE
 
@@ -40,10 +41,10 @@ SLICING = {
     'host': 'localhost',
     'gencode': 'REPLACEME',
 }
-PSQL_USER_DB_NAME = 'test_userapi'
-PSQL_USER_DB_USERNAME = 'postgres'
-PSQL_USER_DB_PASSWORD = 'postgres'
-PSQL_USER_DB_HOST = 'localhost'
+PSQL_USER_DB_NAME = os.getenv("USER_PG_DB", 'test_userapi')
+PSQL_USER_DB_USERNAME = os.getenv('USER_PG_USERNAME', 'postgres')
+PSQL_USER_DB_PASSWORD = os.getenv('USER_PG_PASS', 'postgres')
+PSQL_USER_DB_HOST = os.getenv('USER_PG_HOST', 'localhost')
 
 PSQL_USER_DB_CONNECTION = "postgresql://{name}:{password}@{host}/{db}".format(
     name=PSQL_USER_DB_USERNAME, password=PSQL_USER_DB_PASSWORD, host=PSQL_USER_DB_HOST, db=PSQL_USER_DB_NAME

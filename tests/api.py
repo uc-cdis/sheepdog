@@ -13,7 +13,6 @@ from cdis_oauth2client import OAuth2Client, OAuth2Error
 from cdispyutils.log import get_handler
 from flask import Flask, jsonify
 from flask_sqlalchemy_session import flask_scoped_session
-from indexclient.client import IndexClient
 from indexd.index.drivers.alchemy import SQLAlchemyIndexDriver
 from indexd.alias.drivers.alchemy import SQLAlchemyAliasDriver
 from indexd.auth.drivers.alchemy import SQLAlchemyAuthDriver
@@ -40,7 +39,7 @@ def app_register_blueprints(app):
     app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0+'/oauth2')
 
 
-def db_init(app):
+def db_init(app, index_client):
     app.logger.info('Initializing PsqlGraph driver')
     app.db = PsqlGraphDriver(
         host=app.config['PSQLGRAPH']['host'],
@@ -56,10 +55,7 @@ def db_init(app):
     app.oauth2 = OAuth2Client(**app.config['OAUTH2'])
 
     app.logger.info('Initializing Indexd driver')
-    app.indexd = IndexClient(
-        app.config['INDEXD']['host'],
-        version=app.config['INDEXD']['version'],
-        auth=app.config['INDEXD']['auth'])
+    app.indexd = index_client
     try:
         app.logger.info('Initializing Auth driver')
         app.auth = AuthDriver(app.config["AUTH_ADMIN_CREDS"], app.config["INTERNAL_AUTH"])
@@ -67,11 +63,11 @@ def db_init(app):
         app.logger.exception("Couldn't initialize auth, continuing anyway")
 
 
-def app_init(app):
+def app_init(app, index_client):
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
     app_register_blueprints(app)
-    db_init(app)
+    db_init(app, index_client)
     # exclude es init as it's not used yet
     # es_init(app)
     try:
