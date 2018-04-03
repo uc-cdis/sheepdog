@@ -36,11 +36,11 @@ before_script:
   - userdatamodel-init --db test_userapi
   - pip freeze
   - python bin/setup_test_database.py
-  - mkdir -p tests/resources/keys; cd tests/resources/keys; openssl genrsa -out test_private_key.pem 2048; openssl rsa -in test_private_key.pem -pubout -out test_public_key.pem; cd -
+  - mkdir -p integration_tests/resources/keys; cd integration_tests/resources/keys; openssl genrsa -out test_private_key.pem 2048; openssl rsa -in test_private_key.pem -pubout -out test_public_key.pem; cd -
 
 # command to run tests
 script:
-- py.test -vv --cov=sheepdog --cov-report xml tests/
+- py.test -vv --cov=sheepdog --cov-report xml unit_tests/ integration_tests/
 
 after_script:
 - python-codacy-coverage -r coverage.xml
