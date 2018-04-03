@@ -136,5 +136,4 @@ coverage.xml
 
 # jwt keys
 keys/*.pem
-unit_tests/resources/keys/*.pem
-integration_tests/resources/keys/*.pem
+tests/integration/resources/keys/*.pem

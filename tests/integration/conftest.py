@@ -29,8 +29,8 @@ from sheepdog.test_settings import (
     JWT_KEYPAIR_FILES,
     SIGNPOST,
 )
-from integration_tests.api import app as _app, app_init, indexd_init
-from integration_tests.submission.test_endpoints import put_cgci_blgsp
+from tests.integration.api import app as _app, app_init, indexd_init
+from tests.integration.submission.test_endpoints import put_cgci_blgsp
 
 try:
     reload  # Python 2.7
@@ -44,7 +44,7 @@ def get_parent(path):
     print(path)
     return path[0:path.rfind('/')]
 
-PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/integration_tests/schemas'
+PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/integration/schemas'
 
 @pytest.fixture(scope='session')
 def pg_config():
