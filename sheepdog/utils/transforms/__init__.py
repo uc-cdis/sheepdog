@@ -12,7 +12,7 @@ from sheepdog.errors import (
     UserError,
 )
 from sheepdog.utils.transforms.bcr_xml_to_json import (
-    BcrXmlToJsonParser,
+    BcrBiospecimenXmlToJsonParser,
     BcrClinicalXmlToJsonParser,
 )
 

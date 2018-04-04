@@ -277,7 +277,7 @@ def handle_biospecimen_bcr_xml_transaction(
     Entrypoint from the flask blueprint for BCR Biospecimen XML XSD 2.6
     """
     project_node_id = str(uuid.uuid5(PROJECT_SEED, project.encode('utf-8')))
-    parser = utils.transforms.BcrXmlToJsonParser(project_node_id)
+    parser = utils.transforms.BcrBiospecimenXmlToJsonParser(project_node_id)
     return handle_xml_transaction(role, program, project, parser, **tx_kwargs)
 
 
