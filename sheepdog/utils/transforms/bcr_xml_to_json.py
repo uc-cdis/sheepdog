@@ -25,10 +25,6 @@ from sheepdog.errors import (
     ParsingError,
     SchemaError,
 )
-from sheepdog.globals import (
-    BCR_MAPPING,
-)
-
 
 log = get_logger(__name__)
 SCHEMA_LOCATION_WHITELIST = ["https://github.com/nchbcr/xsd", "http://tcga-data.nci.nih.gov"]
@@ -126,11 +122,11 @@ def to_bool(val):
         raise ValueError("Cannot convert {} to boolean".format(val))
 
 
-class BcrXmlToJsonParser(object):
+class BcrBiospecimenXmlToJsonParser(object):
 
-    def __init__(self, project):
+    def __init__(self, project_code, mapping=None):
         """
-        Create a parser to convert XML to GDC JSON.
+        Create a parser to convert Biospecimen XML to GDC JSON.
 
         Args:
             project (str): the id of the project node to link cases to
@@ -140,9 +136,12 @@ class BcrXmlToJsonParser(object):
         self.exported_entitys = 0
         self.export_count = 0
         self.ignore_missing_properties = True
-        self.xml_mapping = json.loads(
-            json.dumps(yaml.load(BCR_MAPPING)), object_hook=AttrDict
-        )
+
+        if mapping is None:
+            mapping = pkg_resources.resource_string(
+                'gdcdatamodel', 'xml_mappings/tcga_biospecimen.yaml'
+            )
+        self.xml_mapping = yaml.load(mapping)
         self.entities = {}
 
     def xpath(
@@ -219,7 +218,7 @@ class BcrXmlToJsonParser(object):
 
         self.xml_root = validated_parse(str(xml)).getroottree()
         self.namespaces = self.xml_root.getroot().nsmap
-        for entity_type, param_list in self.xml_mapping.items():
+        for entity_type, param_list in self.xml_mapping.iteritems():
             for params in param_list:
                 self.parse_entity(entity_type, params)
 
