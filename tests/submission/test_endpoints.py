@@ -600,7 +600,7 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
     print(resp)
 
 
-def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter, index_client):
+def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter, indexd_client):
     """
     Test that submitting a valid data file creates an index and an alias.
     """
@@ -625,7 +625,7 @@ def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter,
             sur_entity = entity
 
     assert sur_entity, 'No submitted_unaligned_reads entity created'
-    assert index_client.get(sur_entity['id']), 'No indexd document created'
+    assert indexd_client.get(sur_entity['id']), 'No indexd document created'
 
 
 def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
