@@ -25,10 +25,6 @@ from sheepdog.errors import (
     ParsingError,
     SchemaError,
 )
-from sheepdog.globals import (
-    BCR_MAPPING,
-)
-
 
 log = get_logger(__name__)
 SCHEMA_LOCATION_WHITELIST = ["https://github.com/nchbcr/xsd", "http://tcga-data.nci.nih.gov"]
