@@ -188,10 +188,10 @@ class UploadEntity(EntityBase):
             return
 
         self._set_node_properties()
-        indexd_doc = self.transaction.indexd.get(self.node.node_id)
-        if indexd_doc:
-            # import pdb; pdb.set_trace()
-            self._update_indexd_doc(indexd_doc)
+        if self._is_replaceable:
+            indexd_doc = self.transaction.indexd.get(self.node.node_id)
+            if indexd_doc:
+                self._update_indexd_doc(indexd_doc)
 
     def flush_to_session(self):
         """

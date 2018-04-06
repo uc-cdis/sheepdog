@@ -387,9 +387,8 @@ class FileUploadEntity(UploadEntity):
                 file_by_uuid_index = getattr(self.file_by_uuid, 'did', None)
                 file_by_hash_index = getattr(self.file_by_hash, 'did', None)
 
-                # if ((file_by_uuid_index != node.node_id) or
-                        # (file_by_hash_index != node.node_id)):
-                if node.node_id in (file_by_uuid_index, file_by_hash_index):
+                if ((file_by_uuid_index != node.node_id) or
+                        (file_by_hash_index != node.node_id)):
                     self.record_error(
                         'Graph ID and index file ID found in index service do not match, '
                         'which is currently not permitted. Graph ID: {}. '

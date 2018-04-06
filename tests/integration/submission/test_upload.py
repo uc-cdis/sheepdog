@@ -60,8 +60,7 @@ def submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp):
     assert resp.status_code == 200, resp.data
 
 
-def submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=None):
+def submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp, data=None):
     data = data or DEFAULT_METADATA_FILE
     put_cgci_blgsp(client, admin)
     data = json.dumps(data)
@@ -372,7 +371,7 @@ def test_data_file_update_multiple_urls(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_url_id_provided(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, indexd_client, pg_driver, admin, submitter, cgci_blgsp):
     """
     Test submitting the same data again (with the id provided) and updating the
     URL field (should get added to the indexed file in index service).
@@ -400,8 +399,7 @@ def test_data_file_update_url_id_provided(
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
     updated_file['urls'] = new_url
     updated_file['id'] = document.did
-    resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
