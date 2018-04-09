@@ -8,7 +8,6 @@ Pylint ``no-member`` error is disabled because for some reason there are a lot
 of false positives with ``lxml.etree``.
 """
 
-import sys
 import datetime
 import json
 import math
@@ -236,7 +235,6 @@ class BcrBiospecimenXmlToJsonParser(object):
         for entity_type, param_list in self.xml_mapping.iteritems():
             for params in param_list:
                 self.parse_entity(entity_type, params)
-        sys.exit()
 
         return self
 
@@ -266,10 +264,6 @@ class BcrBiospecimenXmlToJsonParser(object):
             entity_id = self.get_entity_id(root, entity_type, params)
             args = (root, entity_type, params, entity_id)
             props = self.get_entity_properties(*args)
-            print "Before"
-            print entity_id
-            print args
-            print props
             
             props.update(self.get_entity_datetime_properties(*args))
             props.update(self.get_entity_const_properties(*args))
@@ -283,9 +277,7 @@ class BcrBiospecimenXmlToJsonParser(object):
             if entity_type == 'case':
                 props['projects'] = [{'id': self.project}]
 
-            #self.save_entity(entity_id, entity_type, props)
-            print "After"
-            print props
+            self.save_entity(entity_id, entity_type, props)
 
     def save_entity(self, entity_id, label, properties):
         """Adds a entity to the graph
@@ -412,11 +404,10 @@ class BcrBiospecimenXmlToJsonParser(object):
         Return:
             dict: dictionary of properties
         """
-        if 'const_properties' not in params or not params.const_properties:
-            return {}
         props = {}
-        for prop, args in params.const_properties.items():
-            props[prop] = munge_property(args['value'], args['type'])
+        if 'const_properties' in params:
+            for prop, args in params.const_properties.items():
+                props[prop] = munge_property(args['value'], args['type'])
         return props
 
     def get_entity_datetime_properties(
@@ -436,27 +427,24 @@ class BcrBiospecimenXmlToJsonParser(object):
         Return:
             dict: the properties dictionary
         """
-        if 'datetime_properties' not in params or \
-           not params.datetime_properties:
-            return {}
-
         props = {}
-        # Loop over all given datetime properties
-        for name, timespans in params.datetime_properties.items():
-            times = {'year': 0, 'month': 0, 'day': 0}
-            # Parse the year, month, day
-            for span in times:
-                if span in timespans:
-                    temp = self.xpath(
-                        timespans[span], root, single=True, text=True,
-                        label='{}: {}'.format(entity_type, entity_id))
-                    times[span] = 0 if temp is None else int(temp)
+        if 'datetime_properties' in params:
+            # Loop over all given datetime properties
+            for name, timespans in params['datetime_properties'].iteritems():
+                times = {'year': 0, 'month': 0, 'day': 0}
+                # Parse the year, month, day
+                for span in times:
+                    if span in timespans:
+                        temp = self.xpath(
+                            timespans[span], root, single=True, text=True,
+                            label='{}: {}'.format(entity_type, entity_id))
+                        times[span] = 0 if temp is None else int(temp)
 
-            if not times['year']:
-                props[name] = 0
-            else:
-                props[name] = unix_time(datetime.datetime(
-                    times['year'], times['month'], times['day']))
+                if not times['year']:
+                    props[name] = 0
+                else:
+                    props[name] = unix_time(datetime.datetime(
+                        times['year'], times['month'], times['day']))
 
         return props
 
