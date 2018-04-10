@@ -274,10 +274,10 @@ class FileUploadEntity(UploadEntity):
         # need to find out if this causes application working outside
         # of context error
         #######################################################################
-        if flask.current_app.config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
-            self.file_exists = self.file_by_uuid or self.file_by_hash
+        if self._config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
+            self.file_exists = bool(self.file_by_uuid or self.file_by_hash)
         else:
-            self.file_exists = self.file_by_uuid
+            self.file_exists = bool(self.file_by_uuid)
 
     def _set_node_and_file_ids(self):
         """
@@ -294,7 +294,7 @@ class FileUploadEntity(UploadEntity):
             self.file_index = self.entity_id
         else:
             # If hash and size uniqueness not enforced, do nothing
-            if not flask.current_app.config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
+            if not self._config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
                 return
 
             if self.entity_id:
@@ -442,7 +442,13 @@ class FileUploadEntity(UploadEntity):
         return document
 
     def get_metadata(self):
+        """Metadata dict in an indexd Document"""
         metadata = {'acls': stringify_acls(self.transaction.get_phsids())}
+
+        # if self._config.get('INDEXD_FILE_STATE', False):
+        # is this the correct state?
+        metadata['file_state'] = 'registered'
+
         return metadata
 
     def _get_file_hashes_and_size(self):

@@ -10,7 +10,10 @@ from psqlgraph.exc import ValidationError
 
 from sheepdog import dictionary
 from sheepdog import models
-from sheepdog.errors import InternalError
+from sheepdog.errors import (
+    InternalError,
+    UserError,
+)
 from sheepdog.globals import (
     REGEX_UUID,
     UNVERIFIED_PROGRAM_NAMES,
@@ -30,8 +33,9 @@ POSSIBLE_OPEN_FILE_NODES = [
     'masked_somatic_mutation',
     'methylation_beta_value',
     'mirna_expression',
-    'file'
+    'file',
 ]
+
 
 def lookup_node(psql_driver, label, node_id=None, secondary_keys=None):
     """Return a query for nodes by id and secondary keys.
@@ -188,10 +192,23 @@ class UploadEntity(EntityBase):
             return
 
         self._set_node_properties()
+
+        # allows updating of node without creating new version
         if self._is_replaceable:
+
+            # indexd document doesn't exist, then there's no more work to do
             indexd_doc = self.transaction.indexd.get(self.node.node_id)
-            if indexd_doc:
-                self._update_indexd_doc(indexd_doc)
+            if not indexd_doc:
+                return
+
+            # cannot update a node in file_state submitted or released
+            if indexd_doc.metadata.get('file_state') in ('submitted', 'released'):
+                raise UserError(
+                    'Unable to update a node in state {}'.format(self.node.state)
+                )
+
+            # only update the fields with the new metadata
+            self._update_indexd_doc(indexd_doc)
 
     def flush_to_session(self):
         """
@@ -210,8 +227,7 @@ class UploadEntity(EntityBase):
                 message = 'Unknown role {}'.format(role)
                 self.logger.error(message)
                 self.record_error(
-                    message, type=EntityErrors.INVALID_PERMISSIONS
-                )
+                    message, type=EntityErrors.INVALID_PERMISSIONS)
         except Exception as e:  # pylint: disable=broad-except
             self.logger.exception(e)
             self.record_error(str(e))
@@ -448,19 +464,21 @@ class UploadEntity(EntityBase):
                 IndexClient representation of document in indexd
         """
 
-        # order is important here
-        # to_json will raise an exception if the doc is deleted
+        # Order is important for deletion. Document.to_json will raise an
+        # exception if the document is already deleted in indexd.
         doc_props = indexd_doc.to_json()
         indexd_doc.delete()
 
         self.transaction.indexd.create(
-            hashes={'md5': self.doc['md5sum']}, # new/updated
-            size=self.doc['file_size'],         # new/updated
-            file_name=self.doc['file_name'],    # new/updated
-            did=doc_props['did'],               # old/carried over
-            urls=doc_props['urls'],             # old/carried over
-            metadata=doc_props['metadata'],     # old/carried over
-            baseid=doc_props['baseid'],         # old/carried over
+            # Required fields are supplied at all times of node creation. That
+            # means that these properties will be in the self.doc variable.
+            hashes={'md5': self.doc['md5sum']},  # new/updated
+            size=self.doc['file_size'],          # new/updated
+            file_name=self.doc['file_name'],     # new/updated
+            did=doc_props['did'],                # old/carried over
+            urls=doc_props['urls'],              # old/carried over
+            metadata=doc_props['metadata'],      # old/carried over
+            baseid=doc_props['baseid'],          # old/carried over
         )
 
     def _merge_doc_links(self, node):
@@ -815,8 +833,8 @@ class UploadEntity(EntityBase):
                 ]
                 max_parent_sample_children = 10
                 if (self.node == models.Sample)\
-                    and (self.node._pg_links[name]['dst_type'] == models.Sample)\
-                    and self._config.get('IS_GDC', False):
+                        and (self.node._pg_links[name]['dst_type'] == models.Sample)\
+                        and self._config.get('IS_GDC', False):
 
                     # check if it's linking to a parent node
                     if nodes[0].sample_type in parent_sample_types:
