@@ -6,6 +6,7 @@ from sheepdog.globals import (
     FILE_STATE_TRANSITIONS,
     FILE_STATE_KEY,
     STATE_KEY,
+    REQUEST_SUBMIT_KEY,
     SUBMITTABLE_FILE_STATES,
     SUBMITTABLE_STATES,
 )
@@ -45,29 +46,22 @@ class SubmissionEntity(EntityBase):
 
         return getattr(self.node, '__pg_secondary_keys', [])
 
-    def submit(self):
+    def user_request_submit(self):
         """
-        Check whether this is a valid transition and transition the entity's
-        state to `submitted` (and file_state if valid).
+        Check whether node is in a valid state
+        and change request_submit property to True
         """
-        self.logger.info('Submitting {}.'.format(self.node))
-        to_state = 'submitted'
-        current_state = self.node._props.get(STATE_KEY, None)
-        current_file_state = self.node._props.get(FILE_STATE_KEY, None)
-        has_file_state = hasattr(self.node.__class__, FILE_STATE_KEY)
+        self.logger.info('User Submitting {}.'.format(self.node))
 
-        # Check node.state
+        current_state = self.node._props.get(STATE_KEY, None)
+
+        # Check if node in submittable state
         if current_state not in SUBMITTABLE_STATES:
             return self.record_error(
                 "Unable to submit node with state: '{}'".format(current_state),
                 type=EntityErrors.INVALID_PROPERTY
             )
 
-        # Conditionally update node.file_state
-        if has_file_state and current_file_state in SUBMITTABLE_FILE_STATES:
-            self.node.props[FILE_STATE_KEY] = to_state
-
-        self.node.props[STATE_KEY] = to_state
-
-        # Clone to version table
-        self.version_node()
+        # Set node to be requested for submission
+        # TODO: THIS MUST BE DONE ON PROJECT LEVEL
+        self.node.props[REQUEST_SUBMIT_KEY] = True
