@@ -10,7 +10,7 @@ from authutils.oauth2.client import blueprint as oauth2_blueprint
 from authutils import AuthError
 from cdispyutils.log import get_handler
 from dictionaryutils import DataDictionary, dictionary
-from datamodelutils import models, validators
+from datamodelutils import models, validators, postgres_admin
 
 
 from indexclient.client import IndexClient as SignpostClient
@@ -67,7 +67,8 @@ def db_init(app):
         database=app.config['PSQLGRAPH']['database'],
         set_flush_timestamps=True,
     )
-
+    if app.config.get('AUTO_MIGRATE_DATABASE'):
+        migrate_database(app)
     app.userdb = SQLAlchemyDriver(app.config['PSQL_USER_DB_CONNECTION'])
     flask_scoped_session(app.userdb.Session, app)
 
@@ -84,6 +85,20 @@ def db_init(app):
     except Exception:
         app.logger.exception("Couldn't initialize auth, continuing anyway")
 
+
+def migrate_database(app):
+    postgres_admin.create_graph_tables(app.db.engine, timeout=1)
+    # hardcoded read role
+    read_role = 'peregrine'
+    # check if such role exists
+    with app.db.session_scope() as session:
+        r = [i for i in
+             session.execute("SELECT 1 FROM pg_roles WHERE rolname='{}'"
+                             .format(read_role))]
+    if len(r) != 0:
+        postgres_admin.grant_read_permissions_to_graph(app.db.engine, read_role)
+
+
 def app_init(app):
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
@@ -93,6 +108,11 @@ def app_init(app):
     app.config['AUTH_SUBMISSION_LIST'] = True
     app.config['USE_DBGAP'] = False
     app.config['IS_GDC'] = False
+
+    # default settings
+    app.config['AUTO_MIGRATE_DATABASE'] = (
+        app.config.get('AUTO_MIGRATE_DATABASE', True)
+    )
 
     app_register_blueprints(app)
     db_init(app)
