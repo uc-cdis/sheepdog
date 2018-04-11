@@ -176,7 +176,7 @@ class BcrBiospecimenXmlToJsonParser(object):
         # that way, if multiples are used in the yaml, it's an or
         # NOTE: if there are multiple hits, this could behave oddly, so watch the
         # source XML
-        if type(path) != list:
+        if isinstance(path) != list:
             list_path = [path]
         else:
             list_path = path
@@ -197,7 +197,7 @@ class BcrBiospecimenXmlToJsonParser(object):
                         depths.append(sum(1 for x in result[0].iterancestors()))
                 break
 
-        if rlen < 1 and expected and type(path) != list:
+        if rlen < 1 and expected and isinstance(path) != list:
             raise ParsingError(
                 '{}: Unable to find xpath {}'.format(label, path)
             )
@@ -757,7 +757,7 @@ class BcrClinicalXmlToJsonParser(object):
                     root=root, path=props['path'], namespaces=namespaces,
                     suffix=props.get('suffix', ''))
                 _type = props['type']
-                is_nan = type(value) == float and math.isnan(value)
+                is_nan = isinstance(value) == float and math.isnan(value)
                 if value is None or is_nan:
                     if key not in doc:
                         key_type = schema['properties'][key].get('type', [])
