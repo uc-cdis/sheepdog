@@ -146,7 +146,7 @@ class BcrBiospecimenXmlToJsonParser(object):
 
     def xpath(
             self, path, root=None, single=False, nullable=True, expected=True,
-            text=True, label=''):
+            text=True, label='', depth=False):
         """
         Wrapper to perform the xpath queries on the xml
 
@@ -158,6 +158,7 @@ class BcrBiospecimenXmlToJsonParser(object):
             expected (bool): raise ParsingError if the result does not exist
             text (bool): whether the return value is the .text str value
             label (str): label for logging
+            depth (int): return depth from root to hit
 
         Return:
 
@@ -167,10 +168,14 @@ class BcrBiospecimenXmlToJsonParser(object):
                 respective conditions are violated (see above)
         """
         result = None
+        depths = []
         if root is None:
             root = self.xml_root
 
         # to walk, we stick them all in a list, but it'll only match the first found
+        # that way, if multiples are used in the yaml, it's an or
+        # NOTE: if there are multiple hits, this could behave oddly, so watch the
+        # source XML
         if type(path) != list:
             list_path = [path]
         else:
@@ -187,6 +192,9 @@ class BcrBiospecimenXmlToJsonParser(object):
 
             # if we get a result, let's check it
             if rlen:
+                if depth:
+                    for res in result:
+                        depths.append(sum(1 for x in result[0].iterancestors()))
                 break
 
         if rlen < 1 and expected and type(path) != list:
@@ -213,6 +221,9 @@ class BcrBiospecimenXmlToJsonParser(object):
                                    .format(label, result))
         if single and result and len(result) > 0:
             result = result[0]
+
+        if depth:
+            result = zip(result, depths)
 
         return result
 
@@ -363,8 +374,6 @@ class BcrBiospecimenXmlToJsonParser(object):
         """
         props = {}
         if 'properties' in params:
-            print dictionary.schema.keys()
-            print entity_type
             schema = dictionary.schema[entity_type]
             for prop, args in params['properties'].iteritems():
                 if args is None:
@@ -464,6 +473,7 @@ class BcrBiospecimenXmlToJsonParser(object):
             dict: a dictionary of edges
         """
         edges = {}
+        # note: this call does nothing, it just returns an empty dict
         edges.update(self.get_entity_edges_by_properties(*args, **kwargs))
         edges.update(self.get_entity_edges_by_id(*args, **kwargs))
         return edges
@@ -485,14 +495,56 @@ class BcrBiospecimenXmlToJsonParser(object):
             dict: dictionary mapping edge types to lists of entity ids
         """
         edges = {}
+        exclusive_check = []
         if 'edges' not in params:
             return edges
+
+        # so, we've got depth checks here where multiple ancestors
+        # could be valid links
+        # the depth check below will return the proximity of
+        # each link, and we need to check it & use the closest
+        # if the schema says it's an exclusive link - joe
+        for entry in dictionary.schema[entity_type]['links']:
+            if 'exclusive' in entry.keys():
+                if entry['exclusive'] == True:
+                    if 'subgroup' in entry.keys():
+                        for subg in entry['subgroup']:
+                            exclusive_check.append(subg['name'])
+
         for edge_type, path in params['edges'].iteritems():
             results = self.xpath(
-                path, root, expected=False, text=True,
+                path, root, expected=False, text=True, depth=True,
                 label='{}: {}'.format(entity_type, entity_id))
             if results:
-                edges[edge_type] = [{'id': r.lower()} for r in results]
+                edges[edge_type] = [{'id': r.lower(), 'depth': d} for r,d in results]
+
+        # here's the meat of the check
+        # if we've found these links are exclusive, walk them and figure out which one
+        # (possibly in a list) is closest. If we have a tie, well, use the first one
+        # we encounter and tell them to fix their data - joe
+        if len(exclusive_check):
+            closest = None
+            closest_type = None
+            closest_val = 99999999
+            new_edges = {}
+            for edge, data in edges.iteritems():
+                if edge in exclusive_check:
+                    if not closest:
+                        closest = data
+                        closest_type = edge
+                        closest_val = min([x['depth'] for x in data])
+                    else:
+                        temp_val = min([x['depth'] for x in data])
+                        if temp_val < closest_val:
+                            closest_val = temp_val
+                            closest = data
+                            closest_type = edge
+                else:
+                    new_edges[edge] = data
+            if closest:
+                new_edges[closest_type] = closest
+            edges = new_edges
+
         return edges
 
     def get_entity_edges_by_properties(
