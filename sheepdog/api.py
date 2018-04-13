@@ -87,7 +87,16 @@ def db_init(app):
 
 
 def migrate_database(app):
-    postgres_admin.create_graph_tables(app.db.engine, timeout=1)
+    if postgres_admin.check_version(app.db):
+        return
+    try:
+        postgres_admin.create_graph_tables(app.db, timeout=1)
+    except Exception:
+        if not postgres_admin.check_version(app.db):
+            app.logger.exception("Fail to migrate database, continuing anyway")
+        # if the version is already up to date, that means there is
+        # another migration wins, so silently exit
+        return
     # hardcoded read role
     read_role = 'peregrine'
     # check if such role exists
@@ -96,7 +105,11 @@ def migrate_database(app):
              session.execute("SELECT 1 FROM pg_roles WHERE rolname='{}'"
                              .format(read_role))]
     if len(r) != 0:
-        postgres_admin.grant_read_permissions_to_graph(app.db.engine, read_role)
+        try:
+            postgres_admin.grant_read_permissions_to_graph(app.db, read_role)
+        except Exception:
+            app.logger.warn("Fail to grant read permission, continuing anyway")
+            return
 
 
 def app_init(app):
