@@ -1,15 +1,16 @@
 import os
 import json
+from multiprocessing import Process
 
+from indexd import default_settings, get_app as get_indexd_app
+from indexclient.client import IndexClient
 import pytest
 import requests
 import requests_mock
-from multiprocessing import Process
 from mock import patch
 from flask.testing import make_test_environ_builder
+from fence.jwt.token import generate_signed_access_token
 from psqlgraph import PsqlGraphDriver
-from signpost import Signpost
-
 from gdcdatamodel.models import Edge, Node
 from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
@@ -19,60 +20,33 @@ from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
 
 import sheepdog
+import utils
 from sheepdog.auth import roles
-from sheepdog.test_settings import PSQL_USER_DB_CONNECTION, Fernet, HMAC_ENCRYPTION_KEY
-from tests.api import app_init
+from sheepdog.test_settings import (
+    PSQL_USER_DB_CONNECTION,
+    Fernet,
+    HMAC_ENCRYPTION_KEY,
+    JWT_KEYPAIR_FILES,
+    INDEXD,
+)
+from tests.api import app as _app, app_init, indexd_init
+from tests.submission.test_endpoints import put_cgci_blgsp
+
+try:
+    reload  # Python 2.7
+except NameError:
+    try:
+        from importlib import reload  # Python 3.4+
+    except ImportError:
+        from imp import reload # Python 3.0 - 3.3
 
 
 def get_parent(path):
     print(path)
     return path[0:path.rfind('/')]
 
+
 PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/tests/schemas'
-
-
-class UserapiTestSettings(object):
-    from boto.s3.connection import OrdinaryCallingFormat
-    MOCK_AUTH = True
-    MOCK_STORAGE = True
-    SHIBBOLETH_HEADER = ''
-    DB = 'postgresql://postgres@localhost:5432/test_userapi'
-    STORAGE_CREDENTIALS = {
-        "cleversafe": {
-            'aws_access_key_id': '',
-            'aws_secret_access_key': '',
-            'host': 'somemanager.osdc.io',
-            'public_host': 'someobjstore.datacommons.io',
-            'port': 443,
-            'is_secure': True,
-            'username': 'someone',
-            'password': 'somepass',
-            "calling_format": OrdinaryCallingFormat(),
-            "is_mocked": True
-        }
-    }
-    CEPH = {
-        'aws_access_key_id': '',
-        'aws_secret_access_key': '',
-        'host': '',
-        'port': 443,
-        'is_secure': True}
-    AWS = {
-        'aws_access_key_id': '',
-        'aws_secret_access_key': '',
-    }
-
-    APPLICATION_ROOT = '/'
-    DEBUG = True
-    OAUTH2_PROVIDER_ERROR_URI = "/oauth2/errors"
-    HOST_NAME = ''
-    SHIBBOLETH_HEADER = 'persistent_id'
-    SSO_URL = ''
-    SINGLE_LOGOUT = ''
-
-    LOGOUT = ""
-    BIONIMBUS_ACCOUNT_ID = -1
-    ENABLE_CSRF_PROTECTION = False
 
 
 @pytest.fixture(scope='session')
@@ -89,38 +63,44 @@ def pg_config():
     )
 
 
-def wait_for_signpost_alive(port):
-    url = 'http://localhost:{}'.format(port)
+def wait_for_indexd_alive(port):
+    url = 'http://localhost:{}/_status'.format(port)
     try:
         requests.get(url)
     except requests.ConnectionError:
-        return wait_for_signpost_alive(port)
+        return wait_for_indexd_alive(port)
     else:
         return
 
 
-def wait_for_signpost_not_alive(port):
-    url = 'http://localhost:{}'.format(port)
+def wait_for_indexd_not_alive(port):
+    url = 'http://localhost:{}/_status'.format(port)
     try:
         requests.get(url)
     except requests.ConnectionError:
         return
     else:
-        return wait_for_signpost_not_alive(port)
-
-
-def run_signpost(port):
-    Signpost({"driver": "inmemory", "layers": ["validator"]}).run(
-        host="localhost", port=port, debug=False)
+        return wait_for_indexd_not_alive(port)
 
 
 @pytest.fixture
 def app(tmpdir, request):
 
     port = 8000
-    signpost = Process(target=run_signpost, args=[port])
-    signpost.start()
-    wait_for_signpost_alive(port)
+    # this is to make sure sqlite is initialized
+    # for every unit test
+    reload(default_settings)
+
+    # fresh files before running
+    for filename in ['auth.sq3', 'index.sq3', 'alias.sq3']:
+        if os.path.exists(filename):
+            os.remove(filename)
+    indexd_app = get_indexd_app()
+
+    indexd_init(*INDEXD['auth'])
+    indexd = Process(target=indexd_app.run, args=['localhost', port])
+    indexd.start()
+    wait_for_indexd_alive(port)
 
     gencode_json = tmpdir.mkdir("slicing").join("test_gencode.json")
     gencode_json.write(json.dumps({
@@ -131,16 +111,51 @@ def app(tmpdir, request):
     }))
 
     def teardown():
-        signpost.terminate()
-        wait_for_signpost_not_alive(port)
+        for filename in ['auth.sq3', 'index.sq3', 'alias.sq3']:
+            if os.path.exists(filename):
+                os.remove(filename)
 
-    _app = app_init()
+        indexd.terminate()
+        wait_for_indexd_not_alive(port)
+
+    _app.config.from_object("sheepdog.test_settings")
 
     request.addfinalizer(teardown)
 
+    app_init(_app)
+    dictionary_setup(_app)
+
     _app.logger.setLevel(os.environ.get("GDC_LOG_LEVEL", "WARNING"))
 
+    _app.jwt_public_keys = {_app.config['USER_API']: {
+            'key-test': utils.read_file('resources/keys/test_public_key.pem')
+    }}
+
     return _app
+
+
+@pytest.fixture(scope='function')
+def client_toggled(app, request):
+    """
+    Will toggle app config parameter for the test using this and return test client
+
+    USAGE:
+    @pytest.mark.config_toggle(parameter='PARAM', value=VAL)
+    def test_mytest(client_toggled):
+        ...
+
+    NOTE: App config gets reset each time function-scoped app fixture is executed,
+    no need to reset here
+    """
+    params = request.node.get_marker('config_toggle')
+
+    app.config[params.kwargs['parameter']] = params.kwargs['value']
+
+    with app.test_client() as client:
+        yield client
+
+    # reset app config just in case
+    app.config.from_object("sheepdog.test_settings")
 
 
 @pytest.fixture
@@ -184,10 +199,9 @@ def user_setup():
             s.add(user)
             s.add(keypair)
         users = s.query(usermd.User).all()
-        print(users)
         test_user = s.query(usermd.User).filter(
             usermd.User.username == 'test').first()
-        test_user.is_admin =True
+        test_user.is_admin = True
         projects = ['phs000218', 'phs000235', 'phs000178']
         admin = s.query(usermd.User).filter(
             usermd.User.username == 'admin').first()
@@ -199,12 +213,12 @@ def user_setup():
         for phsid in projects:
             p = usermd.Project(
                 name=phsid, auth_id=phsid)
-            ua = usermd.AccessPrivilege(
+            usermd.AccessPrivilege(
                 user=user, project=p, privilege=roles.values())
-            s.add(ua)
-            ua = usermd.AccessPrivilege(
+            usermd.AccessPrivilege(
                 user=member, project=p, privilege=['_member_'])
-            s.add(ua)
+            usermd.AccessPrivilege(
+                user=admin, project=p, privilege=roles.values())
 
     return user_driver
 
@@ -217,44 +231,81 @@ def user_teardown():
             session.execute(table.delete())
 
 
+def encoded_jwt(private_key, user):
+    """
+    Return an example JWT containing the claims and encoded with the private
+    key.
+
+    Args:
+        private_key (str): private key
+        user (userdatamodel.models.User): user object
+
+    Return:
+        str: JWT containing claims encoded with private key
+    """
+    kid = JWT_KEYPAIR_FILES.keys()[0]
+    scopes = ['openid']
+    return generate_signed_access_token(
+        kid, private_key, user, 3600, scopes, forced_exp_time=None)
+
+
+def create_user_header(pg_driver, username):
+    private_key = utils.read_file('resources/keys/test_private_key.pem')
+
+    user_driver = SQLAlchemyDriver(PSQL_USER_DB_CONNECTION)
+    with user_driver.session as s:
+        user = s.query(usermd.User).filter_by(username=username).first()
+        token = encoded_jwt(private_key, user)
+        return {'Authorization': 'bearer ' + token}
+
+
 @pytest.fixture()
-def submitter(app, request):
-    def build_header(path, method, role='submitter'):
-        auth = get_auth(role + 'accesskey', role, 'submission')
-        environ = make_test_environ_builder(app, path=path, method=method)
-        request = environ.get_request()
-        request.headers = dict(request.headers)
-        auth.__call__(request)
-        return request.headers
-
-    return build_header
+def submitter(pg_driver):
+    return create_user_header(pg_driver, 'submitter')
 
 
-@pytest.fixture(scope='session')
-def dictionary_setup():
-    def build_dict(app, url):
-        session = requests.Session()
-        adapter = requests_mock.Adapter()
-        session.mount('s3', adapter)
-        json_dict = json.load(open(PATH_TO_SCHEMA_DIR + '/dictionary.json'))
-        adapter.register_uri('GET', url, json=json_dict, status_code=200)
-        resp = session.get(url)
+@pytest.fixture()
+def admin(pg_driver):
+    return create_user_header(pg_driver, 'admin')
 
-        with patch('requests.get') as get_mocked:
-            get_mocked.return_value = resp
-            datadictionary = DataDictionary(url=url)
-            dictionary.init(datadictionary)
-            from gdcdatamodel import models as md
-            from gdcdatamodel import validators as vd
-            models.init(md)
-            validators.init(vd)
-            sheepdog_blueprint = sheepdog.create_blueprint(
-                'submission'
-            )
 
-            try:
-                app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
-            except AssertionError:
-                app.logger.info('Blueprint is already registered!!!')
+@pytest.fixture()
+def member(pg_driver):
+    return create_user_header(pg_driver, 'member')
 
-    return build_dict
+
+@pytest.fixture()
+def cgci_blgsp(client, admin):
+    put_cgci_blgsp(client, admin)
+
+
+@pytest.fixture()
+def index_client():
+    return IndexClient(INDEXD['host'], INDEXD['version'], INDEXD['auth'])
+
+
+def dictionary_setup(_app):
+    url = 's3://testurl'
+    session = requests.Session()
+    adapter = requests_mock.Adapter()
+    session.mount('s3', adapter)
+    json_dict = json.load(open(PATH_TO_SCHEMA_DIR + '/dictionary.json'))
+    adapter.register_uri('GET', url, json=json_dict, status_code=200)
+    resp = session.get(url)
+
+    with patch('requests.get') as get_mocked:
+        get_mocked.return_value = resp
+        datadictionary = DataDictionary(url=url)
+        dictionary.init(datadictionary)
+        from gdcdatamodel import models as md
+        from gdcdatamodel import validators as vd
+        models.init(md)
+        validators.init(vd)
+        sheepdog_blueprint = sheepdog.create_blueprint(
+            'submission'
+        )
+
+        try:
+            _app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
+        except AssertionError:
+            _app.logger.info('Blueprint is already registered!!!')

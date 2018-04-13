@@ -1,8 +1,6 @@
-# pylint: disable=protected-access
 """
-TODO
+Classes and functions for upload.
 """
-
 import uuid
 
 import psqlgraph
@@ -63,6 +61,7 @@ class UploadEntity(EntityBase):
     create a node. After this, it should be flushed into a UploadTransaction's
     session.
     """
+    DATA_FILE_CATEGORIES = ['data_file', 'metadata_file']
 
     def __init__(self, transaction, config=None):
         """
@@ -102,45 +101,134 @@ class UploadEntity(EntityBase):
         node = self.node or self.get_skeleton_node(self.entity_type, self.doc)
         return [] if not node else node.__pg_secondary_keys
 
-    @staticmethod
-    def is_file(node):
+    def parse(self, doc):
         """
-        Check if the API should treat this node as a file-like object.
+        Parse the given doc and set the instance values accordingly.
 
         Args:
-            node (psqlgraph.Node):
+            doc (dict): the json upload representation
 
         Return:
-            bool
+            None
         """
-        is_category_data_file = node._dictionary['category'] == 'data_file'
-        has_file_state = 'file_state' in node.__pg_properties__
-        return is_category_data_file and has_file_state
+        if not isinstance(doc, dict):
+            return self.record_error(
+                'Entity document must be an object, not a {}'
+                .format(doc.__class__.__name__),
+                type=EntityErrors.INVALID_VALUE,
+            )
 
-    @staticmethod
-    def is_updatable_file(node):
+        self.doc = doc
+        self._parse_type()
+        if self.entity_type and self.is_valid:
+            self._parse_id()
+
+    def instantiate(self):
         """
-        Check that a node is a file that can be updated. True if:
+        Create the graph node by populating necessary information within this
+        instance. Will actually be added when flushed to the session.
+        """
+        if not self.is_valid:
+            return
 
-        #. The node is a data_file
-        #. It has a file_state in the list of states below
+        # Check that there is an identifier
+        if not (self.entity_id or self.secondary_keys):
+            keys = [a for b in self.pg_secondary_keys for a in b]
+            if not keys:
+                return self.record_error(
+                    ('There are no unique keys defined on type {} except'
+                     ' for the official GDC id.  To upload this entity you'
+                     ' must add a UUID').format(self.entity_type),
+                    keys=['id'],
+                    type=EntityErrors.MISSING_PROPERTY,
+                )
+            else:
+                return self.record_error(
+                    'Either an id or required unique fields ({}) required'
+                    .format(', '.join(list(keys))),
+                    keys=keys,
+                    type=EntityErrors.MISSING_PROPERTY,
+                )
 
-        Args:
-            node (psqlgraph.Node):
+        # Create entity
+        if not self.entity_type:
+            return
+
+        if self.transaction.role == 'create':
+            self.node = self.get_node_create()
+        elif self.transaction.role == 'update':
+            self.node = self.get_node_merge()
+        else:
+            self.record_error(
+                "Unknown role '{}'".format(self.transaction.role),
+                type=EntityErrors.INVALID_PERMISSIONS,
+            )
+            return
+
+        # Stop if the node instantiation failed
+        if not self.node:
+            return
+
+        self._set_node_properties()
+
+    def flush_to_session(self):
+        """
+        Add graph node to session of the current transaction.
+        """
+        if not self.node:
+            return
+
+        role = self.action
+        try:
+            if role == 'create':
+                self.transaction.session.add(self.node)
+            elif role == 'update':
+                self.node = self.transaction.session.merge(self.node)
+            else:
+                message = 'Unknown role {}'.format(role)
+                self.logger.error(message)
+                self.record_error(
+                    message, type=EntityErrors.INVALID_PERMISSIONS
+                )
+        except Exception as e:  # pylint: disable=broad-except
+            self.logger.exception(e)
+            self.record_error(str(e))
+
+    def _parse_id(self):
+        """
+        Generate and record the entity id.
+
+        :returns: None
+
+        """
+        self.entity_id = self.doc.get('id')
+        not_uuid = (
+            self.transaction.role == 'create'
+            and self.entity_id
+            and not REGEX_UUID.match(self.entity_id)
+        )
+        if not_uuid:
+            self.record_error(
+                'Cannot create entity with custom id that is not a UUID.',
+                keys=['id'], type=EntityErrors.INVALID_VALUE
+            )
+
+    def _parse_type(self):
+        """
+        Parse and record the entity type. This type will be used to look up
+        what node class to instantiate.
 
         Return:
-            bool: whether the node is an updatable file
+            None
         """
-        allowed_states = [
-            'registered',
-            'uploading',
-            'uploaded',
-            'validating',
-        ]
-        file_state = node._props.get('file_state')
-        return UploadEntity.is_file(node) and file_state in allowed_states
+        self.entity_type = self.doc.get('type')
+        if self.entity_type is None:
+            return self.record_error(
+                "missing 'type'", keys=["type"], type=EntityErrors.INVALID_TYPE
+            )
+        self._validate_type()
 
-    def _get_node_create(self, skip_node_lookup=False):
+    def get_node_create(self, skip_node_lookup=False):
         """
         This is called for a POST operation.
 
@@ -160,23 +248,6 @@ class UploadEntity(EntityBase):
                 .format(self.transaction.project_id, roles),
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
-
-        # Assert that the node doesn't already exist
-        if not skip_node_lookup:
-            nodes = lookup_node(
-                self.transaction.db_driver,
-                self.entity_type,
-                self.entity_id,
-                self.secondary_keys,
-            )
-
-            if nodes.count():
-                return self.record_error(
-                    'Cannot create entity that already exists. '
-                    'Try updating entity (PUT instead of POST)',
-                    keys=['id'],
-                    type=EntityErrors.NOT_UNIQUE,
-                )
 
         # Check to see if it's registered in dbGaP is is an exception
         # to the rule
@@ -201,41 +272,43 @@ class UploadEntity(EntityBase):
                         "Case submitter_id '{}' not found in dbGaP."
                         .format(submitter_id),
                         keys=['submitter_id'],
-		        type=EntityErrors.NOT_FOUND)
-
-        # Create the node and populate its properties
-        cls = psqlgraph.Node.get_subclass(self.entity_type)
-        self.logger.debug('Creating new {}'.format(cls.__name__))
-        category = dictionary.schema.get(cls.label)['category']
-        is_data_file = category == 'data_file'
-        if is_data_file:
-            if self.entity_id:
-                self.record_error(
-                    'Cannot assign ID to file, these are system generated. ',
-                    keys=['id'],
-                    type=EntityErrors.INVALID_VALUE,
-                )
-            # ################################################################
-            # SignpostClient is used instead of IndexClient for the GDCAPI.
-            # This means that the client doesn't have access to IndexClient's
-            # methods, causing exceptions to occur.
-            #
-            # Temporary workaround until gdcapi uses indexd
-            # ################################################################
-            # no ID and working in gdcapi
-            elif self._config.get('USE_SIGNPOST', False):
-                doc = self.transaction.signpost.create()
-                self.entity_id = doc.did
+                        type=EntityErrors.NOT_FOUND)
 
         if not self.entity_id:
             self.entity_id = str(uuid.uuid4())
+
+        # Assert that the node doesn't already exist
+        if not skip_node_lookup:
+            nodes = lookup_node(
+                self.transaction.db_driver,
+                self.entity_type,
+                self.entity_id,
+                self.secondary_keys,
+            )
+            if nodes.count():
+                return self.record_error(
+                    'Cannot create entity that already exists. '
+                    'Try updating entity (PUT instead of POST)',
+                    keys=['id'],
+                    type=EntityErrors.NOT_UNIQUE,
+                )
 
         # Fill in default system property values
         for key, val in self.get_system_property_defaults().iteritems():
             if self.doc.get(key, None) is None:
                 self.doc[key] = val
 
+        # Create the node and populate its properties
+        cls = psqlgraph.Node.get_subclass(self.entity_type)
+        self.logger.debug('Creating new {}'.format(cls.__name__))
         node = cls(self.entity_id)
+
+        # Get node category
+        node_class = psqlgraph.Node.get_subclass(self.entity_type)
+        category = dictionary.schema.get(node_class.label)['category']
+
+        is_data_file = category == 'data_file'
+
         if is_data_file:
             # check if open_acl is requested and the node type can be set open
             if self.doc.get('open_acl', None) and self._config.get('IS_GDC', False):
@@ -250,7 +323,7 @@ class UploadEntity(EntityBase):
 
         return node
 
-    def _get_node_merge(self):
+    def get_node_merge(self):
         """
         This is called for a PATCH operation and supports upsert. It will
         lookup an existing node or create one if it doesn't exist.
@@ -274,7 +347,7 @@ class UploadEntity(EntityBase):
 
         # If no node was found, create a new one
         if len(nodes) == 0:
-            return self._get_node_create()
+            return self.get_node_create()
 
         # Check user permissions for updating nodes
         if 'update' not in self.get_user_roles():
@@ -308,18 +381,6 @@ class UploadEntity(EntityBase):
                 'Existing {} entity found with id different from {}'
                 .format(node, self.entity_id),
                 type=EntityErrors.NOT_UNIQUE,
-            )
-
-        # If the node is a data_file, verify that update is allowed
-        if self.is_file(node) and not self.is_updatable_file(node):
-            self.record_error(
-                ("This file is already in file_state '{}' and cannot be "
-                 "updated. The raw data exists in the GDC file storage "
-                 "and modifying the Entity now is unsafe and may cause "
-                 "problems for any processes or users consuming "
-                 "this data.").format(node._props.get('file_state')),
-                keys=['file_state'],
-                type=EntityErrors.INVALID_PERMISSIONS,
             )
 
         # Since we are updating the node, we have to set its state to
@@ -389,40 +450,6 @@ class UploadEntity(EntityBase):
             # Remove empty link list
             if not self.doc[name]:
                 self.doc.pop(name)
-
-    def _parse_id(self):
-        """Generate and record the entity id.
-
-        :returns: None
-
-        """
-
-        self.entity_id = self.doc.get('id')
-        not_uuid = (
-            self.transaction.role == 'create'
-            and self.entity_id
-            and not REGEX_UUID.match(self.entity_id)
-        )
-        if not_uuid:
-            self.record_error(
-                'Cannot create entity with custom id that is not a UUID.',
-                keys=['id'], type=EntityErrors.INVALID_VALUE
-            )
-
-    def _parse_type(self):
-        """
-        Parse and record the entity type. This type will be used to look up
-        what node class to instantiate.
-
-        Return:
-            None
-        """
-        self.entity_type = self.doc.get('type')
-        if self.entity_type is None:
-            return self.record_error(
-                "missing 'type'", keys=["type"], type=EntityErrors.INVALID_TYPE
-            )
-        self._validate_type()
 
     def _remove_empty_values(self, doc):
         for key in doc.keys():
@@ -513,9 +540,9 @@ class UploadEntity(EntityBase):
                     )
 
     def _validate_type(self):
-        """Assert that the requested type is valid and uploadable via the
+        """
+        Assert that the requested type is valid and uploadable via the
         project endpoint.
-
         """
         cls = psqlgraph.Node.get_subclass(self.entity_type)
 
@@ -554,81 +581,9 @@ class UploadEntity(EntityBase):
         metadata = {'acls': self.transaction.get_phsids()}
         return metadata
 
-    def register_index(self):
-        """
-        Call the "signpost" (index client) for the transaction to register a
-        new index record for this entity.
-
-        NOTE:
-        - Should only ever be called for data and metadata files.
-        - If there is already a record matching the hash and size for this
-          file, then do not create a new one.
-        """
-        project_id = self.transaction.project_id
-        submitter_id = self.node._props.get('submitter_id')
-        hashes = {'md5': self.node._props.get('md5sum')}
-        size = self.node._props.get('file_size')
-        alias = "{}/{}".format(project_id, submitter_id)
-        metadata = self.get_metadata()
-        # Check if there is an existing record with this hash and size, i.e.
-        # this node already has an index record. Create a new record (with
-        # UUID) only if none was found.
-        params = {'hashes': hashes, 'size': size}
-        # document: indexclient.Document
-        # if `document` exists, `document.did` is the UUID that is already
-        # registered in indexd for this entity.
-
-        # ################################################################
-        # SignpostClient is used instead of IndexClient for the GDCAPI.
-        # This means that the client doesn't have access to IndexClient's
-        # methods, causing exceptions to occur.
-        #
-        # Temporary workaround until gdcapi uses indexd
-        # ################################################################
-        if not self._config.get('USE_SIGNPOST', False):
-            # IndexClient
-            document = self.transaction.signpost.get_with_params(params)
-            if not document:
-                self.transaction.signpost.create(did=str(uuid.uuid4()),
-                                                 hashes=hashes,
-                                                 size=size,
-                                                 urls=[],
-                                                 metadata=metadata)
-
-            self.transaction.signpost.create_alias(
-                record=alias, hashes=hashes, size=size, release='private'
-            )
-
-    def flush_to_session(self):
-        if not self.node:
-            return
-
-        role = self.action
-        try:
-            if role == 'create':
-                # Check if the category for the node is data_file or
-                # metadata_file, in which case, register a UUID and alias in
-                # the index service.
-                cls = psqlgraph.Node.get_subclass(self.entity_type)
-                category = dictionary.schema.get(cls.label)['category']
-                if category == 'data_file' or category == 'metadata_file':
-                    self.register_index()
-                self.transaction.session.add(self.node)
-            elif role == 'update':
-                self.node = self.transaction.session.merge(self.node)
-            else:
-                message = 'Unknown role {}'.format(role)
-                self.logger.error(message)
-                self.record_error(
-                    message, type=EntityErrors.INVALID_PERMISSIONS
-                )
-        except Exception as e:  # pylint: disable=broad-except
-            self.logger.exception(e)
-            self.record_error(str(e))
-
     def get_skeleton_node(self, label, properties, project_id=None):
-        """Return a node with just the properties set
-
+        """
+        Return a node with just the properties set
         """
         # Get node class
         cls = psqlgraph.Node.get_subclass(label)
@@ -692,51 +647,6 @@ class UploadEntity(EntityBase):
         user = user or self.transaction.user
         return user.roles.get(self.transaction.project_id, [])
 
-    def instantiate(self):
-
-        if not self.is_valid:
-            return
-
-        # Check that there is an identifier
-        if not (self.entity_id or self.secondary_keys):
-            keys = [a for b in self.pg_secondary_keys for a in b]
-            if not keys:
-                return self.record_error(
-                    ('There are no unique keys defined on type {} except'
-                     ' for the official GDC id.  To upload this entity you'
-                     ' must add a UUID').format(self.entity_type),
-                    keys=['id'],
-                    type=EntityErrors.MISSING_PROPERTY,
-                )
-            else:
-                return self.record_error(
-                    'Either an id or required unique fields ({}) required'
-                    .format(', '.join(list(keys))),
-                    keys=keys,
-                    type=EntityErrors.MISSING_PROPERTY,
-                )
-
-        # Create entity
-        if not self.entity_type:
-            return
-
-        if self.transaction.role == 'create':
-            self.node = self._get_node_create()
-        elif self.transaction.role == 'update':
-            self.node = self._get_node_merge()
-        else:
-            self.record_error(
-                "Unknown role '{}'".format(self.transaction.role),
-                type=EntityErrors.INVALID_PERMISSIONS,
-            )
-            return
-
-        # Stop if the node instantiation failed
-        if not self.node:
-            return
-
-        self._set_node_properties()
-
     def is_case_creation_allowed(self, case_id):
         """
         Check if case creation is allowed:
@@ -756,28 +666,6 @@ class UploadEntity(EntityBase):
                 project,
                 self.doc.get('submitter_id')
             )
-
-    def parse(self, doc):
-        """
-        Parse the given doc and set the instance values accordingly.
-
-        Args:
-            doc (dict): the json upload representation
-
-        Return:
-            None
-        """
-        if not isinstance(doc, dict):
-            return self.record_error(
-                'Entity document must be an object, not a {}'
-                .format(doc.__class__.__name__),
-                type=EntityErrors.INVALID_VALUE,
-            )
-
-        self.doc = doc
-        self._parse_type()
-        if self.entity_type and self.is_valid:
-            self._parse_id()
 
     def set_association_proxies(self):
         """

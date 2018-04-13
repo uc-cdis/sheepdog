@@ -27,7 +27,7 @@ from sheepdog.globals import (
     STATES_COMITTABLE_DRY_RUN,
 )
 from sheepdog.transactions import upload
-from sheepdog.transactions.upload.entity import UploadEntity
+from sheepdog.transactions.upload.entity_factory import UploadEntityFactory
 from sheepdog.transactions.upload.transaction import UploadTransaction
 
 
@@ -192,7 +192,8 @@ def create_project(program):
         with UploadTransaction(**transaction_args) as trans:
             node = session.merge(node)
             session.commit()
-            entity = UploadEntity(trans, flask.current_app.config)
+            entity = UploadEntityFactory.create(
+                trans, doc=None, config=flask.current_app.config)
             entity.action = action
             entity.doc = doc
             entity.entity_type = 'project'

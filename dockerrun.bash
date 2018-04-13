@@ -1,7 +1,6 @@
 #!/bin/bash
 
 cd /var/www/sheepdog
-python wsgi.py
 
 (
   # Wait for nginx to create uwsgi.sock

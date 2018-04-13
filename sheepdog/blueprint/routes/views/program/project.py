@@ -224,12 +224,12 @@ def create_delete_entities_viewer(dry_run=False):
     """
 
     @utils.assert_project_exists
-    @auth.authorize_for_project(ROLES['DELETE'])
-    def delete_entities(program, project, ids):
+    @auth.authorize_for_project(ROLES['DELETE'], ROLES['ADMIN'])
+    def delete_entities(program, project, ids, to_delete=None):
         """
         Delete existing GDC entities.
 
-        Using the :http:method:`delete` on the a project's endpoint will
+        Using the :http:method:`delete` on a project's endpoint will
         *completely delete* an entity.
 
         The GDC does not allow deletions or creations that would leave nodes
@@ -245,6 +245,10 @@ def create_delete_entities_viewer(dry_run=False):
         :param str ids:
             A comma separated list of ids specifying the entities to delete.
             These ids must be official GDC ids.
+        :param bool to_delete:
+            Set the to_delete sysan as true or false. If none, then don't try
+            to set the sysan, and instead delete the node.
+        :param str ids:
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
@@ -253,10 +257,29 @@ def create_delete_entities_viewer(dry_run=False):
         :statuscode 404: Entity not found.
         :statuscode 403: Unauthorized request.
         """
+
         ids_list = ids.split(',')
         fields = flask.request.args.get('fields')
+
+        if to_delete is not None:
+            # to_delete is admin only
+            auth.admin_auth()
+
+            # get value of that flag from string
+            if to_delete.lower() == 'false':
+                to_delete = False
+            elif to_delete.lower() == 'true':
+                to_delete = True
+            else:
+                raise UserError('to_delete value not true or false')
+
         return transactions.deletion.handle_deletion_request(
-            program, project, ids_list, dry_run=dry_run, fields=fields
+            program,
+            project,
+            ids_list,
+            to_delete,
+            dry_run=dry_run,
+            fields=fields
         )
 
     return delete_entities
@@ -332,13 +355,13 @@ def export_entities(program, project):
         )
 
 
-def create_files_viewer(dry_run=False):
+def create_files_viewer(dry_run=False, reassign=False):
     """
     Create a view function for handling file operations.
     """
     auth_roles = [
         ROLES['CREATE'], ROLES['UPDATE'], ROLES['DELETE'], ROLES['DOWNLOAD'],
-        ROLES['READ']
+        ROLES['READ'], ROLES['ADMIN'],
     ]
 
     @utils.assert_project_exists
@@ -357,6 +380,9 @@ def create_files_viewer(dry_run=False):
         PUT /<program>/<project>/files/<uuid>
             Upload data using single PUT. The request body should contain
             binary data of the file
+
+        PUT /internal/<program>/<project>/files/<uuid>/reassign
+            Manually (re)assign the S3 url for a given node
 
         DELETE /<program>/<project>/files/<uuid>
             Delete molecular data from object storage.
@@ -409,7 +435,11 @@ def create_files_viewer(dry_run=False):
             else:
                 action = 'upload'
         elif flask.request.method == 'PUT':
-            if flask.request.args.get('partNumber'):
+            if reassign:
+                # admin only
+                auth.admin_auth()
+                action = 'reassign'
+            elif flask.request.args.get('partNumber'):
                 action = 'upload_part'
             else:
                 action = 'upload'
@@ -430,11 +460,18 @@ def create_files_viewer(dry_run=False):
             )
 
         resp = utils.proxy_request(
-            project_id, file_uuid, flask.request.stream, args, headers,
-            flask.request.method, action, dry_run
+            project_id,
+            file_uuid,
+            flask.request.stream,
+            args,
+            headers,
+            flask.request.method,
+            action,
+            dry_run,
         )
 
-        if dry_run:
+
+        if dry_run or action == 'reassign':
             return resp
 
         return flask.Response(

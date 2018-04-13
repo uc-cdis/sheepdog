@@ -1,7 +1,6 @@
 import os
 import re
 import uuid
-
 import indexclient
 
 from gdcdatamodel import models
@@ -81,3 +80,28 @@ def patch_indexclient(monkeypatch):
         indexclient.client.IndexClient, 'create_alias', check_alias
     )
     return called
+
+
+def assert_positive_response(resp):
+    assert resp.status_code == 200, resp.data
+    entities = resp.json['entities']
+    for entity in entities:
+        assert not entity['errors']
+    assert resp.json['success'] is True
+
+
+def assert_negative_response(resp):
+    assert resp.status_code != 200, resp.data
+    entities = resp.json['entities']
+
+    # check if at least one entity has an error
+    entity_errors = [entity['errors'] for entity in entities if entity['errors']]
+    assert entity_errors
+
+    assert resp.json['success'] is False
+
+
+def assert_single_entity_from_response(resp):
+    entities = resp.json['entities']
+    assert len(entities) == 1
+    return entities[0]

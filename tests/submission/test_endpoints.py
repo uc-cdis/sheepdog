@@ -1,3 +1,7 @@
+# this is for interpreting fixtures as parameters that don't do anything
+# pylint: disable=unused-argument
+# pylint: disable=superfluous-parens
+# pylint: disable=no-member
 import contextlib
 import json
 import os
@@ -10,8 +14,7 @@ from moto import mock_s3
 
 from gdcdatamodel import models as md
 from sheepdog.transactions.upload import UploadTransaction
-from tests.submission.utils import data_fnames, patch_indexclient
-from ..auth_mock import Config as auth_conf
+from tests.submission.utils import data_fnames
 
 
 #: Do we have a cache case setting and should we do it?
@@ -20,8 +23,6 @@ BLGSP_PATH = '/v0/submission/CGCI/BLGSP/'
 BRCA_PATH = '/v0/submission/TCGA/BRCA/'
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
-
-ADMIN_HEADERS = {"X-Auth-Token": auth_conf.ADMIN_TOKEN}
 
 
 @contextlib.contextmanager
@@ -50,22 +51,21 @@ def mock_request(f):
     return wrapper
 
 
-def put_cgci(client, auth=None, role='admin'):
+def put_cgci(client, auth=None):
     path = '/v0/submission'
-    headers = auth(path, 'put', role) if auth else None
+    headers = auth
     data = json.dumps({
         'name': 'CGCI', 'type': 'program',
         'dbgap_accession_number': 'phs000235'
     })
     r = client.put(path, headers=headers, data=data)
-    del g.user
     return r
 
 
-def put_cgci_blgsp(client, auth=None, role='admin'):
-    put_cgci(client, auth=auth, role=role)
+def put_cgci_blgsp(client, auth=None):
+    put_cgci(client, auth=auth)
     path = '/v0/submission/CGCI/'
-    headers = auth(path, 'put', role) if auth else None
+    headers = auth
     data = json.dumps({
         "type": "project",
         "code": "BLGSP",
@@ -80,14 +80,14 @@ def put_cgci_blgsp(client, auth=None, role='admin'):
 
 
 def put_tcga_brca(client, submitter):
-    headers = submitter('/v0/submission/', 'put', 'admin')
+    headers = submitter
     data = json.dumps({
         'name': 'TCGA', 'type': 'program',
         'dbgap_accession_number': 'phs000178'
     })
     r = client.put('/v0/submission/', headers=headers, data=data)
     assert r.status_code == 200, r.data
-    headers = submitter('/v0/submission/TCGA/', 'put', 'admin')
+    headers = submitter
     data = json.dumps({
         "type": "project",
         "code": "BRCA",
@@ -101,55 +101,50 @@ def put_tcga_brca(client, submitter):
     return r
 
 
-def test_program_creation_endpoint(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    resp = put_cgci(client, auth=submitter)
+def test_program_creation_endpoint(client, pg_driver, admin):
+    resp = put_cgci(client, auth=admin)
     assert resp.status_code == 200, resp.data
     print resp.data
     resp = client.get('/v0/submission/')
     assert resp.json['links'] == ['/v0/submission/CGCI'], resp.json
 
 
-def test_program_creation_without_admin_token(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
+def test_program_creation_without_admin_token(client, pg_driver, submitter):
     path = '/v0/submission/'
-    headers = submitter(path, 'put', 'member')
+    headers = submitter
     data = json.dumps({'name': 'CGCI', 'type': 'program'})
     resp = client.put(path, headers=headers, data=data)
     assert resp.status_code == 403
 
 
 def test_program_creation_endpoint_for_program_not_supported(
-        app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
+        client, pg_driver, submitter):
     path = '/v0/submission/abc/'
-    resp = client.post(path, headers=submitter(path, 'post'))
+    resp = client.post(path, headers=submitter)
     assert resp.status_code == 404
 
 
-def test_project_creation_endpoint(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    resp = put_cgci_blgsp(client, auth=submitter)
+def test_project_creation_endpoint(client, pg_driver, admin):
+    resp = put_cgci_blgsp(client, auth=admin)
     assert resp.status_code == 200
     resp = client.get('/v0/submission/CGCI/')
     with pg_driver.session_scope():
         assert pg_driver.nodes(md.Project).count() == 1
         n_cgci = (
             pg_driver.nodes(md.Project)
-                .path('programs')
-                .props(name='CGCI')
-                .count()
+            .path('programs')
+            .props(name='CGCI')
+            .count()
         )
         assert n_cgci == 1
     assert resp.json['links'] == ['/v0/submission/CGCI/BLGSP'], resp.json
 
 
-def test_project_creation_without_admin_token(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci(client, submitter)
+def test_project_creation_without_admin_token(client, pg_driver, submitter, admin):
+    put_cgci(client, admin)
     path = '/v0/submission/CGCI/'
     resp = client.put(
-        path, headers=submitter(path, 'put', 'member'), data=json.dumps({
+        path, headers=submitter, data=json.dumps({
             "type": "project",
             "code": "BLGSP",
             "dbgap_accession_number": "phs000527",
@@ -158,10 +153,8 @@ def test_project_creation_without_admin_token(app, client, pg_driver, submitter,
     assert resp.status_code == 403
 
 
-def test_put_entity_creation_valid(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
-    headers = submitter(BLGSP_PATH, 'put')
+def test_put_entity_creation_valid(client, pg_driver, cgci_blgsp, submitter):
+    headers = submitter
     data = json.dumps({
         "type": "experiment",
         "submitter_id": "BLGSP-71-06-00019",
@@ -173,11 +166,9 @@ def test_put_entity_creation_valid(app, client, pg_driver, submitter, dictionary
     assert resp.status_code == 200, resp.data
 
 
-def test_unauthorized_post(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
+def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter):
     # token for TCGA
-    headers = {'X-Auth-Token': auth_conf.SUBMITTER_TOKEN_A}
+    headers = {'Authorization': 'test'}
     data = json.dumps({
         "type": "case",
         "submitter_id": "BLGSP-71-06-00019",
@@ -189,11 +180,9 @@ def test_unauthorized_post(app, client, pg_driver, submitter, dictionary_setup):
     assert resp.status_code == 403
 
 
-def test_unauthorized_post_with_incorrect_role(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
+def test_unauthorized_post_with_incorrect_role(client, pg_driver, cgci_blgsp, member):
     # token only has _member_ role in CGCI
-    headers = submitter(BLGSP_PATH, 'post', 'member')
+    headers = member
     resp = client.post(
         BLGSP_PATH, headers=headers, data=json.dumps({
             "type": "experiment",
@@ -204,17 +193,14 @@ def test_unauthorized_post_with_incorrect_role(app, client, pg_driver, submitter
     assert resp.status_code == 403
 
 
-def test_put_valid_entity_missing_target(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
-
+def test_put_valid_entity_missing_target(client, pg_driver, cgci_blgsp, submitter):
     with open(os.path.join(DATA_DIR, 'sample.json'), 'r') as f:
         sample = json.loads(f.read())
         sample['cases'] = {"submitter_id": "missing-case"}
 
     r = client.put(
         BLGSP_PATH,
-        headers=submitter(BLGSP_PATH, 'put'),
+        headers=submitter,
         data=json.dumps(sample)
     )
 
@@ -229,12 +215,10 @@ def test_put_valid_entity_missing_target(app, client, pg_driver, submitter, dict
     )
 
 
-def test_put_valid_entity_invalid_type(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
+def test_put_valid_entity_invalid_type(client, pg_driver, cgci_blgsp, submitter):
     r = client.put(
         BLGSP_PATH,
-        headers=submitter(BLGSP_PATH, 'put'),
+        headers=submitter,
         data=json.dumps([
             {
                 "type": "experiment",
@@ -273,16 +257,14 @@ def test_put_valid_entity_invalid_type(app, client, pg_driver, submitter, dictio
             == 'INVALID_VALUE'), r.data
 
 
-def test_post_example_entities(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
+def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
     path = BLGSP_PATH
     with open(os.path.join(DATA_DIR, 'case.json'), 'r') as f:
         case_sid = json.loads(f.read())['submitter_id']
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), 'r') as f:
             resp = client.post(
-                path, headers=submitter(path, 'post'), data=f.read()
+                path, headers=submitter, data=f.read()
             )
             assert resp.status_code == 201, resp.data
             if CACHE_CASES and fname not in ['experiment.json', 'case.json']:
@@ -290,33 +272,30 @@ def test_post_example_entities(app, client, pg_driver, submitter, dictionary_set
                 assert (case['submitter_id'] == case_sid), (fname, resp.data)
 
 
-def post_example_entities_together(
-        client, pg_driver, submitter, data_fnames2=None):
-    if data_fnames2 is None:
-        data_fnames2 =  data_fnames
+def post_example_entities_together(client, submitter, data_fnames2=None):
+    if not data_fnames2:
+        data_fnames2 = data_fnames
     path = BLGSP_PATH
     data = []
     for fname in data_fnames2:
         with open(os.path.join(DATA_DIR, fname), 'r') as f:
             data.append(json.loads(f.read()))
-    return client.post(path, headers=submitter(path, 'post'), data=json.dumps(data))
+    return client.post(path, headers=submitter, data=json.dumps(data))
 
 
-def put_example_entities_together(client, pg_driver, submitter):
+def put_example_entities_together(client, headers):
     path = BLGSP_PATH
     data = []
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), 'r') as f:
             data.append(json.loads(f.read()))
-    return client.put(path, headers=submitter(path, 'put'), data=json.dumps(data))
+    return client.put(path, headers=headers, data=json.dumps(data))
 
 
-def test_post_example_entities_together(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
+def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
     with open(os.path.join(DATA_DIR, 'case.json'), 'r') as f:
         case_sid = json.loads(f.read())['submitter_id']
-    resp = post_example_entities_together(client, pg_driver, submitter)
+    resp = post_example_entities_together(client, submitter)
     print resp.data
     assert resp.status_code == 201, resp.data
     if CACHE_CASES:
@@ -325,25 +304,22 @@ def test_post_example_entities_together(app, client, pg_driver, submitter, dicti
 
 
 @pytest.mark.skipif(not CACHE_CASES, reason="This dictionary does not cache cases")
-def test_related_cases(client, pg_driver, submitter):
-    assert put_cgci_blgsp(client, submitter).status_code == 200
+def test_related_cases(client, pg_driver, cgci_blgsp, submitter):
     with open(os.path.join(DATA_DIR, 'case.json'), 'r') as f:
         case_id = json.loads(f.read())['submitter_id']
 
-    resp = post_example_entities_together(client, pg_driver, submitter)
+    resp = post_example_entities_together(client, submitter)
     assert resp.json["cases_related_to_created_entities_count"] == 1, resp.data
     assert resp.json["cases_related_to_updated_entities_count"] == 0, resp.data
     for e in resp.json['entities']:
         for c in e['related_cases']:
             assert c['submitter_id'] == case_id, resp.data
-    resp = put_example_entities_together(client, pg_driver, submitter)
+    resp = put_example_entities_together(client, submitter)
     assert resp.json["cases_related_to_created_entities_count"] == 0, resp.data
     assert resp.json["cases_related_to_updated_entities_count"] == 1, resp.data
 
 
-def test_dictionary_list_entries(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
+def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get('/v0/submission/CGCI/BLGSP/_dictionary')
     print resp.data
     assert "/v0/submission/CGCI/BLGSP/_dictionary/slide" \
@@ -354,9 +330,7 @@ def test_dictionary_list_entries(app, client, pg_driver, submitter, dictionary_s
            in json.loads(resp.data)['links']
 
 
-def test_top_level_dictionary_list_entries(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
+def test_top_level_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get('/v0/submission/_dictionary')
     print resp.data
     assert "/v0/submission/_dictionary/slide" \
@@ -367,34 +341,26 @@ def test_top_level_dictionary_list_entries(app, client, pg_driver, submitter, di
            in json.loads(resp.data)['links']
 
 
-def test_dictionary_get_entries(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
+def test_dictionary_get_entries(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get('/v0/submission/CGCI/BLGSP/_dictionary/aliquot')
     assert json.loads(resp.data)['id'] == 'aliquot'
 
 
-def test_top_level_dictionary_get_entries(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
+def test_top_level_dictionary_get_entries(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get('/v0/submission/_dictionary/aliquot')
     assert json.loads(resp.data)['id'] == 'aliquot'
 
 
-def test_dictionary_get_definitions(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
+def test_dictionary_get_definitions(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get('/v0/submission/CGCI/BLGSP/_dictionary/_definitions')
     assert 'UUID' in resp.json
 
 
-def test_put_dry_run(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
+def test_put_dry_run(client, pg_driver, cgci_blgsp, submitter):
     path = '/v0/submission/CGCI/BLGSP/_dry_run/'
     resp = client.put(
         path,
-        headers=submitter(path, 'put'),
+        headers=submitter,
         data=json.dumps({
             "type": "experiment",
             "submitter_id": "BLGSP-71-06-00019",
@@ -409,13 +375,11 @@ def test_put_dry_run(app, client, pg_driver, submitter, dictionary_setup):
         assert not pg_driver.nodes(md.Experiment).first()
 
 
-def test_incorrect_project_error(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
-    put_tcga_brca(client, submitter)
+def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter, admin):
+    put_tcga_brca(client, admin)
     resp = client.put(
         BLGSP_PATH,
-        headers=submitter(BLGSP_PATH, 'put'),
+        headers=submitter,
         data=json.dumps({
             "type": "experiment",
             "submitter_id": "BLGSP-71-06-00019",
@@ -424,7 +388,7 @@ def test_incorrect_project_error(app, client, pg_driver, submitter, dictionary_s
             }}))
     resp = client.put(
         BRCA_PATH,
-        headers=submitter(BRCA_PATH, 'put'),
+        headers=submitter,
         data=json.dumps({
             "type": "experiment",
             "submitter_id": "BLGSP-71-06-00019",
@@ -440,8 +404,8 @@ def test_incorrect_project_error(app, client, pg_driver, submitter, dictionary_s
             == 'INVALID_PERMISSIONS')
 
 
-def test_timestamps(app, client, pg_driver, submitter, dictionary_setup):
-    test_post_example_entities(app, client, pg_driver, submitter, dictionary_setup)
+def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
+    test_post_example_entities(client, pg_driver, cgci_blgsp, submitter)
     with pg_driver.session_scope():
         case = pg_driver.nodes(md.Case).first()
         ct = case.created_datetime
@@ -449,10 +413,8 @@ def test_timestamps(app, client, pg_driver, submitter, dictionary_setup):
         assert ct is not None, case.props
 
 
-def test_disallow_cross_project_references(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_tcga_brca(client, submitter)
-    put_cgci_blgsp(client, submitter)
+def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, submitter, admin):
+    put_tcga_brca(client, admin)
     data = {
         "progression_or_recurrence": "unknown",
         "classification_of_tumor": "other",
@@ -478,17 +440,15 @@ def test_disallow_cross_project_references(app, client, pg_driver, submitter, di
     }
     resp = client.put(
         BRCA_PATH,
-        headers=submitter(BRCA_PATH, 'put'),
+        headers=submitter,
         data=json.dumps(data))
     assert resp.status_code == 400, resp.data
 
 
-def test_delete_entity(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
+def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
     resp = client.put(
         BLGSP_PATH,
-        headers=submitter(BLGSP_PATH, 'put'),
+        headers=submitter,
         data=json.dumps({
             "type": "experiment",
             "submitter_id": "BLGSP-71-06-00019",
@@ -498,15 +458,14 @@ def test_delete_entity(app, client, pg_driver, submitter, dictionary_setup):
     assert resp.status_code == 200, resp.data
     did = resp.json['entities'][0]['id']
     path = BLGSP_PATH + 'entities/' + did
-    resp = client.delete(path, headers=submitter(path, 'delete'))
+    resp = client.delete(path, headers=submitter)
     assert resp.status_code == 200, resp.data
 
 
-def test_fields_deletion(app, client, pg_driver, submitter, dictionary_setup):
+def test_fields_deletion(app, client, pg_driver, submitter, admin):
     # Put test data into the database
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
-    post_example_entities_together(client, pg_driver, submitter)
+    put_cgci_blgsp(client, admin)
+    post_example_entities_together(client, submitter)
 
     # Gather sample ids and properties for test data
     with pg_driver.session_scope():
@@ -523,7 +482,7 @@ def test_fields_deletion(app, client, pg_driver, submitter, dictionary_setup):
         path = '{}entities/{}/?fields={}'.format(
             BLGSP_PATH, ','.join(node_ids), ','.join(fields)
         )
-        return client.delete(path, headers=submitter(path, 'delete'))
+        return client.delete(path, headers=submitter)
 
     r = delete_fields(samples_props.keys(), fields_to_delete)
     assert r.status_code == 200, r.data
@@ -553,33 +512,29 @@ def test_fields_deletion(app, client, pg_driver, submitter, dictionary_setup):
         assert 'Unable to delete protected field' in r.data
 
 
-def test_catch_internal_errors(monkeypatch, app, client, pg_driver, submitter, dictionary_setup):
+def test_catch_internal_errors(monkeypatch, client, pg_driver, cgci_blgsp, submitter):
     """
     Monkey patch an essential function to just raise an error and assert that
     this error is caught and recorded as a transactional_error.
     """
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
 
     def just_raise_exception(self):
         raise Exception('test')
 
     monkeypatch.setattr(UploadTransaction, 'pre_validate', just_raise_exception)
     try:
-        r = put_example_entities_together(client, pg_driver, submitter)
+        r = put_example_entities_together(client, submitter)
         assert len(r.json['transactional_errors']) == 1, r.data
     except:
         raise
 
 
-def test_validator_error_types(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    assert put_cgci_blgsp(client, submitter).status_code == 200
-    assert put_example_entities_together(client, pg_driver, submitter).status_code == 200
+def test_validator_error_types(client, pg_driver, cgci_blgsp, submitter):
+    assert put_example_entities_together(client, submitter).status_code == 200
 
     r = client.put(
         BLGSP_PATH,
-        headers=submitter(BLGSP_PATH, 'put'),
+        headers=submitter,
         data=json.dumps({
             "type": "sample",
             "cases": {
@@ -599,40 +554,36 @@ def test_validator_error_types(app, client, pg_driver, submitter, dictionary_set
     assert errors['longest_dimension'] == 'INVALID_VALUE'
 
 
-def test_invalid_json(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
+def test_invalid_json(client, pg_driver, cgci_blgsp, submitter):
     resp = client.put(
         BLGSP_PATH,
-        headers=submitter(BLGSP_PATH, 'put'),
+        headers=submitter,
         data="""{
-    "key1": "valid value",
-    "key2": not a string,
-}""")
+            "key1": "valid value",
+            "key2": not a string,
+        }""")
     print resp.data
     assert resp.status_code == 400
     assert 'Expecting value' in resp.json['message']
 
-def test_get_entity_by_id(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
-    post_example_entities_together(client, pg_driver, submitter)
+
+def test_get_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
+    post_example_entities_together(client, submitter)
     with pg_driver.session_scope():
         case_id = pg_driver.nodes(md.Case).first().node_id
     path = '/v0/submission/CGCI/BLGSP/entities/{case_id}'.format(case_id=case_id)
     r = client.get(
         path,
-        headers=submitter(path, 'get'))
+        headers=submitter)
     assert r.status_code == 200, r.data
     assert r.json['entities'][0]['properties']['id'] == case_id, r.data
 
 
-def test_invalid_file_index(monkeypatch, app, client, pg_driver, submitter, dictionary_setup):
+def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter):
     """
     Test that submitting an invalid data file doesn't create an index and an
     alias.
     """
-    dictionary_setup(app, 's3://test.com')
     def fail_index_test(_):
         raise AssertionError('IndexClient tried to create index or alias')
 
@@ -640,73 +591,73 @@ def test_invalid_file_index(monkeypatch, app, client, pg_driver, submitter, dict
     # file is invalid, change the ``create`` and ``create_alias`` methods to
     # raise an error.
     monkeypatch.setattr(
-        UploadTransaction, 'signpost.create', fail_index_test, raising=False
+        UploadTransaction, 'indexd.create', fail_index_test, raising=False
     )
     monkeypatch.setattr(
-        UploadTransaction, 'signpost.create_alias', fail_index_test,
+        UploadTransaction, 'indexd.create_alias', fail_index_test,
         raising=False
     )
     # Attempt to post the invalid entities.
-    put_cgci_blgsp(client, auth=submitter)
     test_fnames = (
         data_fnames
         + ['read_group.json', 'submitted_unaligned_reads_invalid.json']
     )
     resp = post_example_entities_together(
-        client, pg_driver, submitter, data_fnames2=test_fnames
+        client, submitter, data_fnames2=test_fnames
     )
     print(resp)
 
 
-def test_valid_file_index(monkeypatch, app, client, pg_driver, submitter, dictionary_setup):
+def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter, index_client):
     """
     Test that submitting a valid data file creates an index and an alias.
     """
 
     # Update this dictionary in the patched functions to check that they are
     # called.
-    dictionary_setup(app, 's3://test.com')
-    called = patch_indexclient(monkeypatch)
 
     # Attempt to post the valid entities.
-    put_cgci_blgsp(client, auth=submitter)
     test_fnames = (
         data_fnames
         + ['read_group.json', 'submitted_unaligned_reads.json']
     )
     resp = post_example_entities_together(
-        client, pg_driver, submitter, data_fnames2=test_fnames
+        client, submitter, data_fnames2=test_fnames
     )
-    print(resp)
+    assert resp.status_code == 201, resp.data
 
-    assert called['create']
-    assert called['create_alias']
+    # this is a node that will have an indexd entry
+    sur_entity = None
+    for entity in resp.json['entities']:
+        if entity['type'] == 'submitted_unaligned_reads':
+            sur_entity = entity
 
-def test_export_entity_by_id(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
-    post_example_entities_together(client, pg_driver, submitter)
+    assert sur_entity, 'No submitted_unaligned_reads entity created'
+    assert index_client.get(sur_entity['id']), 'No indexd document created'
+
+
+def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
+    post_example_entities_together(client, submitter)
     with pg_driver.session_scope():
         case_id = pg_driver.nodes(md.Case).first().node_id
     path = '/v0/submission/CGCI/BLGSP/export/?ids={case_id}'.format(case_id=case_id)
     r = client.get(
         path,
-        headers=submitter(path, 'get'))
+        headers=submitter)
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
     path += '&format=json'
     r = client.get(
         path,
-        headers=submitter(path, 'get'))
+        headers=submitter)
 
     data = r.json
     assert len(data) == 1
     assert data[0]['id'] == case_id
 
-def test_export_all_node_types(app, client, pg_driver, submitter, dictionary_setup):
-    dictionary_setup(app, 's3://test.com')
-    put_cgci_blgsp(client, submitter)
-    post_example_entities_together(client, pg_driver, submitter)
+
+def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
+    post_example_entities_together(client, submitter)
     with pg_driver.session_scope() as s:
         case = pg_driver.nodes(md.Case).first()
         new_case = md.Case(str(uuid.uuid4()))
@@ -717,7 +668,7 @@ def test_export_all_node_types(app, client, pg_driver, submitter, dictionary_set
     path = '/v0/submission/CGCI/BLGSP/export/?node_label=case'
     r = client.get(
         path,
-        headers=submitter(path, 'get'))
+        headers=submitter)
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
     assert len(r.data.strip().split('\n')) == case_count + 1

@@ -38,6 +38,7 @@ PERMISSIONS = {
     'get_file': 'download',
     'complete_multipart': 'create',
     'initiate_multipart': 'create',
+    'reassign': 'admin',
     'upload': 'create',
     'upload_part': 'create',
     'delete': 'delete',

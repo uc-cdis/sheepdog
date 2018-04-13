@@ -208,6 +208,14 @@ class DelimitedConverter(object):
         if value is None:
             return None
 
+        # Currently, gdcdatamodel.models.File.__pg_properties__['file_size'] = (<type 'float'>, <type 'int'>, <type 'long'>)
+        # Though it needs to be <type 'int'> only as indexd allows only integer size
+        # Per Joe, The change of the model will require a full database migration and a maintanance shutdown
+        # Below is a sad temporary workaround:
+        if current_app.config.get('IS_GDC', False):
+            if key == 'file_size':
+                return int(value)
+
         key, value = strip(key), strip(value)
         types = to_cls.__pg_properties__.get(key, (str,))
         types = types or (str,)
@@ -245,6 +253,7 @@ class DelimitedConverter(object):
             message=message, columns=columns, line=self.reader.line_num,
             **kwargs
         ))
+
 
 class TSVToJSONConverter(DelimitedConverter):
 

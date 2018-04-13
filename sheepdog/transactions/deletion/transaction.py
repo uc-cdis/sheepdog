@@ -3,7 +3,6 @@ from sheepdog import dictionary
 from sheepdog.errors import UserError
 from sheepdog.globals import (
     case_cache_enabled,
-    FLAG_IS_ASYNC,
     TX_LOG_STATE_FAILED,
 )
 from sheepdog.transactions.entity_base import EntityErrors
@@ -18,6 +17,7 @@ class DeletionTransaction(TransactionBase):
     def __init__(self, **kwargs):
         super(DeletionTransaction, self).__init__(role='delete', **kwargs)
         self.fields_to_delete = kwargs.get('fields', None)
+        self.to_delete = kwargs.get('to_delete', None)
 
         # see DeletionEntity.related_cases() docstring for details
         self.related_cases = {
@@ -40,8 +40,8 @@ class DeletionTransaction(TransactionBase):
         elif self.success and self.dry_run:
             return 'Dry run successful. Would have deleted {} entities'.format(
                 len(self.entities))
-        else:
-            return 'Deletion transaction failed.'
+
+        return 'Deletion transaction failed.'
 
     @property
     def deleted_entity_count(self):
@@ -51,8 +51,7 @@ class DeletionTransaction(TransactionBase):
         """
         if not self.success:
             return 0
-        else:
-            return len(self.entities)
+        return len(self.entities)
 
     @property
     def dependent_ids(self):
@@ -70,7 +69,12 @@ class DeletionTransaction(TransactionBase):
 
     def _delete_entities(self):
         if self.success:
-            map(self.session.delete, [e.node for e in self.valid_entities])
+            if self.to_delete is not None:
+                # set to_delete in sysan to True or False if present
+                for e in self.valid_entities:
+                    e.node.sysan['to_delete'] = self.to_delete
+            else:
+                map(self.session.delete, [e.node for e in self.valid_entities])
 
     def _delete_fields(self):
         """
@@ -94,7 +98,7 @@ class DeletionTransaction(TransactionBase):
                         # Below is a sad workaround for inconsistent gdcdictionary :|
                         # Will be safe to remove once 'required' fields is a
                         # complete and tested set for all node types in gdcdictionary.schemas
-                        if current_app.config.get('IS_GDC', True):
+                        if current_app.config.get('IS_GDC', False):
                             if field in ['submitter_id', 'project_id', 'state', 'file_state']:
                                 field_is_protected = True
 
