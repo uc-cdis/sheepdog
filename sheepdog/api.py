@@ -105,7 +105,11 @@ def migrate_database(app):
              session.execute("SELECT 1 FROM pg_roles WHERE rolname='{}'"
                              .format(read_role))]
     if len(r) != 0:
-        postgres_admin.grant_read_permissions_to_graph(app.db, read_role)
+        try:
+            postgres_admin.grant_read_permissions_to_graph(app.db, read_role)
+        except Exception:
+            app.logger.warn("Fail to grant read permission, continuing anyway")
+            return
 
 
 def app_init(app):
