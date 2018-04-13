@@ -29,6 +29,7 @@ from sheepdog.errors import (
 log = get_logger(__name__)
 SCHEMA_LOCATION_WHITELIST = ["https://github.com/nchbcr/xsd", "http://tcga-data.nci.nih.gov"]
 
+
 def _parse_schema_location(root):
     """Get all schema locations from xml."""
     try:
@@ -193,7 +194,7 @@ class BcrBiospecimenXmlToJsonParser(object):
             # if we get a result, let's check it
             if rlen:
                 if depth:
-                    for res in result:
+                    for _ in result:
                         depths.append(sum(1 for x in result[0].iterancestors()))
                 break
 
@@ -203,7 +204,7 @@ class BcrBiospecimenXmlToJsonParser(object):
             )
 
         if rlen < 1 and not expected and single:
-            result = None 
+            result = None
 
         if rlen < 1 and not expected and not single:
             result = []
@@ -226,7 +227,6 @@ class BcrBiospecimenXmlToJsonParser(object):
             result = zip(result, depths)
 
         return result
-
 
     def loads(self, xml):
         """
@@ -275,7 +275,7 @@ class BcrBiospecimenXmlToJsonParser(object):
             entity_id = self.get_entity_id(root, entity_type, params)
             args = (root, entity_type, params, entity_id)
             props = self.get_entity_properties(*args)
-            
+
             props.update(self.get_entity_datetime_properties(*args))
             props.update(self.get_entity_const_properties(*args))
 
@@ -319,14 +319,14 @@ class BcrBiospecimenXmlToJsonParser(object):
                 translation yaml file
         """
         xml_entities = None
-        
+
         if 'root' not in params:
             log.warn('No root xpath for {}'.format(entity_type))
         else:
             xml_entities = self.xpath(
                 params['root'], root=root, expected=False,
                 text=False, label='get_entity_roots')
-        
+
         return xml_entities
 
     def get_entity_id(self, root, entity_type, params):
@@ -563,7 +563,6 @@ class BcrBiospecimenXmlToJsonParser(object):
         Return:
             dict: dictionary mapping entity ids to (label, edge_type) pairs
         """
-        
         # welp, it appears this code has been like this since the start
         # TODO: figure out if the code below the twin returns might actually
         # need to be run someday - joe
@@ -572,21 +571,24 @@ class BcrBiospecimenXmlToJsonParser(object):
         if 'edges_by_property' not in params:
             return edges
         return edges
+        # -- Below code is never executed. Commented it for codacy to pass
 
-        # to reiterate, in case the logic above isn't obvious...this never
-        # gets called, but it's been here since the code was written - joe
-        for edge_type, dst_params in params['edges_by_property'].iteritems():
-            for dst_label, dst_kv in dst_params.items():
-                dst_matches = {
-                    key: self.xpath(
-                        val, root, expected=False, text=True, single=True,
-                        label='{}: {}'.format(entity_type, entity_id))
-                    for key, val in dst_kv.items()}
-                # TODO: fix
-                dsts = []
-                for dst in dsts:
-                    edges[dst.entity_id] = (dst.label, edge_type)
-        return edges
+        # # to reiterate, in case the logic above isn't obvious...this never
+        # # gets called, but it's been here since the code was written - joe
+        # for edge_type, dst_params in params['edges_by_property'].iteritems():
+        #     for dst_label, dst_kv in dst_params.items():
+        #         dst_matches = {
+        #             key: self.xpath(
+        #                 val, root, expected=False, text=True, single=True,
+        #                 label='{}: {}'.format(entity_type, entity_id))
+        #             for key, val in dst_kv.items()}
+        #         # TODO: fix
+        #         dsts = []
+        #         for dst in dsts:
+        #             edges[dst.entity_id] = (dst.label, edge_type)
+        # return edges
+
+        # -- endblock
 
     def get_entity_edge_properties(self, root, edge_type, params, entity_id=''):
         if 'edge_properties' not in params or \
@@ -784,5 +786,3 @@ def munge_property(prop, _type):
     else:
         prop = types[_type](prop) if prop else prop
     return prop
-
-
