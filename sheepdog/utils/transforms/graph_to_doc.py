@@ -385,7 +385,7 @@ def is_property_hidden(key, schema, exclude_id):
 
     is_system_prop = (
         key in schema['systemProperties'] and
-        key not in ['id', 'project_id'])
+        key not in ['id', 'project_id', 'batch_id'])
         # TODO Make this a configurable blacklist
 
     if is_system_prop:
