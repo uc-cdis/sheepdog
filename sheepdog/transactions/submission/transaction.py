@@ -15,6 +15,7 @@ from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.submission.entity import SubmissionEntity
 from sheepdog.transactions.transaction_base import TransactionBase
 
+
 class SubmissionTransaction(TransactionBase):
 
     """Models a transaction to mark all nodes in a project submitted."""
@@ -140,7 +141,7 @@ class SubmissionTransaction(TransactionBase):
             for n in nodes
         ]
         for entity in self.entities:
-            entity.submit()
+            entity.user_request_submit()
 
         project_node = self.session.merge(self.project_node)
         project_node.state = 'submitted'
@@ -203,8 +204,6 @@ class SubmissionTransaction(TransactionBase):
         connection.send(envelope)
 
         self.logger.info("Sent " + description)
-
-
 
     def write_transaction_log(self):
         """Save a log noting this project was opened."""

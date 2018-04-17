@@ -185,6 +185,9 @@ ROLE_OPEN = 'release'
 SUBMITTABLE_FILE_STATES = FILE_STATE_TRANSITIONS['submitted']
 SUBMITTABLE_STATES = ENTITY_STATE_TRANSITIONS['submitted']
 
+#: The key indicating that user requested entity submission
+REQUEST_SUBMIT_KEY = 'request_submission'
+
 # Async scheduling configuration
 ASYNC_MAX_Q_LEN = 128
 ERR_ASYNC_SCHEDULING = (
