@@ -8,7 +8,6 @@ from sheepdog.transactions.entity_base import EntityErrors
 
 from sheepdog.transactions.upload.entity import UploadEntity
 from sheepdog.transactions.upload.entity import lookup_node
-from sheepdog.utils import stringify_acls
 
 
 class NonFileUploadEntity(UploadEntity):
@@ -237,7 +236,7 @@ class FileUploadEntity(UploadEntity):
         hashes = {'md5': self.node._props.get('md5sum')}
         size = self.node._props.get('file_size')
         alias = "{}/{}".format(project_id, submitter_id)
-        metadata = self.get_metadata()
+        acl = self.transaction.get_phsids()
 
         urls = []
         if self.urls:
@@ -248,7 +247,7 @@ class FileUploadEntity(UploadEntity):
                            hashes=hashes,
                            size=size,
                            urls=urls,
-                           metadata=metadata)
+                           acl=acl)
 
         self._create_alias(
             record=alias, hashes=hashes, size=size, release='private'
@@ -453,7 +452,7 @@ class FileUploadEntity(UploadEntity):
 
     def get_file_from_index_by_uuid(self, uuid):
         """
-        Return the record entity from "signpost" (index client)
+        Return the record entity from 'signpost" (index client)
 
         NOTE:
         - Should only ever be called for data and metadata files.
@@ -466,10 +465,6 @@ class FileUploadEntity(UploadEntity):
             document = self.transaction.signpost.get(uuid)
 
         return document
-
-    def get_metadata(self):
-        metadata = {'acls': stringify_acls(self.transaction.get_phsids())}
-        return metadata
 
     def _get_file_hashes_and_size(self):
         hashes = self._get_file_hashes()
