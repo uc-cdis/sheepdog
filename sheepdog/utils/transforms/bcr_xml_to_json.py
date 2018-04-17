@@ -25,13 +25,10 @@ from sheepdog.errors import (
     ParsingError,
     SchemaError,
 )
-from sheepdog.globals import (
-    BCR_MAPPING,
-)
-
 
 log = get_logger(__name__)
 SCHEMA_LOCATION_WHITELIST = ["https://github.com/nchbcr/xsd", "http://tcga-data.nci.nih.gov"]
+
 
 def _parse_schema_location(root):
     """Get all schema locations from xml."""
@@ -126,11 +123,11 @@ def to_bool(val):
         raise ValueError("Cannot convert {} to boolean".format(val))
 
 
-class BcrXmlToJsonParser(object):
+class BcrBiospecimenXmlToJsonParser(object):
 
-    def __init__(self, project):
+    def __init__(self, project, mapping=None):
         """
-        Create a parser to convert XML to GDC JSON.
+        Create a parser to convert Biospecimen XML to GDC JSON.
 
         Args:
             project (str): the id of the project node to link cases to
@@ -140,25 +137,29 @@ class BcrXmlToJsonParser(object):
         self.exported_entitys = 0
         self.export_count = 0
         self.ignore_missing_properties = True
-        self.xml_mapping = json.loads(
-            json.dumps(yaml.load(BCR_MAPPING)), object_hook=AttrDict
-        )
+
+        if mapping is None:
+            mapping = pkg_resources.resource_string(
+                'gdcdatamodel', 'xml_mappings/tcga_biospecimen.yaml'
+            )
+        self.xml_mapping = yaml.load(mapping)
         self.entities = {}
 
     def xpath(
             self, path, root=None, single=False, nullable=True, expected=True,
-            text=True, label=''):
+            text=True, label='', depth=False):
         """
         Wrapper to perform the xpath queries on the xml
 
         Args:
-            path (str): The xpath location path
+            path (str): The xpath location path, can be a list of paths
             root: the lxml element to perform query on
             single (bool): raise ParsingError if the result is not singular
             nullable (bool): raise ParsingError if the result is null
             expected (bool): raise ParsingError if the result does not exist
             text (bool): whether the return value is the .text str value
             label (str): label for logging
+            depth (int): return depth from root to hit
 
         Return:
 
@@ -167,25 +168,46 @@ class BcrXmlToJsonParser(object):
                 if ``single``, ``nullable``, or ``expected`` are True and their
                 respective conditions are violated (see above)
         """
+        result = None
+        depths = []
         if root is None:
             root = self.xml_root
-        try:
-            result = root.xpath(path, namespaces=self.namespaces)
-        except etree.XPathEvalError:
-            result = []
-        except:
-            raise
-        rlen = len(result)
-        if rlen < 1 and expected:
+
+        # to walk, we stick them all in a list, but it'll only match the first found
+        # that way, if multiples are used in the yaml, it's an or
+        # NOTE: if there are multiple hits, this could behave oddly, so watch the
+        # source XML
+        if isinstance(path, list):
+            list_path = path
+        else:
+            list_path = [path]
+
+        for xpath_entry in list_path:
+            try:
+                result = root.xpath(xpath_entry, namespaces=self.namespaces)
+            except etree.XPathEvalError:
+                result = []
+            except:
+                raise
+            rlen = len(result)
+
+            # if we get a result, let's check it
+            if rlen:
+                if depth:
+                    for _ in result:
+                        depths.append(sum(1 for x in result[0].iterancestors()))
+                break
+
+        if (rlen < 1 and expected) and (not isinstance(path, list)):
             raise ParsingError(
                 '{}: Unable to find xpath {}'.format(label, path)
             )
 
         if rlen < 1 and not expected and single:
-            return None
+            result = None
 
         if rlen < 1 and not expected and not single:
-            return []
+            result = []
 
         elif rlen > 1 and single:
             log.error(result)
@@ -193,16 +215,18 @@ class BcrXmlToJsonParser(object):
             raise ParsingError(msg.format(label, path, result))
 
         if text:
-            result = [r.text for r in result]
-            if not nullable and None in result:
-                raise ParsingError('{}: Null result for {}'
+            if result and len(result) > 0:
+                result = [r.text for r in result]
+                if not nullable and None in result:
+                    raise ParsingError('{}: Null result for {}'
                                    .format(label, result))
-
-        if single:
+        if single and result and len(result) > 0:
             result = result[0]
 
-        return result
+        if depth:
+            result = zip(result, depths)
 
+        return result
 
     def loads(self, xml):
         """
@@ -219,7 +243,7 @@ class BcrXmlToJsonParser(object):
 
         self.xml_root = validated_parse(str(xml)).getroottree()
         self.namespaces = self.xml_root.getroot().nsmap
-        for entity_type, param_list in self.xml_mapping.items():
+        for entity_type, param_list in self.xml_mapping.iteritems():
             for params in param_list:
                 self.parse_entity(entity_type, params)
 
@@ -251,6 +275,7 @@ class BcrXmlToJsonParser(object):
             entity_id = self.get_entity_id(root, entity_type, params)
             args = (root, entity_type, params, entity_id)
             props = self.get_entity_properties(*args)
+
             props.update(self.get_entity_datetime_properties(*args))
             props.update(self.get_entity_const_properties(*args))
 
@@ -293,12 +318,15 @@ class BcrXmlToJsonParser(object):
                 parameters that govern xpath queries and translation from the
                 translation yaml file
         """
-        if not params.root:
+        xml_entities = None
+
+        if 'root' not in params:
             log.warn('No root xpath for {}'.format(entity_type))
-            return
-        xml_entities = self.xpath(
-            params.root, root=root, expected=False,
-            text=False, label='get_entity_roots')
+        else:
+            xml_entities = self.xpath(
+                params['root'], root=root, expected=False,
+                text=False, label='get_entity_roots')
+
         return xml_entities
 
     def get_entity_id(self, root, entity_type, params):
@@ -315,14 +343,13 @@ class BcrXmlToJsonParser(object):
         Return:
             str: the entity id
         """
-        assert (
-            not ('id' in params and 'generated_id' in params),
+        assert  not ('id' in params and 'generated_id' in params),\
             'Specification of an id xpath and parameters for generating an id'
-        )
+
         # Lookup ID
         if 'id' in params:
             entity_id = self.xpath(
-                params.id, root, single=True, label=entity_type
+                params['id'], root, single=True, label=entity_type
             ).lower()
         else:
             entity_id = None
@@ -345,30 +372,28 @@ class BcrXmlToJsonParser(object):
         Return:
             dict: the entity properties
         """
-        if 'properties' not in params or not params.properties:
-            return {}
-
         props = {}
-        schema = dictionary.schema[entity_type]
-        for prop, args in params.properties.items():
-            if args is None:
-                if 'null' in schema['properties'][prop].get('type', []):
-                    props[prop] = None
-                continue
-            path, _type = args['path'], args['type']
-            if not path:
-                if 'null' in schema['properties'][prop].get('type', []):
-                    props[prop] = None
-                continue
-            result = self.xpath(
-                path, root, single=True, text=True,
-                expected=(not self.ignore_missing_properties),
-                label='{}: {}'.format(entity_type, entity_id))
-            # optional null fields are removed
-            if result is None and prop not in\
-                    dictionary.schema[entity_type].get('required', []):
-                continue
-            props[prop] = munge_property(result, _type)
+        if 'properties' in params:
+            schema = dictionary.schema[entity_type]
+            for prop, args in params['properties'].iteritems():
+                if args is None:
+                    if 'null' in schema['properties'][prop].get('type', []):
+                        props[prop] = None
+                    continue
+                path, _type = args['path'], args['type']
+                if not path:
+                    if 'null' in schema['properties'][prop].get('type', []):
+                        props[prop] = None
+                    continue
+                result = self.xpath(
+                    path, root, single=True, text=True,
+                    expected=(not self.ignore_missing_properties),
+                    label='{}: {}'.format(entity_type, entity_id))
+                # optional null fields are removed
+                if result is None and prop not in\
+                        dictionary.schema[entity_type].get('required', []):
+                    continue
+                props[prop] = munge_property(result, _type)
         return props
 
     def get_entity_const_properties(self, root, entity_type, params, entity_id=''):
@@ -388,11 +413,10 @@ class BcrXmlToJsonParser(object):
         Return:
             dict: dictionary of properties
         """
-        if 'const_properties' not in params or not params.const_properties:
-            return {}
         props = {}
-        for prop, args in params.const_properties.items():
-            props[prop] = munge_property(args['value'], args['type'])
+        if 'const_properties' in params:
+            for prop, args in params.const_properties.items():
+                props[prop] = munge_property(args['value'], args['type'])
         return props
 
     def get_entity_datetime_properties(
@@ -412,27 +436,24 @@ class BcrXmlToJsonParser(object):
         Return:
             dict: the properties dictionary
         """
-        if 'datetime_properties' not in params or \
-           not params.datetime_properties:
-            return {}
-
         props = {}
-        # Loop over all given datetime properties
-        for name, timespans in params.datetime_properties.items():
-            times = {'year': 0, 'month': 0, 'day': 0}
-            # Parse the year, month, day
-            for span in times:
-                if span in timespans:
-                    temp = self.xpath(
-                        timespans[span], root, single=True, text=True,
-                        label='{}: {}'.format(entity_type, entity_id))
-                    times[span] = 0 if temp is None else int(temp)
+        if 'datetime_properties' in params:
+            # Loop over all given datetime properties
+            for name, timespans in params['datetime_properties'].iteritems():
+                times = {'year': 0, 'month': 0, 'day': 0}
+                # Parse the year, month, day
+                for span in times:
+                    if span in timespans:
+                        temp = self.xpath(
+                            timespans[span], root, single=True, text=True,
+                            label='{}: {}'.format(entity_type, entity_id))
+                        times[span] = 0 if temp is None else int(temp)
 
-            if not times['year']:
-                props[name] = 0
-            else:
-                props[name] = unix_time(datetime.datetime(
-                    times['year'], times['month'], times['day']))
+                if not times['year']:
+                    props[name] = 0
+                else:
+                    props[name] = unix_time(datetime.datetime(
+                        times['year'], times['month'], times['day']))
 
         return props
 
@@ -452,6 +473,7 @@ class BcrXmlToJsonParser(object):
             dict: a dictionary of edges
         """
         edges = {}
+        # note: this call does nothing, it just returns an empty dict
         edges.update(self.get_entity_edges_by_properties(*args, **kwargs))
         edges.update(self.get_entity_edges_by_id(*args, **kwargs))
         return edges
@@ -473,14 +495,56 @@ class BcrXmlToJsonParser(object):
             dict: dictionary mapping edge types to lists of entity ids
         """
         edges = {}
-        if 'edges' not in params or not params.edges:
+        exclusive_check = []
+        if 'edges' not in params:
             return edges
-        for edge_type, path in params.edges.items():
+
+        # so, we've got depth checks here where multiple ancestors
+        # could be valid links
+        # the depth check below will return the proximity of
+        # each link, and we need to check it & use the closest
+        # if the schema says it's an exclusive link - joe
+        for entry in dictionary.schema[entity_type]['links']:
+            if 'exclusive' in entry.keys():
+                if entry['exclusive'] == True:
+                    if 'subgroup' in entry.keys():
+                        for subg in entry['subgroup']:
+                            exclusive_check.append(subg['name'])
+
+        for edge_type, path in params['edges'].iteritems():
             results = self.xpath(
-                path, root, expected=False, text=True,
+                path, root, expected=False, text=True, depth=True,
                 label='{}: {}'.format(entity_type, entity_id))
             if results:
-                edges[edge_type] = [{'id': r.lower()} for r in results]
+                edges[edge_type] = [{'id': r.lower(), 'depth': d} for r,d in results]
+
+        # here's the meat of the check
+        # if we've found these links are exclusive, walk them and figure out which one
+        # (possibly in a list) is closest. If we have a tie, well, use the first one
+        # we encounter and tell them to fix their data - joe
+        if len(exclusive_check):
+            closest = None
+            closest_type = None
+            closest_val = 99999999
+            new_edges = {}
+            for edge, data in edges.iteritems():
+                if edge in exclusive_check:
+                    if not closest:
+                        closest = data
+                        closest_type = edge
+                        closest_val = min([x['depth'] for x in data])
+                    else:
+                        temp_val = min([x['depth'] for x in data])
+                        if temp_val < closest_val:
+                            closest_val = temp_val
+                            closest = data
+                            closest_type = edge
+                else:
+                    new_edges[edge] = data
+            if closest:
+                new_edges[closest_type] = closest
+            edges = new_edges
+
         return edges
 
     def get_entity_edges_by_properties(
@@ -499,31 +563,40 @@ class BcrXmlToJsonParser(object):
         Return:
             dict: dictionary mapping entity ids to (label, edge_type) pairs
         """
+        # welp, it appears this code has been like this since the start
+        # TODO: figure out if the code below the twin returns might actually
+        # need to be run someday - joe
+
         edges = {}
-        if 'edges_by_property' not in params or not params.edges_by_property:
+        if 'edges_by_property' not in params:
             return edges
         return edges
+        # -- Below code is never executed. Commented it for codacy to pass
 
-        for edge_type, dst_params in params.edges_by_property.items():
-            for dst_label, dst_kv in dst_params.items():
-                dst_matches = {
-                    key: self.xpath(
-                        val, root, expected=False, text=True, single=True,
-                        label='{}: {}'.format(entity_type, entity_id))
-                    for key, val in dst_kv.items()}
-                # TODO: fix
-                dsts = []
-                for dst in dsts:
-                    edges[dst.entity_id] = (dst.label, edge_type)
-        return edges
+        # # to reiterate, in case the logic above isn't obvious...this never
+        # # gets called, but it's been here since the code was written - joe
+        # for edge_type, dst_params in params['edges_by_property'].iteritems():
+        #     for dst_label, dst_kv in dst_params.items():
+        #         dst_matches = {
+        #             key: self.xpath(
+        #                 val, root, expected=False, text=True, single=True,
+        #                 label='{}: {}'.format(entity_type, entity_id))
+        #             for key, val in dst_kv.items()}
+        #         # TODO: fix
+        #         dsts = []
+        #         for dst in dsts:
+        #             edges[dst.entity_id] = (dst.label, edge_type)
+        # return edges
+
+        # -- endblock
 
     def get_entity_edge_properties(self, root, edge_type, params, entity_id=''):
-        if 'edge_properties' not in params or not params.edge_properties or \
+        if 'edge_properties' not in params or \
            edge_type not in params.edge_properties:
             return {}
 
         props = {}
-        for prop, args in params.edge_properties[edge_type].items():
+        for prop, args in params['edge_properties'][edge_type].iteritems():
             path, _type = args['path'], args['type']
             if not path:
                 continue
@@ -537,31 +610,28 @@ class BcrXmlToJsonParser(object):
     def get_entity_edge_datetime_properties(
             self, root, edge_type, params, entity_id=''):
 
-        if 'edge_datetime_properties' not in params \
-           or not params.edge_datetime_properties \
-           or edge_type not in params.edge_datetime_properties:
-            return {}
-
         props = {}
-        # Loop over all given datetime properties
-        for name, timespans in params.edge_datetime_properties[edge_type]\
-                                     .items():
-            times = {'year': 0, 'month': 0, 'day': 0}
+        if 'edge_datetime_properties' in params:
+           if edge_type in params['edge_datetime_properties']:
+                # Loop over all given datetime properties
+                for name, timespans in params['edge_datetime_properties'][edge_type]\
+                                             .items():
+                    times = {'year': 0, 'month': 0, 'day': 0}
 
-            # Parse the year, month, day
-            for span in times:
-                if span in timespans:
-                    temp = self.xpath(
-                        timespans[span], root, single=True, text=True,
-                        expected=True,
-                        label='{}: {}'.format(edge_type, entity_id))
-                    times[span] = 0 if temp is None else int(temp)
+                    # Parse the year, month, day
+                    for span in times:
+                        if span in timespans:
+                            temp = self.xpath(
+                                timespans[span], root, single=True, text=True,
+                                expected=True,
+                                label='{}: {}'.format(edge_type, entity_id))
+                            times[span] = 0 if temp is None else int(temp)
 
-            if not times['year']:
-                props[name] = 0
-            else:
-                props[name] = unix_time(datetime.datetime(
-                    times['year'], times['month'], times['day']))
+                    if not times['year']:
+                        props[name] = 0
+                    else:
+                        props[name] = unix_time(datetime.datetime(
+                            times['year'], times['month'], times['day']))
         return props
 
 
@@ -689,7 +759,7 @@ class BcrClinicalXmlToJsonParser(object):
                     root=root, path=props['path'], namespaces=namespaces,
                     suffix=props.get('suffix', ''))
                 _type = props['type']
-                is_nan = type(value) == float and math.isnan(value)
+                is_nan = isinstance(value, float) and math.isnan(value)
                 if value is None or is_nan:
                     if key not in doc:
                         key_type = schema['properties'][key].get('type', [])
@@ -716,5 +786,3 @@ def munge_property(prop, _type):
     else:
         prop = types[_type](prop) if prop else prop
     return prop
-
-
