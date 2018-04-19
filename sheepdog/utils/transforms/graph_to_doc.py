@@ -383,9 +383,10 @@ def _get_links(file_format, schema, exclude_id):
 def is_property_hidden(key, schema, exclude_id):
     """Boolean whether key should be hidden"""
 
-    is_system_prop = (
+    is_system_prop = ((
         key in schema['systemProperties'] and
-        key not in ['id', 'project_id', 'batch_id', 'state_comment'])
+        key not in ['id', 'project_id']) or
+        key in ['batch_id', 'state_comment'])
         # TODO Make this a configurable blacklist
 
     if is_system_prop:
