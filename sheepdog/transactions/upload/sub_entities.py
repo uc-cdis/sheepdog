@@ -168,7 +168,6 @@ class FileUploadEntity(UploadEntity):
             return
 
         role = self.action
-
         try:
             if role == 'create':
                 if not self.file_exists:
@@ -290,8 +289,9 @@ class FileUploadEntity(UploadEntity):
         Will first check provided uuid, then check by hash/size.
         """
 
+        did = self.old_uuid or self.entity_id
         self.file_by_hash = self.get_file_from_index_by_hash()
-        self.file_by_uuid = self.get_file_from_index_by_uuid(self.entity_id)
+        self.file_by_uuid = self.get_file_from_index_by_uuid(did)
 
         #######################################################################
         # need to find out if this causes application working outside

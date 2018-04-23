@@ -240,6 +240,17 @@ def test_creating_new_versioned_file(
         )
 
         did = resp['did']
+        with pg_driver.session_scope():
+            query = pg_driver.nodes(md.SubmittedUnalignedReads)
+
+            # only one in the database
+            assert query.count() == 1
+
+            sur_node = query.first()
+            assert sur_node
+            assert len(sur_node.read_groups) == 1
+            assert did == sur_node.node_id
+
         indexd_doc = indexd_client.get(did)
         assert indexd_doc, 'No doc created for {}'.format(did)
         assert indexd_doc.version is None, 'Should not have a version yet'
