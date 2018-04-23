@@ -4,6 +4,7 @@ uploaded entites.
 """
 import uuid
 
+from sheepdog import utils
 from sheepdog.transactions.entity_base import EntityErrors
 
 from sheepdog.transactions.upload.entity import UploadEntity
@@ -236,7 +237,15 @@ class FileUploadEntity(UploadEntity):
         hashes = {'md5': self.node._props.get('md5sum')}
         size = self.node._props.get('file_size')
         alias = "{}/{}".format(project_id, submitter_id)
-        acl = self.transaction.get_phsids()
+        project = utils.lookup_project(
+            self.transaction.db_driver,
+            self.transaction.program,
+            self.transaction.project
+        )
+        if utils.is_project_public(project):
+            acl = ['*']
+        else:
+            acl = self.transaction.get_phsids()
 
         urls = []
         if self.urls:

@@ -529,6 +529,12 @@ def is_node_file(node):
     return node._dictionary['category'].endswith("_file")
 
 
+def is_project_public(project):
+    if not hasattr(models.Project, 'availability_type'):
+        return False
+    return project.availability_type == 'Open'
+
+
 def should_send_email(config):
     """Only opt to send an email if the following are provided
 
