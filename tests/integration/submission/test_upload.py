@@ -2,8 +2,10 @@
 Test upload entities (mostly data file handling and communication with
 index service).
 """
+import flask
 import json
 import copy
+import pytest
 
 from test_endpoints import put_cgci_blgsp
 
@@ -74,7 +76,7 @@ def submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp, data=N
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_not_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test node and data file creation when neither exist and no ID is provided.
     """
@@ -115,7 +117,7 @@ def test_data_file_not_indexed(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_not_indexed_id_provided(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test node and data file creation when neither exist and an ID is provided.
     That ID should be used for the node and file index creation
@@ -161,7 +163,7 @@ def test_data_file_not_indexed_id_provided(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_already_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting when the file is already indexed in the index client and
     no ID is provided. sheepdog should fall back on the hash/size of the file
@@ -205,7 +207,7 @@ def test_data_file_already_indexed(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_already_indexed_id_provided(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting when the file is already indexed in the index client and
     an id is provided in the submission.
@@ -252,7 +254,7 @@ def test_data_file_already_indexed_id_provided(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_url(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting the same data again but updating the URL field (should
     get added to the indexed file in index service).
@@ -308,7 +310,7 @@ def test_data_file_update_url(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_multiple_urls(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting the same data again but updating the URL field (should
     get added to the indexed file in index service).
@@ -430,7 +432,7 @@ def test_data_file_update_url_id_provided(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_url_invalid_id(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting the same data again (with the WRONG id provided).
     i.e. ID provided doesn't match the id from the index service for the file
@@ -477,7 +479,7 @@ def test_data_file_update_url_invalid_id(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_url_id_provided_different_file_not_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting the same data again (with the id provided) and updating the
     URL field.
@@ -532,7 +534,7 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_url_different_file_not_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting the different data (with NO id provided) and updating the
     URL field.
@@ -589,7 +591,7 @@ def test_data_file_update_url_different_file_not_indexed(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_url_id_provided_different_file_already_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting the same data again (with the id provided) and updating the
     URL field (should get added to the indexed file in index service).
@@ -640,3 +642,38 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     # response
     assert_negative_response(resp)
     assert_single_entity_from_response(resp)
+
+
+@pytest.mark.config_toggle(parameter='ENFORCE_FILE_HASH_SIZE_UNIQUENESS', value=False)
+def test_dont_enforce_file_hash_size_uniqueness(
+        client_toggled, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
+    """
+    Check that able to submit two files with different did and urls but duplicate hash and size
+    if ENFORCE_FILE_HASH_SIZE_UNIQUENESS set to False
+    """
+
+    submit_first_experiment(client_toggled, pg_driver, admin, submitter, cgci_blgsp)
+
+    file_ = DEFAULT_METADATA_FILE
+    file_['id'] = DEFAULT_UUID
+
+    submit_metadata_file(client_toggled, pg_driver, admin, submitter, cgci_blgsp,
+                         data=file_)
+
+    # now submit again but change url and id
+    new_url = 'some/new/url/location/to/add'
+    new_id = DEFAULT_UUID.replace('1', '2')
+
+    updated_file = copy.deepcopy(file_)
+    updated_file['urls'] = new_url
+    updated_file['id'] = new_id
+    submit_metadata_file(client_toggled, pg_driver, admin, submitter,
+                         cgci_blgsp, data=updated_file)
+
+    # check that both are incerted into indexd and have correct urls
+    assert flask.current_app.indexd.get(DEFAULT_UUID).to_json()['urls'] == [
+        DEFAULT_METADATA_FILE['urls']
+    ]
+    assert flask.current_app.indexd.get(new_id).to_json()['urls'] == [
+        new_url
+    ]
