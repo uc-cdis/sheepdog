@@ -165,7 +165,6 @@ def assert_project_exists(func):
             if not project_node:
                 raise NotFoundError('Project {} not found'.format(project))
             phsids = [program_node.dbgap_accession_number, project_node.dbgap_accession_number]
-            flask.g.dbgap_accession_numbers = stringify_acls(phsids)
         return func(program, project, *args, **kwargs)
     return check_and_call
 
@@ -521,16 +520,6 @@ def update_signpost_url(signpost_obj, key_name=None, s3_url=None):
         signpost_obj.urls = []
     signpost_obj.patch()
 
-def stringify_acls(phsids):
-    """Consolidate the dbgap_accession_numbers into one comma separated string
-
-    Args:
-        phsids (list): list of dbgap_accession_numbers
-
-    Returns:
-        string: comma separated string of phsids
-    """
-    return ','.join([number for number in phsids if number is not None])
 
 def is_node_file(node):
     """Returns True if the object is a file (i.e. it may have
@@ -538,6 +527,12 @@ def is_node_file(node):
     """
 
     return node._dictionary['category'].endswith("_file")
+
+
+def is_project_public(project):
+    if not hasattr(models.Project, 'availability_type'):
+        return False
+    return project.availability_type == 'Open'
 
 
 def should_send_email(config):
