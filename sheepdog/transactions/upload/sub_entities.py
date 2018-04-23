@@ -5,9 +5,9 @@ uploaded entites.
 import uuid
 
 import flask
+from indexclient.client import Document
 
 from sheepdog.transactions.entity_base import EntityErrors
-
 from sheepdog.transactions.upload.entity import UploadEntity
 from sheepdog.transactions.upload.entity import lookup_node
 from sheepdog.utils import stringify_acls
@@ -121,7 +121,8 @@ class FileUploadEntity(UploadEntity):
 
         # call to super must happen after setting node and file ids here
         node = super(FileUploadEntity, self).get_node_create(
-            skip_node_lookup=skip_node_lookup)
+            skip_node_lookup=skip_node_lookup,
+        )
         node.acl = self.transaction.get_phsids()
 
         return node
@@ -172,6 +173,10 @@ class FileUploadEntity(UploadEntity):
             if role == 'create':
                 if not self.file_exists:
                     self._register_index()
+
+            elif role == 'version':
+                if self.file_exists:
+                    self._new_version_index()
 
             elif role == 'update':
                 if self.file_exists:
@@ -230,6 +235,24 @@ class FileUploadEntity(UploadEntity):
             if urls_to_add:
                 document.urls.extend(urls_to_add)
                 document.patch()
+
+    def _new_version_index(self):
+        """
+        Call the index client for the transaction to create a new version
+        of an already existing index for the old_uuid.
+        """
+
+        index_json = dict(
+            did=self.entity_id,
+            hashes={'md5': self.node._props.get('md5sum')},
+            size=self.node._props.get('file_size'),
+            file_name=self.node._props.get('file_name'),
+            urls=self.urls,
+            metadata=self.get_metadata(),
+            form='object',
+        )
+        new_doc = Document(None, None, index_json)
+        self._version_index(current_did=self.old_uuid, new_doc=new_doc)
 
     @staticmethod
     def is_updatable_file_node(node):
@@ -443,13 +466,10 @@ class FileUploadEntity(UploadEntity):
 
     def get_metadata(self):
         """Metadata dict in an indexd Document"""
-        metadata = {'acls': stringify_acls(self.transaction.get_phsids())}
-
-        # if self._config.get('INDEXD_FILE_STATE', False):
-        # is this the correct state?
-        metadata['file_state'] = 'registered'
-
-        return metadata
+        return {
+            'acls': stringify_acls(self.transaction.get_phsids()),
+            'state': 'registered',
+        }
 
     def _get_file_hashes_and_size(self):
         hashes = self._get_file_hashes()
@@ -468,3 +488,6 @@ class FileUploadEntity(UploadEntity):
 
     def _create_index(self, **kwargs):
         return self.transaction.indexd.create(**kwargs)
+
+    def _version_index(self, **kwargs):
+        return self.transaction.indexd.add_version(**kwargs)

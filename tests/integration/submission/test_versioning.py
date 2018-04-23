@@ -1,7 +1,6 @@
 import json
 import os
 
-import pytest
 from gdcdatamodel import models as md
 
 from tests.integration.submission.test_endpoints import (
@@ -11,6 +10,29 @@ from tests.integration.submission.test_endpoints import (
 )
 from tests.integration.submission.utils import data_fnames
 
+
+def release_indexd_doc(did, indexd_client):
+    """Simulate a released node in indexd
+
+    Args:
+        indexd_doc (indexdclient.client.Document): representation of doc in indexd
+        indexd_client (pytest fixture): client connected to indexd server
+    """
+
+    indexd_doc = indexd_client.get(did)
+    # release this node
+    indexd_doc.metadata['state'] = 'released'
+    indexd_doc.patch()
+
+    # version the rest of the nodes
+    docs = indexd_client.list_versions(did)
+    for doc in docs:
+        if doc.version is None:
+            version = 1
+        else:
+            version = int(doc.version) + 1
+        doc.version = str(version)
+        doc.patch()
 
 def data_file_creation(client, headers, method='post', sur_filename=''):
     """
@@ -27,7 +49,6 @@ def data_file_creation(client, headers, method='post', sur_filename=''):
 
     Returns:
         pytest_flask.plugin.JSONResponse: http response from sheepdog
-        string: UUID of data file from submission
     """
 
     test_fnames = data_fnames + ['read_group.json']
@@ -42,6 +63,11 @@ def data_file_creation(client, headers, method='post', sur_filename=''):
             client,
             headers,
             data_fnames2=test_fnames + [sur_filename])
+
+    assert_message = 'Unable to create nodes: {}'.format(
+        [entity for entity in resp.json['entities'] if entity['errors']]
+    )
+    assert resp.status_code in (200, 201), assert_message
 
     with open(os.path.join(DATA_DIR, sur_filename), 'r') as f:
         sur_json = json.loads(f.read())
@@ -61,7 +87,9 @@ def data_file_creation(client, headers, method='post', sur_filename=''):
 
     return file_metadata
 
-def test_create_data_file_entity(client, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
+
+def test_create_data_file_entity(
+        client, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
     """
     Create a new node in the database.
 
@@ -97,7 +125,8 @@ def test_create_data_file_entity(client, indexd_server, indexd_client, pg_driver
     assert indexd_doc.version is None
 
 
-def test_update_data_file_entity(app, client, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
+def test_update_data_file_entity(
+        app, client, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
     """
     Update an existing node in the database.
 
@@ -113,7 +142,7 @@ def test_update_data_file_entity(app, client, indexd_server, indexd_client, pg_d
         - Indexd entry has new information supplied by the user
         - Exactly one entry in indexd can have no version number
         - Base IDs between the two same nodes should be the same
-        - Cannot update a node if it is in file_state submitted
+        - Cannot update a node if it is in state submitted
     """
 
     # simulate a project api that lets you do this
@@ -170,15 +199,66 @@ def test_update_data_file_entity(app, client, indexd_server, indexd_client, pg_d
     # submitted or released
 
     # manually change file state to submitted
-    new_doc.metadata['file_state'] = 'submitted'
+    new_doc.metadata['state'] = 'submitted'
     new_doc.patch()
 
-    # attempt to update the node in file_state submitted
+    # attempt to update the node in state submitted
     resp = put_example_entities_together(
         client,
         submitter,
         data_fnames2=data_fnames +
-            ['read_group.json', 'submitted_unaligned_reads_new.json']
+        ['read_group.json', 'submitted_unaligned_reads_new.json']
     )
 
-    assert resp.status_code == 400, 'file_state should be in submitted state'
+    assert resp.status_code == 400, 'indexd doc state should be in submitted state'
+
+
+def test_creating_new_versioned_file(
+        app, client, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
+    """
+    Create a new version of a file
+    """
+
+    # simulate a project api that lets you do this
+    app.config['CREATE_REPLACEABLE'] = True
+
+    def create_node(version_number=None):
+        """Create a node and possibly assign it a version
+
+        Args:
+            version_number (int): whole number to indicate a version
+
+        Returns:
+            str: UUID of node submitted to the api
+        """
+
+        resp = data_file_creation(
+            client,
+            submitter,
+            method='put',
+            sur_filename='submitted_unaligned_reads.json',
+        )
+
+        did = resp['did']
+        indexd_doc = indexd_client.get(did)
+        assert indexd_doc, 'No doc created for {}'.format(did)
+        assert indexd_doc.version is None, 'Should not have a version yet'
+
+        # only give a version number if one is supplied
+        if version_number:
+            # simulate release by incrementing all versions for similar docs
+            release_indexd_doc(did, indexd_client)
+
+            indexd_doc = indexd_client.get(did)
+            assert indexd_doc.version == '1', 'Should have been assigned version 1'
+
+        return resp['did']
+
+    # create nodes and release a few times, just to be sure
+    # create versions 3, 2, 1, None (no version on the last one)
+    accepted_versions = ['3', '2', '1', None]
+    uuids = [create_node(version_number=v) for v in accepted_versions]
+    created_versions = [indexd_client.get(uuid).version for uuid in uuids]
+    # this order is guaranteed
+    for created, accepted in zip(created_versions, accepted_versions):
+        assert created == accepted
