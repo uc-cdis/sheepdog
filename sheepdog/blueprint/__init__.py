@@ -7,6 +7,23 @@ import flask
 
 from sheepdog import sanity_checks
 from sheepdog.blueprint.routes import routes
+from cdiserrors import UserError
+
+
+def assert_route_is_valid(route):
+    """
+    Checks that route dictionary has all nessesary keys provided
+    """
+    def check_key(dictionary, key):
+        if key not in dictionary:
+            raise UserError('Required key "{}" is not provided. Can not continue.'
+                            .format(key))
+
+    check_key(route, 'rule')
+    check_key(route, 'endpoint')
+    check_key(route, 'view_func')
+    check_key(route, 'options')
+    check_key(route['options'], 'methods')
 
 
 def create_blueprint(name, replace_views=None, ignore_routes=None):
@@ -16,11 +33,12 @@ def create_blueprint(name, replace_views=None, ignore_routes=None):
     Args:
         name: blueprint name
         ignore_routes: list of endpoints to ignore
-        replace_views: dict {route: view_func}, used to overload endpoint behavior
+        replace_views: dict {url_rule: route}, used to overload endpoint behavior
 
     Return:
         flask.Blueprint: the sheepdog blueprint
     """
+
     if ignore_routes is None:
         ignore_routes = []
 
@@ -34,7 +52,6 @@ def create_blueprint(name, replace_views=None, ignore_routes=None):
     # Add routes defined in sheepdog.blueprint.routes to the new blueprint
     for route in routes:
         rule = route['rule']
-        view = route['view_func']
 
         # Skip routes provided in ignore_routes
         if rule in ignore_routes:
@@ -42,12 +59,14 @@ def create_blueprint(name, replace_views=None, ignore_routes=None):
 
         # Substitute routes' view functions if replace_views is set
         if rule in replace_views:
-            view = replace_views[rule]
+            route = replace_views[rule]
+
+        assert_route_is_valid(route)
 
         # Add url_rule to the blueprint
         blueprint.add_url_rule(
-            rule, endpoint=route['endpoint'],
-            view_func=view, **route['options']
+            route['rule'], endpoint=route['endpoint'],
+            view_func=route['view_func'], **route['options']
         )
 
     return blueprint
