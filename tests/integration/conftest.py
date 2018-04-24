@@ -1,6 +1,5 @@
 import os
 import json
-from multiprocessing import Process
 
 import pytest
 import requests
@@ -10,14 +9,12 @@ from cdisutilstest.code.conftest import (
     indexd_client,
     indexd_server,
 )
-from flask.testing import make_test_environ_builder
 from fence.jwt.token import generate_signed_access_token
 from psqlgraph import PsqlGraphDriver
 from gdcdatamodel.models import Edge, Node
 from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
 from userdatamodel.driver import SQLAlchemyDriver
-from cdispyutils.hmac4 import get_auth
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
 
@@ -29,7 +26,6 @@ from sheepdog.test_settings import (
     Fernet,
     HMAC_ENCRYPTION_KEY,
     JWT_KEYPAIR_FILES,
-    INDEXD,
 )
 from tests.integration.api import app as _app, app_init
 from tests.integration.submission.test_endpoints import put_cgci_blgsp

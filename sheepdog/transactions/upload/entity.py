@@ -5,7 +5,6 @@ import uuid
 
 import psqlgraph
 import sqlalchemy
-from indexclient.client import Document
 from psqlgraph.exc import ValidationError
 
 from sheepdog import dictionary

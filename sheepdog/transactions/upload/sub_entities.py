@@ -4,7 +4,6 @@ uploaded entites.
 """
 import uuid
 
-import flask
 from indexclient.client import Document
 
 from sheepdog.transactions.entity_base import EntityErrors
