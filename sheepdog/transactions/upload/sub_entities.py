@@ -9,7 +9,6 @@ from indexclient.client import Document
 from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.upload.entity import UploadEntity
 from sheepdog.transactions.upload.entity import lookup_node
-from sheepdog.utils import stringify_acls
 
 
 class NonFileUploadEntity(UploadEntity):
@@ -462,13 +461,6 @@ class FileUploadEntity(UploadEntity):
             document = self.transaction.indexd.get(uuid)
 
         return document
-
-    def get_metadata(self):
-        """Metadata dict in an indexd Document"""
-        return {
-            'acls': stringify_acls(self.transaction.get_phsids()),
-            'state': 'registered',
-        }
 
     def _get_file_hashes_and_size(self):
         hashes = self._get_file_hashes()

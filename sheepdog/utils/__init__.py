@@ -311,7 +311,6 @@ def get_indexd(uuid):
 
     Args:
         uuid (string): UUID that is possibly in the system
-        passive (bool): if a uuid doesn't exist, that's ok
     Returns:
         doc: Indexd doc to be modified later
     """

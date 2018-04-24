@@ -19,7 +19,10 @@ from sheepdog.globals import (
     UNVERIFIED_PROJECT_CODES,
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
-from sheepdog.utils import get_suggestion
+from sheepdog.utils import (
+    get_suggestion,
+    stringify_acls,
+)
 
 # TODO: This should probably go into the dictionary and be
 # read from there. For now, these are the only nodes that will
@@ -86,7 +89,7 @@ class UploadEntity(EntityBase):
         self.doc = {}
         self.parents = {}
         self._secondary_keys = None
-        self._config = config
+        self._config = config or {}
 
         ####################################################################
         # Some projects allow for an entity to be updated partially or fully
@@ -194,8 +197,11 @@ class UploadEntity(EntityBase):
 
         self._set_node_properties()
 
+        if not self.entity_id:
+            return
+
         # indexd document doesn't exist, then there's no more work to do
-        indexd_doc = self.transaction.indexd.get(self.entity_id or '')
+        indexd_doc = self.transaction.indexd.get(self.entity_id)
         if not indexd_doc:
             return
 
@@ -702,7 +708,6 @@ class UploadEntity(EntityBase):
         return node.project_id == self.transaction.project_id
 
     def get_metadata(self):
-        # NOTE: duplicate method found in sub_entities.py
         return {
             'acls': stringify_acls(self.transaction.get_phsids()),
             'state': 'registered',
