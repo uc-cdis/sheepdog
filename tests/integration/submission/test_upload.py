@@ -314,9 +314,7 @@ def test_resubmit_data_file_already_indexed_different_type(
 
     resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
 
-    """
-    Now submit again but a different type and new submitter id
-    """
+    # Now submit again but a different type and new submitter id
     new_file = copy.deepcopy(DIFFERENT_DATA_FILE)
     new_file['submitter_id'] = 'different_submitter_id'
     resp = submit_submitted_methylation(
