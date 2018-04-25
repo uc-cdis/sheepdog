@@ -10,8 +10,6 @@ from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.upload.entity import UploadEntity
 from sheepdog.transactions.upload.entity import lookup_node
 
-from flask import current_app
-
 
 class NonFileUploadEntity(UploadEntity):
     """
