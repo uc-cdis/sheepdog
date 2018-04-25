@@ -418,7 +418,7 @@ class FileUploadEntity(UploadEntity):
         # file exists in index service
         nodes = lookup_node(
             self.transaction.db_driver,
-            self.entity_type,
+            None,  # Don't give it a node type, make sure id if valid across all types
             self.entity_id,
             self.secondary_keys
         ).all()
@@ -433,6 +433,17 @@ class FileUploadEntity(UploadEntity):
                         'which is currently not permitted. Graph ID: {}. '
                         'Index ID: {}. Index ID found using hash/size: {}.'
                         .format(nodes[0].node_id, file_by_hash_index, file_by_uuid_index),
+                        type=EntityErrors.NOT_UNIQUE,
+                    )
+                    is_valid = False
+
+                if self.entity_type != nodes[0].label:
+                    self.record_error(
+                        'Graph Node with ID {} and File with ID {} exist but '
+                        'Graph Node has a different node type: {}. Type provided: {}'
+                        .format(
+                            nodes[0].node_id, file_by_hash_index,
+                            nodes[0].label, self.entity_type),
                         type=EntityErrors.NOT_UNIQUE,
                     )
                     is_valid = False

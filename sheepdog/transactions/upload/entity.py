@@ -22,14 +22,22 @@ from sheepdog.utils import get_suggestion
 
 def lookup_node(psql_driver, label, node_id=None, secondary_keys=None):
     """Return a query for nodes by id and secondary keys."""
-    cls = psqlgraph.Node.get_subclass(label)
-    query = psql_driver.nodes(cls)
+    if label:
+        node_class = psqlgraph.Node.get_subclass(label)
+        query = psql_driver.nodes(node_class)
+    else:
+        query = psql_driver.nodes()
+
     if node_id is None and not secondary_keys:
         return query.filter(sqlalchemy.sql.false())
+
     if node_id is not None:
         query = query.ids(node_id)
-    if all(all(keys) for keys in secondary_keys):
-        query = query.filter(cls._secondary_keys == secondary_keys)
+
+    if label:
+        if all(all(keys) for keys in secondary_keys):
+            query = query.filter(node_class._secondary_keys == secondary_keys)
+
     return query
 
 
