@@ -33,6 +33,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && chown www-data -R /var/www/.cache/Python-Eggs/ \
     && mkdir /run/nginx/
 
+# NOTE: hash -r pip is to fix issues with upgrading to pip 10
+# see https://github.com/pypa/pip/issues/5221#issuecomment-381568428
+
 COPY . /sheepdog
 COPY ./deployment/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
 COPY ./deployment/nginx/nginx.conf /etc/nginx/
