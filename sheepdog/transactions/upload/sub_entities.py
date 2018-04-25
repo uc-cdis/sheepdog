@@ -10,6 +10,8 @@ from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.upload.entity import UploadEntity
 from sheepdog.transactions.upload.entity import lookup_node
 
+from flask import current_app
+
 
 class NonFileUploadEntity(UploadEntity):
     """
@@ -321,27 +323,27 @@ class FileUploadEntity(UploadEntity):
         information provided and whether or not the file exists in the
         index service.
         """
-        self.logger.info(
+        current_app.logger.info(
             'Before setting uuids\nfile_exists:{}, entity_id:{}, file_index:{}'
             .format(self.file_exists, self.entity_id, self.file_index))
 
         if not self.file_exists:
             if self.entity_id:
-                self.logger.info('use entity_id for file creation')
+                current_app.logger.info('use entity_id for file creation')
                 self.file_index = self.entity_id
             else:
-                self.logger.info('use same id for both node entity id and file index')
+                current_app.logger.info('use same id for both node entity id and file index')
                 self.entity_id = str(uuid.uuid4())
                 self.file_index = self.entity_id
         else:
             if self.entity_id:
-                self.logger.info(
+                current_app.logger.info(
                     'check to make sure that when file exists '
                     'and an id is provided that they are the same')
                 # NOTE: record errors are populated in check below
                 self._is_valid_index_for_file()
             else:
-                self.logger.info(
+                current_app.logger.info(
                     'the file exists in indexd and '
                     'no node id is provided, so attempt to use indexed id')
                 file_by_hash_index = getattr(self.file_by_hash, 'did', None)
@@ -351,7 +353,7 @@ class FileUploadEntity(UploadEntity):
                 if self._is_valid_index_id_for_graph():
                     self.entity_id = file_by_hash_index
 
-        self.logger.info(
+        current_app.logger.info(
             'AFTER setting uuids\nfile_exists:{}, entity_id:{}, file_index:{}'
             .format(self.file_exists, self.entity_id, self.file_index)
         )
