@@ -10,7 +10,6 @@ from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.upload.entity import UploadEntity
 from sheepdog.transactions.upload.entity import lookup_node
 
-
 class NonFileUploadEntity(UploadEntity):
     """
     Deals with non-file-like entities.
@@ -202,6 +201,7 @@ class FileUploadEntity(UploadEntity):
         size = self.node._props.get('file_size')
         file_name = self.node._props.get('file_name')
         alias = "{}/{}".format(project_id, submitter_id)
+        acls = self.transaction.get_phsids()
         metadata = self.get_metadata()
 
         urls = []
@@ -213,6 +213,7 @@ class FileUploadEntity(UploadEntity):
                            hashes=hashes,
                            size=size,
                            urls=urls,
+                           acl=acls,
                            file_name=file_name,
                            metadata=metadata)
 
@@ -245,6 +246,7 @@ class FileUploadEntity(UploadEntity):
             size=self.node._props.get('file_size'),
             file_name=self.node._props.get('file_name'),
             urls=self.urls,
+            acl=self.transaction.get_phsids(),
             metadata=self.get_metadata(),
             form='object',
         )

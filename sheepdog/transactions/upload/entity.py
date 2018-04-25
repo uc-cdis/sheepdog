@@ -19,10 +19,8 @@ from sheepdog.globals import (
     UNVERIFIED_PROJECT_CODES,
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
-from sheepdog.utils import (
-    get_suggestion,
-    stringify_acls,
-)
+from sheepdog.utils import get_suggestion
+
 
 # TODO: This should probably go into the dictionary and be
 # read from there. For now, these are the only nodes that will
@@ -709,7 +707,6 @@ class UploadEntity(EntityBase):
 
     def get_metadata(self):
         return {
-            'acls': stringify_acls(self.transaction.get_phsids()),
             'state': 'registered',
         }
 
