@@ -202,16 +202,12 @@ class FileUploadEntity(UploadEntity):
             role = self.action
             try:
                 if role == 'create':
-                    # Check if the category for the node is data_file or
-                    # metadata_file, in which case, register a UUID and alias in
-                    # the index service.
+                    # register a UUID and alias in the index service.
                     if not self.file_exists:
                         self._register_index()
 
                 elif role == 'update':
-                    # Check if the category for the node is data_file or
-                    # metadata_file, in which case, register a UUID and alias in
-                    # the index service.
+                    # update in the index service.
                     if self.file_exists:
                         self._update_index()
                 else:
@@ -325,29 +321,40 @@ class FileUploadEntity(UploadEntity):
         information provided and whether or not the file exists in the
         index service.
         """
+        self.logger.info(
+            'Before setting uuids\nfile_exists:{}, entity_id:{}, file_index:{}'
+            .format(self.file_exists, self.entity_id, self.file_index))
+
         if not self.file_exists:
             if self.entity_id:
-                # use entity_id for file creation
+                self.logger.info('use entity_id for file creation')
                 self.file_index = self.entity_id
             else:
-                # use same id for both node entity id and file index
+                self.logger.info('use same id for both node entity id and file index')
                 self.entity_id = str(uuid.uuid4())
                 self.file_index = self.entity_id
         else:
             if self.entity_id:
-                # check to make sure that when file exists
-                # and an id is provided that they are the same
+                self.logger.info(
+                    'check to make sure that when file exists '
+                    'and an id is provided that they are the same')
                 # NOTE: record errors are populated in check below
                 self._is_valid_index_for_file()
             else:
-                # the file exists in indexd and
-                # no node id is provided, so attempt to use indexed id
+                self.logger.info(
+                    'the file exists in indexd and '
+                    'no node id is provided, so attempt to use indexed id')
                 file_by_hash_index = getattr(self.file_by_hash, 'did', None)
 
                 # ensure that the index we found matches the graph (this will
                 # populate record errors if there are any issues)
                 if self._is_valid_index_id_for_graph():
                     self.entity_id = file_by_hash_index
+
+        self.logger.info(
+            'AFTER setting uuids\nfile_exists:{}, entity_id:{}, file_index:{}'
+            .format(self.file_exists, self.entity_id, self.file_index)
+        )
 
     def _is_valid_index_for_file(self):
         """
