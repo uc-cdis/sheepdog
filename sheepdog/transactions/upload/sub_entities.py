@@ -323,40 +323,29 @@ class FileUploadEntity(UploadEntity):
         information provided and whether or not the file exists in the
         index service.
         """
-        current_app.logger.info(
-            'Before setting uuids\nfile_exists:{}, entity_id:{}, file_index:{}'
-            .format(self.file_exists, self.entity_id, self.file_index))
-
         if not self.file_exists:
             if self.entity_id:
-                current_app.logger.info('use entity_id for file creation')
+                # use entity_id for file creation
                 self.file_index = self.entity_id
             else:
-                current_app.logger.info('use same id for both node entity id and file index')
+                # use same id for both node entity id and file index
                 self.entity_id = str(uuid.uuid4())
                 self.file_index = self.entity_id
         else:
             if self.entity_id:
-                current_app.logger.info(
-                    'check to make sure that when file exists '
-                    'and an id is provided that they are the same')
+                # check to make sure that when file exists
+                # and an id is provided that they are the same
                 # NOTE: record errors are populated in check below
                 self._is_valid_index_for_file()
             else:
-                current_app.logger.info(
-                    'the file exists in indexd and '
-                    'no node id is provided, so attempt to use indexed id')
+                # the file exists in indexd and
+                # no node id is provided, so attempt to use indexed id
                 file_by_hash_index = getattr(self.file_by_hash, 'did', None)
 
                 # ensure that the index we found matches the graph (this will
                 # populate record errors if there are any issues)
                 if self._is_valid_index_id_for_graph():
                     self.entity_id = file_by_hash_index
-
-        current_app.logger.info(
-            'AFTER setting uuids\nfile_exists:{}, entity_id:{}, file_index:{}'
-            .format(self.file_exists, self.entity_id, self.file_index)
-        )
 
     def _is_valid_index_for_file(self):
         """
