@@ -25,12 +25,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     vim \
     && pip install --upgrade pip \
+    && hash -r pip \
     && pip install --upgrade setuptools \
     && pip install uwsgi \
     && mkdir /var/www/sheepdog \
     && mkdir -p /var/www/.cache/Python-Eggs/ \
     && chown www-data -R /var/www/.cache/Python-Eggs/ \
     && mkdir /run/nginx/
+
+# NOTE: hash -r pip is to fix issues with upgrading to pip 10
+# see https://github.com/pypa/pip/issues/5221#issuecomment-381568428
 
 COPY . /sheepdog
 COPY ./deployment/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini

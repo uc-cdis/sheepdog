@@ -44,20 +44,107 @@ DEFAULT_METADATA_FILE = {
     'urls': DEFAULT_URL
 }
 
+EXPERIMENT_ID = 'f4f46d10-df41-4b3e-82df-aadcc808b34b'
+EXPERIMENT_SUBMITTER_ID = 'BLGSP-71-06-00019'
+CASE_ID = '57b20788-fba4-4112-9865-f464bd58561b'
+CASE_SUBMITTER_ID = 'case-0'
+SAMPLE_ID = '7389a0b5-31ef-4c39-b661-a755d20b0d60'
+SAMPLE_SUBMITTER_ID = 'sample-0'
+ALIQUOT_ID = '30a01bce-2a1b-4fdc-89f2-6d326f877719'
+ALIQUOT_SUBMITTER_ID = 'aliquot-0'
+
+DIFFERENT_DATA_FILE = {
+    'data_type': 'Methylation Intensity Values',
+    'assay_instrument_model': 'Illumina Infinium HumanMethylation450K',
+    'file_name': 'TEST',
+    'submitter_id': DEFAULT_SUBMITTER_ID,
+    'aliquots': [
+      {
+        'id': ALIQUOT_ID,
+        'submitter_id': ALIQUOT_SUBMITTER_ID
+      }
+    ],
+    'file_size': DEFAULT_FILE_SIZE,
+    'md5sum': DEFAULT_FILE_HASH,
+    'data_format': 'IDAT',
+    'data_category': 'Methylation Data',
+    'type': 'submitted_methylation'
+}
+
 
 def submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp):
     put_cgci_blgsp(client, admin)
 
     # first submit experiment
     data = json.dumps({
+        'id': EXPERIMENT_ID,
         'type': 'experiment',
-        'submitter_id': 'BLGSP-71-06-00019',
+        'submitter_id': EXPERIMENT_SUBMITTER_ID,
         'projects': {
             'id': 'daa208a7-f57a-562c-a04a-7a7c77542c98'
         }
     })
     resp = client.put(BLGSP_PATH, headers=submitter, data=data)
     assert resp.status_code == 200, resp.data
+
+
+def submit_case(client, pg_driver, admin, submitter, cgci_blgsp):
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    # first submit experiment
+    data = json.dumps({
+        'id': CASE_ID,
+        'disease_type': 'TEST',
+        'submitter_id': CASE_SUBMITTER_ID,
+        'experiments': {
+            'submitter_id': EXPERIMENT_SUBMITTER_ID
+        },
+        'primary_site': 'TEST',
+        'type': 'case'
+    })
+    resp = client.put(BLGSP_PATH, headers=submitter, data=data)
+    assert resp.status_code == 200, resp.data
+
+
+def submit_sample(client, pg_driver, admin, submitter, cgci_blgsp):
+    submit_case(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    # first submit experiment
+    data = json.dumps({
+        'id': SAMPLE_ID,
+        'submitter_id': SAMPLE_SUBMITTER_ID,
+        'cases': {
+            'submitter_id': CASE_SUBMITTER_ID
+        },
+        'type': 'sample',
+    })
+    resp = client.put(BLGSP_PATH, headers=submitter, data=data)
+    assert resp.status_code == 200, resp.data
+
+
+def submit_aliquot(client, pg_driver, admin, submitter, cgci_blgsp):
+    submit_sample(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    # first submit experiment
+    data = json.dumps({
+        'id': ALIQUOT_ID,
+        'submitter_id': ALIQUOT_SUBMITTER_ID,
+        'samples': {
+            'submitter_id': SAMPLE_SUBMITTER_ID
+        },
+        'type': 'aliquot',
+    })
+    resp = client.put(BLGSP_PATH, headers=submitter, data=data)
+    assert resp.status_code == 200, resp.data
+
+
+def submit_submitted_methylation(
+        client, pg_driver, admin, submitter, cgci_blgsp, data=None):
+    submit_sample(client, pg_driver, admin, submitter, cgci_blgsp)
+    data = data or DIFFERENT_DATA_FILE
+    data = json.dumps(data)
+    resp = client.put(BLGSP_PATH, headers=submitter, data=data)
+    return resp
 
 
 def submit_metadata_file(
@@ -198,6 +285,42 @@ def test_data_file_already_indexed(
     # FIXME this is a temporary solution so these tests will probably
     #       need to change in the future
     assert entity['id'] == document.did
+
+
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+def test_resubmit_data_file_already_indexed_different_type(
+        create_alias, create_index, get_index_uuid, get_index_hash,
+        client, pg_driver, admin, submitter, cgci_blgsp):
+    """
+
+    """
+    submit_aliquot(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    document = MagicMock()
+    document.did = '14fd1746-61bb-401a-96d2-342cfaf70000'
+    get_index_hash.return_value = document
+
+    # only return the correct document by uuid IF the uuid provided is
+    # the one from above
+    def get_index_by_uuid(uuid):
+        if uuid == document.did:
+            return document
+        else:
+            return None
+    get_index_uuid.side_effect = get_index_by_uuid
+
+    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    # Now submit again but a different type and new submitter id
+    new_file = copy.deepcopy(DIFFERENT_DATA_FILE)
+    new_file['submitter_id'] = 'different_submitter_id'
+    resp = submit_submitted_methylation(
+        client, pg_driver, admin, submitter, cgci_blgsp, data=new_file)
+
+    assert_negative_response(resp)
 
 
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
