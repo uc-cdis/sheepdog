@@ -20,19 +20,16 @@ def release_indexd_doc(did, indexd_client):
     """
 
     indexd_doc = indexd_client.get(did)
-    # release this node
+    # change state to released
     indexd_doc.metadata['state'] = 'released'
-    indexd_doc.patch()
 
     # version the rest of the nodes
     docs = indexd_client.list_versions(did)
-    for doc in docs:
-        if doc.version is None:
-            version = 1
-        else:
-            version = int(doc.version) + 1
-        doc.version = str(version)
-        doc.patch()
+
+    # create newest version number
+    new_version = int(max([d.version for d in docs]) or '0') + 1
+    indexd_doc.version = str(new_version)
+    indexd_doc.patch()
 
 def data_file_creation(client, headers, method='post', sur_filename=''):
     """
@@ -261,13 +258,14 @@ def test_creating_new_versioned_file(
             release_indexd_doc(did, indexd_client)
 
             indexd_doc = indexd_client.get(did)
-            assert indexd_doc.version == '1', 'Should have been assigned version 1'
+            message = 'Should have been assigned version {}'.format(version_number)
+            assert indexd_doc.version == version_number, message
 
         return resp['did']
 
     # create nodes and release a few times, just to be sure
-    # create versions 3, 2, 1, None (no version on the last one)
-    accepted_versions = ['3', '2', '1', None]
+    # create versions 1, 2, 3, None (no version on the last one)
+    accepted_versions = ['1', '2', '3', None]
     uuids = [create_node(version_number=v) for v in accepted_versions]
     created_versions = [indexd_client.get(uuid).version for uuid in uuids]
     # this order is guaranteed
