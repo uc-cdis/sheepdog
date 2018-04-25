@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python-setuptools \
     sudo \
     vim \
-    && pip install --upgrade pip \
+    && python -m pip install --force-reinstall pip \
     && pip install --upgrade setuptools \
     && pip install uwsgi \
     && mkdir /var/www/sheepdog \
