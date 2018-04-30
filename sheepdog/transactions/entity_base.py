@@ -131,13 +131,13 @@ class EntityBase(object):
                 psqlgraph.Node.get_subclass_named(e.__dst_class__).label)
             for e in psqlgraph.Edge._get_edges_with_src(cls.__name__)
             if hasattr(psqlgraph.Node.get_subclass_named(e.__dst_class__),
-                        'project_id')
+                       'project_id')
         ] + [
             (e.__dst_src_assoc__,
                 psqlgraph.Node.get_subclass_named(e.__src_class__).label)
             for e in psqlgraph.Edge._get_edges_with_dst(cls.__name__)
             if hasattr(psqlgraph.Node.get_subclass_named(e.__src_class__),
-                        'project_id')
+                       'project_id')
         ]
 
     def set_old_props(self):

@@ -74,7 +74,7 @@ class TransactionBase(object):
         self.logger = kwargs.pop('logger', None) or current_app.logger
         self.indexd = kwargs.pop('indexd', None) or current_app.indexd
         self.db_driver = kwargs.pop('db_driver', None) or current_app.db
-        self.config =  kwargs.pop('flask_config', None) or current_app.config
+        self.config = kwargs.pop('flask_config', None) or current_app.config
         #: Create a transaction log, this will be created and committed to the
         #: database during claim_transaction_log()
         self.transaction_id = kwargs.pop('transaction_id', None)

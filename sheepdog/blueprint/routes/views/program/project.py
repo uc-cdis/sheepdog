@@ -549,6 +549,7 @@ def create_release_project_viewer(dry_run=False):
 
     return release_project
 
+
 def create_review_project_viewer(dry_run=False):
     """
     TODO: Docstring for create_review_project_viewer.

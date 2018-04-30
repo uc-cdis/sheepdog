@@ -20,6 +20,8 @@ from authutils import (
 )
 
 LOGGER = get_logger('sheepdog_auth')
+
+
 def _log_import_error(module_name):
     """Log which module cannot be imported.
 

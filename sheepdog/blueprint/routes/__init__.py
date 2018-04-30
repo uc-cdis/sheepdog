@@ -288,4 +288,22 @@ routes = [
         endpoint='delete_entities_admin',
         methods=['DELETE'],
     ),
+    new_route(
+        '/admin/release/create',
+        views.release.create_release,
+        endpoint='create_release_admin',
+        methods=['POST'],
+    ),
+    new_route(
+        '/admin/release/get',
+        views.release.get_release,
+        endpoint='get_release_admin',
+        methods=['GET'],
+    ),
+    new_route(
+        '/admin/release/set',
+        views.release.set_release,
+        endpoint='set_release_admin',
+        methods=['PUT'],
+    )
 ]
