@@ -11,14 +11,14 @@ of false positives with ``lxml.etree``.
 import datetime
 import json
 import math
-import pkg_resources
 from uuid import uuid5, UUID
 
-from cdislogging import get_logger
 import flask
-from lxml import etree
+import pkg_resources
 import requests
 import yaml
+from cdislogging import get_logger
+from lxml import etree
 
 from sheepdog import dictionary
 from sheepdog.errors import (
@@ -203,7 +203,7 @@ class BcrBiospecimenXmlToJsonParser(object):
             )
 
         if rlen < 1 and not expected and single:
-            result = None 
+            result = None
 
         if rlen < 1 and not expected and not single:
             result = []
@@ -218,7 +218,7 @@ class BcrBiospecimenXmlToJsonParser(object):
                 result = [r.text for r in result]
                 if not nullable and None in result:
                     raise ParsingError('{}: Null result for {}'
-                                   .format(label, result))
+                                       .format(label, result))
         if single and result and len(result) > 0:
             result = result[0]
 
@@ -275,7 +275,7 @@ class BcrBiospecimenXmlToJsonParser(object):
             entity_id = self.get_entity_id(root, entity_type, params)
             args = (root, entity_type, params, entity_id)
             props = self.get_entity_properties(*args)
-            
+
             props.update(self.get_entity_datetime_properties(*args))
             props.update(self.get_entity_const_properties(*args))
 
@@ -319,14 +319,14 @@ class BcrBiospecimenXmlToJsonParser(object):
                 translation yaml file
         """
         xml_entities = None
-        
+
         if 'root' not in params:
             log.warn('No root xpath for {}'.format(entity_type))
         else:
             xml_entities = self.xpath(
                 params['root'], root=root, expected=False,
                 text=False, label='get_entity_roots')
-        
+
         return xml_entities
 
     def get_entity_id(self, root, entity_type, params):
@@ -506,7 +506,7 @@ class BcrBiospecimenXmlToJsonParser(object):
         # if the schema says it's an exclusive link - joe
         for entry in dictionary.schema[entity_type]['links']:
             if 'exclusive' in entry.keys():
-                if entry['exclusive'] == True:
+                if entry['exclusive'] is True:
                     if 'subgroup' in entry.keys():
                         for subg in entry['subgroup']:
                             exclusive_check.append(subg['name'])
@@ -516,7 +516,7 @@ class BcrBiospecimenXmlToJsonParser(object):
                 path, root, expected=False, text=True, depth=True,
                 label='{}: {}'.format(entity_type, entity_id))
             if results:
-                edges[edge_type] = [{'id': r.lower(), 'depth': d} for r,d in results]
+                edges[edge_type] = [{'id': r.lower(), 'depth': d} for r, d in results]
 
         # here's the meat of the check
         # if we've found these links are exclusive, walk them and figure out which one
@@ -535,7 +535,7 @@ class BcrBiospecimenXmlToJsonParser(object):
                         closest_val = min([x['depth'] for x in data])
                     else:
                         temp_val = min([x['depth'] for x in data])
-                        if temp_val < closest_val:
+                        if temp_val > closest_val:
                             closest_val = temp_val
                             closest = data
                             closest_type = edge
@@ -563,7 +563,7 @@ class BcrBiospecimenXmlToJsonParser(object):
         Return:
             dict: dictionary mapping entity ids to (label, edge_type) pairs
         """
-        
+
         # welp, it appears this code has been like this since the start
         # TODO: figure out if the code below the twin returns might actually
         # need to be run someday - joe
@@ -610,7 +610,7 @@ class BcrBiospecimenXmlToJsonParser(object):
 
         props = {}
         if 'edge_datetime_properties' in params:
-           if edge_type in params['edge_datetime_properties']:
+            if edge_type in params['edge_datetime_properties']:
                 # Loop over all given datetime properties
                 for name, timespans in params['edge_datetime_properties'][edge_type]\
                                              .items():
@@ -784,5 +784,3 @@ def munge_property(prop, _type):
     else:
         prop = types[_type](prop) if prop else prop
     return prop
-
-

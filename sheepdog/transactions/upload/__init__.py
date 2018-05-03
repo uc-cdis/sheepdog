@@ -293,7 +293,7 @@ def handle_xml_transaction(role, program, project, parser, **tx_kwargs):
     """
     Handle XML transactions. Provide a parser that has a function with the
     signature ``parser.loads(doc)`` to load a doc and ``parser.json`` property
-    to retreive the parsed docs.
+    to retrieve the parsed docs.
     """
     parsing_errors = (
         lxml.etree.XMLSchemaError,
