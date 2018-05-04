@@ -115,7 +115,7 @@ class SubmissionTransaction(TransactionBase):
             filter_project = _project_id.astext == self.project_id
             filter_state = sqlalchemy.or_(
                 _node_state.astext.in_(SUBMITTABLE_STATES),
-                _node_state == None
+                _node_state is None
             )
 
             nodes += (
@@ -177,7 +177,6 @@ class SubmissionTransaction(TransactionBase):
                 if ex_strategy:
                     experimental_strategies.add(ex_strategy)
 
-
         # Construct body
         text_body = preformatted.format(
             project_id=self.project_id,
@@ -203,8 +202,6 @@ class SubmissionTransaction(TransactionBase):
         connection.send(envelope)
 
         self.logger.info("Sent " + description)
-
-
 
     def write_transaction_log(self):
         """Save a log noting this project was opened."""

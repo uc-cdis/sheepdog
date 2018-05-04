@@ -10,7 +10,7 @@ from authutils.oauth2.client import blueprint as oauth2_blueprint
 from authutils import AuthError
 from cdispyutils.log import get_handler
 from dictionaryutils import DataDictionary, dictionary
-from datamodelutils import models, validators
+from datamodelutils import models, validators, postgres_admin
 
 
 from indexclient.client import IndexClient
@@ -68,7 +68,8 @@ def db_init(app):
         database=app.config['PSQLGRAPH']['database'],
         set_flush_timestamps=True,
     )
-
+    if app.config.get('AUTO_MIGRATE_DATABASE'):
+        migrate_database(app)
     app.userdb = SQLAlchemyDriver(app.config['PSQL_USER_DB_CONNECTION'])
     flask_scoped_session(app.userdb.Session, app)
 
@@ -86,6 +87,32 @@ def db_init(app):
         app.logger.exception("Couldn't initialize auth, continuing anyway")
 
 
+def migrate_database(app):
+    if postgres_admin.check_version(app.db):
+        return
+    try:
+        postgres_admin.create_graph_tables(app.db, timeout=1)
+    except Exception:
+        if not postgres_admin.check_version(app.db):
+            app.logger.exception("Fail to migrate database, continuing anyway")
+        # if the version is already up to date, that means there is
+        # another migration wins, so silently exit
+        return
+    # hardcoded read role
+    read_role = 'peregrine'
+    # check if such role exists
+    with app.db.session_scope() as session:
+        r = [i for i in
+             session.execute("SELECT 1 FROM pg_roles WHERE rolname='{}'"
+                             .format(read_role))]
+    if len(r) != 0:
+        try:
+            postgres_admin.grant_read_permissions_to_graph(app.db, read_role)
+        except Exception:
+            app.logger.warn("Fail to grant read permission, continuing anyway")
+            return
+
+
 def app_init(app):
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
@@ -94,6 +121,11 @@ def app_init(app):
     app.config['AUTH_SUBMISSION_LIST'] = True
     app.config['USE_DBGAP'] = False
     app.config['IS_GDC'] = False
+
+    # default settings
+    app.config['AUTO_MIGRATE_DATABASE'] = (
+        app.config.get('AUTO_MIGRATE_DATABASE', True)
+    )
 
     app_register_blueprints(app)
     db_init(app)

@@ -3,8 +3,8 @@ Subclasses for UploadEntity that handle different types of
 uploaded entites.
 """
 import uuid
-import flask
 
+from sheepdog import utils
 from sheepdog.transactions.entity_base import EntityErrors
 
 from sheepdog.transactions.upload.entity import UploadEntity
@@ -195,7 +195,15 @@ class FileUploadEntity(UploadEntity):
         hashes = {'md5': self.node._props.get('md5sum')}
         size = self.node._props.get('file_size')
         alias = "{}/{}".format(project_id, submitter_id)
-        metadata = self.get_metadata()
+        project = utils.lookup_project(
+            self.transaction.db_driver,
+            self.transaction.program,
+            self.transaction.project
+        )
+        if utils.is_project_public(project):
+            acl = ['*']
+        else:
+            acl = self.transaction.get_phsids()
 
         urls = []
         if self.urls:
@@ -206,7 +214,7 @@ class FileUploadEntity(UploadEntity):
                            hashes=hashes,
                            size=size,
                            urls=urls,
-                           metadata=metadata)
+                           acl=acl)
 
         self._create_alias(
             record=alias, hashes=hashes, size=size, release='private'
@@ -424,10 +432,6 @@ class FileUploadEntity(UploadEntity):
             document = self.transaction.indexd.get(uuid)
 
         return document
-
-    def get_metadata(self):
-        metadata = {'acls': flask.g.dbgap_accession_numbers}
-        return metadata
 
     def _get_file_hashes_and_size(self):
         hashes = self._get_file_hashes()
