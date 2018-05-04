@@ -45,6 +45,7 @@ def get_parent(path):
     print(path)
     return path[0:path.rfind('/')]
 
+
 PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/integration/schemas'
 
 

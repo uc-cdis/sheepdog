@@ -38,7 +38,8 @@ def app_register_blueprints(app):
         url = app.config['DICTIONARY_URL']
         datadictionary = DataDictionary(url=url)
     elif ('PATH_TO_SCHEMA_DIR' in app.config):
-        datadictionary = DataDictionary(root_dir=app.config['PATH_TO_SCHEMA_DIR'])
+        datadictionary = DataDictionary(
+            root_dir=app.config['PATH_TO_SCHEMA_DIR'])
     else:
         import gdcdictionary
         datadictionary = gdcdictionary.gdcdictionary
@@ -82,7 +83,8 @@ def db_init(app):
         auth=app.config['INDEXD']['auth'])
     try:
         app.logger.info('Initializing Auth driver')
-        app.auth = AuthDriver(app.config["AUTH_ADMIN_CREDS"], app.config["INTERNAL_AUTH"])
+        app.auth = AuthDriver(app.config["AUTH_ADMIN_CREDS"],
+                              app.config["INTERNAL_AUTH"])
     except Exception:
         app.logger.exception("Couldn't initialize auth, continuing anyway")
 
@@ -138,6 +140,7 @@ def app_init(app):
             'Secret key not set in config! Authentication will not work'
         )
 
+
 app = Flask(__name__)
 
 # Setup logger
@@ -156,6 +159,7 @@ def health_check():
 
     return 'Healthy', 200
 
+
 @app.route('/_version', methods=['GET'])
 def version():
     dictver = {
@@ -169,6 +173,7 @@ def version():
     }
 
     return jsonify(base), 200
+
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -203,7 +208,7 @@ app.register_error_handler(AuthError, _log_and_jsonify_exception)
 
 
 def run_for_development(**kwargs):
-    #app.logger.setLevel(logging.INFO)
+    # app.logger.setLevel(logging.INFO)
 
     for key in ["http_proxy", "https_proxy"]:
         if os.environ.get(key):

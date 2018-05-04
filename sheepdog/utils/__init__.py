@@ -6,16 +6,12 @@ Provide utility functions primarily for code in ``sheepdog.blueprint``
 
 from contextlib import contextmanager
 import copy
-import csv
 import functools
 import json
-import os
 import StringIO
 import tarfile
 import time
-import urlparse
 
-import boto
 import flask
 from fuzzywuzzy.process import extract
 
@@ -24,12 +20,10 @@ from sheepdog import models
 from sheepdog.errors import (
     InternalError,
     NotFoundError,
-    UnsupportedError,
     UserError,
 )
 from sheepdog.globals import (
     submitted_state,
-    DELIMITERS,
     TEMPLATE_NAME,
     UPLOADING_STATE,
     SUCCESS_STATE,
@@ -38,13 +32,9 @@ from sheepdog.globals import (
 )
 from sheepdog.utils.transforms.graph_to_doc import (
     entity_to_template,
-    entity_to_template_delimited,
-    entity_to_template_json,
     entity_to_template_str,
 )
-from . import parse
 from . import s3
-from . import scheduling
 
 
 ALLOWED_STATES = [ERROR_STATE, submitted_state(), UPLOADING_STATE]
@@ -164,7 +154,6 @@ def assert_project_exists(func):
             )
             if not project_node:
                 raise NotFoundError('Project {} not found'.format(project))
-            phsids = [program_node.dbgap_accession_number, project_node.dbgap_accession_number]
         return func(program, project, *args, **kwargs)
     return check_and_call
 

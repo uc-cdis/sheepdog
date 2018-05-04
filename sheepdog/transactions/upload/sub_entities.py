@@ -3,6 +3,7 @@ Subclasses for UploadEntity that handle different types of
 uploaded entites.
 """
 import uuid
+import flask
 
 from sheepdog import utils
 from sheepdog.transactions.entity_base import EntityErrors
