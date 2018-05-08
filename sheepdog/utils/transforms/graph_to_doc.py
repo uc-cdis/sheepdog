@@ -631,7 +631,7 @@ class ExportFile(object):
 
         for label, entities in json_output.iteritems():
             template = self.templates[label]
-            titles = ['id']
+            titles = []
             titles.extend(get_link_titles(entities, template))
             titles.extend(get_non_link_props(template))
             buff = StringIO.StringIO()
