@@ -228,7 +228,6 @@ class FileUploadEntity(UploadEntity):
                            metadata=metadata,
                            urls_metadata=urls_metadata)
 
-        # import pdb; pdb.set_trace()
         self._create_alias(
             record=alias, hashes=hashes, size=size, release='private'
         )
@@ -269,7 +268,6 @@ class FileUploadEntity(UploadEntity):
             )
         ]
 
-        import pdb; pdb.set_trace()
         index_json = dict(
             did=self.entity_id,
             hashes={'md5': self.node._props.get('md5sum')},
@@ -282,7 +280,6 @@ class FileUploadEntity(UploadEntity):
             urls_metadata={url: {'state': 'registered'} for url in urls}
         )
         new_doc = Document(None, None, index_json)
-        # import pdb; pdb.set_trace()
         self._version_index(current_did=self.old_uuid, new_doc=new_doc)
 
     @staticmethod
@@ -519,7 +516,7 @@ class FileUploadEntity(UploadEntity):
 
 def generate_s3_url(host, bucket, program, project, uuid, file_name):
     """
-    Predict what the s3 url will be so we can assign file states before a file
+    Determine what the s3 url will be so we can assign file states before a file
     is uploaded
 
     Example:

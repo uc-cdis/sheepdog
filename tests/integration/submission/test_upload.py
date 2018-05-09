@@ -88,9 +88,10 @@ def submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp):
     assert resp.status_code == 200, resp.data
 
 
-def submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp, data=None):
+def submit_metadata_file(client, admin, submitter, data=None, create_project=False):
     data = data or DEFAULT_METADATA_FILE
-    put_cgci_blgsp(client, admin)
+    if create_project:
+        put_cgci_blgsp(client, admin)
     data = json.dumps(data)
     resp = client.put(BLGSP_PATH, headers=submitter, data=data)
     return resp
@@ -111,7 +112,7 @@ def test_data_file_not_indexed(
     get_index_uuid.return_value = None
     get_index_hash.return_value = None
 
-    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    resp = submit_metadata_file(client, admin, submitter)
 
     # index creation
     assert create_index.call_count == 1
@@ -159,7 +160,7 @@ def test_data_file_not_indexed_id_provided(
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
     file['id'] = DEFAULT_UUID
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=file)
+        client, admin, submitter, data=file)
 
     # index creation
     assert create_index.call_count == 1
@@ -213,7 +214,7 @@ def test_data_file_already_indexed(
             return None
     get_index_uuid.side_effect = get_index_by_uuid
 
-    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    resp = submit_metadata_file(client, admin, submitter)
 
     # no index or alias creation
     assert not create_index.called
@@ -260,7 +261,7 @@ def test_data_file_already_indexed_id_provided(
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
     file['id'] = document.did
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=file)
+        client, admin, submitter, data=file)
 
     # no index or alias creation
     assert not create_index.called
@@ -304,14 +305,14 @@ def test_data_file_update_url(
             return None
     get_index_uuid.side_effect = get_index_by_uuid
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
     updated_file['urls'] = new_url
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -360,7 +361,7 @@ def test_data_file_update_multiple_urls(
             return None
     get_index_uuid.side_effect = get_index_by_uuid
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
@@ -370,7 +371,7 @@ def test_data_file_update_multiple_urls(
     # comma separated list of urls INCLUDING the url that's already there
     updated_file['urls'] = DEFAULT_URL + ',' + new_url + ',' + another_new_url
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -423,14 +424,14 @@ def test_data_file_update_url_id_provided(
             return None
     get_index_uuid.side_effect = get_index_by_uuid
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
     updated_file['urls'] = new_url
     updated_file['id'] = document.did
-    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+    resp = submit_metadata_file(client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -480,7 +481,7 @@ def test_data_file_update_url_invalid_id(
     # the uuid provided doesn't have a matching indexed file
     get_index_uuid.return_value = None
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
@@ -488,7 +489,7 @@ def test_data_file_update_url_invalid_id(
     updated_file['urls'] = new_url
     updated_file['id'] = DEFAULT_UUID
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -532,7 +533,7 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     # index yeilds no match given hash/size
     get_index_hash.return_value = None
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
@@ -542,7 +543,7 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     updated_file['md5sum'] = DEFAULT_FILE_HASH.replace('0', '2')
     updated_file['file_size'] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -590,7 +591,7 @@ def test_data_file_update_url_different_file_not_indexed(
     # index yields no match given hash/size
     get_index_hash.return_value = None
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
@@ -599,7 +600,7 @@ def test_data_file_update_url_different_file_not_indexed(
     updated_file['md5sum'] = DEFAULT_FILE_HASH.replace('0', '2')
     updated_file['file_size'] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -646,7 +647,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     get_index_uuid.return_value = document_with_id
     get_index_hash.return_value = different_file_matching_hash_and_size
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
@@ -656,7 +657,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     updated_file['md5sum'] = DEFAULT_FILE_HASH.replace('0', '2')
     updated_file['file_size'] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -688,30 +689,27 @@ def test_dont_enforce_file_hash_size_uniqueness(
 
     submit_metadata_file(
         client_toggled,
-        pg_driver,
         admin,
         submitter,
-        cgci_blgsp,
         data=file_,
     )
 
     release_indexd_doc(pg_driver, indexd_client, DEFAULT_UUID)
-    # now submit again but change url and id
+    # now submit again but change url
     new_url = 'some/new/url/location/to/add'
-    new_id = DEFAULT_UUID.replace('1', '2')
 
-    # release so that a new indexd document can be made
     updated_file = copy.deepcopy(file_)
     updated_file['urls'] = new_url
-    updated_file['id'] = new_id
-    submit_metadata_file(
+    del updated_file['id']
+
+    # release so that a new indexd document can be made
+    resp = submit_metadata_file(
         client_toggled,
-        pg_driver,
         admin,
         submitter,
-        cgci_blgsp,
         data=updated_file,
     )
+    new_id = resp.json['entities'][0]['id']
 
     # check that both are inserted into indexd and have correct urls
     assert indexd_client.get(DEFAULT_UUID).urls == [DEFAULT_URL]

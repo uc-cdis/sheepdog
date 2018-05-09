@@ -423,6 +423,7 @@ class UploadEntity(EntityBase):
             psqlgraph.Node: Node you just created
         """
 
+        # will always return false if you provide a new UUID in your query
         query = lookup_node(
             self.transaction.db_driver,
             self.entity_type,
@@ -469,8 +470,6 @@ class UploadEntity(EntityBase):
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
 
-
-        import pdb; pdb.set_trace()
         # if it's released then we can make a new node in it's place
         if indexd_doc and node.state == 'released':
             return self.get_node_recreate()

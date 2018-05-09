@@ -519,7 +519,6 @@ def update_indexd_url(indexd_obj, key_name=None, s3_url=None):
     else:
         indexd_obj.urls = []
 
-    # import pdb; pdb.set_trace()
     indexd_obj.patch()
 
 
