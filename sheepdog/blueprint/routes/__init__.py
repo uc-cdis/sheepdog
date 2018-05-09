@@ -276,16 +276,4 @@ routes = [
         views.validate_upload_manifest,
         methods=['POST'],
     ),
-    new_route(
-        '/admin/<program>/<project>/files/<file_uuid>/reassign',
-        views.program.project.create_files_viewer(reassign=True),
-        endpoint='reassign_file_operations_admin',
-        methods=['PUT'],
-    ),
-    new_route(
-        '/admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>',
-        views.program.project.create_delete_entities_viewer(),
-        endpoint='delete_entities_admin',
-        methods=['DELETE'],
-    ),
 ]

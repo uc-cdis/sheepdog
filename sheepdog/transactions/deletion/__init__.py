@@ -29,24 +29,13 @@ def transaction_worker(transaction, ids):
 
     return response, code
 
-def handle_deletion_request(program, project, ids, to_delete=None, **tx_kwargs):
+def handle_deletion_request(program, project, ids, **tx_kwargs):
     """Create and execute a single deletion transaction.
-
-    A user with administrator privileges can mark the sysan of
-    the nodes as to_delete=True/False. The purpose of this is so
-    esbuild will not use the nodes in creating Elastic Search indices.
-
-    ex:
-        /delete
-        /to_delete/true
-        /to_delete/false
 
     Args:
         program (string): program name
         project (string): project code
         ids (string): comma separated "list" of UUIDs to be deleted
-        to_delete (bool): mark node with sysan['to_delete']=True/False
-            if present
         tx_kwargs (dict): other transaction related variables
 
     Returns:
@@ -61,7 +50,6 @@ def handle_deletion_request(program, project, ids, to_delete=None, **tx_kwargs):
         project=project,
         user=flask.g.user,
         logger=flask.current_app.logger,
-        to_delete=to_delete,
         indexd=flask.current_app.indexd,
         db_driver=db_driver,
         **tx_kwargs

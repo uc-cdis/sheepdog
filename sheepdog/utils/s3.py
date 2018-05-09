@@ -45,6 +45,7 @@ def make_s3_request(project_id, uuid, data, args, headers, method, action):
     bucket = None
     if action in UPLOADING_PARTS:
         upload_id = urlparse.parse_qs(args)['uploadId'][0]
+        # import pdb; pdb.set_trace()
         for ip in get_s3_hosts():
             bucket = get_submission_bucket()
             res = bucket.connection.make_request(
@@ -58,7 +59,11 @@ def make_s3_request(project_id, uuid, data, args, headers, method, action):
 
     bucket = bucket or get_submission_bucket()
     res = bucket.connection.make_request(
-        method, bucket=bucket.name, key=key_name,
-        data=data, query_args=args, headers=headers
+        method,
+        bucket=bucket.name,
+        key=key_name,
+        data=data,
+        query_args=args,
+        headers=headers,
     )
     return res

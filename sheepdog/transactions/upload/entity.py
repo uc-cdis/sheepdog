@@ -277,7 +277,7 @@ class UploadEntity(EntityBase):
         Create a new node in the old node's place.
 
         This is only for file nodes, if they exist in indexd with
-        metadata['state'] = 'released'.
+        graph node state = 'released'.
 
         """
 
@@ -469,8 +469,10 @@ class UploadEntity(EntityBase):
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
 
+
+        import pdb; pdb.set_trace()
         # if it's released then we can make a new node in it's place
-        if indexd_doc and indexd_doc.metadata.get('state') == 'released':
+        if indexd_doc and node.state == 'released':
             return self.get_node_recreate()
 
         self._merge_doc_links(node)
@@ -706,9 +708,20 @@ class UploadEntity(EntityBase):
         return node.project_id == self.transaction.project_id
 
     def get_metadata(self):
-        return {
-            'state': 'registered',
-        }
+        """
+        Return a dict of default values on a new node in indexd.
+
+        Metadata refers to the Document.metadata dictionary that captures extra
+        information not facilitated by the attributes of an indexd Document.
+
+        NOTE: This used to have important information, but it was since
+        moved to other places. Keeping the method just in case more
+        fields come in the future.
+
+        Returns:
+            dict: key-value pair of extra metadata about an indexd document
+        """
+        return dict()
 
     def get_skeleton_node(self, label, properties, project_id=None):
         """

@@ -195,7 +195,10 @@ class FileUploadEntity(UploadEntity):
         Call the index client for the transaction to register a
         new index record for this entity.
         """
+
         project_id = self.transaction.project_id
+        program = project_id.split('-')[0]
+        project = '-'.join(project_id.split('-')[1:])
         submitter_id = self.node._props.get('submitter_id')
         hashes = {'md5': self.node._props.get('md5sum')}
         size = self.node._props.get('file_size')
@@ -204,19 +207,28 @@ class FileUploadEntity(UploadEntity):
         acls = self.transaction.get_phsids()
         metadata = self.get_metadata()
 
-        urls = []
-        if self.urls:
-            urls.extend(self.urls)
+        url = generate_s3_url(
+            host=self._config['SUBMISSION']['host'],
+            bucket=self._config['SUBMISSION']['bucket'],
+            program=program,
+            project=project,
+            uuid=self.entity_id,
+            file_name=file_name,
+        )
+        urls_metadata={url: {'state': 'registered'}}
+        urls = [url]
 
         # IndexClient
-        self._create_index(did=self.entity_id,
+        doc = self._create_index(did=self.entity_id,
                            hashes=hashes,
                            size=size,
                            urls=urls,
                            acl=acls,
                            file_name=file_name,
-                           metadata=metadata)
+                           metadata=metadata,
+                           urls_metadata=urls_metadata)
 
+        # import pdb; pdb.set_trace()
         self._create_alias(
             record=alias, hashes=hashes, size=size, release='private'
         )
@@ -240,17 +252,37 @@ class FileUploadEntity(UploadEntity):
         of an already existing index for the old_uuid.
         """
 
+        file_name = self.node._props.get('file_name')
+
+        project_id = self.transaction.project_id
+        program = project_id.split('-')[0]
+        project = '-'.join(project_id.split('-')[1:])
+
+        urls = self.urls or [
+            generate_s3_url(
+                host=self._config['SUBMISSION']['host'],
+                bucket=self._config['SUBMISSION']['bucket'],
+                program=program,
+                project=project,
+                uuid=self.entity_id,
+                file_name=file_name,
+            )
+        ]
+
+        import pdb; pdb.set_trace()
         index_json = dict(
             did=self.entity_id,
             hashes={'md5': self.node._props.get('md5sum')},
             size=self.node._props.get('file_size'),
-            file_name=self.node._props.get('file_name'),
-            urls=self.urls,
+            file_name=file_name,
+            urls=urls,
             acl=self.transaction.get_phsids(),
             metadata=self.get_metadata(),
             form='object',
+            urls_metadata={url: {'state': 'registered'} for url in urls}
         )
         new_doc = Document(None, None, index_json)
+        # import pdb; pdb.set_trace()
         self._version_index(current_did=self.old_uuid, new_doc=new_doc)
 
     @staticmethod
@@ -484,3 +516,38 @@ class FileUploadEntity(UploadEntity):
 
     def _version_index(self, **kwargs):
         return self.transaction.indexd.add_version(**kwargs)
+
+def generate_s3_url(host, bucket, program, project, uuid, file_name):
+    """
+    Predict what the s3 url will be so we can assign file states before a file
+    is uploaded
+
+    Example:
+        s3://HOST/BUCKET/PROGRAM/PROJECT/UUID/FILENAME
+
+    Args:
+        host (str): s3 hostname
+        bucket (str): s3 bucket name
+        program (str): program name
+        project (str): project code
+        uuid (str): entity's did
+        file_name (str): entity's filename
+
+    Returns:
+        str: valid s3 url
+    """
+
+    if not host.startswith('s3://'):
+        host = 's3://' + host
+
+    if not host.endswith('/'):
+        host += '/'
+
+    if bucket.startswith('/'):
+        bucket = bucket[1:]
+
+    if not bucket.endswith('/'):
+        bucket += '/'
+
+    key = '{}/{}/{}/{}'.format(program, project, uuid, file_name)
+    return host + bucket + key

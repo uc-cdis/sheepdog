@@ -2,9 +2,10 @@
 Test upload entities (mostly data file handling and communication with
 index service).
 """
-import flask
-import json
 import copy
+import json
+import re
+
 import pytest
 
 from test_endpoints import put_cgci_blgsp
@@ -21,19 +22,44 @@ except ImportError:
     from mock import MagicMock
     from mock import patch
 
-BLGSP_PATH = '/v0/submission/CGCI/BLGSP/'
+from sheepdog.test_settings import SUBMISSION
+from sheepdog.transactions.upload.sub_entities import generate_s3_url
+from tests.integration.submission.test_versioning import release_indexd_doc
+
+PROGRAM = 'CGCI'
+PROJECT = 'BLGSP'
+BLGSP_PATH = '/v0/submission/{}/{}/'.format(PROGRAM, PROJECT)
 
 # some default values for data file submissions
 DEFAULT_FILE_HASH = '00000000000000000000000000000001'
 DEFAULT_FILE_SIZE = 1
-DEFAULT_URL = 'test/url/test/0'
+FILE_NAME = 'test-file'
 DEFAULT_SUBMITTER_ID = '0'
 DEFAULT_UUID = 'bef870b0-1d2a-4873-b0db-14994b2f89bd'
+DEFAULT_URL = generate_s3_url(
+    host=SUBMISSION['host'],
+    bucket=SUBMISSION['bucket'],
+    program=PROGRAM,
+    project=PROJECT,
+    uuid=DEFAULT_UUID,
+    file_name=FILE_NAME,
+)
+# Regex because sometimes you don't get to upload a UUID, and the UUID is
+# part of the s3 url.
+UUID_REGEX = r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+REGEX_URL = r's3://{}/{}/{}/{}/{}/{}'.format(
+    SUBMISSION['host'],
+    SUBMISSION['bucket'],
+    PROGRAM,
+    PROJECT,
+    UUID_REGEX,
+    FILE_NAME,
+)
 
 DEFAULT_METADATA_FILE = {
     'type': 'experimental_metadata',
     'data_type': 'Experimental Metadata',
-    'file_name': 'test-file',
+    'file_name': FILE_NAME,
     'md5sum': DEFAULT_FILE_HASH,
     'data_format': 'some_format',
     'submitter_id': DEFAULT_SUBMITTER_ID,
@@ -95,7 +121,10 @@ def test_data_file_not_indexed(
     assert 'hashes' in kwargs
     assert kwargs['hashes'].get('md5') == DEFAULT_FILE_HASH
     assert 'urls' in kwargs
-    assert DEFAULT_URL in kwargs['urls']
+
+    # won't have an exact match because of the way URLs are generated
+    # with a UUID in them
+    assert re.match(REGEX_URL, kwargs['urls'][0])
 
     # alias creation
     assert create_alias.called
@@ -648,32 +677,42 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
 def test_dont_enforce_file_hash_size_uniqueness(
         client_toggled, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
-    Check that able to submit two files with different did and urls but duplicate hash and size
-    if ENFORCE_FILE_HASH_SIZE_UNIQUENESS set to False
+    Check that able to submit two files with different did and urls but
+    duplicate hash and size if ENFORCE_FILE_HASH_SIZE_UNIQUENESS set to False
     """
 
     submit_first_experiment(client_toggled, pg_driver, admin, submitter, cgci_blgsp)
 
-    file_ = DEFAULT_METADATA_FILE
+    file_ = copy.deepcopy(DEFAULT_METADATA_FILE)
     file_['id'] = DEFAULT_UUID
 
-    submit_metadata_file(client_toggled, pg_driver, admin, submitter, cgci_blgsp,
-                         data=file_)
+    submit_metadata_file(
+        client_toggled,
+        pg_driver,
+        admin,
+        submitter,
+        cgci_blgsp,
+        data=file_,
+    )
 
+    release_indexd_doc(pg_driver, indexd_client, DEFAULT_UUID)
     # now submit again but change url and id
     new_url = 'some/new/url/location/to/add'
     new_id = DEFAULT_UUID.replace('1', '2')
 
+    # release so that a new indexd document can be made
     updated_file = copy.deepcopy(file_)
     updated_file['urls'] = new_url
     updated_file['id'] = new_id
-    submit_metadata_file(client_toggled, pg_driver, admin, submitter,
-                         cgci_blgsp, data=updated_file)
+    submit_metadata_file(
+        client_toggled,
+        pg_driver,
+        admin,
+        submitter,
+        cgci_blgsp,
+        data=updated_file,
+    )
 
-    # check that both are incerted into indexd and have correct urls
-    assert flask.current_app.indexd.get(DEFAULT_UUID).to_json()['urls'] == [
-        DEFAULT_METADATA_FILE['urls']
-    ]
-    assert flask.current_app.indexd.get(new_id).to_json()['urls'] == [
-        new_url
-    ]
+    # check that both are inserted into indexd and have correct urls
+    assert indexd_client.get(DEFAULT_UUID).urls == [DEFAULT_URL]
+    assert indexd_client.get(new_id).urls == [new_url]

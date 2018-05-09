@@ -153,7 +153,7 @@ def test_project_creation_without_admin_token(client, pg_driver, submitter, admi
     assert resp.status_code == 403
 
 
-def test_put_entity_creation_valid(client, pg_driver, cgci_blgsp, submitter):
+def test_put_entity_creation_valid(client, indexd_client, pg_driver, cgci_blgsp, submitter):
     headers = submitter
     data = json.dumps({
         "type": "experiment",

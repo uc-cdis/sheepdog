@@ -11,20 +11,27 @@ from tests.integration.submission.test_endpoints import (
 from tests.integration.submission.utils import data_fnames
 
 
-def release_indexd_doc(did, indexd_client):
+def release_indexd_doc(pg_driver, indexd_client, latest_did):
     """Simulate a released node in indexd
 
     Args:
-        indexd_doc (indexdclient.client.Document): representation of doc in indexd
+        pg_driver (pytest fixture): client connected to postgres server
         indexd_client (pytest fixture): client connected to indexd server
+        latest_did (str): did of a document in indexd
     """
 
-    indexd_doc = indexd_client.get(did)
-    # change state to released
-    indexd_doc.metadata['state'] = 'released'
+    indexd_doc = indexd_client.get(latest_did)
+
+    # make the url state (file_state) validated
+    for url in indexd_doc.urls_metadata:
+        indexd_doc.urls_metadata[url]['state'] = 'validated'
+
+    # change node state to released
+    with pg_driver.session_scope():
+        pg_driver.nodes().get(latest_did).state = 'released'
 
     # version the rest of the nodes
-    docs = indexd_client.list_versions(did)
+    docs = indexd_client.list_versions(latest_did)
 
     # create newest version number
     new_version = int(max([d.version for d in docs]) or '0') + 1
@@ -255,7 +262,7 @@ def test_creating_new_versioned_file(
         # only give a version number if one is supplied
         if version_number:
             # simulate release by incrementing all versions for similar docs
-            release_indexd_doc(did, indexd_client)
+            release_indexd_doc(pg_driver, indexd_client, did)
 
             indexd_doc = indexd_client.get(did)
             message = 'Should have been assigned version {}'.format(version_number)
