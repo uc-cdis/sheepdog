@@ -4,6 +4,10 @@ from sheepdog.globals import (
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.transactions.transaction_base import MissingNode
+from sheepdog.utils import (
+    is_node_file,
+    get_indexd_state,
+)
 
 
 ALLOWED_DELETION_FILE_STATES = [submitted_state()]
@@ -155,26 +159,25 @@ class DeletionEntity(EntityBase):
                 type=EntityErrors.INVALID_PERMISSIONS)
 
     def error_for_file_state(self):
-        """Record an if the entity is in an invalid state"""
-
-        if 'file_state' not in self.node.__pg_properties__:
+        """Record error if the entity is in an invalid state"""
+        # Don't do anything for non-file nodes
+        if not is_node_file(self.node):
             return
 
-        file_state = self.node._props.get('file_state')
+        file_state = get_indexd_state(self.node.node_id)
 
         if file_state not in ALLOWED_DELETION_FILE_STATES:
-            message = ("This node has file_state '{file_state}'. "
+            message = ("This node has file_state '{}'. "
                        "Deletion is disallowed for entities that have "
                        "raw data uploaded to the GDC.  In order to delete "
                        "this node you must first delete the raw data with "
                        "the Data Transfer Tool."
-                       .format(file_state=self.node.file_state))
+                       .format(file_state))
 
             self.record_error(
                 message,
                 keys=['file_state'],
                 type=EntityErrors.INVALID_PERMISSIONS)
-
 
     def test_deletion(self):
         """Attempt to delete this node and record errors for policy

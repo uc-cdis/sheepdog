@@ -29,6 +29,7 @@ from sheepdog.globals import (
     SUCCESS_STATE,
     ERROR_STATE,
     UPLOADING_PARTS,
+    DATA_FILE_CATEGORIES,
 )
 from sheepdog.utils.transforms.graph_to_doc import (
     entity_to_template,
@@ -294,21 +295,60 @@ def get_node(project_id, uuid, db=None):
         )
 
 
-def get_indexd(uuid):
+def get_indexd(uuid, return_not_found=False):
     """Get indexd doc for a given UUID
 
     Args:
         uuid (string): UUID that is possibly in the system
+        return_not_found (bool): If True, will return None if record does not exist
     Returns:
         doc: Indexd doc to be modified later
     """
 
     indexd_obj = flask.current_app.indexd.get(uuid)
-    if indexd_obj is None:
+    if indexd_obj is None and not return_not_found:
         raise InternalError(
             "Indexd entry for {} doesn't exist".format(uuid)
         )
     return indexd_obj
+
+
+def get_indexd_state(did, return_not_found=False):
+    """Get file state from indexd urls_metadata
+    Args:
+        did (string): document id in indexd database
+        return_not_found (bool): If True, will return None if record does not exist
+    Returns:
+        state for the main storage url stored in urls_metadata
+    """
+    indexd_doc = get_indexd(did, return_not_found=return_not_found)
+
+    if indexd_doc is None:
+        return None
+
+    states = [
+        meta['state']
+        for url, meta in indexd_doc.urls_metadata.items()
+        if 'backup' not in url and 'aws' not in url
+    ]
+    if len(states) == 0:
+        raise UserError(
+            "Can not find primary storage indexd url for {}".format(did)
+        )
+    if len(states) > 1:
+        raise UserError(
+            "Can not find primary storage indexd url for {}".format(did)
+        )
+
+    return states[0]
+
+
+def set_indexd_state(did, url, state):
+    """Update url state in indexd
+    """
+    indexd_doc = get_indexd(did)
+    indexd_doc.urls_metadata[url]['state'] = state
+    indexd_doc.patch()
 
 
 def get_suggestion(value, choices):
@@ -424,9 +464,12 @@ def lookup_program(psql_driver, program):
     return psql_driver.nodes(models.Program).props(name=program).scalar()
 
 
-def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run=False):
+def proxy_request(project_id, uuid, data, args, headers, method, action,
+                  indexd_client, dry_run=False):
     node = get_node(project_id, uuid)
-    check_action_allowed_in_state(action, node.file_state)
+    file_state = get_indexd_state(node.node_id)
+
+    check_action_allowed_in_state(action, file_state)
     indexd_obj = get_indexd(uuid)
 
     if dry_run:
@@ -437,9 +480,9 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
         return flask.Response(json.dumps({'message': message}), status=200)
 
     if action in ['upload', 'initiate_multipart']:
-        update_state(node, UPLOADING_STATE)
+        set_indexd_state(node, s3_url, UPLOADING_STATE)
     elif action == 'abort_multipart':
-        update_state(node, submitted_state())
+        set_indexd_state(node, s3_url, submitted_state())
 
     if action not in ['upload', 'upload_part', 'complete_multipart', 'reassign']:
         data = ''
@@ -461,7 +504,7 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
             return flask.Response(json.dumps({'message': message}), status=400)
 
         update_indexd_url(indexd_obj, s3_url=new_url)
-        update_state(node, SUCCESS_STATE)
+        set_indexd_state(node, new_url, SUCCESS_STATE)
         message = ('URL successfully reassigned. New url: {}'.format(new_url))
         return flask.Response(json.dumps({'message': message}), status=200)
 
@@ -471,18 +514,12 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
     if action in ['upload', 'complete_multipart']:
         if resp.status == 200:
             update_indexd_url(indexd_obj, project_id + '/' + uuid)
-            update_state(node, SUCCESS_STATE)
+            set_indexd_state(node, s3_url, SUCCESS_STATE)
     if action == 'delete':
         if resp.status == 204:
-            update_state(node, submitted_state())
+            set_indexd_state(node, s3_url, submitted_state())
             update_indexd_url(indexd_obj, None)
     return resp
-
-
-def update_state(node, state):
-    with flask.current_app.db.session_scope() as s:
-        s.add(node)
-        node.file_state = state
 
 
 def update_indexd_url(indexd_obj, key_name=None, s3_url=None):
@@ -510,13 +547,12 @@ def update_indexd_url(indexd_obj, key_name=None, s3_url=None):
     indexd_obj.patch()
 
 
-
 def is_node_file(node):
     """Returns True if the object is a file (i.e. it may have
     corresponding data in the object store)
     """
 
-    return node._dictionary['category'].endswith("_file")
+    return node._dictionary['category'] in DATA_FILE_CATEGORIES
 
 
 def is_project_public(project):

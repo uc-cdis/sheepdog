@@ -6,8 +6,12 @@ import uuid
 
 import psqlgraph
 from indexclient.client import Document
+from sheepdog.utils import (
+    lookup_project,
+    is_project_public,
+    get_indexd_state,
+)
 
-from sheepdog import utils
 from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.upload.entity import (
     UploadEntity,
@@ -140,6 +144,8 @@ class FileUploadEntity(UploadEntity):
         # entity_id is set to the node_id here
         node = super(FileUploadEntity, self).get_node_merge()
 
+        file_state = get_indexd_state(node.node_id, return_not_found=True)
+
         # verify that update is allowed
         if not self.is_updatable_file_node(node):
             self.record_error(
@@ -147,7 +153,7 @@ class FileUploadEntity(UploadEntity):
                  "updated. The raw data exists in the file storage "
                  "and modifying the Entity now is unsafe and may cause "
                  "problems for any processes or users consuming "
-                 "this data.").format(node._props.get('file_state')),
+                 "this data.").format(file_state),
                 keys=['file_state'],
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
@@ -211,13 +217,13 @@ class FileUploadEntity(UploadEntity):
         alias = "{}/{}".format(project_id, submitter_id)
         metadata = self.get_metadata()
 
-        project_node = utils.lookup_project(
+        project_node = lookup_project(
             self.transaction.db_driver,
             self.transaction.program,
             self.transaction.project
         )
 
-        if utils.is_project_public(project_node):
+        if is_project_public(project_node):
             acls = ['*']
         else:
             acls = self.transaction.get_phsids()
@@ -311,21 +317,19 @@ class FileUploadEntity(UploadEntity):
         Return:
             bool: whether the node is an updatable file
         """
-        is_updateable = True
-        has_file_state = 'file_state' in node.__pg_properties__
+        allowed_states = [
+            'registered',
+            'uploading',
+            'uploaded',
+            'validating',
+        ]
 
-        if has_file_state:
-            allowed_states = [
-                'registered',
-                'uploading',
-                'uploaded',
-                'validating',
-            ]
-            file_state = node._props.get('file_state')
-            if file_state and file_state not in allowed_states:
-                is_updateable = False
+        file_state = get_indexd_state(node.node_id, return_not_found=True)
 
-        return is_updateable
+        if file_state and file_state not in allowed_states:
+            return False
+
+        return True
 
     def _populate_files_from_index(self):
         """
@@ -570,6 +574,7 @@ class FileUploadEntity(UploadEntity):
 
     def _version_index(self, **kwargs):
         return self.transaction.indexd.add_version(**kwargs)
+
 
 def generate_s3_url(host, bucket, program, project, uuid, file_name):
     """

@@ -89,12 +89,6 @@ class DeletionTransaction(TransactionBase):
                             [field in dictionary.schema[e.node.label].get(protected_category, [])
                              for protected_category in ['required', 'systemProperties']]
                         )
-                        # Below is a sad workaround for inconsistent gdcdictionary :|
-                        # Will be safe to remove once 'required' fields is a
-                        # complete and tested set for all node types in gdcdictionary.schemas
-                        if current_app.config.get('IS_GDC', False):
-                            if field in ['submitter_id', 'project_id', 'state', 'file_state']:
-                                field_is_protected = True
 
                         if field_is_protected:
                             raise UserError(

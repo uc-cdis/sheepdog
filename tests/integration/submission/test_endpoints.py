@@ -252,7 +252,6 @@ def test_put_valid_entity_invalid_type(client, pg_driver, cgci_blgsp, submitter)
             }
         ]))
 
-    print r.json
     assert r.status_code == 400, r.data
     assert r.status_code == r.json['code']
     assert (r.json['entities'][2]['errors'][0]['keys']

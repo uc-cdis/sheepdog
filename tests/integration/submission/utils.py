@@ -130,7 +130,6 @@ def put_example_entities_together(client, headers, data_fnames2=None):
     return client.put(path, headers=headers, data=json.dumps(data))
 
 
-
 def data_file_creation(client, headers, method='post', sur_filename=''):
     """
     Boilerplate setup code for some tests
@@ -183,6 +182,7 @@ def data_file_creation(client, headers, method='post', sur_filename=''):
     }
 
     return file_metadata
+
 
 def release_indexd_doc(pg_driver, indexd_client, latest_did):
     """Simulate a released node in indexd

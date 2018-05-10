@@ -431,7 +431,6 @@ def create_files_viewer(dry_run=False, reassign=False):
         else:
             raise UserError('Unsupported file operation', code=405)
 
-
         project_id = program + '-' + project
         role = PERMISSIONS[action]
         if role not in flask.g.user.roles[project_id]:
@@ -447,9 +446,9 @@ def create_files_viewer(dry_run=False, reassign=False):
             headers,
             flask.request.method,
             action,
-            dry_run,
+            flask.current_app.indexd,
+            dry_run=dry_run,
         )
-
 
         if dry_run or action == 'reassign':
             return resp

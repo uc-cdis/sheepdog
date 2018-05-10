@@ -17,6 +17,7 @@ from sheepdog.globals import (
     REGEX_UUID,
     UNVERIFIED_PROGRAM_NAMES,
     UNVERIFIED_PROJECT_CODES,
+    DATA_FILE_CATEGORIES,
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.utils import get_suggestion
@@ -76,7 +77,7 @@ class UploadEntity(EntityBase):
     create a node. After this, it should be flushed into a UploadTransaction's
     session.
     """
-    DATA_FILE_CATEGORIES = ['data_file', 'metadata_file']
+    DATA_FILE_CATEGORIES = DATA_FILE_CATEGORIES
 
     def __init__(self, transaction, config=None):
         """

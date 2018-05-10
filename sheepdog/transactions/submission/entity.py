@@ -1,6 +1,10 @@
 # pylint: disable=protected-access
 
 from sheepdog import models
+from sheepdog.utils import (
+    set_indexd_state,
+    get_indexd_state,
+)
 from sheepdog.globals import (
     ENTITY_STATE_TRANSITIONS,
     FILE_STATE_TRANSITIONS,
@@ -53,8 +57,7 @@ class SubmissionEntity(EntityBase):
         self.logger.info('Submitting {}.'.format(self.node))
         to_state = 'submitted'
         current_state = self.node._props.get(STATE_KEY, None)
-        current_file_state = self.node._props.get(FILE_STATE_KEY, None)
-        has_file_state = hasattr(self.node.__class__, FILE_STATE_KEY)
+        current_file_state = get_indexd_state(self.node.node_id)
 
         # Check node.state
         if current_state not in SUBMITTABLE_STATES:
@@ -63,9 +66,9 @@ class SubmissionEntity(EntityBase):
                 type=EntityErrors.INVALID_PROPERTY
             )
 
-        # Conditionally update node.file_state
-        if has_file_state and current_file_state in SUBMITTABLE_FILE_STATES:
-            self.node.props[FILE_STATE_KEY] = to_state
+        # Conditionally update file_state
+        if current_file_state in SUBMITTABLE_FILE_STATES:
+            set_indexd_state(self.node.node_id, s3_url, to_state)
 
         self.node.props[STATE_KEY] = to_state
 
