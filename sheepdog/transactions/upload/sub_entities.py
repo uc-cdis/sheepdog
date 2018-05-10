@@ -3,12 +3,17 @@ Subclasses for UploadEntity that handle different types of
 uploaded entites.
 """
 import uuid
+import flask
 
 from indexclient.client import Document
+from sheepdog import utils
 
 from sheepdog.transactions.entity_base import EntityErrors
-from sheepdog.transactions.upload.entity import UploadEntity
-from sheepdog.transactions.upload.entity import lookup_node
+from sheepdog.transactions.upload.entity import (
+    UploadEntity,
+    lookup_node,
+)
+
 
 class NonFileUploadEntity(UploadEntity):
     """
@@ -197,15 +202,25 @@ class FileUploadEntity(UploadEntity):
         """
 
         project_id = self.transaction.project_id
-        program = project_id.split('-')[0]
-        project = '-'.join(project_id.split('-')[1:])
+        program = self.transaction.program
+        project = self.transaction.project
         submitter_id = self.node._props.get('submitter_id')
         hashes = {'md5': self.node._props.get('md5sum')}
         size = self.node._props.get('file_size')
         file_name = self.node._props.get('file_name')
         alias = "{}/{}".format(project_id, submitter_id)
-        acls = self.transaction.get_phsids()
         metadata = self.get_metadata()
+
+        project_node = utils.lookup_project(
+            self.transaction.db_driver,
+            self.transaction.program,
+            self.transaction.project
+        )
+
+        if utils.is_project_public(project_node):
+            acls = ['*']
+        else:
+            acls = self.transaction.get_phsids()
 
         url = generate_s3_url(
             host=self._config['SUBMISSION']['host'],
@@ -219,7 +234,7 @@ class FileUploadEntity(UploadEntity):
         urls = [url]
 
         # IndexClient
-        doc = self._create_index(did=self.entity_id,
+        self._create_index(did=self.entity_id,
                            hashes=hashes,
                            size=size,
                            urls=urls,

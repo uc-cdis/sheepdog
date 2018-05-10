@@ -16,10 +16,13 @@ Sphinx==1.6.5
 sphinx_rtd_theme
 -e git+https://git@github.com/uc-cdis/cdisutils-test.git@0.2.2#egg=cdisutilstest
 -e git+https://git@github.com/uc-cdis/indexd.git@0.7.0#egg=indexd
+
+# indexd dependencies
+-e git+https://git@github.com/uc-cdis/doiclient.git@1.0.0#egg=doiclient
+-e git+https://git@github.com/uc-cdis/dosclient.git@1.0.0#egg=dosclient
+
 # these two are required by fence -> cirrus -> google_cloud
 pyasn1-modules==0.0.11
 urllib3==1.22
 -e git+https://github.com/uc-cdis/cirrus.git@0.0.0#egg=cirrus-0.0.0
 -e git+https://git@github.com/uc-cdis/fence.git@1.1.1#egg=fence
--e git+https://github.com/uc-cdis/doiclient.git@1.0.0#egg=doiclient
--e git+https://github.com/uc-cdis/dosclient.git@1.0.0#egg=dosclient

@@ -10,7 +10,7 @@ from authutils.oauth2.client import blueprint as oauth2_blueprint
 from authutils import AuthError
 from cdispyutils.log import get_handler
 from dictionaryutils import DataDictionary, dictionary
-from datamodelutils import models, validators
+from datamodelutils import models, validators, postgres_admin
 
 
 from indexclient.client import IndexClient
@@ -38,7 +38,8 @@ def app_register_blueprints(app):
         url = app.config['DICTIONARY_URL']
         datadictionary = DataDictionary(url=url)
     elif ('PATH_TO_SCHEMA_DIR' in app.config):
-        datadictionary = DataDictionary(root_dir=app.config['PATH_TO_SCHEMA_DIR'])
+        datadictionary = DataDictionary(
+            root_dir=app.config['PATH_TO_SCHEMA_DIR'])
     else:
         import gdcdictionary
         datadictionary = gdcdictionary.gdcdictionary
@@ -68,7 +69,8 @@ def db_init(app):
         database=app.config['PSQLGRAPH']['database'],
         set_flush_timestamps=True,
     )
-
+    if app.config.get('AUTO_MIGRATE_DATABASE'):
+        migrate_database(app)
     app.userdb = SQLAlchemyDriver(app.config['PSQL_USER_DB_CONNECTION'])
     flask_scoped_session(app.userdb.Session, app)
 
@@ -81,9 +83,36 @@ def db_init(app):
         auth=app.config['INDEXD']['auth'])
     try:
         app.logger.info('Initializing Auth driver')
-        app.auth = AuthDriver(app.config["AUTH_ADMIN_CREDS"], app.config["INTERNAL_AUTH"])
+        app.auth = AuthDriver(app.config["AUTH_ADMIN_CREDS"],
+                              app.config["INTERNAL_AUTH"])
     except Exception:
         app.logger.exception("Couldn't initialize auth, continuing anyway")
+
+
+def migrate_database(app):
+    if postgres_admin.check_version(app.db):
+        return
+    try:
+        postgres_admin.create_graph_tables(app.db, timeout=1)
+    except Exception:
+        if not postgres_admin.check_version(app.db):
+            app.logger.exception("Fail to migrate database, continuing anyway")
+        # if the version is already up to date, that means there is
+        # another migration wins, so silently exit
+        return
+    # hardcoded read role
+    read_role = 'peregrine'
+    # check if such role exists
+    with app.db.session_scope() as session:
+        r = [i for i in
+             session.execute("SELECT 1 FROM pg_roles WHERE rolname='{}'"
+                             .format(read_role))]
+    if len(r) != 0:
+        try:
+            postgres_admin.grant_read_permissions_to_graph(app.db, read_role)
+        except Exception:
+            app.logger.warn("Fail to grant read permission, continuing anyway")
+            return
 
 
 def app_init(app):
@@ -95,6 +124,11 @@ def app_init(app):
     app.config['USE_DBGAP'] = False
     app.config['IS_GDC'] = False
 
+    # default settings
+    app.config['AUTO_MIGRATE_DATABASE'] = (
+        app.config.get('AUTO_MIGRATE_DATABASE', True)
+    )
+
     app_register_blueprints(app)
     db_init(app)
     # exclude es init as it's not used yet
@@ -105,6 +139,7 @@ def app_init(app):
         app.logger.error(
             'Secret key not set in config! Authentication will not work'
         )
+
 
 app = Flask(__name__)
 
@@ -124,6 +159,7 @@ def health_check():
 
     return 'Healthy', 200
 
+
 @app.route('/_version', methods=['GET'])
 def version():
     dictver = {
@@ -137,6 +173,7 @@ def version():
     }
 
     return jsonify(base), 200
+
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -171,7 +208,7 @@ app.register_error_handler(AuthError, _log_and_jsonify_exception)
 
 
 def run_for_development(**kwargs):
-    #app.logger.setLevel(logging.INFO)
+    # app.logger.setLevel(logging.INFO)
 
     for key in ["http_proxy", "https_proxy"]:
         if os.environ.get(key):
