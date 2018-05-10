@@ -1,95 +1,12 @@
-import json
-import os
-
+import pytest
 from gdcdatamodel import models as md
 
-from tests.integration.submission.test_endpoints import (
-    post_example_entities_together,
+from tests.integration.submission.utils import (
     put_example_entities_together,
-    DATA_DIR,
+    data_file_creation,
+    data_fnames,
+    release_indexd_doc,
 )
-from tests.integration.submission.utils import data_fnames
-
-
-def release_indexd_doc(pg_driver, indexd_client, latest_did):
-    """Simulate a released node in indexd
-
-    Args:
-        pg_driver (pytest fixture): client connected to postgres server
-        indexd_client (pytest fixture): client connected to indexd server
-        latest_did (str): did of a document in indexd
-    """
-
-    indexd_doc = indexd_client.get(latest_did)
-
-    # make the url state (file_state) validated
-    for url in indexd_doc.urls_metadata:
-        indexd_doc.urls_metadata[url]['state'] = 'validated'
-
-    # change node state to released
-    with pg_driver.session_scope():
-        pg_driver.nodes().get(latest_did).state = 'released'
-
-    # version the rest of the nodes
-    docs = indexd_client.list_versions(latest_did)
-
-    # create newest version number
-    new_version = int(max([d.version for d in docs]) or '0') + 1
-    indexd_doc.version = str(new_version)
-    indexd_doc.patch()
-
-def data_file_creation(client, headers, method='post', sur_filename=''):
-    """
-    Boilerplate setup code for some tests
-
-    Submit nodes for creation and get back the data file associated
-    with the submission.
-
-    Args:
-        client (fixture): fixture for making http requests
-        headers (dict): http header with token
-        method (string): HTTP PUT or POST
-        sur_filename (str): filename to use for the submitted unaligned reads file
-
-    Returns:
-        pytest_flask.plugin.JSONResponse: http response from sheepdog
-    """
-
-    test_fnames = data_fnames + ['read_group.json']
-
-    if method == 'post':
-        resp = post_example_entities_together(
-            client,
-            headers,
-            data_fnames2=test_fnames + [sur_filename])
-    elif method == 'put':
-        resp = put_example_entities_together(
-            client,
-            headers,
-            data_fnames2=test_fnames + [sur_filename])
-
-    assert_message = 'Unable to create nodes: {}'.format(
-        [entity for entity in resp.json['entities'] if entity['errors']]
-    )
-    assert resp.status_code in (200, 201), assert_message
-
-    with open(os.path.join(DATA_DIR, sur_filename), 'r') as f:
-        sur_json = json.loads(f.read())
-
-    sur_uuid = [
-        entity['id']
-        for entity in resp.json['entities']
-        if entity['type'] == 'submitted_unaligned_reads'
-    ][0]
-
-    file_metadata = {
-        'did': sur_uuid,
-        'file_size': sur_json['file_size'],
-        'file_name': sur_json['file_name'],
-        'md5sum': sur_json['md5sum'],
-    }
-
-    return file_metadata
 
 
 def test_create_data_file_entity(
@@ -129,8 +46,10 @@ def test_create_data_file_entity(
     assert indexd_doc.version is None
 
 
+# simulate a project's api that lets you do this
+@pytest.mark.config_toggle(parameter='CREATE_REPLACEABLE', value=True)
 def test_update_data_file_entity(
-        app, client, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
+        client_toggled, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
     """
     Update an existing node in the database.
 
@@ -149,12 +68,10 @@ def test_update_data_file_entity(
         - Cannot update a node if it is in state submitted
     """
 
-    # simulate a project api that lets you do this
-    app.config['CREATE_REPLACEABLE'] = True
 
     # node already in database
     data_file = data_file_creation(
-        client,
+        client_toggled,
         submitter,
         method='post',
         sur_filename='submitted_unaligned_reads.json',
@@ -165,7 +82,7 @@ def test_update_data_file_entity(
 
     # update node, causing new information in indexd
     new_data_file = data_file_creation(
-        client,
+        client_toggled,
         submitter,
         method='put',
         sur_filename='submitted_unaligned_reads_new.json',
@@ -203,12 +120,13 @@ def test_update_data_file_entity(
     # submitted or released
 
     # manually change file state to submitted
-    new_doc.metadata['state'] = 'submitted'
-    new_doc.patch()
+    with pg_driver.session_scope():
+        sur = pg_driver.nodes(md.SubmittedUnalignedReads).one()
+        sur.state = 'submitted'
 
     # attempt to update the node in state submitted
     resp = put_example_entities_together(
-        client,
+        client_toggled,
         submitter,
         data_fnames2=data_fnames +
         ['read_group.json', 'submitted_unaligned_reads_new.json']
@@ -217,14 +135,13 @@ def test_update_data_file_entity(
     assert resp.status_code == 400, 'indexd doc state should be in submitted state'
 
 
+# simulate a project's api that lets you do this
+@pytest.mark.config_toggle(parameter='CREATE_REPLACEABLE', value=True)
 def test_creating_new_versioned_file(
-        app, client, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
+        client_toggled, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
     """
     Create a new version of a file
     """
-
-    # simulate a project api that lets you do this
-    app.config['CREATE_REPLACEABLE'] = True
 
     def create_node(version_number=None):
         """Create a node and possibly assign it a version
@@ -237,7 +154,7 @@ def test_creating_new_versioned_file(
         """
 
         resp = data_file_creation(
-            client,
+            client_toggled,
             submitter,
             method='put',
             sur_filename='submitted_unaligned_reads.json',

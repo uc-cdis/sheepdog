@@ -14,7 +14,11 @@ from moto import mock_s3
 
 from gdcdatamodel import models as md
 from sheepdog.transactions.upload import UploadTransaction
-from tests.integration.submission.utils import data_fnames
+from tests.integration.submission.utils import (
+    data_fnames,
+    post_example_entities_together,
+    put_example_entities_together,
+)
 
 
 #: Do we have a cache case setting and should we do it?
@@ -270,28 +274,6 @@ def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
             if CACHE_CASES and fname not in ['experiment.json', 'case.json']:
                 case = resp.json['entities'][0]['related_cases'][0]
                 assert (case['submitter_id'] == case_sid), (fname, resp.data)
-
-
-def post_example_entities_together(client, submitter, data_fnames2=None):
-    if not data_fnames2:
-        data_fnames2 = data_fnames
-    path = BLGSP_PATH
-    data = []
-    for fname in data_fnames2:
-        with open(os.path.join(DATA_DIR, fname), 'r') as f:
-            data.append(json.loads(f.read()))
-    return client.post(path, headers=submitter, data=json.dumps(data))
-
-
-def put_example_entities_together(client, headers, data_fnames2=None):
-    if not data_fnames2:
-        data_fnames2 = data_fnames
-    path = BLGSP_PATH
-    data = []
-    for fname in data_fnames2:
-        with open(os.path.join(DATA_DIR, fname), 'r') as f:
-            data.append(json.loads(f.read()))
-    return client.put(path, headers=headers, data=json.dumps(data))
 
 
 def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):

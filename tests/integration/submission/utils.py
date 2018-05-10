@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import uuid
@@ -105,3 +106,107 @@ def assert_single_entity_from_response(resp):
     entities = resp.json['entities']
     assert len(entities) == 1
     return entities[0]
+
+
+def post_example_entities_together(client, submitter, data_fnames2=None):
+    if not data_fnames2:
+        data_fnames2 = data_fnames
+    path = BLGSP_PATH
+    data = []
+    for fname in data_fnames2:
+        with open(os.path.join(DATA_DIR, fname), 'r') as f:
+            data.append(json.loads(f.read()))
+    return client.post(path, headers=submitter, data=json.dumps(data))
+
+
+def put_example_entities_together(client, headers, data_fnames2=None):
+    if not data_fnames2:
+        data_fnames2 = data_fnames
+    path = BLGSP_PATH
+    data = []
+    for fname in data_fnames2:
+        with open(os.path.join(DATA_DIR, fname), 'r') as f:
+            data.append(json.loads(f.read()))
+    return client.put(path, headers=headers, data=json.dumps(data))
+
+
+
+def data_file_creation(client, headers, method='post', sur_filename=''):
+    """
+    Boilerplate setup code for some tests
+
+    Submit nodes for creation and get back the data file associated
+    with the submission.
+
+    Args:
+        client (fixture): fixture for making http requests
+        headers (dict): http header with token
+        method (string): HTTP PUT or POST
+        sur_filename (str): filename to use for the submitted unaligned reads file
+
+    Returns:
+        pytest_flask.plugin.JSONResponse: http response from sheepdog
+    """
+
+    test_fnames = data_fnames + ['read_group.json']
+
+    if method == 'post':
+        resp = post_example_entities_together(
+            client,
+            headers,
+            data_fnames2=test_fnames + [sur_filename])
+    elif method == 'put':
+        resp = put_example_entities_together(
+            client,
+            headers,
+            data_fnames2=test_fnames + [sur_filename])
+
+    assert_message = 'Unable to create nodes: {}'.format(
+        [entity for entity in resp.json['entities'] if entity['errors']]
+    )
+    assert resp.status_code in (200, 201), assert_message
+
+    with open(os.path.join(DATA_DIR, sur_filename), 'r') as f:
+        sur_json = json.loads(f.read())
+
+    sur_uuid = [
+        entity['id']
+        for entity in resp.json['entities']
+        if entity['type'] == 'submitted_unaligned_reads'
+    ][0]
+
+    file_metadata = {
+        'did': sur_uuid,
+        'file_size': sur_json['file_size'],
+        'file_name': sur_json['file_name'],
+        'md5sum': sur_json['md5sum'],
+    }
+
+    return file_metadata
+
+def release_indexd_doc(pg_driver, indexd_client, latest_did):
+    """Simulate a released node in indexd
+
+    Args:
+        pg_driver (pytest fixture): client connected to postgres server
+        indexd_client (pytest fixture): client connected to indexd server
+        latest_did (str): did of a document in indexd
+    """
+
+    indexd_doc = indexd_client.get(latest_did)
+
+    # make the url state (file_state) validated
+    for url in indexd_doc.urls_metadata:
+        indexd_doc.urls_metadata[url]['state'] = 'validated'
+
+    # change node state to released
+    with pg_driver.session_scope():
+        pg_driver.nodes().get(latest_did).state = 'released'
+
+    # version the rest of the nodes
+    docs = indexd_client.list_versions(latest_did)
+
+    # create newest version number
+    new_version = int(max([d.version for d in docs]) or '0') + 1
+    indexd_doc.version = str(new_version)
+    indexd_doc.patch()

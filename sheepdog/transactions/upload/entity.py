@@ -203,9 +203,8 @@ class UploadEntity(EntityBase):
         if not indexd_doc:
             return
 
-        doc_state = indexd_doc.metadata.get('state')
         # cannot update a node in state submitted
-        if doc_state == 'submitted':
+        if self.node.state == 'submitted':
             raise UserError(
                 'Unable to update a node in state {}'.format(doc_state)
             )
@@ -271,52 +270,6 @@ class UploadEntity(EntityBase):
                 "missing 'type'", keys=["type"], type=EntityErrors.INVALID_TYPE
             )
         self._validate_type()
-
-    def get_node_recreate(self):
-        """
-        Create a new node in the old node's place.
-
-        This is only for file nodes, if they exist in indexd with
-        graph node state = 'released'.
-
-        """
-
-        nodes = lookup_node(
-            self.transaction.db_driver,
-            self.entity_type,
-            self.entity_id,
-            self.secondary_keys,
-        )
-
-        self.old_uuid = nodes.one().node_id
-        self.file_by_uuid = self.get_file_from_index_by_uuid(self.entity_id)
-        with self.transaction.db_driver.session_scope() as session:
-            for node in nodes:
-                session.delete(node)
-
-        # new node id
-        self.entity_id = str(uuid.uuid4())
-
-        # Fill in default system property values
-        for key, val in self.get_system_property_defaults().iteritems():
-            if self.doc.get(key, None) is None:
-                self.doc[key] = val
-
-        # Create the node and populate its properties
-        cls = psqlgraph.Node.get_subclass(self.entity_type)
-        self.logger.debug('Recreating new {}'.format(cls.__name__))
-        node = cls(self.entity_id)
-
-        # check if open_acl is requested and the node type can be set open
-        if self.doc.get('open_acl', None) and self._config.get('IS_GDC', False):
-            if self.entity_type in POSSIBLE_OPEN_FILE_NODES:
-                node.acl = [u'open']
-            else:
-                node.acl = self.transaction.get_phsids()
-
-        self.action = 'version'
-        return node
-
 
     def get_node_create(self, skip_node_lookup=False):
         """
@@ -788,7 +741,7 @@ class UploadEntity(EntityBase):
         user = user or self.transaction.user
         return user.roles.get(self.transaction.project_id, [])
 
-    def is_case_creation_allowed(self, case_id):
+    def is_case_creation_allowed(self, submitter_id):
         """
         Check if case creation is allowed:
 
@@ -807,7 +760,7 @@ class UploadEntity(EntityBase):
             return self.transaction.dbgap_x_referencer.case_exists(
                 program,
                 project,
-                self.doc.get('submitter_id')
+                submitter_id,
             )
 
     def set_association_proxies(self):
