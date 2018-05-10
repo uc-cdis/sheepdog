@@ -1,21 +1,21 @@
+# pylint: disable=unused-import
 import os
 import json
-from multiprocessing import Process
 
-from indexd import default_settings, get_app as get_indexd_app
-from indexclient.client import IndexClient
 import pytest
 import requests
 import requests_mock
 from mock import patch
-from flask.testing import make_test_environ_builder
+from cdisutilstest.code.conftest import (
+    indexd_client,
+    indexd_server,
+)
 from fence.jwt.token import generate_signed_access_token
 from psqlgraph import PsqlGraphDriver
 from gdcdatamodel.models import Edge, Node
 from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
 from userdatamodel.driver import SQLAlchemyDriver
-from cdispyutils.hmac4 import get_auth
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
 
@@ -27,9 +27,8 @@ from sheepdog.test_settings import (
     Fernet,
     HMAC_ENCRYPTION_KEY,
     JWT_KEYPAIR_FILES,
-    INDEXD,
 )
-from tests.integration.api import app as _app, app_init, indexd_init
+from tests.integration.api import app as _app, app_init
 from tests.integration.submission.test_endpoints import put_cgci_blgsp
 
 try:
@@ -62,45 +61,8 @@ def pg_config():
         database=test_db,
     )
 
-
-def wait_for_indexd_alive(port):
-    url = 'http://localhost:{}/_status'.format(port)
-    try:
-        requests.get(url)
-    except requests.ConnectionError:
-        return wait_for_indexd_alive(port)
-    else:
-        return
-
-
-def wait_for_indexd_not_alive(port):
-    url = 'http://localhost:{}/_status'.format(port)
-    try:
-        requests.get(url)
-    except requests.ConnectionError:
-        return
-    else:
-        return wait_for_indexd_not_alive(port)
-
-
 @pytest.fixture
 def app(tmpdir, request):
-
-    port = 8000
-    # this is to make sure sqlite is initialized
-    # for every unit test
-    reload(default_settings)
-
-    # fresh files before running
-    for filename in ['auth.sq3', 'index.sq3', 'alias.sq3']:
-        if os.path.exists(filename):
-            os.remove(filename)
-    indexd_app = get_indexd_app()
-
-    indexd_init(*INDEXD['auth'])
-    indexd = Process(target=indexd_app.run, args=['localhost', port])
-    indexd.start()
-    wait_for_indexd_alive(port)
 
     gencode_json = tmpdir.mkdir("slicing").join("test_gencode.json")
     gencode_json.write(json.dumps({
@@ -110,17 +72,7 @@ def app(tmpdir, request):
         'd_gene': ['chr1', None, None],
     }))
 
-    def teardown():
-        for filename in ['auth.sq3', 'index.sq3', 'alias.sq3']:
-            if os.path.exists(filename):
-                os.remove(filename)
-
-        indexd.terminate()
-        wait_for_indexd_not_alive(port)
-
     _app.config.from_object("sheepdog.test_settings")
-
-    request.addfinalizer(teardown)
 
     app_init(_app)
     dictionary_setup(_app)
@@ -277,11 +229,6 @@ def member(pg_driver):
 @pytest.fixture()
 def cgci_blgsp(client, admin):
     put_cgci_blgsp(client, admin)
-
-
-@pytest.fixture()
-def index_client():
-    return IndexClient(INDEXD['host'], INDEXD['version'], INDEXD['auth'])
 
 
 def dictionary_setup(_app):

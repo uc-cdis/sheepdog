@@ -58,7 +58,11 @@ def make_s3_request(project_id, uuid, data, args, headers, method, action):
 
     bucket = bucket or get_submission_bucket()
     res = bucket.connection.make_request(
-        method, bucket=bucket.name, key=key_name,
-        data=data, query_args=args, headers=headers
+        method,
+        bucket=bucket.name,
+        key=key_name,
+        data=data,
+        query_args=args,
+        headers=headers,
     )
     return res

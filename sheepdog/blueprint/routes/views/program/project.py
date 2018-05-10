@@ -225,7 +225,7 @@ def create_delete_entities_viewer(dry_run=False):
 
     @utils.assert_project_exists
     @auth.authorize_for_project(ROLES['DELETE'], ROLES['ADMIN'])
-    def delete_entities(program, project, ids, to_delete=None):
+    def delete_entities(program, project, ids):
         """
         Delete existing GDC entities.
 
@@ -245,9 +245,6 @@ def create_delete_entities_viewer(dry_run=False):
         :param str ids:
             A comma separated list of ids specifying the entities to delete.
             These ids must be official GDC ids.
-        :param bool to_delete:
-            Set the to_delete sysan as true or false. If none, then don't try
-            to set the sysan, and instead delete the node.
         :param str ids:
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
@@ -261,23 +258,10 @@ def create_delete_entities_viewer(dry_run=False):
         ids_list = ids.split(',')
         fields = flask.request.args.get('fields')
 
-        if to_delete is not None:
-            # to_delete is admin only
-            auth.admin_auth()
-
-            # get value of that flag from string
-            if to_delete.lower() == 'false':
-                to_delete = False
-            elif to_delete.lower() == 'true':
-                to_delete = True
-            else:
-                raise UserError('to_delete value not true or false')
-
         return transactions.deletion.handle_deletion_request(
             program,
             project,
             ids_list,
-            to_delete,
             dry_run=dry_run,
             fields=fields
         )
@@ -435,11 +419,7 @@ def create_files_viewer(dry_run=False, reassign=False):
             else:
                 action = 'upload'
         elif flask.request.method == 'PUT':
-            if reassign:
-                # admin only
-                auth.admin_auth()
-                action = 'reassign'
-            elif flask.request.args.get('partNumber'):
+            if flask.request.args.get('partNumber'):
                 action = 'upload_part'
             else:
                 action = 'upload'

@@ -299,7 +299,6 @@ def get_indexd(uuid):
 
     Args:
         uuid (string): UUID that is possibly in the system
-        passive (bool): if a uuid doesn't exist, that's ok
     Returns:
         doc: Indexd doc to be modified later
     """
@@ -507,6 +506,7 @@ def update_indexd_url(indexd_obj, key_name=None, s3_url=None):
         indexd_obj.urls = [s3_url]
     else:
         indexd_obj.urls = []
+
     indexd_obj.patch()
 
 

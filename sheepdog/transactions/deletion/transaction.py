@@ -17,7 +17,6 @@ class DeletionTransaction(TransactionBase):
     def __init__(self, **kwargs):
         super(DeletionTransaction, self).__init__(role='delete', **kwargs)
         self.fields_to_delete = kwargs.get('fields', None)
-        self.to_delete = kwargs.get('to_delete', None)
 
         # see DeletionEntity.related_cases() docstring for details
         self.related_cases = {
@@ -69,12 +68,7 @@ class DeletionTransaction(TransactionBase):
 
     def _delete_entities(self):
         if self.success:
-            if self.to_delete is not None:
-                # set to_delete in sysan to True or False if present
-                for e in self.valid_entities:
-                    e.node.sysan['to_delete'] = self.to_delete
-            else:
-                map(self.session.delete, [e.node for e in self.valid_entities])
+            map(self.session.delete, [e.node for e in self.valid_entities])
 
     def _delete_fields(self):
         """

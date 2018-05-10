@@ -14,7 +14,11 @@ from moto import mock_s3
 
 from gdcdatamodel import models as md
 from sheepdog.transactions.upload import UploadTransaction
-from tests.integration.submission.utils import data_fnames
+from tests.integration.submission.utils import (
+    data_fnames,
+    post_example_entities_together,
+    put_example_entities_together,
+)
 
 
 #: Do we have a cache case setting and should we do it?
@@ -153,7 +157,7 @@ def test_project_creation_without_admin_token(client, pg_driver, submitter, admi
     assert resp.status_code == 403
 
 
-def test_put_entity_creation_valid(client, pg_driver, cgci_blgsp, submitter):
+def test_put_entity_creation_valid(client, indexd_client, pg_driver, cgci_blgsp, submitter):
     headers = submitter
     data = json.dumps({
         "type": "experiment",
@@ -270,26 +274,6 @@ def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
             if CACHE_CASES and fname not in ['experiment.json', 'case.json']:
                 case = resp.json['entities'][0]['related_cases'][0]
                 assert (case['submitter_id'] == case_sid), (fname, resp.data)
-
-
-def post_example_entities_together(client, submitter, data_fnames2=None):
-    if not data_fnames2:
-        data_fnames2 = data_fnames
-    path = BLGSP_PATH
-    data = []
-    for fname in data_fnames2:
-        with open(os.path.join(DATA_DIR, fname), 'r') as f:
-            data.append(json.loads(f.read()))
-    return client.post(path, headers=submitter, data=json.dumps(data))
-
-
-def put_example_entities_together(client, headers):
-    path = BLGSP_PATH
-    data = []
-    for fname in data_fnames:
-        with open(os.path.join(DATA_DIR, fname), 'r') as f:
-            data.append(json.loads(f.read()))
-    return client.put(path, headers=headers, data=json.dumps(data))
 
 
 def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
@@ -587,16 +571,6 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
     def fail_index_test(_):
         raise AssertionError('IndexClient tried to create index or alias')
 
-    # Since the IndexClient should never be called to register anything if the
-    # file is invalid, change the ``create`` and ``create_alias`` methods to
-    # raise an error.
-    monkeypatch.setattr(
-        UploadTransaction, 'indexd.create', fail_index_test, raising=False
-    )
-    monkeypatch.setattr(
-        UploadTransaction, 'indexd.create_alias', fail_index_test,
-        raising=False
-    )
     # Attempt to post the invalid entities.
     test_fnames = (
         data_fnames
@@ -608,7 +582,7 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
     print(resp)
 
 
-def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter, index_client):
+def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter, indexd_client):
     """
     Test that submitting a valid data file creates an index and an alias.
     """
@@ -633,7 +607,7 @@ def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter,
             sur_entity = entity
 
     assert sur_entity, 'No submitted_unaligned_reads entity created'
-    assert index_client.get(sur_entity['id']), 'No indexd document created'
+    assert indexd_client.get(sur_entity['id']), 'No indexd document created'
 
 
 def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):

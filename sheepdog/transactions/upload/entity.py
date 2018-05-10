@@ -4,13 +4,15 @@ Classes and functions for upload.
 import uuid
 
 import psqlgraph
-import flask
 import sqlalchemy
 from psqlgraph.exc import ValidationError
 
 from sheepdog import dictionary
 from sheepdog import models
-from sheepdog.errors import InternalError
+from sheepdog.errors import (
+    InternalError,
+    UserError,
+)
 from sheepdog.globals import (
     REGEX_UUID,
     UNVERIFIED_PROGRAM_NAMES,
@@ -18,6 +20,7 @@ from sheepdog.globals import (
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.utils import get_suggestion
+
 
 # TODO: This should probably go into the dictionary and be
 # read from there. For now, these are the only nodes that will
@@ -30,11 +33,23 @@ POSSIBLE_OPEN_FILE_NODES = [
     'masked_somatic_mutation',
     'methylation_beta_value',
     'mirna_expression',
-    'file'
+    'file',
 ]
 
+
 def lookup_node(psql_driver, label, node_id=None, secondary_keys=None):
-    """Return a query for nodes by id and secondary keys."""
+    """Return a query for nodes by id and secondary keys.
+
+    Args:
+        psql_driver (psqlgraph.psqlgraph.PsqlGraphDriver): Connection to graph
+        label (str): Node type label
+        node_id (str): UUID of node
+        secondary_keys (tuple): filter by node type secondary keys property
+
+    Returns:
+        psqlgraph.query.GraphQuery: sqlalchemy query object
+    """
+
     cls = psqlgraph.Node.get_subclass(label)
     query = psql_driver.nodes(cls)
     if node_id is None and not secondary_keys:
@@ -72,7 +87,16 @@ class UploadEntity(EntityBase):
         self.doc = {}
         self.parents = {}
         self._secondary_keys = None
-        self._config = config
+        self._config = config or {}
+
+        ####################################################################
+        # Some projects allow for an entity to be updated partially or fully
+        # as many times as needed without creating a new version of the
+        # doc in indexd
+        ####################################################################
+        self._is_replaceable = self._config.get('CREATE_REPLACEABLE', False)
+
+        self.old_uuid = None
 
     @property
     def secondary_keys(self):
@@ -171,6 +195,24 @@ class UploadEntity(EntityBase):
 
         self._set_node_properties()
 
+        if not self.entity_id:
+            return
+
+        # indexd document doesn't exist, then there's no more work to do
+        indexd_doc = self.transaction.indexd.get(self.entity_id)
+        if not indexd_doc:
+            return
+
+        # cannot update a node in state submitted
+        if self.node.state == 'submitted':
+            raise UserError(
+                'Unable to update a node in state {}'.format(doc_state)
+            )
+
+        # only update the fields with the new metadata
+        if self._is_replaceable:
+            self._update_indexd_doc(indexd_doc)
+
     def flush_to_session(self):
         """
         Add graph node to session of the current transaction.
@@ -184,12 +226,13 @@ class UploadEntity(EntityBase):
                 self.transaction.session.add(self.node)
             elif role == 'update':
                 self.node = self.transaction.session.merge(self.node)
+            elif role == 'version':
+                self.transaction.session.add(self.node)
             else:
                 message = 'Unknown role {}'.format(role)
                 self.logger.error(message)
                 self.record_error(
-                    message, type=EntityErrors.INVALID_PERMISSIONS
-                )
+                    message, type=EntityErrors.INVALID_PERMISSIONS)
         except Exception as e:  # pylint: disable=broad-except
             self.logger.exception(e)
             self.record_error(str(e))
@@ -238,8 +281,9 @@ class UploadEntity(EntityBase):
         #. If not `skip_node_lookup`, the node does not already exist
 
         Return:
-            psqlgraph.Node
+            psqlgraph.Node: Node you just created
         """
+
         # Check user permissions for updating nodes
         roles = self.get_user_roles()
         if 'create' not in roles:
@@ -279,13 +323,13 @@ class UploadEntity(EntityBase):
 
         # Assert that the node doesn't already exist
         if not skip_node_lookup:
-            nodes = lookup_node(
+            query = lookup_node(
                 self.transaction.db_driver,
                 self.entity_type,
                 self.entity_id,
                 self.secondary_keys,
             )
-            if nodes.count():
+            if query.count() == 1:
                 return self.record_error(
                     'Cannot create entity that already exists. '
                     'Try updating entity (PUT instead of POST)',
@@ -325,29 +369,32 @@ class UploadEntity(EntityBase):
 
     def get_node_merge(self):
         """
-        This is called for a PATCH operation and supports upsert. It will
+        This is called for a PUT operation and supports upsert. It will
         lookup an existing node or create one if it doesn't exist.
 
         Return:
-            psqlgraph.Node:
+            psqlgraph.Node: Node you just created
         """
-        nodes = lookup_node(
+
+        # will always return false if you provide a new UUID in your query
+        query = lookup_node(
             self.transaction.db_driver,
             self.entity_type,
             self.entity_id,
             self.secondary_keys
-        ).all()
+        )
 
-        if len(nodes) > 1:
+        # if no node was found, create a new one
+        if query.count() == 0:
+            return self.get_node_create()
+
+        # NOTE: should this happen?
+        if query.count() > 1:
             return self.record_error(
-                'Entity is not unique, {} entities found with {}'
-                .format(len(nodes), self.secondary_keys),
+                '{} entities found with {}'
+                .format(query.count(), self.secondary_keys),
                 type=EntityErrors.NOT_UNIQUE,
             )
-
-        # If no node was found, create a new one
-        if len(nodes) == 0:
-            return self.get_node_create()
 
         # Check user permissions for updating nodes
         if 'update' not in self.get_user_roles():
@@ -357,8 +404,9 @@ class UploadEntity(EntityBase):
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
 
-        node = nodes.pop()
+        node = query.one()
         self.old_props = {k: v for k, v in node.props.iteritems()}
+        indexd_doc = self.transaction.indexd.get(node.node_id)
 
         if node.label != self.entity_type:
             return self.record_error(
@@ -374,6 +422,11 @@ class UploadEntity(EntityBase):
                 .format(node.project_id, self.transaction.project_id),
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
+
+        # if it's released then we can make a new node in it's place
+        if indexd_doc and node.state == 'released':
+            return self.get_node_recreate()
+
         self._merge_doc_links(node)
 
         if self.entity_id and node.node_id != self.entity_id:
@@ -411,6 +464,37 @@ class UploadEntity(EntityBase):
 
         return node
 
+    def _update_indexd_doc(self, indexd_doc):
+        """Update an entry in indexd if applicable for a project
+
+        Currently there is no way to update all the fields a document in indexd.
+        For projects that permit it, a submitter can update the node metadata
+        as many times as they want but that means a change in file size,
+        file name, hashes, etc. To get around this we collect the metadata from
+        indexd, delete the entry, and re-create it with the same did and baseid.
+
+        Args:
+            indexd_doc (indexclient.client.Document):
+                IndexClient representation of document in indexd
+        """
+
+        # Order is important for deletion. Document.to_json will raise an
+        # exception if the document is already deleted in indexd.
+        doc_props = indexd_doc.to_json()
+        indexd_doc.delete()
+
+        self.transaction.indexd.create(
+            # Required fields are supplied at all times of node creation. That
+            # means that these properties will be in the self.doc variable.
+            hashes={'md5': self.doc['md5sum']},  # new/updated
+            size=self.doc['file_size'],          # new/updated
+            file_name=self.doc['file_name'],     # new/updated
+            did=doc_props['did'],                # old/carried over
+            urls=doc_props['urls'],              # old/carried over
+            metadata=doc_props['metadata'],      # old/carried over
+            baseid=doc_props['baseid'],          # old/carried over
+        )
+
     def _merge_doc_links(self, node):
         """
         For all links that exist in the database, add them to the document if
@@ -427,9 +511,7 @@ class UploadEntity(EntityBase):
             self.doc[name] = doc_links
 
             # Get set of node ids in the link document
-            map(doc_ids.add, [
-                l.get('id') for l in doc_links if l.get('id')
-            ])
+            map(doc_ids.add, [l.get('id') for l in doc_links if l.get('id')])
 
             # Get set of secondary_keys in the link document
             for link in doc_links:
@@ -578,8 +660,20 @@ class UploadEntity(EntityBase):
         return node.project_id == self.transaction.project_id
 
     def get_metadata(self):
-        metadata = {'acls': self.transaction.get_phsids()}
-        return metadata
+        """
+        Return a dict of default values on a new node in indexd.
+
+        Metadata refers to the Document.metadata dictionary that captures extra
+        information not facilitated by the attributes of an indexd Document.
+
+        NOTE: This used to have important information, but it was since
+        moved to other places. Keeping the method just in case more
+        fields come in the future.
+
+        Returns:
+            dict: key-value pair of extra metadata about an indexd document
+        """
+        return dict()
 
     def get_skeleton_node(self, label, properties, project_id=None):
         """
@@ -647,7 +741,7 @@ class UploadEntity(EntityBase):
         user = user or self.transaction.user
         return user.roles.get(self.transaction.project_id, [])
 
-    def is_case_creation_allowed(self, case_id):
+    def is_case_creation_allowed(self, submitter_id):
         """
         Check if case creation is allowed:
 
@@ -655,6 +749,8 @@ class UploadEntity(EntityBase):
         #. Is the case in a predefined list of cases to allow?
         #. Is the owning project in a predefined list of projects?
         """
+
+        # TODO: case_id not used?
         program, project = self.transaction.project_id.split('-', 1)
         if program in UNVERIFIED_PROGRAM_NAMES:
             return True
@@ -664,7 +760,7 @@ class UploadEntity(EntityBase):
             return self.transaction.dbgap_x_referencer.case_exists(
                 program,
                 project,
-                self.doc.get('submitter_id')
+                submitter_id,
             )
 
     def set_association_proxies(self):
@@ -765,8 +861,8 @@ class UploadEntity(EntityBase):
                 ]
                 max_parent_sample_children = 10
                 if (self.node == models.Sample)\
-                    and (self.node._pg_links[name]['dst_type'] == models.Sample)\
-                    and self._config.get('IS_GDC', False):
+                        and (self.node._pg_links[name]['dst_type'] == models.Sample)\
+                        and self._config.get('IS_GDC', False):
 
                     # check if it's linking to a parent node
                     if nodes[0].sample_type in parent_sample_types:

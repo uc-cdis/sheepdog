@@ -3,13 +3,16 @@ Subclasses for UploadEntity that handle different types of
 uploaded entites.
 """
 import uuid
-import flask
+
+import psqlgraph
+from indexclient.client import Document
 
 from sheepdog import utils
 from sheepdog.transactions.entity_base import EntityErrors
-
-from sheepdog.transactions.upload.entity import UploadEntity
-from sheepdog.transactions.upload.entity import lookup_node
+from sheepdog.transactions.upload.entity import (
+    UploadEntity,
+    lookup_node,
+)
 
 
 class NonFileUploadEntity(UploadEntity):
@@ -80,6 +83,8 @@ class FileUploadEntity(UploadEntity):
     """
     def __init__(self, *args, **kwargs):
         super(FileUploadEntity, self).__init__(*args, **kwargs)
+
+        # file exists in indexd
         self.file_exists = False
         self.file_index = None
         self.file_by_uuid = None
@@ -118,14 +123,15 @@ class FileUploadEntity(UploadEntity):
 
         # call to super must happen after setting node and file ids here
         node = super(FileUploadEntity, self).get_node_create(
-            skip_node_lookup=skip_node_lookup)
+            skip_node_lookup=skip_node_lookup,
+        )
         node.acl = self.transaction.get_phsids()
 
         return node
 
     def get_node_merge(self):
         """
-        This is called for a PATCH operation and supports upsert. It will
+        This is called for a PUT operation and supports upsert. It will
         lookup an existing node or create one if it doesn't exist.
 
         Return:
@@ -164,11 +170,14 @@ class FileUploadEntity(UploadEntity):
             return
 
         role = self.action
-
         try:
             if role == 'create':
                 if not self.file_exists:
                     self._register_index()
+
+            elif role == 'version':
+                if self.file_exists:
+                    self._new_version_index()
 
             elif role == 'update':
                 if self.file_exists:
@@ -191,31 +200,48 @@ class FileUploadEntity(UploadEntity):
         Call the index client for the transaction to register a
         new index record for this entity.
         """
+
         project_id = self.transaction.project_id
+        program = self.transaction.program
+        project = self.transaction.project
         submitter_id = self.node._props.get('submitter_id')
         hashes = {'md5': self.node._props.get('md5sum')}
         size = self.node._props.get('file_size')
+        file_name = self.node._props.get('file_name')
         alias = "{}/{}".format(project_id, submitter_id)
-        project = utils.lookup_project(
+        metadata = self.get_metadata()
+
+        project_node = utils.lookup_project(
             self.transaction.db_driver,
             self.transaction.program,
             self.transaction.project
         )
-        if utils.is_project_public(project):
-            acl = ['*']
-        else:
-            acl = self.transaction.get_phsids()
 
-        urls = []
-        if self.urls:
-            urls.extend(self.urls)
+        if utils.is_project_public(project_node):
+            acls = ['*']
+        else:
+            acls = self.transaction.get_phsids()
+
+        url = generate_s3_url(
+            host=self._config['SUBMISSION']['host'],
+            bucket=self._config['SUBMISSION']['bucket'],
+            program=program,
+            project=project,
+            uuid=self.entity_id,
+            file_name=file_name,
+        )
+        urls_metadata={url: {'state': 'registered'}}
+        urls = [url]
 
         # IndexClient
         self._create_index(did=self.entity_id,
                            hashes=hashes,
                            size=size,
                            urls=urls,
-                           acl=acl)
+                           acl=acls,
+                           file_name=file_name,
+                           metadata=metadata,
+                           urls_metadata=urls_metadata)
 
         self._create_alias(
             record=alias, hashes=hashes, size=size, release='private'
@@ -233,6 +259,43 @@ class FileUploadEntity(UploadEntity):
             if urls_to_add:
                 document.urls.extend(urls_to_add)
                 document.patch()
+
+    def _new_version_index(self):
+        """
+        Call the index client for the transaction to create a new version
+        of an already existing index for the old_uuid.
+        """
+
+        file_name = self.node._props.get('file_name')
+
+        project_id = self.transaction.project_id
+        program = project_id.split('-')[0]
+        project = '-'.join(project_id.split('-')[1:])
+
+        urls = self.urls or [
+            generate_s3_url(
+                host=self._config['SUBMISSION']['host'],
+                bucket=self._config['SUBMISSION']['bucket'],
+                program=program,
+                project=project,
+                uuid=self.entity_id,
+                file_name=file_name,
+            )
+        ]
+
+        index_json = dict(
+            did=self.entity_id,
+            hashes={'md5': self.node._props.get('md5sum')},
+            size=self.node._props.get('file_size'),
+            file_name=file_name,
+            urls=urls,
+            acl=self.transaction.get_phsids(),
+            metadata=self.get_metadata(),
+            form='object',
+            urls_metadata={url: {'state': 'registered'} for url in urls}
+        )
+        new_doc = Document(None, None, index_json)
+        self._version_index(current_did=self.old_uuid, new_doc=new_doc)
 
     @staticmethod
     def is_updatable_file_node(node):
@@ -268,17 +331,20 @@ class FileUploadEntity(UploadEntity):
         """
         Populate information about file existence in index service.
         Will first check provided uuid, then check by hash/size.
-
-        Returns:
-            TYPE: Description
         """
-        self.file_by_hash = self.get_file_from_index_by_hash()
-        self.file_by_uuid = self.get_file_from_index_by_uuid(self.entity_id)
 
-        if flask.current_app.config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
-            self.file_exists = self.file_by_uuid or self.file_by_hash
+        did = self.old_uuid or self.entity_id
+        self.file_by_hash = self.get_file_from_index_by_hash()
+        self.file_by_uuid = self.get_file_from_index_by_uuid(did)
+
+        #######################################################################
+        # need to find out if this causes application working outside
+        # of context error
+        #######################################################################
+        if self._config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
+            self.file_exists = bool(self.file_by_uuid or self.file_by_hash)
         else:
-            self.file_exists = self.file_by_uuid
+            self.file_exists = bool(self.file_by_uuid)
 
     def _set_node_and_file_ids(self):
         """
@@ -286,6 +352,7 @@ class FileUploadEntity(UploadEntity):
         information provided and whether or not the file exists in the
         index service.
         """
+
         if not self.file_exists:
             # generate entity_id if not provided
             if not self.entity_id:
@@ -294,7 +361,7 @@ class FileUploadEntity(UploadEntity):
             self.file_index = self.entity_id
         else:
             # If hash and size uniqueness not enforced, do nothing
-            if not flask.current_app.config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
+            if not self._config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
                 return
 
             if self.entity_id:
@@ -368,34 +435,79 @@ class FileUploadEntity(UploadEntity):
 
     def _is_valid_index_id_for_graph(self):
         # Do not check by hash and size if uniqueness is not enforced (for ex. GDC)
-        if not flask.current_app.config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
+
+        if self._is_replaceable:
             return True
 
         is_valid = True
         # if a single match exists in the graph, check to see if
         # file exists in index service
-        nodes = lookup_node(
+        query = lookup_node(
             self.transaction.db_driver,
             self.entity_type,
             self.entity_id,
             self.secondary_keys
-        ).all()
-        if len(nodes) == 1:
+        )
+        if query.count() == 1:
             if self.file_exists:
+                node = query.one()
                 file_by_uuid_index = getattr(self.file_by_uuid, 'did', None)
                 file_by_hash_index = getattr(self.file_by_hash, 'did', None)
-                if ((file_by_uuid_index != nodes[0].node_id) or
-                        (file_by_hash_index != nodes[0].node_id)):
+
+                if ((file_by_uuid_index != node.node_id) or
+                        (file_by_hash_index != node.node_id)):
                     self.record_error(
                         'Graph ID and index file ID found in index service do not match, '
                         'which is currently not permitted. Graph ID: {}. '
                         'Index ID: {}. Index ID found using hash/size: {}.'
-                        .format(nodes[0].node_id, file_by_hash_index, file_by_uuid_index),
+                        .format(node.node_id, file_by_hash_index, file_by_uuid_index),
                         type=EntityErrors.NOT_UNIQUE,
                     )
                     is_valid = False
 
         return is_valid
+
+    def get_node_recreate(self):
+        """
+        Create a new node in the old node's place if it exists in indexd. with
+        graph node state = 'released'.
+        """
+
+        nodes = lookup_node(
+            self.transaction.db_driver,
+            self.entity_type,
+            self.entity_id,
+            self.secondary_keys,
+        )
+
+        self.old_uuid = nodes.one().node_id
+        self.file_by_uuid = self.get_file_from_index_by_uuid(self.entity_id)
+        with self.transaction.db_driver.session_scope() as session:
+            for node in nodes:
+                session.delete(node)
+
+        # new node id
+        self.entity_id = str(uuid.uuid4())
+
+        # Fill in default system property values
+        for key, val in self.get_system_property_defaults().iteritems():
+            if self.doc.get(key, None) is None:
+                self.doc[key] = val
+
+        # Create the node and populate its properties
+        cls = psqlgraph.Node.get_subclass(self.entity_type)
+        self.logger.debug('Recreating new {}'.format(cls.__name__))
+        node = cls(self.entity_id)
+
+        # check if open_acl is requested and the node type can be set open
+        if self.doc.get('open_acl', None) and self._config.get('IS_GDC', False):
+            if self.entity_type in POSSIBLE_OPEN_FILE_NODES:
+                node.acl = [u'open']
+            else:
+                node.acl = self.transaction.get_phsids()
+
+        self.action = 'version'
+        return node
 
     def get_file_from_index_by_hash(self):
         """
@@ -426,7 +538,11 @@ class FileUploadEntity(UploadEntity):
         - Should only ever be called for data and metadata files.
         - If there is already a record matching the hash and size for this
           file, then return none.
+
+        Args:
+            uuid (str): unique digital id for a node in the database
         """
+
         document = None
 
         if uuid:
@@ -451,3 +567,41 @@ class FileUploadEntity(UploadEntity):
 
     def _create_index(self, **kwargs):
         return self.transaction.indexd.create(**kwargs)
+
+    def _version_index(self, **kwargs):
+        return self.transaction.indexd.add_version(**kwargs)
+
+def generate_s3_url(host, bucket, program, project, uuid, file_name):
+    """
+    Determine what the s3 url will be so we can assign file states before a file
+    is uploaded
+
+    Example:
+        s3://HOST/BUCKET/PROGRAM/PROJECT/UUID/FILENAME
+
+    Args:
+        host (str): s3 hostname
+        bucket (str): s3 bucket name
+        program (str): program name
+        project (str): project code
+        uuid (str): entity's did
+        file_name (str): entity's filename
+
+    Returns:
+        str: valid s3 url
+    """
+
+    if not host.startswith('s3://'):
+        host = 's3://' + host
+
+    if not host.endswith('/'):
+        host += '/'
+
+    if bucket.startswith('/'):
+        bucket = bucket[1:]
+
+    if not bucket.endswith('/'):
+        bucket += '/'
+
+    key = '{}/{}/{}/{}'.format(program, project, uuid, file_name)
+    return host + bucket + key

@@ -100,3 +100,4 @@ os.environ['AUTHLIB_INSECURE_TRANSPORT'] = 'true'
 
 # if False, there will be 2 indexd entries created for file entities with different ids but with same hash and size insead of one
 ENFORCE_FILE_HASH_SIZE_UNIQUENESS = True
+CREATE_REPLACEABLE = False

@@ -2,9 +2,10 @@
 Test upload entities (mostly data file handling and communication with
 index service).
 """
-import flask
-import json
 import copy
+import json
+import re
+
 import pytest
 
 from test_endpoints import put_cgci_blgsp
@@ -21,19 +22,44 @@ except ImportError:
     from mock import MagicMock
     from mock import patch
 
-BLGSP_PATH = '/v0/submission/CGCI/BLGSP/'
+from sheepdog.test_settings import SUBMISSION
+from sheepdog.transactions.upload.sub_entities import generate_s3_url
+from tests.integration.submission.test_versioning import release_indexd_doc
+
+PROGRAM = 'CGCI'
+PROJECT = 'BLGSP'
+BLGSP_PATH = '/v0/submission/{}/{}/'.format(PROGRAM, PROJECT)
 
 # some default values for data file submissions
 DEFAULT_FILE_HASH = '00000000000000000000000000000001'
 DEFAULT_FILE_SIZE = 1
-DEFAULT_URL = 'test/url/test/0'
+FILE_NAME = 'test-file'
 DEFAULT_SUBMITTER_ID = '0'
 DEFAULT_UUID = 'bef870b0-1d2a-4873-b0db-14994b2f89bd'
+DEFAULT_URL = generate_s3_url(
+    host=SUBMISSION['host'],
+    bucket=SUBMISSION['bucket'],
+    program=PROGRAM,
+    project=PROJECT,
+    uuid=DEFAULT_UUID,
+    file_name=FILE_NAME,
+)
+# Regex because sometimes you don't get to upload a UUID, and the UUID is
+# part of the s3 url.
+UUID_REGEX = r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+REGEX_URL = r's3://{}/{}/{}/{}/{}/{}'.format(
+    SUBMISSION['host'],
+    SUBMISSION['bucket'],
+    PROGRAM,
+    PROJECT,
+    UUID_REGEX,
+    FILE_NAME,
+)
 
 DEFAULT_METADATA_FILE = {
     'type': 'experimental_metadata',
     'data_type': 'Experimental Metadata',
-    'file_name': 'test-file',
+    'file_name': FILE_NAME,
     'md5sum': DEFAULT_FILE_HASH,
     'data_format': 'some_format',
     'submitter_id': DEFAULT_SUBMITTER_ID,
@@ -62,10 +88,10 @@ def submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp):
     assert resp.status_code == 200, resp.data
 
 
-def submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=None):
+def submit_metadata_file(client, admin, submitter, data=None, create_project=False):
     data = data or DEFAULT_METADATA_FILE
-    put_cgci_blgsp(client, admin)
+    if create_project:
+        put_cgci_blgsp(client, admin)
     data = json.dumps(data)
     resp = client.put(BLGSP_PATH, headers=submitter, data=data)
     return resp
@@ -77,7 +103,7 @@ def submit_metadata_file(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_not_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test node and data file creation when neither exist and no ID is provided.
     """
@@ -86,7 +112,7 @@ def test_data_file_not_indexed(
     get_index_uuid.return_value = None
     get_index_hash.return_value = None
 
-    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    resp = submit_metadata_file(client, admin, submitter)
 
     # index creation
     assert create_index.call_count == 1
@@ -96,7 +122,10 @@ def test_data_file_not_indexed(
     assert 'hashes' in kwargs
     assert kwargs['hashes'].get('md5') == DEFAULT_FILE_HASH
     assert 'urls' in kwargs
-    assert DEFAULT_URL in kwargs['urls']
+
+    # won't have an exact match because of the way URLs are generated
+    # with a UUID in them
+    assert re.match(REGEX_URL, kwargs['urls'][0])
 
     # alias creation
     assert create_alias.called
@@ -118,7 +147,7 @@ def test_data_file_not_indexed(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_not_indexed_id_provided(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test node and data file creation when neither exist and an ID is provided.
     That ID should be used for the node and file index creation
@@ -131,7 +160,7 @@ def test_data_file_not_indexed_id_provided(
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
     file['id'] = DEFAULT_UUID
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=file)
+        client, admin, submitter, data=file)
 
     # index creation
     assert create_index.call_count == 1
@@ -164,7 +193,7 @@ def test_data_file_not_indexed_id_provided(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_already_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting when the file is already indexed in the index client and
     no ID is provided. sheepdog should fall back on the hash/size of the file
@@ -185,7 +214,7 @@ def test_data_file_already_indexed(
             return None
     get_index_uuid.side_effect = get_index_by_uuid
 
-    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    resp = submit_metadata_file(client, admin, submitter)
 
     # no index or alias creation
     assert not create_index.called
@@ -208,7 +237,7 @@ def test_data_file_already_indexed(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_already_indexed_id_provided(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting when the file is already indexed in the index client and
     an id is provided in the submission.
@@ -232,7 +261,7 @@ def test_data_file_already_indexed_id_provided(
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
     file['id'] = document.did
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=file)
+        client, admin, submitter, data=file)
 
     # no index or alias creation
     assert not create_index.called
@@ -255,7 +284,7 @@ def test_data_file_already_indexed_id_provided(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_url(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting the same data again but updating the URL field (should
     get added to the indexed file in index service).
@@ -276,14 +305,14 @@ def test_data_file_update_url(
             return None
     get_index_uuid.side_effect = get_index_by_uuid
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
     updated_file['urls'] = new_url
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -311,7 +340,7 @@ def test_data_file_update_url(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_multiple_urls(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting the same data again but updating the URL field (should
     get added to the indexed file in index service).
@@ -332,7 +361,7 @@ def test_data_file_update_multiple_urls(
             return None
     get_index_uuid.side_effect = get_index_by_uuid
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
@@ -342,7 +371,7 @@ def test_data_file_update_multiple_urls(
     # comma separated list of urls INCLUDING the url that's already there
     updated_file['urls'] = DEFAULT_URL + ',' + new_url + ',' + another_new_url
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -374,7 +403,7 @@ def test_data_file_update_multiple_urls(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_url_id_provided(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, indexd_client, pg_driver, admin, submitter, cgci_blgsp):
     """
     Test submitting the same data again (with the id provided) and updating the
     URL field (should get added to the indexed file in index service).
@@ -395,15 +424,14 @@ def test_data_file_update_url_id_provided(
             return None
     get_index_uuid.side_effect = get_index_by_uuid
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
     updated_file['urls'] = new_url
     updated_file['id'] = document.did
-    resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+    resp = submit_metadata_file(client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -434,7 +462,7 @@ def test_data_file_update_url_id_provided(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_url_invalid_id(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting the same data again (with the WRONG id provided).
     i.e. ID provided doesn't match the id from the index service for the file
@@ -453,7 +481,7 @@ def test_data_file_update_url_invalid_id(
     # the uuid provided doesn't have a matching indexed file
     get_index_uuid.return_value = None
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
@@ -461,7 +489,7 @@ def test_data_file_update_url_invalid_id(
     updated_file['urls'] = new_url
     updated_file['id'] = DEFAULT_UUID
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -481,7 +509,7 @@ def test_data_file_update_url_invalid_id(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_url_id_provided_different_file_not_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting the same data again (with the id provided) and updating the
     URL field.
@@ -490,7 +518,7 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     submitted data for the given ID. The file hash/size provided does NOT
     match an already indexed file. e.g. The file is not yet indexed.
 
-    The asssumption is that the user is attempting to UPDATE the index
+    The assumption is that the user is attempting to UPDATE the index
     with a new file.
 
     FIXME At the moment, we do not allow updating like this
@@ -505,7 +533,7 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     # index yeilds no match given hash/size
     get_index_hash.return_value = None
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
@@ -515,7 +543,7 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     updated_file['md5sum'] = DEFAULT_FILE_HASH.replace('0', '2')
     updated_file['file_size'] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -536,7 +564,7 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_url_different_file_not_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting the different data (with NO id provided) and updating the
     URL field.
@@ -545,7 +573,7 @@ def test_data_file_update_url_different_file_not_indexed(
     submitted data. The file hash/size provided does NOT
     match an already indexed file. e.g. The file is not yet indexed.
 
-    The asssumption is that the user is attempting to UPDATE the index
+    The assumption is that the user is attempting to UPDATE the index
     with a new file but didn't provide a full id, just the same submitter_id
     as before.
 
@@ -560,10 +588,10 @@ def test_data_file_update_url_different_file_not_indexed(
     document.urls = [DEFAULT_URL]
     get_index_uuid.return_value = document
 
-    # index yeilds no match given hash/size
+    # index yields no match given hash/size
     get_index_hash.return_value = None
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
@@ -572,7 +600,7 @@ def test_data_file_update_url_different_file_not_indexed(
     updated_file['md5sum'] = DEFAULT_FILE_HASH.replace('0', '2')
     updated_file['file_size'] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -593,7 +621,7 @@ def test_data_file_update_url_different_file_not_indexed(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_update_url_id_provided_different_file_already_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting the same data again (with the id provided) and updating the
     URL field (should get added to the indexed file in index service).
@@ -601,7 +629,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     HOWEVER the file hash and size in the new data MATCH A DIFFERENT
     FILE in the index service that does NOT have the id provided.
 
-    The asssumption is that the user is attempting to UPDATE the index
+    The assumption is that the user is attempting to UPDATE the index
     with a new file they've already submitted under a different id.
 
     FIXME At the moment, we do not allow updating like this
@@ -619,7 +647,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     get_index_uuid.return_value = document_with_id
     get_index_hash.return_value = different_file_matching_hash_and_size
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, admin, submitter)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
@@ -629,7 +657,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     updated_file['md5sum'] = DEFAULT_FILE_HASH.replace('0', '2')
     updated_file['file_size'] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, admin, submitter, data=updated_file)
 
     # no index or alias creation
     assert not create_index.called
@@ -648,34 +676,41 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
 
 @pytest.mark.config_toggle(parameter='ENFORCE_FILE_HASH_SIZE_UNIQUENESS', value=False)
 def test_dont_enforce_file_hash_size_uniqueness(
-        client_toggled, pg_driver, admin, submitter, cgci_blgsp):
+        client_toggled, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
-    Check that able to submit two files with different did and urls but duplicate hash and size
-    if ENFORCE_FILE_HASH_SIZE_UNIQUENESS set to False
+    Check that able to submit two files with different did and urls but
+    duplicate hash and size if ENFORCE_FILE_HASH_SIZE_UNIQUENESS set to False
     """
 
     submit_first_experiment(client_toggled, pg_driver, admin, submitter, cgci_blgsp)
 
-    file_ = DEFAULT_METADATA_FILE
+    file_ = copy.deepcopy(DEFAULT_METADATA_FILE)
     file_['id'] = DEFAULT_UUID
 
-    submit_metadata_file(client_toggled, pg_driver, admin, submitter, cgci_blgsp,
-                         data=file_)
+    submit_metadata_file(
+        client_toggled,
+        admin,
+        submitter,
+        data=file_,
+    )
 
-    # now submit again but change url and id
+    release_indexd_doc(pg_driver, indexd_client, DEFAULT_UUID)
+    # now submit again but change url
     new_url = 'some/new/url/location/to/add'
-    new_id = DEFAULT_UUID.replace('1', '2')
 
     updated_file = copy.deepcopy(file_)
     updated_file['urls'] = new_url
-    updated_file['id'] = new_id
-    submit_metadata_file(client_toggled, pg_driver, admin, submitter,
-                         cgci_blgsp, data=updated_file)
+    del updated_file['id']
 
-    # check that both are incerted into indexd and have correct urls
-    assert flask.current_app.indexd.get(DEFAULT_UUID).to_json()['urls'] == [
-        DEFAULT_METADATA_FILE['urls']
-    ]
-    assert flask.current_app.indexd.get(new_id).to_json()['urls'] == [
-        new_url
-    ]
+    # release so that a new indexd document can be made
+    resp = submit_metadata_file(
+        client_toggled,
+        admin,
+        submitter,
+        data=updated_file,
+    )
+    new_id = resp.json['entities'][0]['id']
+
+    # check that both are inserted into indexd and have correct urls
+    assert indexd_client.get(DEFAULT_UUID).urls == [DEFAULT_URL]
+    assert indexd_client.get(new_id).urls == [new_url]
