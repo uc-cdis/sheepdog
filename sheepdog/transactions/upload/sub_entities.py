@@ -236,7 +236,7 @@ class FileUploadEntity(UploadEntity):
             uuid=self.entity_id,
             file_name=file_name,
         )
-        urls_metadata={url: {'state': 'registered'}}
+        urls_metadata = {url: {'state': 'registered'}}
         urls = [url]
 
         # IndexClient

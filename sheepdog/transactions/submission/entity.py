@@ -68,7 +68,7 @@ class SubmissionEntity(EntityBase):
 
         # Conditionally update file_state
         if current_file_state in SUBMITTABLE_FILE_STATES:
-            set_indexd_state(self.node.node_id, s3_url, to_state)
+            set_indexd_state(self.node.node_id, to_state)
 
         self.node.props[STATE_KEY] = to_state
 

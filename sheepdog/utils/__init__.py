@@ -343,9 +343,19 @@ def get_indexd_state(did, return_not_found=False):
     return states[0]
 
 
-def set_indexd_state(did, url, state):
+def set_indexd_state(did, state):
     """Update url state in indexd
     """
+    config = flask.current_app._config
+    import pdb; pdb.set_trace()
+    url = generate_s3_url(
+        host=config['SUBMISSION']['host'],
+        bucket=config['SUBMISSION']['bucket'],
+        program=program,
+        project=project,
+        uuid=self.entity_id,
+        file_name=file_name,
+    )
     indexd_doc = get_indexd(did)
     indexd_doc.urls_metadata[url]['state'] = state
     indexd_doc.patch()
@@ -484,29 +494,8 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
     elif action == 'abort_multipart':
         set_indexd_state(node, s3_url, submitted_state())
 
-    if action not in ['upload', 'upload_part', 'complete_multipart', 'reassign']:
+    if action not in ['upload', 'upload_part', 'complete_multipart']:
         data = ''
-
-    if action == 'reassign':
-        try:
-            # data.read() works like a file pointer.
-            # When you .read() again it will be pointing at the end of the stream
-            json_data = data.read()
-
-            # if it comes in as a string, convert it to dict
-            if not isinstance(json_data, dict):
-                json_data = json.loads(json_data)
-
-            new_url = json_data['s3_url']
-
-        except Exception:
-            message = 'Unable to parse json. Use the format {\'s3_url\':\'s3/://...\'}'
-            return flask.Response(json.dumps({'message': message}), status=400)
-
-        update_indexd_url(indexd_obj, s3_url=new_url)
-        set_indexd_state(node, new_url, SUCCESS_STATE)
-        message = ('URL successfully reassigned. New url: {}'.format(new_url))
-        return flask.Response(json.dumps({'message': message}), status=200)
 
     resp = s3.make_s3_request(
         project_id, uuid, data, args, headers, method, action
