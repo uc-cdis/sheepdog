@@ -20,7 +20,10 @@ from sheepdog.globals import (
     DATA_FILE_CATEGORIES,
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
-from sheepdog.utils import get_suggestion
+from sheepdog.utils import (
+    get_suggestion,
+    get_indexd,
+)
 
 
 # TODO: This should probably go into the dictionary and be
@@ -200,14 +203,14 @@ class UploadEntity(EntityBase):
             return
 
         # indexd document doesn't exist, then there's no more work to do
-        indexd_doc = self.transaction.indexd.get(self.entity_id)
+        indexd_doc = get_indexd(self.entity_id, return_not_found=True)
         if not indexd_doc:
             return
 
         # cannot update a node in state submitted
         if self.node.state == 'submitted':
             raise UserError(
-                'Unable to update a node in state {}'.format(doc_state)
+                'Unable to update a node in state "submitted"'
             )
 
         # only update the fields with the new metadata
@@ -407,7 +410,8 @@ class UploadEntity(EntityBase):
 
         node = query.one()
         self.old_props = {k: v for k, v in node.props.iteritems()}
-        indexd_doc = self.transaction.indexd.get(node.node_id)
+
+        indexd_doc = get_indexd(node.node_id, return_not_found=True)
 
         if node.label != self.entity_type:
             return self.record_error(

@@ -15,6 +15,7 @@ from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.submission.entity import SubmissionEntity
 from sheepdog.transactions.transaction_base import TransactionBase
 
+
 class SubmissionTransaction(TransactionBase):
 
     """Models a transaction to mark all nodes in a project submitted."""
@@ -30,8 +31,8 @@ class SubmissionTransaction(TransactionBase):
     def __init__(self, smtp_conf=None, **kwargs):
         super(SubmissionTransaction, self).__init__(role='submit', **kwargs)
 
-        self.app_config = capp.config
-        if utils.should_send_email(self.app_config):
+        self._config = capp.config
+        if utils.should_send_email(self._config):
             self.smtp_conf = smtp_conf
 
         if ROLE_SUBMIT not in self.user.roles.get(self.project_id, []):
@@ -136,7 +137,7 @@ class SubmissionTransaction(TransactionBase):
         self.assert_project_state()
         nodes = self.lookup_submittable_nodes()
         self.entities = [
-            SubmissionEntity(self, n)
+            SubmissionEntity(self, n, config=self._config)
             for n in nodes
         ]
         for entity in self.entities:
@@ -146,7 +147,7 @@ class SubmissionTransaction(TransactionBase):
         project_node.state = 'submitted'
         project_node.releasable = True
 
-        if self.success and utils.should_send_email(self.app_config):
+        if self.success and utils.should_send_email(self._config):
             self.send_submission_notification_email()
 
         self.commit()
@@ -158,9 +159,9 @@ class SubmissionTransaction(TransactionBase):
         about submitting a project
         """
 
-        from_addr = self.app_config.get('EMAIL_FROM_ADDRESS')
-        to_addr = self.app_config.get('EMAIL_SUPPORT_ADDRESS')
-        preformatted = self.app_config.get('EMAIL_NOTIFICATION_SUBMISSION')
+        from_addr = self._config.get('EMAIL_FROM_ADDRESS')
+        to_addr = self._config.get('EMAIL_SUPPORT_ADDRESS')
+        preformatted = self._config.get('EMAIL_NOTIFICATION_SUBMISSION')
         subject = (
             "[SUBMISSION] Project {project_id} has been submitted by {user}"
             .format(project_id=self.project_id, user=self.user.username))

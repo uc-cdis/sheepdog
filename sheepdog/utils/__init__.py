@@ -313,7 +313,7 @@ def get_indexd(uuid, return_not_found=False):
     return indexd_obj
 
 
-def get_indexd_state(did, return_not_found=False):
+def get_indexd_state(did, url, return_not_found=False):
     """Get file state from indexd urls_metadata
     Args:
         did (string): document id in indexd database
@@ -326,36 +326,12 @@ def get_indexd_state(did, return_not_found=False):
     if indexd_doc is None:
         return None
 
-    states = [
-        meta['state']
-        for url, meta in indexd_doc.urls_metadata.items()
-        if 'backup' not in url and 'aws' not in url
-    ]
-    if len(states) == 0:
-        raise UserError(
-            "Can not find primary storage indexd url for {}".format(did)
-        )
-    if len(states) > 1:
-        raise UserError(
-            "Can not find primary storage indexd url for {}".format(did)
-        )
-
-    return states[0]
+    return indexd_doc.urls_metadata[url]['state']
 
 
-def set_indexd_state(did, state):
+def set_indexd_state(did, url, state):
     """Update url state in indexd
     """
-    config = flask.current_app._config
-    import pdb; pdb.set_trace()
-    url = generate_s3_url(
-        host=config['SUBMISSION']['host'],
-        bucket=config['SUBMISSION']['bucket'],
-        program=program,
-        project=project,
-        uuid=self.entity_id,
-        file_name=file_name,
-    )
     indexd_doc = get_indexd(did)
     indexd_doc.urls_metadata[url]['state'] = state
     indexd_doc.patch()
@@ -390,6 +366,42 @@ def get_variables(payload):
         except Exception as e:  # pylint: disable=broad-except
             errors = ['Unable to parse variables', str(e)]
     return variables, errors
+
+
+def generate_s3_url(host, bucket, program, project, uuid, file_name):
+    """
+    Determine what the s3 url will be so we can assign file states before a file
+    is uploaded
+
+    Example:
+        s3://HOST/BUCKET/PROGRAM/PROJECT/UUID/FILENAME
+
+    Args:
+        host (str): s3 hostname
+        bucket (str): s3 bucket name
+        program (str): program name
+        project (str): project code
+        uuid (str): entity's did
+        file_name (str): entity's filename
+
+    Returns:
+        str: valid s3 url
+    """
+
+    if not host.startswith('s3://'):
+        host = 's3://' + host
+
+    if not host.endswith('/'):
+        host += '/'
+
+    if bucket.startswith('/'):
+        bucket = bucket[1:]
+
+    if not bucket.endswith('/'):
+        bucket += '/'
+
+    key = '{}/{}/{}/{}'.format(program, project, uuid, file_name)
+    return host + bucket + key
 
 
 def is_property_hidden(key, schema, exclude_id):
@@ -477,10 +489,21 @@ def lookup_program(psql_driver, program):
 def proxy_request(project_id, uuid, data, args, headers, method, action,
                   indexd_client, dry_run=False):
     node = get_node(project_id, uuid)
-    file_state = get_indexd_state(node.node_id)
+    indexd_obj = get_indexd(uuid)
+
+    program, project = project_id.split('-', 1)
+    s3_url = generate_s3_url(
+        host=flask.current_app._config['SUBMISSION']['host'],
+        bucket=flask.current_app._config['SUBMISSION']['bucket'],
+        program=program,
+        project=project,
+        uuid=uuid,
+        file_name=indexd_obj.file_name,
+    )
+
+    file_state = get_indexd_state(node.node_id, s3_url)
 
     check_action_allowed_in_state(action, file_state)
-    indexd_obj = get_indexd(uuid)
 
     if dry_run:
         message = (

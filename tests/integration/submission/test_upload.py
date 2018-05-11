@@ -23,7 +23,7 @@ except ImportError:
     from mock import patch
 
 from sheepdog.test_settings import SUBMISSION
-from sheepdog.transactions.upload.sub_entities import generate_s3_url
+from sheepdog.utils import generate_s3_url
 from tests.integration.submission.test_versioning import release_indexd_doc
 
 PROGRAM = 'CGCI'

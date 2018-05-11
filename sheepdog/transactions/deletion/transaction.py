@@ -147,7 +147,7 @@ class DeletionTransaction(TransactionBase):
                  .all())
 
         self.entities = [
-            DeletionEntity(self, node)
+            DeletionEntity(self, node, config=self._config)
             for node in nodes
         ]
 

@@ -10,6 +10,7 @@ from sheepdog.utils import (
     lookup_project,
     is_project_public,
     get_indexd_state,
+    generate_s3_url,
 )
 
 from sheepdog.transactions.entity_base import EntityErrors
@@ -574,39 +575,3 @@ class FileUploadEntity(UploadEntity):
 
     def _version_index(self, **kwargs):
         return self.transaction.indexd.add_version(**kwargs)
-
-
-def generate_s3_url(host, bucket, program, project, uuid, file_name):
-    """
-    Determine what the s3 url will be so we can assign file states before a file
-    is uploaded
-
-    Example:
-        s3://HOST/BUCKET/PROGRAM/PROJECT/UUID/FILENAME
-
-    Args:
-        host (str): s3 hostname
-        bucket (str): s3 bucket name
-        program (str): program name
-        project (str): project code
-        uuid (str): entity's did
-        file_name (str): entity's filename
-
-    Returns:
-        str: valid s3 url
-    """
-
-    if not host.startswith('s3://'):
-        host = 's3://' + host
-
-    if not host.endswith('/'):
-        host += '/'
-
-    if bucket.startswith('/'):
-        bucket = bucket[1:]
-
-    if not bucket.endswith('/'):
-        bucket += '/'
-
-    key = '{}/{}/{}/{}'.format(program, project, uuid, file_name)
-    return host + bucket + key
