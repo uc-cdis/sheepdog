@@ -159,7 +159,14 @@ def assert_project_exists(func):
     return check_and_call
 
 
-def check_action_allowed_in_state(action, file_state):
+def check_action_allowed_for_file(action, node, s3_url):
+    # get file state from indexd
+    file_state = get_indexd_state(node.node_id, s3_url, return_not_found=True)
+
+    # if record not found, allow action
+    if file_state is None:
+        return
+
     not_allowed_state = (
         action in ['upload', 'initiate_multipart']
         and file_state not in ALLOWED_STATES
@@ -325,6 +332,15 @@ def get_indexd_state(did, url, return_not_found=False):
 
     if indexd_doc is None:
         return None
+
+    # Get url from urls_metadata if None is provided
+    if url is None:
+        urls = indexd_doc.urls_metadata.keys()
+        if len(urls) == 0:
+            raise UserError('No urls found for {}'.format(did))
+        elif len(urls) > 1:
+            raise UserError('Multiple urls found for {}: {}'.format(did, urls))
+        url = urls[0]
 
     return indexd_doc.urls_metadata[url]['state']
 
@@ -493,17 +509,15 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
 
     program, project = project_id.split('-', 1)
     s3_url = generate_s3_url(
-        host=flask.current_app._config['SUBMISSION']['host'],
-        bucket=flask.current_app._config['SUBMISSION']['bucket'],
+        host=flask.current_app.config['SUBMISSION']['host'],
+        bucket=flask.current_app.config['SUBMISSION']['bucket'],
         program=program,
         project=project,
         uuid=uuid,
         file_name=indexd_obj.file_name,
     )
 
-    file_state = get_indexd_state(node.node_id, s3_url)
-
-    check_action_allowed_in_state(action, file_state)
+    check_action_allowed_for_file(action, node, s3_url)
 
     if dry_run:
         message = (
@@ -513,9 +527,9 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
         return flask.Response(json.dumps({'message': message}), status=200)
 
     if action in ['upload', 'initiate_multipart']:
-        set_indexd_state(node, s3_url, UPLOADING_STATE)
+        set_indexd_state(node.node_id, s3_url, UPLOADING_STATE)
     elif action == 'abort_multipart':
-        set_indexd_state(node, s3_url, submitted_state())
+        set_indexd_state(node.node_id, s3_url, submitted_state())
 
     if action not in ['upload', 'upload_part', 'complete_multipart']:
         data = ''
@@ -525,11 +539,12 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
     )
     if action in ['upload', 'complete_multipart']:
         if resp.status == 200:
-            update_indexd_url(indexd_obj, project_id + '/' + uuid)
-            set_indexd_state(node, s3_url, SUCCESS_STATE)
+            update_indexd_url(indexd_obj,
+                              key_name='{}/{}'.format(project_id, uuid))
+            set_indexd_state(node.node_id, s3_url, SUCCESS_STATE)
     if action == 'delete':
         if resp.status == 204:
-            set_indexd_state(node, s3_url, submitted_state())
+            set_indexd_state(node.node_id, s3_url, submitted_state())
             update_indexd_url(indexd_obj, None)
     return resp
 

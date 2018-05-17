@@ -6,9 +6,7 @@ from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.transactions.transaction_base import MissingNode
 from sheepdog.utils import (
     is_node_file,
-    get_indexd,
     get_indexd_state,
-    generate_s3_url,
 )
 
 
@@ -167,17 +165,7 @@ class DeletionEntity(EntityBase):
         if not is_node_file(self.node):
             return
 
-        indexd_doc = get_indexd(self.node.node_id)
-
-        s3_url = generate_s3_url(
-            host=self._config['SUBMISSION']['host'],
-            bucket=self._config['SUBMISSION']['bucket'],
-            program=self.transaction.program,
-            project=self.transaction.project,
-            uuid=self.entity_id,
-            file_name=indexd_doc.file_name,
-        )
-        file_state = get_indexd_state(self.node.node_id, s3_url)
+        file_state = get_indexd_state(self.node.node_id, self.s3_url)
 
         if file_state not in ALLOWED_DELETION_FILE_STATES:
             message = ("This node has file_state '{}'. "

@@ -18,6 +18,7 @@ from sheepdog.transactions.upload.entity import (
     UploadEntity,
     lookup_node,
 )
+from sheepdog.globals import DATA_FILE_CATEGORIES
 
 
 class NonFileUploadEntity(UploadEntity):
@@ -91,9 +92,9 @@ class FileUploadEntity(UploadEntity):
 
         # file exists in indexd
         self.file_exists = False
-        self.file_index = None
         self.file_by_uuid = None
         self.file_by_hash = None
+        self.s3_url = None
         self.urls = []
 
     def parse(self, doc):
@@ -123,8 +124,8 @@ class FileUploadEntity(UploadEntity):
         Return:
             psqlgraph.Node
         """
-        self._populate_files_from_index()
-        self._set_node_and_file_ids()
+        self._populate_file_exist_in_index()
+        self._set_entity_id()
 
         # call to super must happen after setting node and file ids here
         node = super(FileUploadEntity, self).get_node_create(
@@ -145,7 +146,15 @@ class FileUploadEntity(UploadEntity):
         # entity_id is set to the node_id here
         node = super(FileUploadEntity, self).get_node_merge()
 
-        file_state = get_indexd_state(node.node_id, return_not_found=True)
+        self._populate_file_exist_in_index()
+        self._is_valid_index_id_for_graph()
+
+        # if no indexd record, do not check if file updatable
+        if not self.transaction.indexd.get(node.node_id):
+            self.file_exists = False
+            return node
+
+        file_state = get_indexd_state(node.node_id, self.s3_url)
 
         # verify that update is allowed
         if not self.is_updatable_file_node(node):
@@ -159,9 +168,6 @@ class FileUploadEntity(UploadEntity):
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
 
-        self._populate_files_from_index()
-        self._is_valid_index_id_for_graph()
-
         return node
 
     def flush_to_session(self):
@@ -171,7 +177,7 @@ class FileUploadEntity(UploadEntity):
         flush_to_session.
         """
         # Refresh self.file_exists info
-        self._populate_files_from_index()
+        self._populate_file_exist_in_index()
 
         if not self.node:
             return
@@ -229,22 +235,25 @@ class FileUploadEntity(UploadEntity):
         else:
             acls = self.transaction.get_phsids()
 
-        url = generate_s3_url(
-            host=self._config['SUBMISSION']['host'],
-            bucket=self._config['SUBMISSION']['bucket'],
-            program=program,
-            project=project,
-            uuid=self.entity_id,
-            file_name=file_name,
-        )
-        urls_metadata = {url: {'state': 'registered'}}
-        urls = [url]
+        if not self.urls:
+            url = generate_s3_url(
+                host=self._config['SUBMISSION']['host'],
+                bucket=self._config['SUBMISSION']['bucket'],
+                program=program,
+                project=project,
+                uuid=self.entity_id,
+                file_name=file_name,
+            )
+            self.urls = [url]
+            urls_metadata = {url: {'state': 'registered'}}
+        else:
+            urls_metadata = {url: {'state': 'registered'} for url in self.urls}
 
         # IndexClient
         self._create_index(did=self.entity_id,
                            hashes=hashes,
                            size=size,
-                           urls=urls,
+                           urls=self.urls,
                            acl=acls,
                            file_name=file_name,
                            metadata=metadata,
@@ -302,14 +311,14 @@ class FileUploadEntity(UploadEntity):
             urls_metadata={url: {'state': 'registered'} for url in urls}
         )
         new_doc = Document(None, None, index_json)
+
         self._version_index(current_did=self.old_uuid, new_doc=new_doc)
 
-    @staticmethod
-    def is_updatable_file_node(node):
+    def is_updatable_file_node(self, node):
         """
         Check that a node is a file that can be updated. True if:
 
-        #. The node is a data_file
+        #. The node is a file
         #. It has a file_state in the list of states below
 
         Args:
@@ -324,18 +333,19 @@ class FileUploadEntity(UploadEntity):
             'uploaded',
             'validating',
         ]
-
-        file_state = get_indexd_state(node.node_id, return_not_found=True)
-
-        if file_state and file_state not in allowed_states:
+        is_data_file = node._dictionary.get('category') in DATA_FILE_CATEGORIES
+        if not is_data_file:
             return False
 
-        return True
+        file_state = get_indexd_state(node.node_id, self.s3_url)
 
-    def _populate_files_from_index(self):
+        return file_state in allowed_states
+
+    def _populate_file_exist_in_index(self):
         """
-        Populate information about file existence in index service.
-        Will first check provided uuid, then check by hash/size.
+        Populate self.file_exists (in index service)
+        - Will first check provided uuid
+        - then (if file hash size uniqueness is enforced) check by hash/size
         """
 
         did = self.old_uuid or self.entity_id
@@ -351,19 +361,16 @@ class FileUploadEntity(UploadEntity):
         else:
             self.file_exists = bool(self.file_by_uuid)
 
-    def _set_node_and_file_ids(self):
+    def _set_entity_id(self):
         """
-        Set the node uuid and indexed file uuid accordingly based on
-        information provided and whether or not the file exists in the
-        index service.
+        Set self.entity_id based on information provided
+        and whether or not the file exists in the index service.
         """
 
         if not self.file_exists:
             # generate entity_id if not provided
             if not self.entity_id:
                 self.entity_id = str(uuid.uuid4())
-            # use same id for both node entity id and file index
-            self.file_index = self.entity_id
         else:
             # If hash and size uniqueness not enforced, do nothing
             if not self._config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):

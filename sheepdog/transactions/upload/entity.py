@@ -411,8 +411,6 @@ class UploadEntity(EntityBase):
         node = query.one()
         self.old_props = {k: v for k, v in node.props.iteritems()}
 
-        indexd_doc = get_indexd(node.node_id, return_not_found=True)
-
         if node.label != self.entity_type:
             return self.record_error(
                 'Existing {} entity found with type different from {}'
@@ -429,7 +427,7 @@ class UploadEntity(EntityBase):
             )
 
         # if it's released then we can make a new node in it's place
-        if indexd_doc and node.state == 'released':
+        if node.state == 'released':
             return self.get_node_recreate()
 
         self._merge_doc_links(node)
