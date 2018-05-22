@@ -347,10 +347,22 @@ def get_indexd_state(did, url, return_not_found=False):
 
 def set_indexd_state(did, url, state):
     """Update url state in indexd
+
+    You have to return the patched version of the indexd Document object
+    because it gets modified, if you intend on using the same doc in other
+    parts of your program.
+
+    Args:
+        url (str): key of urls_metadata you wish to change
+        state (str): state you wish to change it to
+
+    Returns:
+        indexclient.client.Document: indexd doc object
     """
     indexd_doc = get_indexd(did)
     indexd_doc.urls_metadata[url]['state'] = state
     indexd_doc.patch()
+    return indexd_doc
 
 
 def get_suggestion(value, choices):
@@ -527,9 +539,9 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
         return flask.Response(json.dumps({'message': message}), status=200)
 
     if action in ['upload', 'initiate_multipart']:
-        set_indexd_state(node.node_id, s3_url, UPLOADING_STATE)
+        indexd_obj = set_indexd_state(node.node_id, s3_url, UPLOADING_STATE)
     elif action == 'abort_multipart':
-        set_indexd_state(node.node_id, s3_url, submitted_state())
+        indexd_obj = set_indexd_state(node.node_id, s3_url, submitted_state())
 
     if action not in ['upload', 'upload_part', 'complete_multipart']:
         data = ''
@@ -541,11 +553,12 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
         if resp.status == 200:
             update_indexd_url(indexd_obj,
                               key_name='{}/{}'.format(project_id, uuid))
-            set_indexd_state(node.node_id, s3_url, SUCCESS_STATE)
-    if action == 'delete':
+            indexd_obj = set_indexd_state(node.node_id, s3_url, SUCCESS_STATE)
+    elif action == 'delete':
         if resp.status == 204:
-            set_indexd_state(node.node_id, s3_url, submitted_state())
+            indexd_obj = set_indexd_state(node.node_id, s3_url, submitted_state())
             update_indexd_url(indexd_obj, None)
+
     return resp
 
 
