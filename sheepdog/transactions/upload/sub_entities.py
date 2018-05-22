@@ -1,6 +1,6 @@
 """
 Subclasses for UploadEntity that handle different types of
-uploaded entites.
+uploaded entities.
 """
 import uuid
 
