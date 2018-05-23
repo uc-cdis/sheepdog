@@ -29,6 +29,7 @@ def transaction_worker(transaction, ids):
 
     return response, code
 
+
 def handle_deletion_request(program, project, ids, **tx_kwargs):
     """Create and execute a single deletion transaction.
 
