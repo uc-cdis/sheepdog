@@ -43,17 +43,17 @@ class UploadEntityFactory():
             # NOTE: This error with doc will get recorded using record_error()
             #       when the parse() function gets called to support
             #       more helpful debugging
-            return UploadEntity(transaction, config)
+            return UploadEntity(transaction, config=config)
 
         node_type = doc.get('type')
         if node_type is None:
             # Handle missing node_type in submission json. This will make
             # the return errors be what we expect from the client-side.
-            return UploadEntity(transaction, config)
+            return UploadEntity(transaction, config=config)
 
         node_category = get_node_category(node_type)
 
         if node_category in UploadEntity.DATA_FILE_CATEGORIES:
-            return FileUploadEntity(transaction, config)
+            return FileUploadEntity(transaction, config=config)
         else:
-            return NonFileUploadEntity(transaction, config)
+            return NonFileUploadEntity(transaction, config=config)

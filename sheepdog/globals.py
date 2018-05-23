@@ -38,7 +38,6 @@ PERMISSIONS = {
     'get_file': 'download',
     'complete_multipart': 'create',
     'initiate_multipart': 'create',
-    'reassign': 'admin',
     'upload': 'create',
     'upload_part': 'create',
     'delete': 'delete',
@@ -57,6 +56,7 @@ UNVERIFIED_PROJECT_CODES = []
 #: State a file should be put in given an error.
 ERROR_STATE = 'error'
 
+
 def case_cache_enabled():
     """
     Return if the case cache is enabled or not. NOTE that the dictionary must be initialized
@@ -71,7 +71,7 @@ def case_cache_enabled():
     from sheepdog import dictionary
     try:
         return (
-            True if dictionary.settings == None
+            True if dictionary.settings is None
             else dictionary.settings.get('enable_case_cache', True)
         )
     except (AttributeError, KeyError, TypeError):
@@ -192,3 +192,5 @@ ERR_ASYNC_SCHEDULING = (
     ' asynchronous tasks. Please try again later.'
 )
 
+# Categories of nodes considered 'file node'
+DATA_FILE_CATEGORIES = ['data_file', 'metadata_file', 'index_file']

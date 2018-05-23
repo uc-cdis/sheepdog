@@ -273,7 +273,7 @@ class UploadTransaction(TransactionBase):
             None
         """
         try:
-            entity = UploadEntityFactory.create(self, doc, self._config)
+            entity = UploadEntityFactory.create(self, doc, config=self._config)
             entity.parse(doc)
             self.entities.append(entity)
         except Exception as e:  # pylint: disable=broad-except
@@ -338,7 +338,7 @@ class BulkUploadTransaction(TransactionBase):
             logger=self.logger,
             transaction_id=self.transaction_id,
             indexd=self.indexd,
-            flask_config=self.config,
+            flask_config=self._config,
             external_proxies=self.external_proxies,
         )
         sub_transaction.parse_doc(name, doc_format, doc, data)

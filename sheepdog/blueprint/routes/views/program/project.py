@@ -339,7 +339,7 @@ def export_entities(program, project):
         )
 
 
-def create_files_viewer(dry_run=False, reassign=False):
+def create_files_viewer(dry_run=False):
     """
     Create a view function for handling file operations.
     """
@@ -364,9 +364,6 @@ def create_files_viewer(dry_run=False, reassign=False):
         PUT /<program>/<project>/files/<uuid>
             Upload data using single PUT. The request body should contain
             binary data of the file
-
-        PUT /internal/<program>/<project>/files/<uuid>/reassign
-            Manually (re)assign the S3 url for a given node
 
         DELETE /<program>/<project>/files/<uuid>
             Delete molecular data from object storage.
@@ -431,7 +428,6 @@ def create_files_viewer(dry_run=False, reassign=False):
         else:
             raise UserError('Unsupported file operation', code=405)
 
-
         project_id = program + '-' + project
         role = PERMISSIONS[action]
         if role not in flask.g.user.roles[project_id]:
@@ -447,12 +443,9 @@ def create_files_viewer(dry_run=False, reassign=False):
             headers,
             flask.request.method,
             action,
-            dry_run,
+            flask.current_app.indexd,
+            dry_run=dry_run,
         )
-
-
-        if dry_run or action == 'reassign':
-            return resp
 
         return flask.Response(
             resp.read(), status=resp.status, headers=resp.getheaders(),

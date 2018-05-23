@@ -29,6 +29,7 @@ from sheepdog.globals import (
     SUCCESS_STATE,
     ERROR_STATE,
     UPLOADING_PARTS,
+    DATA_FILE_CATEGORIES,
 )
 from sheepdog.utils.transforms.graph_to_doc import (
     entity_to_template,
@@ -158,7 +159,19 @@ def assert_project_exists(func):
     return check_and_call
 
 
-def check_action_allowed_in_state(action, file_state):
+def check_action_allowed_for_file(action, node, s3_url, indexd_client):
+    # get file state from indexd
+    file_state = get_indexd_state(
+        node.node_id,
+        s3_url,
+        indexd_client,
+        return_not_found=True
+    )
+
+    # if record not found, allow action
+    if file_state is None:
+        return
+
     not_allowed_state = (
         action in ['upload', 'initiate_multipart']
         and file_state not in ALLOWED_STATES
@@ -294,21 +307,67 @@ def get_node(project_id, uuid, db=None):
         )
 
 
-def get_indexd(uuid):
+def get_indexd(uuid, indexd_client, return_not_found=False):
     """Get indexd doc for a given UUID
 
     Args:
         uuid (string): UUID that is possibly in the system
+        return_not_found (bool): If True, will return None if record does not exist
     Returns:
         doc: Indexd doc to be modified later
     """
 
-    indexd_obj = flask.current_app.indexd.get(uuid)
-    if indexd_obj is None:
+    indexd_doc = indexd_client.get(uuid)
+    if indexd_doc is None and not return_not_found:
         raise InternalError(
             "Indexd entry for {} doesn't exist".format(uuid)
         )
-    return indexd_obj
+    return indexd_doc
+
+
+def get_indexd_state(did, url, indexd_client, return_not_found=False):
+    """Get file state from indexd urls_metadata
+    Args:
+        did (string): document id in indexd database
+        return_not_found (bool): If True, will return None if record does not exist
+    Returns:
+        state for the main storage url stored in urls_metadata
+    """
+    indexd_doc = get_indexd(did, indexd_client, return_not_found=return_not_found)
+
+    if indexd_doc is None:
+        return None
+
+    # Get url from urls_metadata if None is provided
+    if url is None:
+        urls = indexd_doc.urls_metadata.keys()
+        if len(urls) == 0:
+            raise UserError('No urls found for {}'.format(did))
+        elif len(urls) > 1:
+            raise UserError('Multiple urls found for {}: {}'.format(did, urls))
+        url = urls[0]
+
+    return indexd_doc.urls_metadata[url]['state']
+
+
+def set_indexd_state(indexd_doc, url, state):
+    """Update url state in indexd
+
+    You have to return the patched version of the indexd Document object
+    because it gets modified, if you intend on using the same doc in other
+    parts of your program.
+
+    Args:
+        indexd_doc (indexclient.client.Document): Representation of indexd doc
+        url (str): key of urls_metadata you wish to change
+        state (str): state you wish to change it to
+
+    Returns:
+        indexclient.client.Document: indexd doc object
+    """
+    indexd_doc.urls_metadata[url]['state'] = state
+    indexd_doc.patch()
+    return indexd_doc
 
 
 def get_suggestion(value, choices):
@@ -340,6 +399,42 @@ def get_variables(payload):
         except Exception as e:  # pylint: disable=broad-except
             errors = ['Unable to parse variables', str(e)]
     return variables, errors
+
+
+def generate_s3_url(host, bucket, program, project, uuid, file_name):
+    """
+    Determine what the s3 url will be so we can assign file states before a file
+    is uploaded
+
+    Example:
+        s3://HOST/BUCKET/PROGRAM/PROJECT/UUID/FILENAME
+
+    Args:
+        host (str): s3 hostname
+        bucket (str): s3 bucket name
+        program (str): program name
+        project (str): project code
+        uuid (str): entity's did
+        file_name (str): entity's filename
+
+    Returns:
+        str: valid s3 url
+    """
+
+    if not host.startswith('s3://'):
+        host = 's3://' + host
+
+    if not host.endswith('/'):
+        host += '/'
+
+    if bucket.startswith('/'):
+        bucket = bucket[1:]
+
+    if not bucket.endswith('/'):
+        bucket += '/'
+
+    key = '{}/{}/{}/{}'.format(program, project, uuid, file_name)
+    return host + bucket + key
 
 
 def is_property_hidden(key, schema, exclude_id):
@@ -424,10 +519,22 @@ def lookup_program(psql_driver, program):
     return psql_driver.nodes(models.Program).props(name=program).scalar()
 
 
-def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run=False):
+def proxy_request(project_id, uuid, data, args, headers, method, action,
+                  indexd_client, dry_run=False):
     node = get_node(project_id, uuid)
-    check_action_allowed_in_state(action, node.file_state)
-    indexd_obj = get_indexd(uuid)
+    indexd_doc = indexd_client.get(uuid)
+
+    program, project = project_id.split('-', 1)
+    s3_url = generate_s3_url(
+        host=flask.current_app.config['SUBMISSION']['host'],
+        bucket=flask.current_app.config['SUBMISSION']['bucket'],
+        program=program,
+        project=project,
+        uuid=uuid,
+        file_name=indexd_doc.file_name,
+    )
+
+    check_action_allowed_for_file(action, node, s3_url, indexd_client)
 
     if dry_run:
         message = (
@@ -437,78 +544,23 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
         return flask.Response(json.dumps({'message': message}), status=200)
 
     if action in ['upload', 'initiate_multipart']:
-        update_state(node, UPLOADING_STATE)
+        set_indexd_state(indexd_doc, s3_url, UPLOADING_STATE)
     elif action == 'abort_multipart':
-        update_state(node, submitted_state())
+        set_indexd_state(indexd_doc, s3_url, submitted_state())
 
-    if action not in ['upload', 'upload_part', 'complete_multipart', 'reassign']:
+    if action not in ['upload', 'upload_part', 'complete_multipart']:
         data = ''
 
-    if action == 'reassign':
-        try:
-            # data.read() works like a file pointer.
-            # When you .read() again it will be pointing at the end of the stream
-            json_data = data.read()
-
-            # if it comes in as a string, convert it to dict
-            if not isinstance(json_data, dict):
-                json_data = json.loads(json_data)
-
-            new_url = json_data['s3_url']
-
-        except Exception:
-            message = 'Unable to parse json. Use the format {\'s3_url\':\'s3/://...\'}'
-            return flask.Response(json.dumps({'message': message}), status=400)
-
-        update_indexd_url(indexd_obj, s3_url=new_url)
-        update_state(node, SUCCESS_STATE)
-        message = ('URL successfully reassigned. New url: {}'.format(new_url))
-        return flask.Response(json.dumps({'message': message}), status=200)
-
     resp = s3.make_s3_request(
-        project_id, uuid, data, args, headers, method, action
+        project_id, uuid, indexd_doc.file_name, data, args, headers, method, action
     )
-    if action in ['upload', 'complete_multipart']:
-        if resp.status == 200:
-            update_indexd_url(indexd_obj, project_id + '/' + uuid)
-            update_state(node, SUCCESS_STATE)
-    if action == 'delete':
-        if resp.status == 204:
-            update_state(node, submitted_state())
-            update_indexd_url(indexd_obj, None)
+
+    if action in ['upload', 'complete_multipart'] and resp.status == 200:
+        set_indexd_state(indexd_doc, s3_url, SUCCESS_STATE)
+    elif action == 'delete' and resp.status == 204:
+        set_indexd_state(indexd_doc, s3_url, submitted_state())
+
     return resp
-
-
-def update_state(node, state):
-    with flask.current_app.db.session_scope() as s:
-        s.add(node)
-        node.file_state = state
-
-
-def update_indexd_url(indexd_obj, key_name=None, s3_url=None):
-    """Update indexd document with a new URL.
-
-    Args:
-        indexd_obj (Indexd Doc): Indexd object that will be modified
-            with a new URL.
-        key_name (string): Name of the s3 key to update indexd object with.
-        s3_url (string): The URL you wish assign indexd object with.
-    """
-
-    if key_name:
-        url = "s3://{host}/{bucket}/{name}".format(
-            host=flask.current_app.config['SUBMISSION']['host'],
-            bucket=flask.current_app.config['SUBMISSION']['bucket'],
-            name=key_name
-        )
-        indexd_obj.urls = [url]
-    elif s3_url:
-        indexd_obj.urls = [s3_url]
-    else:
-        indexd_obj.urls = []
-
-    indexd_obj.patch()
-
 
 
 def is_node_file(node):
@@ -516,7 +568,7 @@ def is_node_file(node):
     corresponding data in the object store)
     """
 
-    return node._dictionary['category'].endswith("_file")
+    return node._dictionary['category'] in DATA_FILE_CATEGORIES
 
 
 def is_project_public(project):

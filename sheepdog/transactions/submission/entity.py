@@ -2,11 +2,7 @@
 
 from sheepdog import models
 from sheepdog.globals import (
-    ENTITY_STATE_TRANSITIONS,
-    FILE_STATE_TRANSITIONS,
-    FILE_STATE_KEY,
     STATE_KEY,
-    SUBMITTABLE_FILE_STATES,
     SUBMITTABLE_STATES,
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
@@ -16,9 +12,10 @@ class SubmissionEntity(EntityBase):
 
     """Models an entity to be marked submitted."""
 
-    def __init__(self, transaction, node):
+    def __init__(self, transaction, node, config=None):
         super(SubmissionEntity, self).__init__(transaction, node)
         self.action = 'submit'
+        self._config = config or {}
 
     def version_node(self):
         """
@@ -53,8 +50,6 @@ class SubmissionEntity(EntityBase):
         self.logger.info('Submitting {}.'.format(self.node))
         to_state = 'submitted'
         current_state = self.node._props.get(STATE_KEY, None)
-        current_file_state = self.node._props.get(FILE_STATE_KEY, None)
-        has_file_state = hasattr(self.node.__class__, FILE_STATE_KEY)
 
         # Check node.state
         if current_state not in SUBMITTABLE_STATES:
@@ -62,10 +57,6 @@ class SubmissionEntity(EntityBase):
                 "Unable to submit node with state: '{}'".format(current_state),
                 type=EntityErrors.INVALID_PROPERTY
             )
-
-        # Conditionally update node.file_state
-        if has_file_state and current_file_state in SUBMITTABLE_FILE_STATES:
-            self.node.props[FILE_STATE_KEY] = to_state
 
         self.node.props[STATE_KEY] = to_state
 

@@ -17,9 +17,13 @@ from sheepdog.globals import (
     REGEX_UUID,
     UNVERIFIED_PROGRAM_NAMES,
     UNVERIFIED_PROJECT_CODES,
+    DATA_FILE_CATEGORIES,
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
-from sheepdog.utils import get_suggestion
+from sheepdog.utils import (
+    get_suggestion,
+    get_indexd,
+)
 
 
 # TODO: This should probably go into the dictionary and be
@@ -76,7 +80,7 @@ class UploadEntity(EntityBase):
     create a node. After this, it should be flushed into a UploadTransaction's
     session.
     """
-    DATA_FILE_CATEGORIES = ['data_file', 'metadata_file']
+    DATA_FILE_CATEGORIES = DATA_FILE_CATEGORIES
 
     def __init__(self, transaction, config=None):
         """
@@ -199,15 +203,17 @@ class UploadEntity(EntityBase):
             return
 
         # indexd document doesn't exist, then there's no more work to do
-        indexd_doc = self.transaction.indexd.get(self.entity_id)
+        indexd_doc = get_indexd(
+            self.entity_id,
+            self.transaction.indexd,
+            return_not_found=True
+        )
         if not indexd_doc:
             return
 
         # cannot update a node in state submitted
         if self.node.state == 'submitted':
-            raise UserError(
-                'Unable to update a node in state {}'.format(self.node.state)
-            )
+            raise UserError('Unable to update a node in state "submitted"')
 
         # only update the fields with the new metadata
         if self._is_replaceable:
@@ -406,7 +412,6 @@ class UploadEntity(EntityBase):
 
         node = query.one()
         self.old_props = {k: v for k, v in node.props.iteritems()}
-        indexd_doc = self.transaction.indexd.get(node.node_id)
 
         if node.label != self.entity_type:
             return self.record_error(
@@ -424,7 +429,7 @@ class UploadEntity(EntityBase):
             )
 
         # if it's released then we can make a new node in it's place
-        if indexd_doc and node.state == 'released':
+        if node.state == 'released':
             return self.get_node_recreate()
 
         self._merge_doc_links(node)
