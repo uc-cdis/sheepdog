@@ -193,4 +193,4 @@ ERR_ASYNC_SCHEDULING = (
 )
 
 # Categories of nodes considered 'file node'
-DATA_FILE_CATEGORIES = ['data_file', 'metadata_file']
+DATA_FILE_CATEGORIES = ['data_file', 'metadata_file', 'index_file']

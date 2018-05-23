@@ -554,7 +554,7 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
     resp = s3.make_s3_request(
         project_id, uuid, indexd_obj.file_name, data, args, headers, method, action
     )
-    
+
     if action in ['upload', 'complete_multipart'] and resp.status == 200:
         set_indexd_state(node.node_id, s3_url, SUCCESS_STATE, indexd_client)
     elif action == 'delete' and resp.status == 204:
