@@ -563,42 +563,6 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
     return resp
 
 
-def update_indexd_url(indexd_doc, program, project, uuid, key_name=None, s3_url=None):
-    """Update indexd document with a new URL.
-
-    Args:
-        indexd_doc (indexclient.client.Document): Indexd doc that will be modified
-            with a new URL.
-        key_name (string): Name of the s3 key to update indexd object with.
-        s3_url (string): The URL you wish assign indexd object with.
-    """
-
-    original_url = generate_s3_url(
-        host=flask.current_app.config['SUBMISSION']['host'],
-        bucket=flask.current_app.config['SUBMISSION']['bucket'],
-        program=program,
-        project=project,
-        uuid=uuid,
-        file_name=indexd_doc.file_name,
-    )
-
-    if key_name:
-        url = "s3://{host}/{bucket}/{name}".format(
-            host=flask.current_app.config['SUBMISSION']['host'],
-            bucket=flask.current_app.config['SUBMISSION']['bucket'],
-            name=key_name
-        )
-        indexd_doc.urls = [url]
-        indexd_doc.urls_metadata[url] = indexd_doc.urls_metadata[original_url]
-    elif s3_url:
-        indexd_doc.urls = [s3_url]
-        indexd_doc.urls_metadata[s3_url] = indexd_doc.urls_metadata[original_url]
-    else:
-        indexd_doc.urls = []
-
-    indexd_doc.patch()
-
-
 def is_node_file(node):
     """Returns True if the object is a file (i.e. it may have
     corresponding data in the object store)
