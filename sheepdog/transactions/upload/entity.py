@@ -213,9 +213,7 @@ class UploadEntity(EntityBase):
 
         # cannot update a node in state submitted
         if self.node.state == 'submitted':
-            raise UserError(
-                'Unable to update a node in state "submitted"'
-            )
+            raise UserError('Unable to update a node in state "submitted"')
 
         # only update the fields with the new metadata
         if self._is_replaceable:
