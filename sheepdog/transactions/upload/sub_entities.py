@@ -346,7 +346,6 @@ class FileUploadEntity(UploadEntity):
             self.s3_url,
             self.transaction.indexd
         )
-
         return file_state in allowed_states
 
     def _populate_file_exist_in_index(self):

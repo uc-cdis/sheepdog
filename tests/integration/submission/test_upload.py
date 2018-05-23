@@ -22,8 +22,13 @@ except ImportError:
     from mock import MagicMock
     from mock import patch
 
+from gdcdatamodel.models import SubmittedAlignedReads
+from sheepdog.transactions.upload.sub_entities import FileUploadEntity
 from sheepdog.test_settings import SUBMISSION
-from sheepdog.utils import generate_s3_url
+from sheepdog.utils import (
+    generate_s3_url,
+    set_indexd_state,
+)
 from tests.integration.submission.test_versioning import release_indexd_doc
 
 PROGRAM = 'CGCI'
@@ -445,3 +450,47 @@ def test_dont_enforce_file_hash_size_uniqueness(
     assert len(records) == 2
     assert indexd_client.get(DEFAULT_UUID).urls == [DEFAULT_URL]
     assert indexd_client.get(new_id).urls == [new_url]
+
+
+def test_is_updatable_file(client, pg_driver, indexd_client):
+    """Test _is_updatable_file_node method
+    """
+
+    did = 'bef870b0-1d2a-4873-b0db-14994b2f89bd'
+    url = '/some/url'
+
+    # Create dummy file node and corresponding indexd record
+    node = SubmittedAlignedReads(did)
+    indexd_client.create(
+        did=did,
+        urls=[url],
+        hashes={'md5': '0'*32},
+        size=1,
+    )
+    ALLOWED_STATES = [
+        'registered',
+        'uploading',
+        'uploaded',
+        'validating',
+    ]
+
+    DISALLOWED_STATES = [
+        'validated',
+    ]
+    transaction = MagicMock()
+    transaction.indexd = indexd_client
+    entity = FileUploadEntity(transaction)
+    entity.s3_url = url
+
+    for file_state in ALLOWED_STATES:
+        # set node's url state in indexd
+        set_indexd_state(did, url, file_state, indexd_client)
+
+        # check if updatable
+        assert entity.is_updatable_file_node(node)
+
+    for file_state in DISALLOWED_STATES:
+        # set node's url state in indexd
+        set_indexd_state(did, url, file_state, indexd_client)
+        # check if not updatable
+        assert not entity.is_updatable_file_node(node)
