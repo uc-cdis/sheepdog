@@ -40,7 +40,7 @@ def get_submission_bucket():
     return conn.get_bucket(flask.current_app.config['SUBMISSION']['bucket'])
 
 
-def make_s3_request(project_id, uuid, data, args, headers, method, action):
+def make_s3_request(project_id, uuid, file_name, data, args, headers, method, action):
     key_name = project_id + '/' + uuid
     bucket = None
     if action in UPLOADING_PARTS:
