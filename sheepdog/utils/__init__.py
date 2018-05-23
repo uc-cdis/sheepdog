@@ -554,46 +554,13 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
     resp = s3.make_s3_request(
         project_id, uuid, indexd_obj.file_name, data, args, headers, method, action
     )
-    if action in ['upload', 'complete_multipart']:
-        if resp.status == 200:
-            update_indexd_url(
-                indexd_obj,
-                key_name='{}/{}/{}/{}'.format(
-                    program, project, uuid, indexd_obj.file_name
-                )
-            )
-            indexd_obj = set_indexd_state(node.node_id, s3_url, SUCCESS_STATE, indexd_client)
-    elif action == 'delete':
-        if resp.status == 204:
-            indexd_obj = set_indexd_state(node.node_id, s3_url, submitted_state(), indexd_client)
-            update_indexd_url(indexd_obj, None)
+    
+    if action in ['upload', 'complete_multipart'] and resp.status == 200:
+        set_indexd_state(node.node_id, s3_url, SUCCESS_STATE, indexd_client)
+    elif action == 'delete' and resp.status == 204:
+        set_indexd_state(node.node_id, s3_url, submitted_state(), indexd_client)
 
     return resp
-
-
-def update_indexd_url(indexd_obj, key_name=None, s3_url=None):
-    """Update indexd document with a new URL.
-
-    Args:
-        indexd_obj (Indexd Doc): Indexd object that will be modified
-            with a new URL.
-        key_name (string): Name of the s3 key to update indexd object with.
-        s3_url (string): The URL you wish assign indexd object with.
-    """
-
-    if key_name:
-        url = "s3://{host}/{bucket}/{name}".format(
-            host=flask.current_app.config['SUBMISSION']['host'],
-            bucket=flask.current_app.config['SUBMISSION']['bucket'],
-            name=key_name
-        )
-        indexd_obj.urls = [url]
-    elif s3_url:
-        indexd_obj.urls = [s3_url]
-    else:
-        indexd_obj.urls = []
-
-    indexd_obj.patch()
 
 
 def is_node_file(node):
