@@ -317,12 +317,12 @@ def get_indexd(uuid, indexd_client, return_not_found=False):
         doc: Indexd doc to be modified later
     """
 
-    indexd_obj = indexd_client.get(uuid)
-    if indexd_obj is None and not return_not_found:
+    indexd_doc = indexd_client.get(uuid)
+    if indexd_doc is None and not return_not_found:
         raise InternalError(
             "Indexd entry for {} doesn't exist".format(uuid)
         )
-    return indexd_obj
+    return indexd_doc
 
 
 def get_indexd_state(did, url, indexd_client, return_not_found=False):
@@ -350,7 +350,7 @@ def get_indexd_state(did, url, indexd_client, return_not_found=False):
     return indexd_doc.urls_metadata[url]['state']
 
 
-def set_indexd_state(did, url, state, indexd_client):
+def set_indexd_state(indexd_doc, url, state):
     """Update url state in indexd
 
     You have to return the patched version of the indexd Document object
@@ -358,13 +358,13 @@ def set_indexd_state(did, url, state, indexd_client):
     parts of your program.
 
     Args:
+        indexd_doc (indexclient.client.Document): Representation of indexd doc
         url (str): key of urls_metadata you wish to change
         state (str): state you wish to change it to
 
     Returns:
         indexclient.client.Document: indexd doc object
     """
-    indexd_doc = get_indexd(did, indexd_client)
     indexd_doc.urls_metadata[url]['state'] = state
     indexd_doc.patch()
     return indexd_doc
@@ -522,7 +522,7 @@ def lookup_program(psql_driver, program):
 def proxy_request(project_id, uuid, data, args, headers, method, action,
                   indexd_client, dry_run=False):
     node = get_node(project_id, uuid)
-    indexd_obj = indexd_client.get(uuid)
+    indexd_doc = indexd_client.get(uuid)
 
     program, project = project_id.split('-', 1)
     s3_url = generate_s3_url(
@@ -531,7 +531,7 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
         program=program,
         project=project,
         uuid=uuid,
-        file_name=indexd_obj.file_name,
+        file_name=indexd_doc.file_name,
     )
 
     check_action_allowed_for_file(action, node, s3_url, indexd_client)
@@ -544,21 +544,21 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
         return flask.Response(json.dumps({'message': message}), status=200)
 
     if action in ['upload', 'initiate_multipart']:
-        indexd_obj = set_indexd_state(node.node_id, s3_url, UPLOADING_STATE, indexd_client)
+        set_indexd_state(indexd_doc, s3_url, UPLOADING_STATE)
     elif action == 'abort_multipart':
-        indexd_obj = set_indexd_state(node.node_id, s3_url, submitted_state(), indexd_client)
+        set_indexd_state(indexd_doc, s3_url, submitted_state())
 
     if action not in ['upload', 'upload_part', 'complete_multipart']:
         data = ''
 
     resp = s3.make_s3_request(
-        project_id, uuid, indexd_obj.file_name, data, args, headers, method, action
+        project_id, uuid, indexd_doc.file_name, data, args, headers, method, action
     )
-    
+
     if action in ['upload', 'complete_multipart'] and resp.status == 200:
-        set_indexd_state(node.node_id, s3_url, SUCCESS_STATE, indexd_client)
+        set_indexd_state(indexd_doc, s3_url, SUCCESS_STATE)
     elif action == 'delete' and resp.status == 204:
-        set_indexd_state(node.node_id, s3_url, submitted_state(), indexd_client)
+        set_indexd_state(indexd_doc, s3_url, submitted_state())
 
     return resp
 
