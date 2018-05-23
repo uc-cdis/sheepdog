@@ -702,7 +702,7 @@ class ExportFile(object):
         return self.result
 
 
-def export_all(node_label, project_id, db, file_format, **kwargs):
+def export_all(node_label, project_id, file_format, db, **kwargs):
     """
     Export all nodes of type with name ``node_label`` to a TSV file and yield
     rows of the resulting TSV.
