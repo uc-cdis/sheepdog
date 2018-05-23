@@ -203,7 +203,11 @@ class UploadEntity(EntityBase):
             return
 
         # indexd document doesn't exist, then there's no more work to do
-        indexd_doc = get_indexd(self.entity_id, return_not_found=True)
+        indexd_doc = get_indexd(
+            self.entity_id,
+            self.transaction.indexd,
+            return_not_found=True
+        )
         if not indexd_doc:
             return
 

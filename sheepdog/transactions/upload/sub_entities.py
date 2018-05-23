@@ -9,8 +9,8 @@ from indexclient.client import Document
 from sheepdog.utils import (
     lookup_project,
     is_project_public,
-    get_indexd_state,
     generate_s3_url,
+    get_indexd_state,
 )
 
 from sheepdog.transactions.entity_base import EntityErrors
@@ -154,7 +154,11 @@ class FileUploadEntity(UploadEntity):
             self.file_exists = False
             return node
 
-        file_state = get_indexd_state(node.node_id, self.s3_url)
+        file_state = get_indexd_state(
+            node.node_id,
+            self.s3_url,
+            self.transaction.indexd_client
+        )
 
         # verify that update is allowed
         if not self.is_updatable_file_node(node):
@@ -337,7 +341,11 @@ class FileUploadEntity(UploadEntity):
         if not is_data_file:
             return False
 
-        file_state = get_indexd_state(node.node_id, self.s3_url)
+        file_state = get_indexd_state(
+            node.node_id,
+            self.s3_url,
+            self.transaction.indexd_client
+        )
 
         return file_state in allowed_states
 
