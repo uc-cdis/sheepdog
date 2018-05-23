@@ -157,7 +157,7 @@ class FileUploadEntity(UploadEntity):
         file_state = get_indexd_state(
             node.node_id,
             self.s3_url,
-            self.transaction.indexd_client
+            self.transaction.indexd
         )
 
         # verify that update is allowed
@@ -344,7 +344,7 @@ class FileUploadEntity(UploadEntity):
         file_state = get_indexd_state(
             node.node_id,
             self.s3_url,
-            self.transaction.indexd_client
+            self.transaction.indexd
         )
 
         return file_state in allowed_states
