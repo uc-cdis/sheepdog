@@ -484,13 +484,15 @@ def test_is_updatable_file(client, pg_driver, indexd_client):
 
     for file_state in ALLOWED_STATES:
         # set node's url state in indexd
-        set_indexd_state(did, url, file_state, indexd_client)
+        indexd_doc = indexd_client.get(did)
+        set_indexd_state(indexd_doc, url, file_state)
 
         # check if updatable
         assert entity.is_updatable_file_node(node)
 
     for file_state in DISALLOWED_STATES:
         # set node's url state in indexd
-        set_indexd_state(did, url, file_state, indexd_client)
+        indexd_doc = indexd_client.get(did)
+        set_indexd_state(indexd_doc, url, file_state)
         # check if not updatable
         assert not entity.is_updatable_file_node(node)
