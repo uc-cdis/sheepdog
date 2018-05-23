@@ -702,7 +702,7 @@ class ExportFile(object):
         return self.result
 
 
-def export_all(node_label, project_id, db, **kwargs):
+def export_all(node_label, project_id, db, file_format, **kwargs):
     """
     Export all nodes of type with name ``node_label`` to a TSV file and yield
     rows of the resulting TSV.
@@ -710,6 +710,7 @@ def export_all(node_label, project_id, db, **kwargs):
     Args:
         node_label (str): type of nodes to look up, for example ``'case'``
         project_id (str): project to look under
+        file_format (str): json or tsv
         db (psqlgraph.PsqlGraphDriver): database driver to use for queries
 
     Return:
@@ -832,19 +833,37 @@ def export_all(node_label, project_id, db, **kwargs):
         # Case instance          experiments.id   experiments.submitter_id
         # (<Case(...[uuid]...)>, u'...[uuid]...', u'exp-01')
 
-        # Yield the lines of the file.
-        yield '{}\n'.format('\t'.join(titles))
+        if file_format == "json":
+          yield '{ "data": ['        
+        else: # json
+          # Yield the lines of the file.
+          yield '{}\n'.format('\t'.join(titles))
+        
         for result in query.yield_per(1000):
             row = []
+            json_obj = {
+              "link_fields": {
+
+              }
+            }
             # Write in the properties from just the node.
             node = result[0]
             for prop in props:
                 row.append(node[prop] or '')
+                json_obj[prop] = node[prop] or ''
             # Tack on the linked properties.
             row.extend(map(lambda col: col or '', result[1:]))
+            for idx, title in enumerate(titles_linked):
+              json_obj["link_fields"][title] = result[idx+1] or ''
             # Convert row elements to string if they are not
             for idx, val in enumerate(row):
                 if not isinstance(val, str):
                     row[idx] = str(row[idx])
+            if file_format == "json":
+              yield json.dumps(json_obj)
+            else:
+              yield '{}\n'.format('\t'.join(row))
+        
+        if file_format == "json":
+          yield ']}'
 
-            yield '{}\n'.format('\t'.join(row))

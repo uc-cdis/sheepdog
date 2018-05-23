@@ -339,7 +339,7 @@ def export_entities(program, project):
         headers = {'Content-Disposition': content_disp}
         return flask.Response(
             utils.transforms.graph_to_doc.export_all(
-                node_label, project_id, flask.current_app.db
+                node_label, project_id, file_format, flask.current_app.db
             ),
             mimetype=mimetype,
             headers=headers,
