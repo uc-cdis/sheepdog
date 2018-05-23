@@ -451,6 +451,9 @@ class FileUploadEntity(UploadEntity):
         if self._is_replaceable:
             return True
 
+        if not self._config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
+            return True
+
         is_valid = True
         # if a single match exists in the graph, check to see if
         # file exists in index service
