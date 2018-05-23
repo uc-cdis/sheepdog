@@ -165,7 +165,11 @@ class DeletionEntity(EntityBase):
         if not is_node_file(self.node):
             return
 
-        file_state = get_indexd_state(self.node.node_id, None)
+        file_state = get_indexd_state(
+            self.node.node_id,
+            None,
+            self.transaction.indexd
+        )
 
         if file_state not in ALLOWED_DELETION_FILE_STATES:
             message = ("This node has file_state '{}'. "

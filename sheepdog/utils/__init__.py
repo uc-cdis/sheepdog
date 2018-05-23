@@ -159,9 +159,14 @@ def assert_project_exists(func):
     return check_and_call
 
 
-def check_action_allowed_for_file(action, node, s3_url):
+def check_action_allowed_for_file(action, node, s3_url, indexd_client):
     # get file state from indexd
-    file_state = get_indexd_state(node.node_id, s3_url, return_not_found=True)
+    file_state = get_indexd_state(
+        node.node_id,
+        s3_url,
+        indexd_client,
+        return_not_found=True
+    )
 
     # if record not found, allow action
     if file_state is None:
@@ -302,7 +307,7 @@ def get_node(project_id, uuid, db=None):
         )
 
 
-def get_indexd(uuid, return_not_found=False):
+def get_indexd(uuid, indexd_client, return_not_found=False):
     """Get indexd doc for a given UUID
 
     Args:
@@ -312,7 +317,7 @@ def get_indexd(uuid, return_not_found=False):
         doc: Indexd doc to be modified later
     """
 
-    indexd_obj = flask.current_app.indexd.get(uuid)
+    indexd_obj = indexd_client.get(uuid)
     if indexd_obj is None and not return_not_found:
         raise InternalError(
             "Indexd entry for {} doesn't exist".format(uuid)
@@ -320,7 +325,7 @@ def get_indexd(uuid, return_not_found=False):
     return indexd_obj
 
 
-def get_indexd_state(did, url, return_not_found=False):
+def get_indexd_state(did, url, indexd_client, return_not_found=False):
     """Get file state from indexd urls_metadata
     Args:
         did (string): document id in indexd database
@@ -328,7 +333,7 @@ def get_indexd_state(did, url, return_not_found=False):
     Returns:
         state for the main storage url stored in urls_metadata
     """
-    indexd_doc = get_indexd(did, return_not_found=return_not_found)
+    indexd_doc = get_indexd(did, indexd_client, return_not_found=return_not_found)
 
     if indexd_doc is None:
         return None
@@ -345,7 +350,7 @@ def get_indexd_state(did, url, return_not_found=False):
     return indexd_doc.urls_metadata[url]['state']
 
 
-def set_indexd_state(did, url, state):
+def set_indexd_state(did, url, state, indexd_client):
     """Update url state in indexd
 
     You have to return the patched version of the indexd Document object
@@ -359,7 +364,7 @@ def set_indexd_state(did, url, state):
     Returns:
         indexclient.client.Document: indexd doc object
     """
-    indexd_doc = get_indexd(did)
+    indexd_doc = get_indexd(did, indexd_client)
     indexd_doc.urls_metadata[url]['state'] = state
     indexd_doc.patch()
     return indexd_doc
@@ -517,7 +522,7 @@ def lookup_program(psql_driver, program):
 def proxy_request(project_id, uuid, data, args, headers, method, action,
                   indexd_client, dry_run=False):
     node = get_node(project_id, uuid)
-    indexd_obj = get_indexd(uuid)
+    indexd_obj = indexd_client.get(uuid)
 
     program, project = project_id.split('-', 1)
     s3_url = generate_s3_url(
@@ -529,7 +534,7 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
         file_name=indexd_obj.file_name,
     )
 
-    check_action_allowed_for_file(action, node, s3_url)
+    check_action_allowed_for_file(action, node, s3_url, indexd_client)
 
     if dry_run:
         message = (
@@ -539,9 +544,9 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
         return flask.Response(json.dumps({'message': message}), status=200)
 
     if action in ['upload', 'initiate_multipart']:
-        indexd_obj = set_indexd_state(node.node_id, s3_url, UPLOADING_STATE)
+        indexd_obj = set_indexd_state(node.node_id, s3_url, UPLOADING_STATE, indexd_client)
     elif action == 'abort_multipart':
-        indexd_obj = set_indexd_state(node.node_id, s3_url, submitted_state())
+        indexd_obj = set_indexd_state(node.node_id, s3_url, submitted_state(), indexd_client)
 
     if action not in ['upload', 'upload_part', 'complete_multipart']:
         data = ''
@@ -553,10 +558,10 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
         if resp.status == 200:
             update_indexd_url(indexd_obj,
                               key_name='{}/{}'.format(project_id, uuid))
-            indexd_obj = set_indexd_state(node.node_id, s3_url, SUCCESS_STATE)
+            indexd_obj = set_indexd_state(node.node_id, s3_url, SUCCESS_STATE, indexd_client)
     elif action == 'delete':
         if resp.status == 204:
-            indexd_obj = set_indexd_state(node.node_id, s3_url, submitted_state())
+            indexd_obj = set_indexd_state(node.node_id, s3_url, submitted_state(), indexd_client)
             update_indexd_url(indexd_obj, None)
 
     return resp
