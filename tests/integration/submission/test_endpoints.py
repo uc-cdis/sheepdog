@@ -619,3 +619,21 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
     assert len(r.data.strip().split('\n')) == case_count + 1
+
+def test_export_all_node_types_json(client, pg_driver, cgci_blgsp, submitter):
+    post_example_entities_together(client, submitter)
+    with pg_driver.session_scope() as s:
+        case = pg_driver.nodes(md.Case).first()
+        new_case = md.Case(str(uuid.uuid4()))
+        new_case.props = case.props
+        new_case.submitter_id = 'case-2'
+        s.add(new_case)
+        case_count = pg_driver.nodes(md.Case).count()
+    path = '/v0/submission/CGCI/BLGSP/export/?node_label=case&format=json'
+    r = client.get(
+        path,
+        headers=submitter)
+    assert r.status_code == 200, r.data
+    assert r.headers['Content-Disposition'].endswith('json')
+    js_data = json.loads(r.data)
+    assert len(js_data["data"]) == case_count

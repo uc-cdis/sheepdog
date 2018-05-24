@@ -26,6 +26,8 @@ if __name__ == '__main__':
                         default='test', help="psql test user")
     parser.add_argument("--password", type=str, action="store",
                         default='test', help="psql test password")
+    parser.add_argument("--root_password", type=str, action="store",
+                        default='test', help="psql root (postgres) user password")
     parser.add_argument("--database", type=str, action="store",
                         default='sheepdog_automated_test', help="psql test database")
     parser.add_argument("--no-drop", action="store_true",
@@ -35,6 +37,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     setup_database(args.user, args.password, args.database,
+                   host=args.host,
+                   root_password=args.root_password,
                    no_drop=args.no_drop, no_user=args.no_user)
     create_tables(args.host, args.user, args.password, args.database)
     create_indexes(args.host, args.user, args.password, args.database)

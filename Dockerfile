@@ -24,9 +24,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python-setuptools \
     sudo \
     vim \
-    && pip install --upgrade pip \
-    && pip install --upgrade setuptools \
-    && pip install uwsgi \
+    && python -m pip install --upgrade pip \
+    && python -m pip install --upgrade setuptools \
+    && python -m pip install uwsgi \
     && mkdir /var/www/sheepdog \
     && mkdir -p /var/www/.cache/Python-Eggs/ \
     && chown www-data -R /var/www/.cache/Python-Eggs/ \
@@ -38,7 +38,7 @@ COPY ./deployment/nginx/nginx.conf /etc/nginx/
 COPY ./deployment/nginx/uwsgi.conf /etc/nginx/sites-available/
 WORKDIR /sheepdog
 
-RUN pip install -r requirements.txt \
+RUN python -m pip install -r requirements.txt \
     && COMMIT=`git rev-parse HEAD` && echo "COMMIT=\"${COMMIT}\"" >sheepdog/version_data.py \
     && VERSION=`git describe --always --tags` && echo "VERSION=\"${VERSION}\"" >>sheepdog/version_data.py \
     && DICTCOMMIT=`git rev-parse HEAD` && echo "DICTCOMMIT=\"${DICTCOMMIT}\"" >>/sheepdog/sheepdog/version_data.py \
