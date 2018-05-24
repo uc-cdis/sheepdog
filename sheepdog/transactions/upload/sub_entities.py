@@ -144,6 +144,8 @@ class FileUploadEntity(UploadEntity):
         node = super(FileUploadEntity, self).get_node_create(
             skip_node_lookup=skip_node_lookup)
         node.acl = self.transaction.get_phsids()
+        if self.use_object_id(self.entity_type):
+            node._props['object_id'] = self.object_id
 
         return node
 
@@ -182,6 +184,9 @@ class FileUploadEntity(UploadEntity):
         else:
             self._populate_files_from_index()
             self._is_valid_index_id_for_graph()
+
+        if self.use_object_id(self.entity_type):
+            node._props['object_id'] = self.object_id
 
         return node
 
@@ -361,7 +366,7 @@ class FileUploadEntity(UploadEntity):
             else:
                 if self.file_exists:
                     self.file_index = self.file_by_uuid or self.file_by_hash
-                    self.object_id = self.file_index
+                    self.object_id = getattr(self.file_index, 'did', None)
                 # else case handled by create
 
         else:

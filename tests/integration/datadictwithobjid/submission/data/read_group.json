@@ -1,0 +1,15 @@
+{
+    "type": "read_group",
+    "aliquots": {
+        "submitter_id": "BLGSP-71-06-00019-01A-11D"
+    },
+    "submitter_id": "test-readgroup-1",
+    "experiment_name": "experiment1",
+    "sequencing_center": "center1",
+    "platform": "Illumina",
+    "library_strategy": "WXS",
+    "library_name": "library1",
+    "is_paired_end": false,
+    "read_length": 12345,
+    "read_group_name": "readgroup-1"
+}

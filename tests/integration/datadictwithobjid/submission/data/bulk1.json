@@ -1,0 +1,47 @@
+[
+  {
+    "doc": "{\"type\": \"case\", \"projects\": {\"id\": \"daa208a7-f57a-562c-a04a-7a7c77542c98\"}, \"submitter_id\": \"BLGSP-71-06-00005\"}", 
+    "name": "BLGSP-71-06-00005.json", 
+    "doc_format": "JSON"
+  }, 
+  {
+    "doc": "{\"sample_type_id\": \"10\", \"is_ffpe\": false, \"oct_embedded\": \"false\", \"sample_type\": \"Blood Derived Normal\", \"submitter_id\": \"BLGSP-71-06-00005-01A\", \"cases\": {\"submitter_id\": \"BLGSP-71-06-00005\"}, \"type\": \"sample\"}", 
+    "name": "BLGSP-71-06-00005-01A.json", 
+    "doc_format": "JSON"
+  }, 
+  {
+    "doc": "{\"creation_datetime\": 1359936000, \"portion_number\": \"01\", \"weight\": 2.0, \"submitter_id\": \"BLGSP-71-06-00005-01A-2\", \"samples\": {\"submitter_id\": \"BLGSP-71-06-00005-01A\"}, \"type\": \"portion\", \"is_ffpe\": false}", 
+    "name": "BLGSP-71-06-00005-01A-2.json", 
+    "doc_format": "JSON"
+  }, 
+  {
+    "doc": "{\"portions\": {\"submitter_id\": \"BLGSP-71-06-00005-01A-2\"}, \"analyte_type_id\": \"D\", \"analyte_type\": \"DNA\", \"submitter_id\": \"BLGSP-71-06-00005-01A-21\", \"amount\": 10.98, \"concentration\": 0.14, \"spectrophotometer_method\": \"PicoGreen\", \"type\": \"analyte\"}", 
+    "name": "BLGSP-71-06-00005-01A-21.json", 
+    "doc_format": "JSON"
+  }, 
+  {
+    "doc": "{\"source_center\": \"23\", \"concentration\": 0.07, \"type\": \"aliquot\", \"analytes\": {\"submitter_id\": \"BLGSP-71-06-00005-01A-21\"}, \"submitter_id\": \"BLGSP-71-06-00005-01A-21R\"}", 
+    "name": "BLGSP-71-06-00005-01A-21R.json", 
+    "doc_format": "JSON"
+  }, 
+  {
+    "doc": "{\"source_center\": \"23\", \"concentration\": 0.14, \"type\": \"aliquot\", \"samples\": {\"submitter_id\": \"BLGSP-71-06-00005-01A\"}, \"submitter_id\": \"BLGSP-71-06-00005-99A-01D\"}", 
+    "name": "BLGSP-71-06-00005-99A-01D.json", 
+    "doc_format": "JSON"
+  }, 
+  {
+    "doc": "{\"file_name\": \"C500.CGCI-file1.bam\", \"md5sum\": \"35b39360cc41a7b635980159aef265ba\", \"submitter_id\": \"CGCI-file-1\", \"aliquots\": {\"submitter_id\": \"BLGSP-71-06-00005-99A-01D\"}, \"file_size\": 5962718282, \"type\": \"file\"}", 
+    "name": "CGCI-file-1.json", 
+    "doc_format": "JSON"
+  }, 
+  {
+    "doc": "{\"file_name\": \"C500.CGCI-file2.bam\", \"md5sum\": \"35980159aef265ba35b39360cc41a7b6\", \"submitter_id\": \"CGCI-file-2\", \"aliquots\": {\"submitter_id\": \"BLGSP-71-06-00005-99A-01D\"}, \"file_size\": 5962718282, \"type\": \"file\"}", 
+    "name": "CGCI-file-2.json", 
+    "doc_format": "JSON"
+  }, 
+  {
+    "doc": "{\"file_name\": \"C500.CGCI-file3.bam\", \"md5sum\": \"65be9a535b382d2fb6767e89c5c4eedb\", \"submitter_id\": \"CGCI-file-3\", \"aliquots\": {\"submitter_id\": \"BLGSP-71-06-00005-99A-01D\"}, \"file_size\": 62966, \"type\": \"file\"}", 
+    "name": "CGCI-file-3.json", 
+    "doc_format": "JSON"
+  }
+]

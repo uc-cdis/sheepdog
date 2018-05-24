@@ -29,8 +29,8 @@ from sheepdog.test_settings import (
     JWT_KEYPAIR_FILES,
     SIGNPOST,
 )
-from tests.integration.api import app as _app, app_init, indexd_init
-from tests.integration.submission.test_endpoints import put_cgci_blgsp
+from tests.integration.datadictwithobjid.api import app as _app, app_init, indexd_init
+from tests.integration.datadictwithobjid.submission.test_endpoints import put_cgci_blgsp
 
 try:
     reload  # Python 2.7
@@ -44,7 +44,7 @@ def get_parent(path):
     print(path)
     return path[0:path.rfind('/')]
 
-PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/integration/schemas'
+PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/datadictwithobjid/schemas'
 
 @pytest.fixture(scope='session')
 def pg_config():
@@ -125,7 +125,7 @@ def app(tmpdir, request):
     _app.logger.setLevel(os.environ.get("GDC_LOG_LEVEL", "WARNING"))
 
     _app.jwt_public_keys = {_app.config['USER_API']: {
-            'key-test': utils.read_file('resources/keys/test_public_key.pem')
+            'key-test': utils.read_file('../resources/keys/test_public_key.pem')
     }}
     return _app
 
@@ -222,7 +222,7 @@ def encoded_jwt(private_key, user):
 
 
 def create_user_header(pg_driver, username):
-    private_key = utils.read_file('resources/keys/test_private_key.pem')
+    private_key = utils.read_file('../resources/keys/test_private_key.pem')
 
     user_driver = SQLAlchemyDriver(PSQL_USER_DB_CONNECTION)
     with user_driver.session as s:

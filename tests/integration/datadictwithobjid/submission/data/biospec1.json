@@ -1,0 +1,83 @@
+[
+    {
+        "type": "case",
+        "submitter_id": "BLGSP-71-06-00005",
+        "projects": {
+            "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
+        }
+    }, {
+        "type": "sample",
+        "cases": {
+            "submitter_id": "BLGSP-71-06-00005"
+        },
+        "sample_type_id": "10",
+        "oct_embedded": "false",
+        "is_ffpe": false,
+        "sample_type": "Blood Derived Normal",
+        "submitter_id": "BLGSP-71-06-00005-01A"
+    }, {
+        "type": "portion",
+        "samples": {
+            "submitter_id": "BLGSP-71-06-00005-01A"
+        },
+        "creation_datetime": 1359936000,
+        "portion_number": "01",
+        "weight": 2.0,
+        "submitter_id": "BLGSP-71-06-00005-01A-2",
+        "is_ffpe": false
+    }, {
+        "type": "analyte",
+        "portions": {
+            "submitter_id": "BLGSP-71-06-00005-01A-2"
+        },
+        "analyte_type": "DNA",
+        "submitter_id": "BLGSP-71-06-00005-01A-21",
+        "amount": 10.98,
+        "concentration": 0.14,
+        "spectrophotometer_method": "PicoGreen",
+        "analyte_type_id": "D"
+    }, {
+        "type": "aliquot",
+        "analytes": {
+            "submitter_id": "BLGSP-71-06-00005-01A-21"
+        },
+        "submitter_id": "BLGSP-71-06-00005-01A-21R",
+        "source_center": "23",
+        "concentration": 0.07
+    }, {
+        "type": "aliquot",
+        "samples": {
+            "submitter_id": "BLGSP-71-06-00005-01A"
+        },
+        "submitter_id": "BLGSP-71-06-00005-99A-01D",
+        "source_center": "23",
+        "concentration": 0.14
+    }, {
+        "type": "file",
+        "aliquots": {
+            "submitter_id": "BLGSP-71-06-00005-99A-01D"
+        },
+        "submitter_id": "CGCI-file-1",
+        "file_size": 42,
+        "file_name": "C500.CGCI-file1.bam",
+        "md5sum": "35b39360cc41a7b635980159aef265ba"
+    }, {
+        "type": "file",
+        "aliquots": {
+            "submitter_id": "BLGSP-71-06-00005-99A-01D"
+        },
+        "submitter_id": "CGCI-file-2",
+        "file_size": 42,
+        "file_name": "C500.CGCI-file2.bam",
+        "md5sum": "35980159aef265ba35b39360cc41a7b6"
+    }, {
+        "type": "file",
+        "aliquots": {
+            "submitter_id": "BLGSP-71-06-00005-99A-01D"
+        },
+        "submitter_id": "CGCI-file-3",
+        "file_size": 5962718282,
+        "file_name": "C500.CGCI-file3.bam",
+        "md5sum": "c415baa7b6359835b39360c0159aef26"
+    }
+]
