@@ -357,7 +357,7 @@ class UploadEntity(EntityBase):
         node_class = psqlgraph.Node.get_subclass(self.entity_type)
         category = dictionary.schema.get(node_class.label)['category']
 
-        is_data_file = category == 'data_file'
+        is_data_file = category in self.DATA_FILE_CATEGORIES
 
         if is_data_file:
             # check if open_acl is requested and the node type can be set open
