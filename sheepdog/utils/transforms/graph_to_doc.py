@@ -839,6 +839,7 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
           # Yield the lines of the file.
           yield '{}\n'.format('\t'.join(titles))
         
+        js_list_separator = ''
         for result in query.yield_per(1000):
             row = []
             json_obj = {
@@ -860,9 +861,10 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
                 if not isinstance(val, str):
                     row[idx] = str(row[idx])
             if file_format == "json":
-              yield json.dumps(json_obj)
+              yield js_list_separator + json.dumps(json_obj)
             else:
               yield '{}\n'.format('\t'.join(row))
+            js_list_separator = ','
         
         if file_format == "json":
           yield ']}'
