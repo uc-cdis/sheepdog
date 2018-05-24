@@ -5,12 +5,15 @@ from gdcdatamodel.models import *
 from psqlgraph import create_all, Node, Edge
 
 
-def try_drop_test_data(user, database, root_user='postgres', host=''):
-
+def try_drop_test_data(user, database, root_user='postgres', host='', root_password='' ):
     print('Dropping old test data')
+    connect_str="postgres://{user}@{host}/postgres".format(
+        user=root_user, host=host)
+    if root_password:
+      connect_str="postgres://{user}:{password}@{host}/postgres".format(
+          user=root_user, password=root_password, host=host)
 
-    engine = create_engine("postgres://{user}@{host}/postgres".format(
-        user=root_user, host=host))
+    engine = create_engine(connect_str)
 
     conn = engine.connect()
     conn.execute("commit")
@@ -25,17 +28,23 @@ def try_drop_test_data(user, database, root_user='postgres', host=''):
 
 
 def setup_database(user, password, database, root_user='postgres',
-                   host='', no_drop=False, no_user=False):
+                   host='', no_drop=False, no_user=False, root_password=''
+                  ):
     """
     setup the user and database
     """
     print('Setting up test database')
 
     if not no_drop:
-        try_drop_test_data(user, database)
+        try_drop_test_data(user, database, root_user, host, root_password)
 
-    engine = create_engine("postgres://{user}@{host}/postgres".format(
-        user=root_user, host=host))
+    connect_str="postgres://{user}@{host}/postgres".format(
+        user=root_user, host=host)
+    if password:
+      connect_str="postgres://{user}:{password}@{host}/postgres".format(
+          user=root_user, password=root_password, host=host)
+
+    engine = create_engine(connect_str)
     conn = engine.connect()
     conn.execute("commit")
 
@@ -50,13 +59,16 @@ def setup_database(user, password, database, root_user='postgres',
             user_stmt = "CREATE USER {user} WITH PASSWORD '{password}'".format(
                 user=user, password=password)
             conn.execute(user_stmt)
-
+        except Exception, msg:
+            logging.warn("Unable to add user:" + str(msg))
+        # User may already exist - GRANT privs on new db
+        try:
             perm_stmt = 'GRANT ALL PRIVILEGES ON DATABASE {database} to {password}'\
                         ''.format(database=database, password=password)
             conn.execute(perm_stmt)
             conn.execute("commit")
         except Exception, msg:
-            logging.warn("Unable to add user:" + str(msg))
+            logging.warn("Unable to GRANT privs to user:" + str(msg))
     conn.close()
 
 
