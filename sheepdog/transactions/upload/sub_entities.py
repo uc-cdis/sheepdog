@@ -10,6 +10,8 @@ from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.upload.entity import UploadEntity
 from sheepdog.transactions.upload.entity import lookup_node
 
+from sheepdog.utils import stringify_acls
+from sheepdog import dictionary
 
 class NonFileUploadEntity(UploadEntity):
     """
@@ -83,6 +85,7 @@ class FileUploadEntity(UploadEntity):
         self.file_index = None
         self.file_by_uuid = None
         self.file_by_hash = None
+        self.object_id = None
         self.urls = []
 
     def parse(self, doc):
@@ -102,6 +105,9 @@ class FileUploadEntity(UploadEntity):
             self.urls = entity_urls.strip().split(',')
             # remove from the doc since we don't want to validate it
             doc.pop('urls')
+
+        if self.use_object_id(self.entity_type):
+            self.object_id = doc.get('object_id')
 
         super(FileUploadEntity, self).parse(doc)
 
@@ -131,7 +137,7 @@ class FileUploadEntity(UploadEntity):
                 self.entity_id = doc.did
                 self.file_exists = True
         else:
-            self._populate_files_from_index(self.entity_id)
+            self._populate_files_from_index()
             self._set_node_and_file_ids()
 
         # call to super must happen after setting node and file ids here
@@ -174,7 +180,7 @@ class FileUploadEntity(UploadEntity):
         if self._config.get('USE_SIGNPOST', False):
             pass
         else:
-            self._populate_files_from_index(self.entity_id)
+            self._populate_files_from_index()
             self._is_valid_index_id_for_graph()
 
         return node
@@ -252,11 +258,14 @@ class FileUploadEntity(UploadEntity):
             urls.extend(self.urls)
 
         # IndexClient
-        self._create_index(did=self.file_index,
+        doc = self._create_index(did=self.file_index,
                            hashes=hashes,
                            size=size,
                            urls=urls,
                            acl=acl)
+
+        if self.use_object_id(self.entity_type):
+            self.object_id = doc.did
 
         self._create_alias(
             record=alias, hashes=hashes, size=size, release='private'
@@ -275,6 +284,16 @@ class FileUploadEntity(UploadEntity):
                 document.urls.extend(urls_to_add)
                 document.patch()
 
+    @staticmethod
+    def use_object_id(entity_type):
+        """
+        Check if the dictionary contains object_id for
+        storing the GUID of the index record
+        """
+        ret = dictionary.schema.get(entity_type, {}).get('properties', {}).get('object_id')
+        return ret
+    
+    
     @staticmethod
     def is_updatable_file_node(node):
         """
@@ -305,7 +324,7 @@ class FileUploadEntity(UploadEntity):
 
         return is_updateable
 
-    def _populate_files_from_index(self, uuid=None):
+    def _populate_files_from_index(self):
         """
         Populate information about file existence in index service.
         Will first check provided uuid, then check by hash/size.
@@ -313,6 +332,12 @@ class FileUploadEntity(UploadEntity):
         Returns:
             TYPE: Description
         """
+        uuid = self.entity_id
+        if self.use_object_id(self.entity_type):
+            if self.object_id:
+                uuid = self.object_id
+            else:
+                uuid = None
         self.file_by_hash = self.get_file_from_index_by_hash()
         self.file_by_uuid = self.get_file_from_index_by_uuid(uuid)
 
@@ -325,29 +350,44 @@ class FileUploadEntity(UploadEntity):
         information provided and whether or not the file exists in the
         index service.
         """
-        if not self.file_exists:
-            if self.entity_id:
-                # use entity_id for file creation
-                self.file_index = self.entity_id
-            else:
-                # use same id for both node entity id and file index
+        if self.use_object_id(self.entity_type):
+            # we are responsible for cleaning up entity id
+            if not self.entity_id:
                 self.entity_id = str(uuid.uuid4())
-                self.file_index = self.entity_id
-        else:
-            if self.entity_id:
-                # check to make sure that when file exists
-                # and an id is provided that they are the same
-                # NOTE: record errors are populated in check below
-                self._is_valid_index_for_file()
-            else:
-                # the file exists in indexd and
-                # no node id is provided, so attempt to use indexed id
-                file_by_hash_index = getattr(self.file_by_hash, 'did', None)
 
-                # ensure that the index we found matches the graph (this will
-                # populate record errors if there are any issues)
-                if self._is_valid_index_id_for_graph():
-                    self.entity_id = file_by_hash_index
+            if self.object_id:
+                # Set file_index for updates
+                self.file_index = self.object_id
+            else:
+                if self.file_exists:
+                    self.file_index = self.file_by_uuid or self.file_by_hash
+                    self.object_id = self.file_index
+                # else case handled by create
+
+        else:
+            if not self.file_exists:
+                if self.entity_id:
+                    # use entity_id for file creation
+                    self.file_index = self.entity_id
+                else:
+                    # use same id for both node entity id and file index
+                    self.entity_id = str(uuid.uuid4())
+                    self.file_index = self.entity_id
+            else:
+                if self.entity_id:
+                    # check to make sure that when file exists
+                    # and an id is provided that they are the same
+                    # NOTE: record errors are populated in check below
+                    self._is_valid_index_for_file()
+                else:
+                    # the file exists in indexd and
+                    # no node id is provided, so attempt to use indexed id
+                    file_by_hash_index = getattr(self.file_by_hash, 'did', None)
+
+                    # ensure that the index we found matches the graph (this will
+                    # populate record errors if there are any issues)
+                    if self._is_valid_index_id_for_graph():
+                        self.entity_id = file_by_hash_index
 
     def _is_valid_index_for_file(self):
         """
