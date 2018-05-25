@@ -12,6 +12,7 @@ from sheepdog.transactions.upload.entity import lookup_node
 
 from sheepdog import dictionary
 
+
 class NonFileUploadEntity(UploadEntity):
     """
     Deals with non-file-like entities.
@@ -45,16 +46,34 @@ class FileUploadEntity(UploadEntity):
     - submitter_id/project are used to create an alias in the index service to
         a data file
     - when sheepdog attempts to find out if a file exists in index service it
-      has TWO methods of determining
-        FIXME At the moment, there is a 1:1 mapping of id's between graph nodes and
-              indexed files. eventually, there'll be a file_id attr in the graph node
-        1) If a file uuid exists in the graph node or is provided in the submission,
-           we can look up that uuid in index service
-        2) The hash/file_size combo should be unique in the index service for each
-           file
+      has a few methods of determining:
+        1) If a file uuid exists in the graph node we can look up that uuid in
+           index service
+        2) If an id is provided in the submission we can look up that uuid in
+           index service
+        2) The hash/file_size combo provided should be unique in the index
+           service for each file
 
-    Here are a few submission examples and how we currently handle. The
-    examples here refer to whether or not an "id" field is included during
+    Handling Relationship Between Graph Node and Indexed File:
+        - sheepdog has 2 different methods and supports both in order to be
+          backwards compatible
+              1) graph node id and indexed file's id must match
+                    - 1:1 id matching is enforced
+              2) graph node has an `object_id` that maps to the
+                 indexed file's id
+                    - graph node id and indexed file's id do NOT need to match
+                    - 1:1 id matching is NOT enforced
+                    - this method is ONLY used when the dictionary schema has
+                      an `object_id` property for entities
+                          - this makes it backwards-compatible with older
+                            dictionaries
+
+    ---------------------------------------------------------------------------
+
+    Here are a few submission examples and how we currently handle situations
+    where the `object_id` is NOT in the dictionary, e.g. we are enforcing 1:1.
+
+    The examples here refer to whether or not an "id" field is included during
     the submission.
 
     - "id" NOT provided , file NOT in index service
@@ -71,8 +90,7 @@ class FileUploadEntity(UploadEntity):
 
     ERROR cases handled:
         - If you attempt to submit the same data again with a different "id"
-            it will fail. At the moment we are maintaining a 1:1 between indexed
-            files and graph nodes
+            it will fail.
         - Attempting to submit new data (new file) when the node has already
             been created with a previous file will fail. We don't currently
             allow updating the linkage to a new file since we're forcing
@@ -142,6 +160,7 @@ class FileUploadEntity(UploadEntity):
         node = super(FileUploadEntity, self).get_node_create(
             skip_node_lookup=skip_node_lookup)
         node.acl = self.transaction.get_phsids()
+
         if self.use_object_id(self.entity_type):
             node._props['object_id'] = self.object_id
 
@@ -180,11 +199,17 @@ class FileUploadEntity(UploadEntity):
         if self._config.get('USE_SIGNPOST', False):
             pass
         else:
-            if self.use_object_id(self.entity_type) and not self.object_id and 'object_id' in node._props:
+            if (self.use_object_id(self.entity_type)
+                and not self.object_id and 'object_id' in node._props):
                     self.object_id = node._props['object_id']
+
             self._populate_files_from_index()
+
             if not self.use_object_id(self.entity_type):
-                self._is_valid_index_id_for_graph()
+                # when object_id isn't used, we force 1:1 between indexed id
+                # and node id.
+                # NOTE: The call below populates record errors
+                self._is_index_id_identical_to_node_id()
             else:
                 if self.file_exists:
                     self._is_valid_index_for_file()
@@ -264,11 +289,13 @@ class FileUploadEntity(UploadEntity):
             urls.extend(self.urls)
 
         # IndexClient
-        doc = self._create_index(did=self.file_index,
-                           hashes=hashes,
-                           size=size,
-                           urls=urls,
-                           acl=acl)
+        doc = self._create_index(
+            did=self.file_index,
+            hashes=hashes,
+            size=size,
+            urls=urls,
+            acl=acl
+        )
 
         if self.use_object_id(self.entity_type):
             self.object_id = str(doc.did)
@@ -299,7 +326,6 @@ class FileUploadEntity(UploadEntity):
         """
         ret = dictionary.schema.get(entity_type, {}).get('properties', {}).get('object_id')
         return ret
-
 
     @staticmethod
     def is_updatable_file_node(node):
@@ -334,10 +360,9 @@ class FileUploadEntity(UploadEntity):
     def _populate_files_from_index(self):
         """
         Populate information about file existence in index service.
-        Will first check provided uuid, then check by hash/size.
+        Will first check uuid then check by hash/size.
 
-        Returns:
-            TYPE: Description
+        If an object_id exists, that will be used to check indexd
         """
         uuid = self.entity_id
         if self.use_object_id(self.entity_type):
@@ -360,7 +385,6 @@ class FileUploadEntity(UploadEntity):
             # we are responsible for cleaning up entity id
             if not self.entity_id:
                 self.entity_id = str(uuid.uuid4())
-
 
             if self.file_exists:
                 if self.object_id:
@@ -392,7 +416,7 @@ class FileUploadEntity(UploadEntity):
 
                     # ensure that the index we found matches the graph (this will
                     # populate record errors if there are any issues)
-                    if self._is_valid_index_id_for_graph():
+                    if self._is_index_id_identical_to_node_id():
                         self.entity_id = file_by_hash_index
 
     def _is_valid_index_for_file(self):
@@ -404,7 +428,9 @@ class FileUploadEntity(UploadEntity):
         those uuids match. record_errors will be set with any issues
         """
         is_valid = True
-        if not self.use_object_id(self.entity_type) and (not self.file_by_hash or not self.file_by_uuid):
+
+        if (not self.use_object_id(self.entity_type)
+                and (not self.file_by_hash or not self.file_by_uuid)):
             error_message = (
                 'Could not find exact file match in index for id: {} '
                 'AND `hashes - size`: `{} - {}`. '
@@ -466,11 +492,11 @@ class FileUploadEntity(UploadEntity):
             is_valid = False
 
         if is_valid and not self.use_object_id(self.entity_type):
-            is_valid = self._is_valid_index_id_for_graph()
+            is_valid = self._is_index_id_identical_to_node_id()
 
         return is_valid
 
-    def _is_valid_index_id_for_graph(self):
+    def _is_index_id_identical_to_node_id(self):
         is_valid = True
         # if a single match exists in the graph, check to see if
         # file exists in index service
@@ -501,10 +527,7 @@ class FileUploadEntity(UploadEntity):
         """
         Return the record entity from "signpost" (index client)
 
-        NOTE:
-        - Should only ever be called for data and metadata files.
-        - If there is already a record matching the hash and size for this
-          file, then return none.
+        NOTE: Should only ever be called for data and metadata files.
         """
         document = None
 
@@ -530,10 +553,7 @@ class FileUploadEntity(UploadEntity):
         """
         Return the record entity from 'signpost" (index client)
 
-        NOTE:
-        - Should only ever be called for data and metadata files.
-        - If there is already a record matching the hash and size for this
-          file, then return none.
+        NOTE: Should only ever be called for data and metadata files.
         """
         document = None
 
