@@ -197,8 +197,7 @@ def test_data_file_already_indexed(
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
     #       need to change in the future
-    print entity
-    assert entity['object_id'] == document.did
+    assert entity['id'] == document.did
 
 
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')

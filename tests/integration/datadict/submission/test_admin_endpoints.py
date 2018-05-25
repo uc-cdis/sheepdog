@@ -8,8 +8,8 @@ import json
 import pytest
 
 from gdcdatamodel import models as md
-from tests.integration.submission.test_endpoints import post_example_entities_together
-from tests.integration.submission.utils import data_fnames
+from tests.integration.datadict.submission.test_endpoints import post_example_entities_together
+from tests.integration.datadict.submission.utils import data_fnames
 
 def create_blgsp_url(path):
     base_url = '/v0/submission/admin/CGCI/BLGSP'

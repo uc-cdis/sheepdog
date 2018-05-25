@@ -581,8 +581,19 @@ def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter,
         if entity['type'] == 'submitted_unaligned_reads':
             sur_entity = entity
 
+    path = '/v0/submission/CGCI/BLGSP/export/?format=json&ids={nid}'.format(nid=sur_entity['id'])
+    r = client.get(
+        path,
+        headers=submitter)
+
+    print r.json
+    data = r.json
+    object_id = data[0]['object_id']
+    assert len(data) == 1
+    assert object_id
+
     assert sur_entity, 'No submitted_unaligned_reads entity created'
-    assert index_client.get(sur_entity['id']), 'No indexd document created'
+    assert index_client.get(object_id), 'No indexd document created'
 
 def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)

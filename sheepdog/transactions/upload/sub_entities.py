@@ -106,8 +106,7 @@ class FileUploadEntity(UploadEntity):
             # remove from the doc since we don't want to validate it
             doc.pop('urls')
 
-        if self.use_object_id(self.entity_type):
-            self.object_id = doc.get('object_id')
+        self.object_id = doc.get('object_id')
 
         super(FileUploadEntity, self).parse(doc)
 
@@ -182,11 +181,14 @@ class FileUploadEntity(UploadEntity):
         if self._config.get('USE_SIGNPOST', False):
             pass
         else:
+            if self.use_object_id(self.entity_type) and not self.object_id and 'object_id' in node._props:
+                    self.object_id = node._props['object_id']
             self._populate_files_from_index()
-            self._is_valid_index_id_for_graph()
-
-        if self.use_object_id(self.entity_type):
-            node._props['object_id'] = self.object_id
+            if not self.use_object_id(self.entity_type):
+                self._is_valid_index_id_for_graph()
+            else:
+                if self.file_exists:
+                    self._is_valid_index_for_file()
 
         return node
 
@@ -271,6 +273,7 @@ class FileUploadEntity(UploadEntity):
 
         if self.use_object_id(self.entity_type):
             self.object_id = doc.did
+            self.node._props['object_id'] = self.object_id
 
         self._create_alias(
             record=alias, hashes=hashes, size=size, release='private'
@@ -281,7 +284,7 @@ class FileUploadEntity(UploadEntity):
         Call the "signpost" (index client) for the transaction to update an
         index record for this entity.
         """
-        document = self.file_by_uuid
+        document = self.file_by_uuid or self.file_by_hash
 
         if self.urls:
             urls_to_add = [url for url in self.urls if url not in document.urls]
@@ -345,7 +348,6 @@ class FileUploadEntity(UploadEntity):
                 uuid = None
         self.file_by_hash = self.get_file_from_index_by_hash()
         self.file_by_uuid = self.get_file_from_index_by_uuid(uuid)
-
         if self.file_by_uuid or self.file_by_hash:
             self.file_exists = True
 
@@ -360,14 +362,14 @@ class FileUploadEntity(UploadEntity):
             if not self.entity_id:
                 self.entity_id = str(uuid.uuid4())
 
-            if self.object_id:
-                # Set file_index for updates
-                self.file_index = self.object_id
+
+            if self.file_exists:
+                if self.object_id:
+                    self._is_valid_index_for_file()
+                else:
+                    self.object_id = getattr(self.file_by_hash, 'did', None)
             else:
-                if self.file_exists:
-                    self.file_index = self.file_by_uuid or self.file_by_hash
-                    self.object_id = getattr(self.file_index, 'did', None)
-                # else case handled by create
+                self.file_index = self.object_id
 
         else:
             if not self.file_exists:
@@ -403,8 +405,7 @@ class FileUploadEntity(UploadEntity):
         those uuids match. record_errors will be set with any issues
         """
         is_valid = True
-
-        if not self.file_by_hash or not self.file_by_uuid:
+        if not self.use_object_id(self.entity_type) and (not self.file_by_hash or not self.file_by_uuid):
             error_message = (
                 'Could not find exact file match in index for id: {} '
                 'AND `hashes - size`: `{} - {}`. '
@@ -417,6 +418,28 @@ class FileUploadEntity(UploadEntity):
             if self.file_by_hash:
                 error_message += 'A file was found matching `hash / size` but NOT id.'
             elif self.file_by_uuid:
+                error_message += 'A file was found matching id but NOT `hash / size`.'
+            else:
+                # keep generic error message since both didn't result in a match
+                pass
+
+            self.record_error(
+                error_message,
+                type=EntityErrors.INVALID_VALUE
+            )
+            is_valid = False
+
+        if not self.file_by_hash and self.file_by_uuid:
+            error_message = (
+                'Could not find exact file match in index for id: {} '
+                'AND `hashes - size`: `{} - {}`. '
+            ).format(
+                self.entity_id,
+                str(self._get_file_hashes()),
+                str(self._get_file_size())
+            )
+
+            if self.file_by_uuid:
                 error_message += 'A file was found matching id but NOT `hash / size`.'
             else:
                 # keep generic error message since both didn't result in a match
@@ -443,7 +466,7 @@ class FileUploadEntity(UploadEntity):
             )
             is_valid = False
 
-        if is_valid:
+        if is_valid and not self.use_object_id(self.entity_type):
             is_valid = self._is_valid_index_id_for_graph()
 
         return is_valid

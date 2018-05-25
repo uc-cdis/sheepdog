@@ -104,10 +104,15 @@ def test_data_file_not_indexed(
     entity = assert_single_entity_from_response(resp)
     assert entity['action'] == 'create'
 
-    # make sure uuid in node is the same as the uuid from index
-    # FIXME this is a temporary solution so these tests will probably
-    #       need to change in the future
-    assert entity['id'] == did
+    path = '/v0/submission/CGCI/BLGSP/export/?format=json&ids={nid}'.format(nid=entity['id'])
+    r = client.get(
+        path,
+        headers=submitter)
+
+    data = r.json
+    assert len(data) == 1
+    assert data[0]['object_id'] == did
+    assert data[0]['id'] != did
 
 
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
@@ -127,7 +132,7 @@ def test_data_file_not_indexed_id_provided(
     get_index_hash.return_value = None
 
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    file['id'] = DEFAULT_UUID
+    file['object_id'] = DEFAULT_UUID
     resp = submit_metadata_file(
         client, pg_driver, admin, submitter, cgci_blgsp, data=file)
 
@@ -153,7 +158,7 @@ def test_data_file_not_indexed_id_provided(
     # FIXME this is a temporary solution so these tests will probably
     #       need to change in the future
     assert did == DEFAULT_UUID
-    assert entity['id'] == DEFAULT_UUID
+    assert entity['id'] != DEFAULT_UUID
 
 
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
@@ -302,10 +307,7 @@ def test_data_file_update_url(
     entity = assert_single_entity_from_response(resp)
     assert entity['action'] == 'update'
 
-    # make sure uuid in node is the same as the uuid from index
-    # FIXME this is a temporary solution so these tests will probably
-    #       need to change in the future
-    assert entity['id'] == document.did
+    assert entity['id'] != document.did
 
 
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
@@ -353,7 +355,6 @@ def test_data_file_update_multiple_urls(
 
     # make sure original url and new url are in the document and patch gets called
     assert DEFAULT_URL in document.urls
-    print document.urls
     assert new_url in document.urls
     assert another_new_url in document.urls
     assert document.patch.called
@@ -365,11 +366,6 @@ def test_data_file_update_multiple_urls(
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
     assert entity['action'] == 'update'
-
-    # make sure uuid in node is the same as the uuid from index
-    # FIXME this is a temporary solution so these tests will probably
-    #       need to change in the future
-    assert entity['id'] == document.did
 
 
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
@@ -404,8 +400,8 @@ def test_data_file_update_url_id_provided(
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
+    updated_file['object_id'] = '14fd1746-61bb-401a-96d2-342cfaf70000'
     updated_file['urls'] = new_url
-    updated_file['id'] = document.did
     resp = submit_metadata_file(
         client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
 
@@ -422,11 +418,6 @@ def test_data_file_update_url_id_provided(
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
     assert entity['action'] == 'update'
-
-    # make sure uuid in node is the same as the uuid from index
-    # FIXME this is a temporary solution so these tests will probably
-    #       need to change in the future
-    assert entity['id'] == document.did
 
 
 """ ----- TESTS THAT SHOULD RESULT IN SUBMISSION FAILURES ARE BELOW  ----- """
@@ -509,13 +500,14 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     # index yeilds no match given hash/size
     get_index_hash.return_value = None
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    entity = assert_single_entity_from_response(resp)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
     updated_file['urls'] = new_url
-    updated_file['id'] = DEFAULT_UUID
+    updated_file['object_id'] = DEFAULT_UUID
     updated_file['md5sum'] = DEFAULT_FILE_HASH.replace('0', '2')
     updated_file['file_size'] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
@@ -567,12 +559,15 @@ def test_data_file_update_url_different_file_not_indexed(
     # index yeilds no match given hash/size
     get_index_hash.return_value = None
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    entity = assert_single_entity_from_response(resp)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
     updated_file['urls'] = new_url
+    updated_file['object_id'] = DEFAULT_UUID
     updated_file['md5sum'] = DEFAULT_FILE_HASH.replace('0', '2')
     updated_file['file_size'] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
