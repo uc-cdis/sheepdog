@@ -111,9 +111,7 @@ def test_data_file_not_indexed(
 
     data = r.json
     assert len(data) == 1
-    assert data[0]['object_id'] == did
-    assert data[0]['id'] != did
-
+    assert did == None
 
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')

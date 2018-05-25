@@ -272,7 +272,7 @@ class FileUploadEntity(UploadEntity):
                            acl=acl)
 
         if self.use_object_id(self.entity_type):
-            self.object_id = doc.did
+            self.object_id = str(doc.did)
             self.node._props['object_id'] = self.object_id
 
         self._create_alias(
