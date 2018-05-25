@@ -499,7 +499,7 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     get_index_hash.return_value = None
 
     resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
-    entity = assert_single_entity_from_response(resp)
+    assert_single_entity_from_response(resp)
 
     # now submit again but change url
     new_url = 'some/new/url/location/to/add'
