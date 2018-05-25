@@ -10,7 +10,6 @@ from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.upload.entity import UploadEntity
 from sheepdog.transactions.upload.entity import lookup_node
 
-from sheepdog.utils import stringify_acls
 from sheepdog import dictionary
 
 class NonFileUploadEntity(UploadEntity):
