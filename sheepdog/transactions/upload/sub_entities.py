@@ -300,8 +300,8 @@ class FileUploadEntity(UploadEntity):
         """
         ret = dictionary.schema.get(entity_type, {}).get('properties', {}).get('object_id')
         return ret
-    
-    
+
+
     @staticmethod
     def is_updatable_file_node(node):
         """
