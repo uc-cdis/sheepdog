@@ -55,25 +55,26 @@ def mock_request(f):
     return wrapper
 
 
-def put_cgci(client, auth=None):
+def put_cgci(client, auth=None, name='CGCI', phsid='phs000235'):
     path = '/v0/submission'
     headers = auth
     data = json.dumps({
-        'name': 'CGCI', 'type': 'program',
-        'dbgap_accession_number': 'phs000235'
+        'type': 'program',
+        'name': name,
+        'dbgap_accession_number': phsid,
     })
     r = client.put(path, headers=headers, data=data)
     return r
 
 
-def put_cgci_blgsp(client, auth=None):
+def put_cgci_blgsp(client, auth=None, code='BLGSP', phsid='phs000527'):
     put_cgci(client, auth=auth)
     path = '/v0/submission/CGCI/'
     headers = auth
     data = json.dumps({
         "type": "project",
-        "code": "BLGSP",
-        "dbgap_accession_number": 'phs000527',
+        "code": code,
+        "dbgap_accession_number": phsid,
         "name": "Burkitt Lymphoma Genome Sequencing Project",
         "state": "open"
     })
@@ -111,6 +112,24 @@ def test_program_creation_endpoint(client, pg_driver, admin):
     print resp.data
     resp = client.get('/v0/submission/')
     assert resp.json['links'] == ['/v0/submission/CGCI'], resp.json
+
+
+def test_program_creation_duplicate_phsid(client, pg_driver, admin):
+    # put one version of project in database
+    resp = put_cgci(client, auth=admin)
+
+    # put another version, same phsid
+    resp = put_cgci(client, auth=admin, name='DIFFERENT')
+    assert resp.status_code == 409, resp.data
+
+
+def test_program_creation_duplicate_name(client, pg_driver, admin):
+    # put one version of project in database
+    resp = put_cgci(client, auth=admin)
+
+    # put another version, same phsid
+    resp = put_cgci(client, auth=admin, phsid='phs123456')
+    assert resp.status_code == 409, resp.data
 
 
 def test_program_creation_without_admin_token(client, pg_driver, submitter):
