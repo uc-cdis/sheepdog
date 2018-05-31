@@ -124,17 +124,32 @@ def root_create():
         raise UserError("No program specified in key 'name'")
 
     with current_app.db.session_scope(can_inherit=False) as session:
-        base_query = current_app.db.nodes(models.Program)
+        base_program_query = current_app.db.nodes(models.Program)
+        base_project_query = current_app.db.nodes(models.Project)
 
-        name_node = base_query.props(name=program).scalar()
+        name_node = base_program_query.props(name=program).scalar()
 
-        phsid_node = None
+        phsid_program_node = None
+        phsid_project_node = None
         if phsid:
-            phsid_node = base_query.props(dbgap_accession_number=phsid).first()
+            phsid_program_node = (
+                base_program_query
+                .props(dbgap_accession_number=phsid)
+                .first()
+            )
+            phsid_project_node = (
+                base_project_query
+                .props(dbgap_accession_number=phsid)
+                .first()
+            )
 
-        if phsid_node:
+        if phsid_program_node:
             message = 'Program with phsid {} already exists.'.format(phsid)
-            node_id = phsid_node.node_id
+            node_id = phsid_program_node.node_id
+            status_code = 409
+        elif phsid_project_node:
+            message = 'Project with phsid {} already exists.'.format(phsid)
+            node_id = phsid_project_node.node_id
             status_code = 409
         elif name_node:
             message = 'Program with name {} already exists.'.format(program)

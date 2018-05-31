@@ -29,7 +29,10 @@ from sheepdog.test_settings import (
     JWT_KEYPAIR_FILES,
 )
 from tests.integration.api import app as _app, app_init
-from tests.integration.submission.test_endpoints import put_cgci_blgsp
+from tests.integration.submission.test_endpoints import (
+    put_program,
+    put_cgci_blgsp
+)
 
 try:
     reload  # Python 2.7
@@ -228,6 +231,7 @@ def member(pg_driver):
 
 @pytest.fixture()
 def cgci_blgsp(client, admin):
+    put_program(client, admin)
     put_cgci_blgsp(client, admin)
 
 
