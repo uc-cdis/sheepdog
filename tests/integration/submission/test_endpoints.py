@@ -93,7 +93,7 @@ def put_tcga_brca(client, headers):
         "type": "project",
         "code": "BRCA",
         "name": "TEST",
-        "dbgap_accession_number": "phs000178",
+        "dbgap_accession_number": None,
         "state": "open"
     })
     r = client.put('/v0/submission/TCGA/', headers=headers, data=data)
@@ -165,6 +165,14 @@ def test_project_creation_duplicate_phsid(client, pg_driver, admin):
 
     # add another copy with the same phsid and  a different project code
     put_cgci_blgsp(client, headers=admin, code='DIFFERENT', status_code=409)
+
+
+def test_project_creation_duplicate_program_phsid(client, pg_driver, admin):
+    # put program
+    put_cgci(client, headers=admin, phsid='phs000235')
+
+    # add project with the same phsid as the program
+    put_cgci_blgsp(client, headers=admin, phsid='phs000235', status_code=409)
 
 
 def test_project_creation_duplicate_name(client, pg_driver, admin):

@@ -158,6 +158,21 @@ def create_project(program):
         if not program_node:
             raise NotFoundError('Program {} is not registered'.format(program))
 
+        phsid_program_node = (
+            flask
+            .current_app
+            .db
+            .nodes(models.Program)
+            .props(dbgap_accession_number=phsid)
+            .first()
+        )
+
+        if phsid_program_node:
+            raise UserError(
+                'Program {} already exists with this phsid'.format(project),
+                code=409,
+            )
+
         # Look up project node by project code.
         node = utils.lookup_project(flask.current_app.db, program, project)
 
