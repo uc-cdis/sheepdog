@@ -55,22 +55,20 @@ def mock_request(f):
     return wrapper
 
 
-def put_cgci(client, auth=None, name='CGCI', phsid='phs000235'):
+def put_cgci(client, headers=None, name='CGCI', phsid='phs000235'):
     path = '/v0/submission'
-    headers = auth
     data = json.dumps({
         'type': 'program',
         'name': name,
         'dbgap_accession_number': phsid,
     })
-    r = client.put(path, headers=headers, data=data)
-    return r
+    resp = client.put(path, headers=headers, data=data)
+    return resp
 
 
-def put_cgci_blgsp(client, auth=None, code='BLGSP', phsid='phs000527'):
-    put_cgci(client, auth=auth)
+def put_cgci_blgsp(client, headers=None, code='BLGSP', phsid='phs000527', status_code=200):
+    put_cgci(client, headers=headers)
     path = '/v0/submission/CGCI/'
-    headers = auth
     data = json.dumps({
         "type": "project",
         "code": code,
@@ -78,21 +76,19 @@ def put_cgci_blgsp(client, auth=None, code='BLGSP', phsid='phs000527'):
         "name": "Burkitt Lymphoma Genome Sequencing Project",
         "state": "open"
     })
-    r = client.put(path, headers=headers, data=data)
-    assert r.status_code == 200, r.data
+    resp = client.put(path, headers=headers, data=data)
+    assert resp.status_code == status_code, resp.data
     del g.user
-    return r
+    return resp
 
 
-def put_tcga_brca(client, submitter):
-    headers = submitter
+def put_tcga_brca(client, headers):
     data = json.dumps({
         'name': 'TCGA', 'type': 'program',
         'dbgap_accession_number': 'phs000178'
     })
     r = client.put('/v0/submission/', headers=headers, data=data)
     assert r.status_code == 200, r.data
-    headers = submitter
     data = json.dumps({
         "type": "project",
         "code": "BRCA",
@@ -107,7 +103,7 @@ def put_tcga_brca(client, submitter):
 
 
 def test_program_creation_endpoint(client, pg_driver, admin):
-    resp = put_cgci(client, auth=admin)
+    resp = put_cgci(client, headers=admin)
     assert resp.status_code == 200, resp.data
     print resp.data
     resp = client.get('/v0/submission/')
@@ -116,19 +112,19 @@ def test_program_creation_endpoint(client, pg_driver, admin):
 
 def test_program_creation_duplicate_phsid(client, pg_driver, admin):
     # put one version of project in database
-    resp = put_cgci(client, auth=admin)
+    resp = put_cgci(client, headers=admin)
 
     # put another version, same phsid
-    resp = put_cgci(client, auth=admin, name='DIFFERENT')
+    resp = put_cgci(client, headers=admin, name='DIFFERENT')
     assert resp.status_code == 409, resp.data
 
 
 def test_program_creation_duplicate_name(client, pg_driver, admin):
     # put one version of project in database
-    resp = put_cgci(client, auth=admin)
+    resp = put_cgci(client, headers=admin)
 
     # put another version, same phsid
-    resp = put_cgci(client, auth=admin, phsid='phs123456')
+    resp = put_cgci(client, headers=admin, phsid='phs123456')
     assert resp.status_code == 409, resp.data
 
 
@@ -148,7 +144,7 @@ def test_program_creation_endpoint_for_program_not_supported(
 
 
 def test_project_creation_endpoint(client, pg_driver, admin):
-    resp = put_cgci_blgsp(client, auth=admin)
+    resp = put_cgci_blgsp(client, headers=admin)
     assert resp.status_code == 200
     resp = client.get('/v0/submission/CGCI/')
     with pg_driver.session_scope():
@@ -161,6 +157,22 @@ def test_project_creation_endpoint(client, pg_driver, admin):
         )
         assert n_cgci == 1
     assert resp.json['links'] == ['/v0/submission/CGCI/BLGSP'], resp.json
+
+
+def test_project_creation_duplicate_phsid(client, pg_driver, admin):
+    # put one copy
+    put_cgci_blgsp(client, headers=admin)
+
+    # add another copy with the same phsid and  a different project code
+    put_cgci_blgsp(client, headers=admin, code='DIFFERENT', status_code=409)
+
+
+def test_project_creation_duplicate_name(client, pg_driver, admin):
+    # put one copy
+    put_cgci_blgsp(client, headers=admin)
+
+    # add another copy with the same project code but a different phsid
+    put_cgci_blgsp(client, headers=admin, phsid='phs123456', status_code=409)
 
 
 def test_project_creation_without_admin_token(client, pg_driver, submitter, admin):

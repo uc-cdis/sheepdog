@@ -145,20 +145,46 @@ def create_project(program):
     project = doc.get('code')
     if not project:
         raise UserError("No project specified in key 'code'")
+
     project = project.encode('utf-8')
     # Parse dbgap accession number.
     phsid = doc.get('dbgap_accession_number')
-    if not phsid:
-        raise UserError("No dbGaP accesion number specified.")
 
     # Create base JSON document.
     base_doc = utils.parse.parse_request_json()
     with flask.current_app.db.session_scope() as session:
+
         program_node = utils.lookup_program(flask.current_app.db, program)
         if not program_node:
             raise NotFoundError('Program {} is not registered'.format(program))
-        # Look up project node.
+
+        # Look up project node by project code.
         node = utils.lookup_project(flask.current_app.db, program, project)
+
+        # Look up project node by phsid.
+        phsid_node = None
+        if phsid:
+            phsid_node = (
+                flask
+                .current_app
+                .db
+                .nodes(models.Project)
+                .props(dbgap_accession_number=phsid)
+                .first()
+            )
+
+        if phsid_node and not node:
+            raise UserError(
+                'Project {} already exists with this phsid'.format(project),
+                code=409,
+            )
+
+        elif node and not phsid_node:
+            raise UserError(
+                'Project {} already exists with this code'.format(project),
+                code=409,
+            )
+
         if not node:
             # Create a new project node
             node_uuid = str(uuid.uuid5(PROJECT_SEED, project.encode('utf-8')))
@@ -166,6 +192,7 @@ def create_project(program):
             node.programs = [program_node]
             action = 'create'
             node.props['state'] = 'open'
+
         else:
             action = 'update'
 
@@ -193,7 +220,10 @@ def create_project(program):
             node = session.merge(node)
             session.commit()
             entity = UploadEntityFactory.create(
-                trans, doc=None, config=flask.current_app.config)
+                trans,
+                doc=None,
+                config=flask.current_app.config,
+            )
             entity.action = action
             entity.doc = doc
             entity.entity_type = 'project'
