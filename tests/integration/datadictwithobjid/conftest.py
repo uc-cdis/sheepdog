@@ -32,13 +32,7 @@ from sheepdog.test_settings import (
 from tests.integration.datadictwithobjid.api import app as _app, app_init, indexd_init
 from tests.integration.datadictwithobjid.submission.test_endpoints import put_cgci_blgsp
 
-try:
-    reload  # Python 2.7
-except NameError:
-    try:
-        from importlib import reload  # Python 3.4+
-    except ImportError:
-        from imp import reload # Python 3.0 - 3.3
+from imp import reload
 
 def get_parent(path):
     print(path)

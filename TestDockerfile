@@ -10,6 +10,8 @@ USER travis
 WORKDIR /home/travis/.travis
 RUN git clone https://github.com/travis-ci/travis-build.git
 WORKDIR /home/travis/.travis/travis-build
+# Grabbed this commit from the travis build logs
+# Still didn't make the travis compile work :-(
 RUN bash -lc "git checkout 4957953b89efba670e1a6869d66a1de7e6e2390e"
 RUN bash -lc "gem install bundler"
 RUN bash -lc "bundle install --gemfile ~/.travis/travis-build/Gemfile"

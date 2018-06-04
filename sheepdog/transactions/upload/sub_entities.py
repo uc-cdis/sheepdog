@@ -429,8 +429,7 @@ class FileUploadEntity(UploadEntity):
         """
         is_valid = True
 
-        if (not self.use_object_id(self.entity_type)
-                and (not self.file_by_hash or not self.file_by_uuid)):
+        if (not self.file_by_hash or not self.file_by_uuid):
             error_message = (
                 'Could not find exact file match in index for id: {} '
                 'AND `hashes - size`: `{} - {}`. '
@@ -443,28 +442,6 @@ class FileUploadEntity(UploadEntity):
             if self.file_by_hash:
                 error_message += 'A file was found matching `hash / size` but NOT id.'
             elif self.file_by_uuid:
-                error_message += 'A file was found matching id but NOT `hash / size`.'
-            else:
-                # keep generic error message since both didn't result in a match
-                pass
-
-            self.record_error(
-                error_message,
-                type=EntityErrors.INVALID_VALUE
-            )
-            is_valid = False
-
-        if not self.file_by_hash and self.file_by_uuid:
-            error_message = (
-                'Could not find exact file match in index for id: {} '
-                'AND `hashes - size`: `{} - {}`. '
-            ).format(
-                self.entity_id,
-                str(self._get_file_hashes()),
-                str(self._get_file_size())
-            )
-
-            if self.file_by_uuid:
                 error_message += 'A file was found matching id but NOT `hash / size`.'
             else:
                 # keep generic error message since both didn't result in a match
