@@ -6,7 +6,7 @@ from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.transactions.transaction_base import MissingNode
 
 
-ALLOWED_DELETION_FILE_STATES = [submitted_state()]
+ALLOWED_DELETION_FILE_STATES = [submitted_state(), None]
 
 
 class DeletionEntity(EntityBase):
