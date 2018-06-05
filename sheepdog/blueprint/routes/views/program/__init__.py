@@ -2,31 +2,22 @@
 View functions for routes in the blueprint for '/<program>' paths.
 """
 
-import json
 import uuid
 
 import flask
-import sqlalchemy
-import yaml
 
 from sheepdog import auth
-from sheepdog import dictionary
 from sheepdog import models
 from sheepdog import utils
 from sheepdog.blueprint.routes.views.program import project
 from sheepdog.errors import (
-    APINotImplemented,
-    AuthError,
     NotFoundError,
     UserError,
 )
 from sheepdog.globals import (
-    PERMISSIONS,
     PROJECT_SEED,
     ROLES,
-    STATES_COMITTABLE_DRY_RUN,
 )
-from sheepdog.transactions import upload
 from sheepdog.transactions.upload.entity_factory import UploadEntityFactory
 from sheepdog.transactions.upload.transaction import UploadTransaction
 
@@ -131,27 +122,42 @@ def create_project(program):
                 "name": "Burkitt Lymphoma Genome Sequencing Project",
                 "primary_site": "Lymph Nodes",
                 "dbgap_accession_number": "phs000527",
-                "state": "active"
+                "state": "active",
+                "dbgap_bypass_prefix": "test-",
+                "dbgap_bypass_range": 10
             }
     """
+
     auth.admin_auth()
-    doc = utils.parse.parse_request_json()
-    if not isinstance(doc, dict):
+    base_doc = utils.parse.parse_request_json()
+    if not isinstance(base_doc, dict):
         raise UserError('Program endpoint only supports single documents')
-    if doc.get('type') and doc.get('type') not in ['project']:
+
+    if base_doc.get('type') and base_doc.get('type') not in ['project']:
         raise UserError("Invalid post to program endpoint with type='{}'"
-                        .format(doc.get('type')))
+                        .format(base_doc.get('type')))
     # Parse project.code
-    project = doc.get('code')
+    project = base_doc.get('code')
     if not project:
         raise UserError("No project specified in key 'code'")
 
     project = project.encode('utf-8')
     # Parse dbgap accession number.
-    phsid = doc.get('dbgap_accession_number')
+    phsid = base_doc.get('dbgap_accession_number')
+
+    bypass_case_range = 0
+    if base_doc.get('bypass_case_range'):
+        bypass_case_range = base_doc['bypass_case_range']
+        # this dict will get used later for creating the project node
+        del base_doc['bypass_case_range']
+
+    bypass_case_prefix = 0
+    if base_doc.get('bypass_case_prefix'):
+        bypass_case_prefix = base_doc['bypass_case_prefix']
+        # this dict will get used later for creating the project node
+        del base_doc['bypass_case_prefix']
 
     # Create base JSON document.
-    base_doc = utils.parse.parse_request_json()
     with flask.current_app.db.session_scope() as session:
 
         program_node = utils.lookup_program(flask.current_app.db, program)
@@ -233,6 +239,14 @@ def create_project(program):
 
         with UploadTransaction(**transaction_args) as trans:
             node = session.merge(node)
+
+            # create bypass cases if requested
+            if bypass_case_range > 0:
+                node.sysan['dbgap_bypassed_cases'] = [
+                    '{}{:04d}'.format(bypass_case_prefix, i)
+                    for i in range(1, bypass_case_range + 1)
+                ]
+
             session.commit()
             entity = UploadEntityFactory.create(
                 trans,

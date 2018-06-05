@@ -67,28 +67,28 @@ def put_program(client, headers=None, name='CGCI', phsid='phs000235', status_cod
     return resp
 
 
-def put_cgci_blgsp(client, headers=None, code='BLGSP', phsid='phs000527', status_code=200):
+def put_cgci_blgsp(client, headers=None, code='BLGSP', phsid='phs000527',
+                   status_code=200, case_range=None, case_prefix=None):
     path = '/v0/submission/CGCI/'
-    data = json.dumps({
+    data = {
         "type": "project",
         "code": code,
         "dbgap_accession_number": phsid,
         "name": "Burkitt Lymphoma Genome Sequencing Project",
         "state": "open"
-    })
+    }
+    if case_range and case_prefix:
+        data['bypass_case_range'] = case_range
+        data['bypass_case_prefix'] = case_prefix
+
+    data = json.dumps(data)
     resp = client.put(path, headers=headers, data=data)
     assert resp.status_code == status_code, resp.data
     del g.user
     return resp
 
 
-def put_tcga_brca(client, headers):
-    data = json.dumps({
-        'name': 'TCGA', 'type': 'program',
-        'dbgap_accession_number': 'phs000178'
-    })
-    r = client.put('/v0/submission/', headers=headers, data=data)
-    assert r.status_code == 200, r.data
+def put_tcga_brca(client, headers, data=None):
     data = json.dumps({
         "type": "project",
         "code": "BRCA",
@@ -163,6 +163,31 @@ def test_project_creation_endpoint(client, pg_driver, admin):
         )
         assert n_cgci == 1
     assert resp.json['links'] == ['/v0/submission/CGCI/BLGSP'], resp.json
+
+
+def test_project_creation_endpoint_bypass_cases(client, pg_driver, admin):
+    case_range = 10
+    case_prefix = 'test-'
+
+    put_program(client, headers=admin)
+    put_cgci_blgsp(
+        client,
+        headers=admin,
+        case_prefix=case_prefix,
+        case_range=case_range,
+    )
+
+    with pg_driver.session_scope():
+        project_nodes = pg_driver.nodes(md.Project).all()
+        assert len(project_nodes) == 1
+
+        bypass_cases = project_nodes[0].sysan.get('dbgap_bypassed_cases')
+
+        assert bypass_cases is not None
+        assert bypass_cases == [
+            '{}{:04d}'.format(case_prefix, i)
+            for i in range(1, case_range + 1)
+        ]
 
 
 def test_project_creation_duplicate_phsid(client, pg_driver, admin):
@@ -407,6 +432,7 @@ def test_put_dry_run(client, pg_driver, cgci_blgsp, submitter):
 
 
 def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter, admin):
+    put_program(client, headers=admin, name='TCGA', phsid='phs000178')
     put_tcga_brca(client, admin)
     resp = client.put(
         BLGSP_PATH,
@@ -445,6 +471,7 @@ def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
 
 
 def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, submitter, admin):
+    put_program(client, headers=admin, name='TCGA', phsid='phs000178')
     put_tcga_brca(client, admin)
     data = {
         "progression_or_recurrence": "unknown",
