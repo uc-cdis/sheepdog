@@ -1,0 +1,14 @@
+{
+    "type": "submitted_unaligned_reads",
+    "read_groups": {
+        "submitter_id": "test-readgroup-1"
+    },
+    "submitter_id": "CGCI-file-2",
+    "data_format": "BAM",
+    "file_size": 5962718282,
+    "file_name": "C500.CGCI-file1.bam",
+    "md5sum": "35b39360cc41a7b635980159aef265ba",
+    "experimental_strategy": "WGS",
+    "data_type": "Unaligned Reads",
+    "data_category": "Sequencing Data"
+}

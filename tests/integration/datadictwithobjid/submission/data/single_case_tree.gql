@@ -1,0 +1,33 @@
+query tree {
+  cases (id: "1d0b4064-1b68-4d35-9df0-7f3cde95c082") {
+    type
+    id
+    files
+    samples {
+      type
+      id
+      aliquots {
+        id
+        files {
+          id
+        }
+      }
+      portions {
+        type
+        id
+        analytes {
+          type
+          id
+          aliquots {
+            type
+            id
+            files {
+              type
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+}

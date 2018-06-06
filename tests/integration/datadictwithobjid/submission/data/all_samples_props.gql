@@ -1,0 +1,3 @@
+query getAllSamples {
+  samples (type: "sample") @properties
+}
