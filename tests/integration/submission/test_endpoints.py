@@ -55,83 +55,36 @@ def mock_request(f):
     return wrapper
 
 
-def put_program(client, headers=None, name='CGCI', phsid='phs000235', status_code=200):
-    path = '/v0/submission'
-    data = json.dumps({
-        'type': 'program',
-        'name': name,
-        'dbgap_accession_number': phsid,
-    })
-    resp = client.put(path, headers=headers, data=data)
-    assert resp.status_code == status_code, resp.data
-    return resp
-
-
-def put_cgci_blgsp(client, headers=None, code='BLGSP', phsid='phs000527',
-                   status_code=200, case_range=None, case_prefix=None):
-    path = '/v0/submission/CGCI/'
-    data = {
-        "type": "project",
-        "code": code,
-        "dbgap_accession_number": phsid,
-        "name": "Burkitt Lymphoma Genome Sequencing Project",
-        "state": "open"
-    }
-    if case_range and case_prefix:
-        data['bypass_case_range'] = case_range
-        data['bypass_case_prefix'] = case_prefix
-
-    data = json.dumps(data)
-    resp = client.put(path, headers=headers, data=data)
-    assert resp.status_code == status_code, resp.data
-    del g.user
-    return resp
-
-
-def put_tcga_brca(client, headers, data=None):
-    data = json.dumps({
-        "type": "project",
-        "code": "BRCA",
-        "name": "TEST",
-        "dbgap_accession_number": None,
-        "state": "open"
-    })
-    r = client.put('/v0/submission/TCGA/', headers=headers, data=data)
-    assert r.status_code == 200, r.data
-    del g.user
-    return r
-
-
-def test_program_creation_endpoint(client, pg_driver, admin):
-    put_program(client, headers=admin)
+def test_program_creation_endpoint(put_program, client, pg_driver):
+    put_program()
     resp = client.get('/v0/submission/')
     assert resp.json['links'] == ['/v0/submission/CGCI'], resp.json
 
 
-def test_program_creation_duplicate_project_phsid(client, pg_driver, admin):
-    put_program(client, headers=admin)
+def test_program_creation_duplicate_project_phsid(put_program, put_cgci_blgsp,  pg_driver):
+    put_program()
 
     # add program and project
-    put_cgci_blgsp(client, headers=admin)
+    put_cgci_blgsp()
 
     # add program with the same phsid as the first project
-    put_program(client, headers=admin, phsid='phs000527', status_code=409)
+    put_program(phsid='phs000527', status_code=409)
 
 
-def test_program_creation_duplicate_phsid(client, pg_driver, admin):
+def test_program_creation_duplicate_phsid(put_program, pg_driver):
     # put one version of project in database
-    put_program(client, headers=admin)
+    put_program()
 
     # put another version, same phsid
-    put_program(client, headers=admin, name='DIFFERENT', status_code=409)
+    put_program(name='DIFFERENT', status_code=409)
 
 
-def test_program_creation_duplicate_name(client, pg_driver, admin):
+def test_program_creation_duplicate_name(put_program, pg_driver):
     # put one version of project in database
-    put_program(client, headers=admin)
+    put_program()
 
     # put another version, same phsid
-    put_program(client, headers=admin, phsid='phs123456', status_code=409)
+    put_program(phsid='phs123456', status_code=409)
 
 
 def test_program_creation_without_admin_token(client, pg_driver, submitter):
@@ -149,9 +102,9 @@ def test_program_creation_endpoint_for_program_not_supported(
     assert resp.status_code == 404
 
 
-def test_project_creation_endpoint(client, pg_driver, admin):
-    put_program(client, headers=admin)
-    put_cgci_blgsp(client, headers=admin)
+def test_project_creation_endpoint(put_program, put_cgci_blgsp, client, pg_driver):
+    put_program()
+    put_cgci_blgsp()
     resp = client.get('/v0/submission/CGCI/')
     with pg_driver.session_scope():
         assert pg_driver.nodes(md.Project).count() == 1
@@ -165,14 +118,12 @@ def test_project_creation_endpoint(client, pg_driver, admin):
     assert resp.json['links'] == ['/v0/submission/CGCI/BLGSP'], resp.json
 
 
-def test_project_creation_endpoint_bypass_cases(client, pg_driver, admin):
+def test_project_creation_endpoint_bypass_cases(put_program, put_cgci_blgsp,  pg_driver):
     case_range = 10
     case_prefix = 'test-'
 
-    put_program(client, headers=admin)
+    put_program()
     put_cgci_blgsp(
-        client,
-        headers=admin,
         case_prefix=case_prefix,
         case_range=case_range,
     )
@@ -190,35 +141,35 @@ def test_project_creation_endpoint_bypass_cases(client, pg_driver, admin):
         ]
 
 
-def test_project_creation_duplicate_phsid(client, pg_driver, admin):
-    put_program(client, headers=admin)
+def test_project_creation_duplicate_phsid(put_program, put_cgci_blgsp, pg_driver):
+    put_program()
 
     # put one copy
-    put_cgci_blgsp(client, headers=admin)
+    put_cgci_blgsp()
 
     # add another copy with the same phsid and  a different project code
-    put_cgci_blgsp(client, headers=admin, code='DIFFERENT', status_code=409)
+    put_cgci_blgsp(code='DIFFERENT', status_code=409)
 
 
-def test_project_creation_duplicate_program_phsid(client, pg_driver, admin):
-    put_program(client, headers=admin)
+def test_project_creation_duplicate_program_phsid(put_program, put_cgci_blgsp, pg_driver):
+    put_program()
 
     # add project with the same phsid as the program
-    put_cgci_blgsp(client, headers=admin, phsid='phs000235', status_code=409)
+    put_cgci_blgsp(phsid='phs000235', status_code=409)
 
 
-def test_project_creation_duplicate_name(client, pg_driver, admin):
-    put_program(client, headers=admin)
+def test_project_creation_duplicate_name(put_program, put_cgci_blgsp, pg_driver):
+    put_program()
 
     # put one copy
-    put_cgci_blgsp(client, headers=admin)
+    put_cgci_blgsp()
 
     # add another copy with the same project code but a different phsid
-    put_cgci_blgsp(client, headers=admin, phsid='phs123456', status_code=409)
+    put_cgci_blgsp(phsid='phs123456', status_code=409)
 
 
-def test_project_creation_without_admin_token(client, pg_driver, submitter, admin):
-    put_program(client, admin)
+def test_project_creation_without_admin_token(put_program, pg_driver, client, submitter):
+    put_program()
     path = '/v0/submission/CGCI/'
     resp = client.put(
         path, headers=submitter, data=json.dumps({
@@ -431,9 +382,7 @@ def test_put_dry_run(client, pg_driver, cgci_blgsp, submitter):
         assert not pg_driver.nodes(md.Experiment).first()
 
 
-def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter, admin):
-    put_program(client, headers=admin, name='TCGA', phsid='phs000178')
-    put_tcga_brca(client, admin)
+def test_incorrect_project_error(client, pg_driver, cgci_blgsp, tcga_brca, submitter):
     resp = client.put(
         BLGSP_PATH,
         headers=submitter,
@@ -470,9 +419,7 @@ def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
         assert ct is not None, case.props
 
 
-def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, submitter, admin):
-    put_program(client, headers=admin, name='TCGA', phsid='phs000178')
-    put_tcga_brca(client, admin)
+def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, tcga_brca, submitter):
     data = {
         "progression_or_recurrence": "unknown",
         "classification_of_tumor": "other",
@@ -520,11 +467,11 @@ def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
 
-def test_fields_deletion(app, client, pg_driver, submitter, admin):
-    put_program(client, headers=admin)
+def test_fields_deletion(app, client, put_program, put_cgci_blgsp, pg_driver, submitter):
+    put_program()
 
     # Put test data into the database
-    put_cgci_blgsp(client, admin)
+    put_cgci_blgsp()
     post_example_entities_together(client, submitter)
 
     # Gather sample ids and properties for test data

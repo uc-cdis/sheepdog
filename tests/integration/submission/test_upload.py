@@ -8,8 +8,6 @@ import re
 
 import pytest
 
-from test_endpoints import put_cgci_blgsp
-
 from utils import assert_positive_response
 from utils import assert_negative_response
 from utils import assert_single_entity_from_response
@@ -78,8 +76,7 @@ DEFAULT_METADATA_FILE = {
 }
 
 
-def submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp):
-    put_cgci_blgsp(client, admin)
+def submit_first_experiment(client, submitter):
 
     # first submit experiment
     data = json.dumps({
@@ -93,10 +90,8 @@ def submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp):
     assert resp.status_code == 200, resp.data
 
 
-def submit_metadata_file(client, admin, submitter, data=None, create_project=False):
+def submit_metadata_file(client, admin, submitter, data=None):
     data = data or DEFAULT_METADATA_FILE
-    if create_project:
-        put_cgci_blgsp(client, admin)
     data = json.dumps(data)
     resp = client.put(BLGSP_PATH, headers=submitter, data=data)
     return resp
@@ -122,7 +117,7 @@ def test_data_file_not_indexed(
     """
     Test node and data file creation when neither exist and no ID is provided.
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, submitter)
 
     resp = submit_metadata_file(client, admin, submitter)
 
@@ -158,7 +153,7 @@ def test_data_file_not_indexed_id_provided(
     That ID should be used for the node and file index creation
     """
 
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, submitter)
 
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
     file['id'] = DEFAULT_UUID
@@ -192,7 +187,7 @@ def test_data_file_already_indexed(
     to find it in indexing service.
     2. ID is provided
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, submitter)
 
     # submit metadata file once
     metadata_file = copy.deepcopy(DEFAULT_METADATA_FILE)
@@ -239,7 +234,7 @@ def test_data_file_update_urls(
     Test submitting the same data again but updating the URL field (should
     get added to the indexed file in index service).
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, submitter)
 
     # submit metadata_file once
     submit_metadata_file(client, admin, submitter)
@@ -280,7 +275,7 @@ def test_data_file_update_url_invalid_id(
     FIXME: the 1:1 between node id and index/file id is temporary so this
            test may need to be modified in the future
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, submitter)
 
     # submit metadata file once
     metadata_file = copy.deepcopy(DEFAULT_METADATA_FILE)
@@ -326,7 +321,7 @@ def test_data_file_update_url_different_file_not_indexed(
     the submitter_id/project). There is already a match for that, BUT
     the provided file hash/size is different than the previously submitted one.
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, submitter)
 
     # submit metadata file once
     metadata_file = copy.deepcopy(DEFAULT_METADATA_FILE)
@@ -374,7 +369,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
 
     FIXME At the moment, we do not allow updating like this
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, submitter)
 
     document_with_id = MagicMock()
     document_with_id.did = DEFAULT_UUID
@@ -422,7 +417,7 @@ def test_dont_enforce_file_hash_size_uniqueness(
     duplicate hash and size if ENFORCE_FILE_HASH_SIZE_UNIQUENESS set to False
     """
 
-    submit_first_experiment(client_toggled, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client_toggled, submitter)
 
     # submit metadata file once
     metadata_file = copy.deepcopy(DEFAULT_METADATA_FILE)
