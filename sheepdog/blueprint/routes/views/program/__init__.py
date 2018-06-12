@@ -175,7 +175,7 @@ def create_project(program):
 
         if phsid_program_node:
             raise UserError(
-                'Program {} already exists with this phsid'.format(project),
+                'Program {} already exists with this phsid'.format(program_node),
                 code=409,
             )
 
