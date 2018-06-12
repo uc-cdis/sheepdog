@@ -29,7 +29,6 @@ from sheepdog.test_settings import (
     JWT_KEYPAIR_FILES,
 )
 from tests.integration.api import app as _app, app_init
-from tests.integration.submission.test_endpoints import put_cgci_blgsp
 
 try:
     reload  # Python 2.7
@@ -227,8 +226,74 @@ def member(pg_driver):
 
 
 @pytest.fixture()
-def cgci_blgsp(client, admin):
-    put_cgci_blgsp(client, admin)
+def put_program(client, admin):
+    def put_program_helper(headers=admin, name='CGCI', phsid='phs000235', status_code=200):
+        path = '/v0/submission'
+        data = json.dumps({
+            'type': 'program',
+            'name': name,
+            'dbgap_accession_number': phsid,
+        })
+        resp = client.put(path, headers=headers, data=data)
+        assert resp.status_code == status_code, resp.data
+        return resp
+
+    return put_program_helper
+
+
+@pytest.fixture()
+def put_cgci_blgsp(client, admin):
+    def put_cgci_blgsp_helper(
+            headers=admin, code='BLGSP', phsid='phs000527',
+            status_code=200, case_range=None, case_prefix=None):
+
+        path = '/v0/submission/CGCI/'
+        data = {
+            "type": "project",
+            "code": code,
+            "dbgap_accession_number": phsid,
+            "name": "Burkitt Lymphoma Genome Sequencing Project",
+            "state": "open"
+        }
+        if case_range and case_prefix:
+            data['bypass_case_range'] = case_range
+            data['bypass_case_prefix'] = case_prefix
+
+        data = json.dumps(data)
+        resp = client.put(path, headers=headers, data=data)
+        assert resp.status_code == status_code, resp.data
+        return resp
+
+    return put_cgci_blgsp_helper
+
+
+@pytest.fixture()
+def cgci_blgsp(put_program, put_cgci_blgsp):
+    put_program()
+    put_cgci_blgsp()
+
+
+@pytest.fixture()
+def put_tcga_brca(client, admin):
+    def put_tcga_brca_helper(headers=admin):
+        data = json.dumps({
+            "type": "project",
+            "code": "BRCA",
+            "name": "TEST",
+            "dbgap_accession_number": None,
+            "state": "open"
+        })
+        resp = client.put('/v0/submission/TCGA/', headers=headers, data=data)
+        assert resp.status_code == 200, resp.data
+        return resp
+
+    return put_tcga_brca_helper
+
+
+@pytest.fixture()
+def tcga_brca(put_program, put_tcga_brca):
+    put_program(name='TCGA', phsid='phs000178')
+    put_tcga_brca()
 
 
 def dictionary_setup(_app):

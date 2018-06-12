@@ -1,3 +1,4 @@
+# pylint: disable=not-callable
 """
 Provide view functions for routes in the blueprint.
 """
@@ -123,28 +124,52 @@ def root_create():
         raise UserError("No program specified in key 'name'")
 
     with current_app.db.session_scope(can_inherit=False) as session:
-        node = (
-            current_app
-            .db
-            .nodes(models.Program)
-            .props(name=program)
-            .scalar()
-        )
-        if node:
-            message = 'Program already exists.'
-            node_id = node.node_id
+        base_program_query = current_app.db.nodes(models.Program)
+        base_project_query = current_app.db.nodes(models.Project)
+
+        name_node = base_program_query.props(name=program).scalar()
+
+        phsid_program_node = None
+        phsid_project_node = None
+        if phsid:
+            phsid_program_node = (
+                base_program_query
+                .props(dbgap_accession_number=phsid)
+                .first()
+            )
+            phsid_project_node = (
+                base_project_query
+                .props(dbgap_accession_number=phsid)
+                .first()
+            )
+
+        if phsid_program_node:
+            message = 'Program with phsid {} already exists.'.format(phsid)
+            node_id = phsid_program_node.node_id
+            status_code = 409
+        elif phsid_project_node:
+            message = 'Project with phsid {} already exists.'.format(phsid)
+            node_id = phsid_project_node.node_id
+            status_code = 409
+        elif name_node:
+            message = 'Program with name {} already exists.'.format(program)
+            node_id = name_node.node_id
+            status_code = 409
         else:
             node_id = str(uuid.uuid5(PROGRAM_SEED, program.encode('utf-8')))
-            session.add(models.Program(  # pylint: disable=not-callable
-                node_id, name=program, dbgap_accession_number=phsid
+            session.add(models.Program(
+                node_id,
+                name=program,
+                dbgap_accession_number=phsid,
             ))
             message = 'Program registered.'
+            status_code = 200
 
     return flask.jsonify({
         'id': node_id,
         'name': program,
         'message': message,
-    })
+    }), status_code
 
 
 def get_dictionary():
