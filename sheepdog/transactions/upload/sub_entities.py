@@ -429,6 +429,10 @@ class FileUploadEntity(UploadEntity):
         """
         is_valid = True
 
+        entity_id = self.entity_id
+        if self.use_object_id(self.entity_type):
+            entity_id = self.object_id
+
         if (not self.file_by_hash or not self.file_by_uuid):
             error_message = (
                 'Could not find exact file match in index for id: {} '
@@ -522,7 +526,8 @@ class FileUploadEntity(UploadEntity):
             # document: indexclient.Document
             # if `document` exists, `document.did` is the UUID that is already
             # registered in indexd for this entity.
-            document = self.transaction.signpost.get_with_params(params)
+            if params:
+                document = self.transaction.signpost.get_with_params(params)
 
         return document
 
@@ -542,14 +547,23 @@ class FileUploadEntity(UploadEntity):
     def _get_file_hashes_and_size(self):
         hashes = self._get_file_hashes()
         size = self._get_file_size()
-        return {'hashes': hashes, 'size': size}
+        if hashes and size:
+            return {'hashes': hashes, 'size': size}
+        elif hashes:
+            return {'hashes': hashes}
+        elif size:
+            return {'size': size}
+        return None
 
     def _get_file_hashes(self):
-        return {'md5': self.doc.get('md5sum')}
+        if self.doc.get('md5sum'):
+            return {'md5': self.doc.get('md5sum')}
+        return None
 
     def _get_file_size(self):
-        size = self.doc.get('file_size')
-        return size
+        if self.doc.get('file_size'):
+            return self.doc.get('file_size')
+        return None
 
     def _create_alias(self, **kwargs):
         return self.transaction.signpost.create_alias(**kwargs)
