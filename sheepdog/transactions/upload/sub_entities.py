@@ -438,7 +438,7 @@ class FileUploadEntity(UploadEntity):
                 'Could not find exact file match in index for id: {} '
                 'AND `hashes - size`: `{} - {}`. '
             ).format(
-                self.entity_id,
+                entity_id,
                 str(self._get_file_hashes()),
                 str(self._get_file_size())
             )
