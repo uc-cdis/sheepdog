@@ -88,7 +88,8 @@ class TransactionBase(object):
                          self.user, self.project_id)
 
         #: Verify that this transaction is allowed
-        self.assert_project_state()
+        if not self._config.get('IGNORE_PROJECT_STATE'):
+            self.assert_project_state()
         try:
             # BulkUploadTransaction has @property(entities)
             self.entities = []

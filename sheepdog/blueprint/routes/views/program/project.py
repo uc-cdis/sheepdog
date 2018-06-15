@@ -758,33 +758,7 @@ def commit_dry_run_transaction(program, project, transaction_id):
                 'Unable to find transaction_log with id: {} for project {}'
                 .format(transaction_id, '{}-{}'.format(program, project))
             )
-        # Check state.
-        if tx_log.state not in STATES_COMITTABLE_DRY_RUN:
-            raise UserError(
-                'Unable to commit transaction log in state {}.'
-                .format(tx_log.state)
-            )
-        # Check not closed.
-        if tx_log.closed:
-            raise UserError('Unable to commit closed transaction log.')
-        # Check not committed.
-        if tx_log.committed_by is not None:
-            raise UserError(
-                "This transaction_log was committed already by transaction "
-                "'{}'.".format(tx_log.committed_by)
-            )
-        # Check is dry_run
-        if tx_log.is_dry_run is not True:
-            raise UserError(
-                "Cannot submit transaction_log '{}', not a dry_run."
-                .format(tx_log.id)
-            )
-        # Check project
-        if tx_log.project != project or tx_log.program != program:
-            raise UserError(
-                "Cannot submit transaction_log '{}', in project {}-{}."
-                .format(tx_log.id, program, project)
-            )
+        utils.assert_dry_run_transaction(program, project, tx_log)
 
         response, code = resubmit_transaction(tx_log)
         response_data = json.loads(response.get_data())

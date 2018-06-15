@@ -134,7 +134,8 @@ class SubmissionTransaction(TransactionBase):
         For the current project, attempt to transition all nodes from their
         current states to ``submitted``.
         """
-        self.assert_project_state()
+        if not self._config.get('IGNORE_PROJECT_STATE'):
+            self.assert_project_state()
         nodes = self.lookup_submittable_nodes()
         self.entities = [
             SubmissionEntity(self, n, config=self._config)
