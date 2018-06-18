@@ -88,8 +88,7 @@ class TransactionBase(object):
                          self.user, self.project_id)
 
         #: Verify that this transaction is allowed
-        if not self._config.get('IGNORE_PROJECT_STATE'):
-            self.assert_project_state()
+        self.assert_project_state()
         try:
             # BulkUploadTransaction has @property(entities)
             self.entities = []
@@ -218,6 +217,9 @@ class TransactionBase(object):
 
     def assert_project_state(self):
         """Assert that the transaction is allowed given the Project.state."""
+        if self._config.get('IGNORE_PROJECT_STATE'):
+            return
+
         project = utils.lookup_project(self.db_driver, self.program, self.project)
         state = project.state
         if state not in self.REQUIRED_PROJECT_STATES:
