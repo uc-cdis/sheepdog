@@ -123,6 +123,7 @@ def app_init(app):
     app.config['AUTH_SUBMISSION_LIST'] = True
     app.config['USE_DBGAP'] = False
     app.config['IS_GDC'] = False
+    app.config['IGNORE_PROJECT_STATE'] = False
 
     # default settings
     app.config['AUTO_MIGRATE_DATABASE'] = (

@@ -217,6 +217,9 @@ class TransactionBase(object):
 
     def assert_project_state(self):
         """Assert that the transaction is allowed given the Project.state."""
+        if self._config.get('IGNORE_PROJECT_STATE'):
+            return
+
         project = utils.lookup_project(self.db_driver, self.program, self.project)
         state = project.state
         if state not in self.REQUIRED_PROJECT_STATES:
