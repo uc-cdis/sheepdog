@@ -12,6 +12,7 @@ lxml==3.8.0
 pbr==2.0.0
 psycopg2==2.7.3.2
 python-keystoneclient==1.8.1
+python-Levenshtein==0.12.0
 PyYAML==3.11
 requests==2.18.4
 setuptools==30.1.0
