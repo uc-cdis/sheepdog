@@ -144,8 +144,10 @@ class SubmissionTransaction(TransactionBase):
             entity.submit()
 
         project_node = self.session.merge(self.project_node)
-        project_node.state = 'submitted'
-        project_node.releasable = True
+        if self._config.get('IGNORE_PROJECT_STATE', False):
+            project_node.releasable = True
+        else:
+            project_node.state = 'submitted'
 
         if self.success and utils.should_send_email(self._config):
             self.send_submission_notification_email()

@@ -216,7 +216,17 @@ class TransactionBase(object):
         return [entity.node for entity in self.entities if entity.node]
 
     def assert_project_state(self):
-        """Assert that the transaction is allowed given the Project.state."""
+        """Assert that the transaction is allowed given the Project.state.
+
+        NOTE: Currently not in use.
+        GDC has moved away from project.state in favor of more explicit node
+        attributes.
+        """
+
+        # ignore Project.state in the database
+        if self._config.get('IGNORE_PROJECT_STATE', False):
+            return
+
         project = utils.lookup_project(self.db_driver, self.program, self.project)
         state = project.state
         if state not in self.REQUIRED_PROJECT_STATES:
