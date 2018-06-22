@@ -68,7 +68,6 @@ def test_update_data_file_entity(
         - Cannot update a node if it is in state submitted
     """
 
-
     # node already in database
     data_file = data_file_creation(
         client_toggled,
@@ -79,6 +78,10 @@ def test_update_data_file_entity(
 
     # entry already in indexd
     original_doc = indexd_client.get(data_file['did'])
+
+    # make file 'uploaded'
+    original_doc.urls_metadata[original_doc.urls[0]]['state'] = 'uploaded'
+    original_doc.patch()
 
     # update node, causing new information in indexd
     new_data_file = data_file_creation(
