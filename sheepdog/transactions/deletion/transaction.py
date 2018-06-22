@@ -13,6 +13,10 @@ from sheepdog.transactions.transaction_base import MissingNode, TransactionBase
 class DeletionTransaction(TransactionBase):
 
     REQUIRED_PROJECT_STATES = ['open']
+    required_project_flags  = {
+        'in_review': [None, False],
+        'submission_enabled': [True],
+    }
 
     def __init__(self, **kwargs):
         super(DeletionTransaction, self).__init__(role='delete', **kwargs)

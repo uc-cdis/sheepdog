@@ -42,6 +42,7 @@ class UploadTransaction(TransactionBase):
     REQUIRED_PROJECT_STATES = ['open']
     required_project_flags  = {
         'in_review': [None, False],
+        'submission_enabled': [True],
     }
 
     def __init__(self, **kwargs):

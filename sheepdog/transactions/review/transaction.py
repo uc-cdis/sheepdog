@@ -5,6 +5,10 @@ from sheepdog.transactions.transaction_base import TransactionBase
 class ReviewTransactionBase(TransactionBase):
 
     role = None
+    required_project_flags  = {
+        'in_review': [False, None],
+        'submission_enabled': [True],
+    }
 
     def __init__(self, **kwargs):
         super(ReviewTransactionBase, self).__init__(role=self.role, **kwargs)

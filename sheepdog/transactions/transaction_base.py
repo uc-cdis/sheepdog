@@ -44,6 +44,9 @@ class TransactionBase(object):
     """
 
     REQUIRED_PROJECT_STATES = []
+    required_project_flags  = {
+        'submission_enabled': [True],
+    }
 
     def __init__(self, program, project, **kwargs):
         """
