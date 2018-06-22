@@ -40,10 +40,13 @@ class UploadTransaction(TransactionBase):
     """
 
     REQUIRED_PROJECT_STATES = ['open']
+    required_project_flags  = {
+        'in_review': [None, False],
+    }
 
     def __init__(self, **kwargs):
         """
-        Initizalize the UploadTransaction.
+        Initialize the UploadTransaction.
 
         Keyword Args:
             See TransactionBase.__init__()
