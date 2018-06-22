@@ -47,7 +47,14 @@ def test_create_data_file_entity(
 
 
 # simulate a project's api that lets you do this
-@pytest.mark.config_toggle(parameter='CREATE_REPLACEABLE', value=True)
+@pytest.mark.config_toggle(
+    parameters={
+        'CREATE_REPLACEABLE': True,
+        'ENFORCE_FILE_HASH_SIZE_UNIQUENESS': False,
+        'IGNORE_PROJECT_STATE': True,
+        'IS_GDC': True,
+    }
+)
 def test_update_data_file_entity(
         client_toggled, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
     """
@@ -119,8 +126,7 @@ def test_update_data_file_entity(
     # entry in indexd has no version
     assert new_doc.version is None
 
-    # make sure that a node cannot be updated after it's in state
-    # submitted or released
+    # make sure that a node cannot be updated after it's in state submitted
 
     # manually change file state to submitted
     with pg_driver.session_scope():
@@ -135,11 +141,11 @@ def test_update_data_file_entity(
         ['read_group.json', 'submitted_unaligned_reads_new.json']
     )
 
-    assert resp.status_code == 400, 'indexd doc state should be in submitted state'
+    assert resp.status_code == 400, 'indexd doc state should not be in "submitted" state'
 
 
 # simulate a project's api that lets you do this
-@pytest.mark.config_toggle(parameter='CREATE_REPLACEABLE', value=True)
+@pytest.mark.config_toggle(parameters={'CREATE_REPLACEABLE': True})
 def test_creating_new_versioned_file(
         client_toggled, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
     """

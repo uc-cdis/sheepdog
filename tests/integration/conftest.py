@@ -88,10 +88,10 @@ def app(tmpdir, request):
 @pytest.fixture(scope='function')
 def client_toggled(app, request):
     """
-    Will toggle app config parameter for the test using this and return test client
+    Will toggle app config parameters for the test using this and return test client
 
     USAGE:
-    @pytest.mark.config_toggle(parameter='PARAM', value=VAL)
+    @pytest.mark.config_toggle(parameters={'PARAM1': VAL1, 'PARAM2': VAL2})
     def test_mytest(client_toggled):
         ...
 
@@ -100,7 +100,8 @@ def client_toggled(app, request):
     """
     params = request.node.get_marker('config_toggle')
 
-    app.config[params.kwargs['parameter']] = params.kwargs['value']
+    for parameter, value in params.kwargs['parameters'].items():
+        app.config[parameter] = value
 
     with app.test_client() as client:
         yield client
