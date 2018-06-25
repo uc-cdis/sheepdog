@@ -248,25 +248,25 @@ class TransactionBase(object):
             if not correct_state:
                 # Collect the current values for the project attributes
                 # needed in order to report them to the user.
-                current_states = ' and '.join([
+                current_attributes = ', '.join([
                     # this `bool()` is to convert None to False
-		    bool(getattr(project, value))
-		    for _, value in self.required_project_flags.items()
+                    '{}: {}'.format(key, bool(getattr(project_node, key)))
+		    for key in self.required_project_flags
                 ])
 
                 # Put together a list of the values required for the states
                 # in order for a transaction to be considered valid.
-                wanted_states = ' and '.join([
+                wanted_attributes = ' and '.join([
 		    # This `all()` will condense the list of required
                     # values into True or False. `self.required_project_flags`
                     # values are a list, and we only want the truthy/falsey
                     # value in that list.
-		    all(value)
-		    for _, value in self.required_project_flags.items()
+                    '{}: {}'.format(key, value)
+		    for key, value in self.required_project_flags.items()
                 ])
 
                 raise UserError(msg.format(
-                    current_state, flask.request.path, wanted_states))
+                    current_attributes, flask.request.path, wanted_attributes))
 
         # old project states
         else:
