@@ -44,6 +44,9 @@ class TransactionBase(object):
     """
 
     REQUIRED_PROJECT_STATES = []
+    required_project_flags  = {
+        'submission_enabled': [True],
+    }
 
     def __init__(self, program, project, **kwargs):
         """
@@ -216,19 +219,56 @@ class TransactionBase(object):
         return [entity.node for entity in self.entities if entity.node]
 
     def assert_project_state(self):
-        """Assert that the transaction is allowed given the Project.state."""
-        if self._config.get('IGNORE_PROJECT_STATE'):
-            return
+        """Assert that the transaction is allowed given the Project.state.
 
-        project = utils.lookup_project(self.db_driver, self.program, self.project)
-        state = project.state
-        if state not in self.REQUIRED_PROJECT_STATES:
-            states = ' or '.join(self.REQUIRED_PROJECT_STATES)
-            msg = (
-                "Project is in state '{}', which prevents {}. In order to"
-                " perform this action, the project must be in state <{}>."
-            )
-            raise UserError(msg.format(state, flask.request.path, states))
+        old:
+            Project.state = 'open'
+        new:
+            Project._props = {
+                'in_review': True,
+                'released': False,
+                ...
+            }
+        """
+
+        project_node = utils.lookup_project(self.db_driver, self.program, self.project)
+        msg = (
+            "Project is in state '{}', which prevents {}. In order to"
+            " perform this action, the project must be in state <{}>."
+        )
+
+        # new project 'states'
+        if self._config.get('IGNORE_PROJECT_STATE', False):
+            # Check if project 'state' is correctly configured.
+            correct_state = all([
+                getattr(project_node, flag) in expected
+                for flag, expected in self.required_project_flags.items()
+            ])
+
+            if not correct_state:
+                # Collect the current values for the project attributes
+                # needed in order to report them to the user.
+                current_attributes_dict = {
+                    # this `bool()` is to convert None to False
+                    key: bool(getattr(project_node, key))
+                    for key in self.required_project_flags
+                }
+                current_attributes = str(current_attributes_dict)
+
+                # The list of the values required for the states
+                # in order for a transaction to be considered valid.
+                wanted_attributes = str(self.required_project_flags.items())
+
+                raise UserError(msg.format(
+                    current_attributes, flask.request.path, wanted_attributes))
+
+        # old project states
+        else:
+            current_state = project_node.state
+            if current_state not in self.REQUIRED_PROJECT_STATES:
+                wanted_states = ' or '.join(self.REQUIRED_PROJECT_STATES)
+                raise UserError(msg.format(
+                    current_state, flask.request.path, wanted_states))
 
     def __enter__(self):
         """Called when entering a transaction context.

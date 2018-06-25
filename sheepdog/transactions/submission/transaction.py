@@ -22,6 +22,11 @@ class SubmissionTransaction(TransactionBase):
 
     REQUIRED_PROJECT_STATES = ['review']
 
+    # TODO: fill this out properly based on projects
+    required_project_flags  = {
+        'submission_enabled': [True],
+    }
+
     #: Don't mark these classes submitted
     SKIPPED_CLASSES = [
         'case',

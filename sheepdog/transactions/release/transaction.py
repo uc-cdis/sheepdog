@@ -11,6 +11,11 @@ class ReleaseTransaction(TransactionBase):
         'processing',
     ]
 
+    # TODO: fill this out properly based on projects
+    required_project_flags  = {
+        'submission_enabled': [True],
+    }
+
     def __init__(self, **kwargs):
         super(ReleaseTransaction, self).__init__(role='release', **kwargs)
 
