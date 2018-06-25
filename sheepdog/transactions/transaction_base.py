@@ -238,7 +238,7 @@ class TransactionBase(object):
         )
 
         # new project 'states'
-        if self._config.get('IGNORE_PROJECT_STATE'):
+        if self._config.get('IGNORE_PROJECT_STATE', False):
             # Check if project 'state' is correctly configured.
             correct_state = all([
                 getattr(project_node, flag) in expected
@@ -248,22 +248,16 @@ class TransactionBase(object):
             if not correct_state:
                 # Collect the current values for the project attributes
                 # needed in order to report them to the user.
-                current_attributes = ', '.join([
+                current_attributes_dict = {
                     # this `bool()` is to convert None to False
-                    '{}: {}'.format(key, bool(getattr(project_node, key)))
-		    for key in self.required_project_flags
-                ])
+                    key: bool(getattr(project_node, key))
+                    for key in self.required_project_flags
+                }
+                current_attributes = str(current_attributes_dict)
 
-                # Put together a list of the values required for the states
+                # The list of the values required for the states
                 # in order for a transaction to be considered valid.
-                wanted_attributes = ' and '.join([
-		    # This `all()` will condense the list of required
-                    # values into True or False. `self.required_project_flags`
-                    # values are a list, and we only want the truthy/falsey
-                    # value in that list.
-                    '{}: {}'.format(key, value)
-		    for key, value in self.required_project_flags.items()
-                ])
+                wanted_attributes = str(self.required_project_flags.items())
 
                 raise UserError(msg.format(
                     current_attributes, flask.request.path, wanted_attributes))
