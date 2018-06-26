@@ -15,7 +15,7 @@ from moto import mock_s3
 from gdcdatamodel import models as md
 from sheepdog.transactions.upload import UploadTransaction
 from tests.integration.submission.utils import (
-    data_fnames,
+    DATA_FILES,
     post_example_entities_together,
     put_example_entities_together,
 )
@@ -288,7 +288,7 @@ def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
     path = BLGSP_PATH
     with open(os.path.join(DATA_DIR, 'case.json'), 'r') as f:
         case_sid = json.loads(f.read())['submitter_id']
-    for fname in data_fnames:
+    for fname in DATA_FILES:
         with open(os.path.join(DATA_DIR, fname), 'r') as f:
             resp = client.post(
                 path, headers=submitter, data=f.read()
@@ -596,11 +596,11 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
 
     # Attempt to post the invalid entities.
     test_fnames = (
-        data_fnames
+        DATA_FILES
         + ['read_group.json', 'submitted_unaligned_reads_invalid.json']
     )
     resp = post_example_entities_together(
-        client, submitter, data_fnames2=test_fnames
+        client, submitter, data_fnames=test_fnames
     )
     print(resp)
 
@@ -615,11 +615,11 @@ def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter,
 
     # Attempt to post the valid entities.
     test_fnames = (
-        data_fnames
+        DATA_FILES
         + ['read_group.json', 'submitted_unaligned_reads.json']
     )
     resp = post_example_entities_together(
-        client, submitter, data_fnames2=test_fnames
+        client, submitter, data_fnames=test_fnames
     )
     assert resp.status_code == 201, resp.data
 
