@@ -498,7 +498,6 @@ class UploadEntity(EntityBase):
             'urls_metadata': self.doc.get('urls_metadata', {}),
             'metadata': self.doc.get('metadata', {}),
         }
-        updated_fields
         self.transaction.indexd.create(
             did=old_doc['did'],
             baseid=old_doc['baseid'],

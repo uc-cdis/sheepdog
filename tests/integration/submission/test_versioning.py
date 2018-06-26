@@ -31,7 +31,7 @@ def test_create_data_file_entity(
     data_file = read_json_data(os.path.join(DATA_DIR, sur_filename))
 
     # node created in database
-    response, sur_entity = data_file_creation(
+    _, sur_entity = data_file_creation(
         client,
         submitter,
         method='post',
@@ -82,8 +82,7 @@ def test_update_data_file_entity(
 
     # post file node into database
     sur_filename = 'submitted_unaligned_reads.json'
-    old_data_file = read_json_data(os.path.join(DATA_DIR, sur_filename))
-    response, sur_entity = data_file_creation(
+    _, sur_entity = data_file_creation(
         client_toggled,
         submitter,
         method='post',
@@ -100,7 +99,7 @@ def test_update_data_file_entity(
     # update node, causing new information in indexd
     new_filename = 'submitted_unaligned_reads_new.json'
     new_data_file = read_json_data(os.path.join(DATA_DIR, new_filename))
-    response1, sur_entity1 = data_file_creation(
+    _, sur_entity1 = data_file_creation(
         client_toggled,
         submitter,
         method='put',
@@ -170,7 +169,7 @@ def test_creating_new_versioned_file(
             str: UUID of node submitted to the api
         """
 
-        resp, sur_entity = data_file_creation(
+        _, sur_entity = data_file_creation(
             client_toggled,
             submitter,
             method='put',
