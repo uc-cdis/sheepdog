@@ -21,6 +21,7 @@ from sheepdog.globals import (
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.utils import (
+    generate_s3_url,
     get_suggestion,
     get_indexd,
 )
@@ -483,21 +484,37 @@ class UploadEntity(EntityBase):
                 IndexClient representation of document in indexd
         """
 
-        # Order is important for deletion. Document.to_json will raise an
-        # exception if the document is already deleted in indexd.
-        doc_props = indexd_doc.to_json()
+        # get old indexd document as json
+        old_doc = indexd_doc.to_json()
+
+        # delete old indexd document
         indexd_doc.delete()
 
+        # create new updated document (keeping old 'did' and 'baseid')
+        urls = [
+            generate_s3_url(
+                host=self._config['SUBMISSION']['host'],
+                bucket=self._config['SUBMISSION']['bucket'],
+                program=self.transaction.program,
+                project=self.transaction.project,
+                uuid=self.entity_id,
+                file_name=self.doc['file_name'],
+            )
+        ]
+        urls_metadata = {url: {'state': 'registered'} for url in urls}
+
+        updated_fields = {
+            'hashes': {'md5': self.doc['md5sum']},
+            'size': self.doc['file_size'],
+            'file_name': self.doc['file_name'],
+            'urls': urls,
+            'urls_metadata': urls_metadata,
+            'metadata': self.doc.get('metadata', {}),
+        }
         self.transaction.indexd.create(
-            # Required fields are supplied at all times of node creation. That
-            # means that these properties will be in the self.doc variable.
-            hashes={'md5': self.doc['md5sum']},  # new/updated
-            size=self.doc['file_size'],          # new/updated
-            file_name=self.doc['file_name'],     # new/updated
-            did=doc_props['did'],                # old/carried over
-            urls=doc_props['urls'],              # old/carried over
-            metadata=doc_props['metadata'],      # old/carried over
-            baseid=doc_props['baseid'],          # old/carried over
+            did=old_doc['did'],
+            baseid=old_doc['baseid'],
+            **updated_fields
         )
 
     def _merge_doc_links(self, node):

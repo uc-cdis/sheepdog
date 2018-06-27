@@ -26,7 +26,7 @@ from sheepdog.globals import (
     submitted_state,
     TEMPLATE_NAME,
     UPLOADING_STATE,
-    SUCCESS_STATE,
+    UPLOADED_STATE,
     ERROR_STATE,
     UPLOADING_PARTS,
     DATA_FILE_CATEGORIES,
@@ -39,7 +39,12 @@ from sheepdog.utils.transforms.graph_to_doc import (
 from . import s3
 
 
-ALLOWED_STATES = [ERROR_STATE, submitted_state(), UPLOADING_STATE]
+ALLOWED_STATES_FOR_UPLOAD = [
+    ERROR_STATE,
+    submitted_state(),
+    UPLOADING_STATE,
+    UPLOADED_STATE,
+]
 
 
 def _get_links(file_format, schema, exclude_id):
@@ -175,13 +180,13 @@ def check_action_allowed_for_file(action, node, s3_url, indexd_client):
 
     not_allowed_state = (
         action in ['upload', 'initiate_multipart']
-        and file_state not in ALLOWED_STATES
+        and file_state not in ALLOWED_STATES_FOR_UPLOAD
     )
     not_uploading_state = (
         action in UPLOADING_PARTS and file_state != UPLOADING_STATE
     )
     not_success_state = (
-        action == 'get_file' and file_state != SUCCESS_STATE
+        action == 'get_file' and file_state != UPLOADED_STATE
     )
     if not_allowed_state or not_uploading_state or not_success_state:
         raise UserError(
@@ -348,7 +353,7 @@ def get_indexd_state(did, url, indexd_client, return_not_found=False):
             raise UserError('Multiple urls found for {}: {}'.format(did, urls))
         url = urls[0]
 
-    return indexd_doc.urls_metadata[url]['state']
+    return indexd_doc.urls_metadata[url].get('state')
 
 
 def set_indexd_state(indexd_doc, url, state):
@@ -557,7 +562,7 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
     )
 
     if action in ['upload', 'complete_multipart'] and resp.status == 200:
-        set_indexd_state(indexd_doc, s3_url, SUCCESS_STATE)
+        set_indexd_state(indexd_doc, s3_url, UPLOADED_STATE)
     elif action == 'delete' and resp.status == 204:
         set_indexd_state(indexd_doc, s3_url, submitted_state())
 

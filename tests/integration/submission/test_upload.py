@@ -409,7 +409,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     assert_single_entity_from_response(resp)
 
 
-@pytest.mark.config_toggle(parameter='ENFORCE_FILE_HASH_SIZE_UNIQUENESS', value=False)
+@pytest.mark.config_toggle(parameters={'ENFORCE_FILE_HASH_SIZE_UNIQUENESS': False})
 def test_dont_enforce_file_hash_size_uniqueness(
         client_toggled, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """

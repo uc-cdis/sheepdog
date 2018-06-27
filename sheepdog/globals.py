@@ -113,7 +113,7 @@ def submitted_state():
 #: State file enters when user begins upload.
 UPLOADING_STATE = 'uploading'
 #: State file enters when user completes upload.
-SUCCESS_STATE = 'uploaded'
+UPLOADED_STATE = 'uploaded'
 
 #: This is a list of states that an entity must be in to allow deletion.
 ALLOWED_DELETION_STATES = [

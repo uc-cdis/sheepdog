@@ -12,7 +12,7 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
 # https://stackoverflow.com/questions/373194/python-regex-for-md5-hash
 re_md5 = re.compile(r'(i?)(?<![a-z0-9])[a-f0-9]{32}(?![a-z0-9])')
 
-data_fnames = [
+DATA_FILES = [
     'experiment.json',
     'case.json',
     'sample.json',
@@ -108,26 +108,32 @@ def assert_single_entity_from_response(resp):
     return entities[0]
 
 
-def post_example_entities_together(client, submitter, data_fnames2=None):
-    if not data_fnames2:
-        data_fnames2 = data_fnames
+def post_example_entities_together(client, submitter, data_fnames=None):
+    if not data_fnames:
+        data_fnames = DATA_FILES
     path = BLGSP_PATH
     data = []
-    for fname in data_fnames2:
+    for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), 'r') as f:
             data.append(json.loads(f.read()))
     return client.post(path, headers=submitter, data=json.dumps(data))
 
 
-def put_example_entities_together(client, headers, data_fnames2=None):
-    if not data_fnames2:
-        data_fnames2 = data_fnames
+def put_example_entities_together(client, headers, data_fnames=None):
+    if not data_fnames:
+        data_fnames = DATA_FILES
     path = BLGSP_PATH
     data = []
-    for fname in data_fnames2:
+    for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), 'r') as f:
             data.append(json.loads(f.read()))
     return client.put(path, headers=headers, data=json.dumps(data))
+
+
+def read_json_data(filepath):
+    with open(filepath, 'r') as f:
+        json_data = json.loads(f.read())
+    return json_data
 
 
 def data_file_creation(client, headers, method='post', sur_filename=''):
@@ -147,41 +153,26 @@ def data_file_creation(client, headers, method='post', sur_filename=''):
         pytest_flask.plugin.JSONResponse: http response from sheepdog
     """
 
-    test_fnames = data_fnames + ['read_group.json']
-
     if method == 'post':
-        resp = post_example_entities_together(
-            client,
-            headers,
-            data_fnames2=test_fnames + [sur_filename])
+        upload_function = post_example_entities_together
     elif method == 'put':
-        resp = put_example_entities_together(
-            client,
-            headers,
-            data_fnames2=test_fnames + [sur_filename])
+        upload_function = put_example_entities_together
+
+    test_fnames = DATA_FILES + ['read_group.json']
+    resp = upload_function(client,
+                           headers,
+                           data_fnames=test_fnames + [sur_filename])
 
     assert_message = 'Unable to create nodes: {}'.format(
         [entity for entity in resp.json['entities'] if entity['errors']]
     )
     assert resp.status_code in (200, 201), assert_message
 
-    with open(os.path.join(DATA_DIR, sur_filename), 'r') as f:
-        sur_json = json.loads(f.read())
+    for entity in resp.json['entities']:
+        if entity['type'] == 'submitted_unaligned_reads':
+            sur_entity = entity
 
-    sur_uuid = [
-        entity['id']
-        for entity in resp.json['entities']
-        if entity['type'] == 'submitted_unaligned_reads'
-    ][0]
-
-    file_metadata = {
-        'did': sur_uuid,
-        'file_size': sur_json['file_size'],
-        'file_name': sur_json['file_name'],
-        'md5sum': sur_json['md5sum'],
-    }
-
-    return file_metadata
+    return resp.json, sur_entity
 
 
 def release_indexd_doc(pg_driver, indexd_client, latest_did):
