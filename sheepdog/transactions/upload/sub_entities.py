@@ -187,6 +187,9 @@ class FileUploadEntity(UploadEntity):
         if not self.node:
             return
 
+        if self.transaction.dry_run:
+            return
+
         role = self.action
         try:
             if role == 'create':
@@ -266,6 +269,7 @@ class FileUploadEntity(UploadEntity):
             }
 
         # IndexClient
+
         self._create_index(did=self.entity_id,
                            hashes=hashes,
                            size=size,

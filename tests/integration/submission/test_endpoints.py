@@ -18,6 +18,7 @@ from tests.integration.submission.utils import (
     DATA_FILES,
     post_example_entities_together,
     put_example_entities_together,
+    data_file_creation,
 )
 
 
@@ -669,3 +670,44 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
     assert len(r.data.strip().split('\n')) == case_count + 1
+
+
+def test_commit_dry_run_transaction(client, pg_driver, cgci_blgsp, submitter,
+                                    indexd_client):
+    resp, file_metadata = data_file_creation(
+        client, submitter, sur_filename='submitted_unaligned_reads.json',
+        dry_run=True)
+    tx_id = resp.json['transaction_id']
+
+    # Make sure no indexd record was created
+    assert indexd_client.get(file_meta['did']) is None
+
+    # Make sure no file node was created
+    with pg_driver.session_scope():
+        assert pg_driver.nodes().get(file_meta['did']) is None
+
+    # Commit previous dry_run transaction
+    commit_path = os.path.join(BLGSP_PATH, 'transactions', str(tx_id), 'commit')
+    response = client.post(commit_path, headers=submitter)
+
+    assert response.status_code == 201, response.json
+
+    # Make sure only one submitted unaligned reads was created
+    sur_entities = [e for e in response.json['entities']
+                    if e['type'] == 'submitted_unaligned_reads']
+    assert len(sur_entities) == 1
+
+    # Make sure everything is correct in graph and indexd
+    sur_entity = sur_entities[0]
+
+    with pg_driver.session_scope():
+        node = pg_driver.nodes().get(sur_entity['id'])
+        assert node.file_name == file_meta['file_name']
+        assert node.file_size == file_meta['file_size']
+        assert node.md5sum == file_meta['md5sum']
+
+    sur_indexd = indexd_client.get(sur_entity['id'])
+    assert sur_indexd is not None
+    assert sur_indexd.file_name == file_meta['file_name']
+    assert sur_indexd.size == file_meta['file_size']
+    assert sur_indexd.hashes['md5'] == file_meta['md5sum']
