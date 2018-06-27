@@ -19,6 +19,7 @@ from tests.integration.submission.utils import (
     post_example_entities_together,
     put_example_entities_together,
     data_file_creation,
+    read_json_data,
 )
 
 
@@ -674,17 +675,20 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
 
 def test_commit_dry_run_transaction(client, pg_driver, cgci_blgsp, submitter,
                                     indexd_client):
-    resp, file_metadata = data_file_creation(
+    resp_json, sur_entity_dr = data_file_creation(
         client, submitter, sur_filename='submitted_unaligned_reads.json',
         dry_run=True)
-    tx_id = resp.json['transaction_id']
+    tx_id = resp_json['transaction_id']
+
+    file_meta = read_json_data(os.path.join(DATA_DIR,
+                                            'submitted_unaligned_reads.json'))
 
     # Make sure no indexd record was created
-    assert indexd_client.get(file_meta['did']) is None
+    assert indexd_client.get(sur_entity_dr['id']) is None
 
     # Make sure no file node was created
     with pg_driver.session_scope():
-        assert pg_driver.nodes().get(file_meta['did']) is None
+        assert pg_driver.nodes().get(sur_entity_dr['id']) is None
 
     # Commit previous dry_run transaction
     commit_path = os.path.join(BLGSP_PATH, 'transactions', str(tx_id), 'commit')
