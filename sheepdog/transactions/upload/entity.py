@@ -21,6 +21,7 @@ from sheepdog.globals import (
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.utils import (
+    generate_s3_url,
     get_suggestion,
     get_indexd,
 )
@@ -489,13 +490,25 @@ class UploadEntity(EntityBase):
         # delete old indexd document
         indexd_doc.delete()
 
-        # create new updated one (keeping old 'did' and 'baseid')
+        # create new updated document (keeping old 'did' and 'baseid')
+        urls = [
+            generate_s3_url(
+                host=self._config['SUBMISSION']['host'],
+                bucket=self._config['SUBMISSION']['bucket'],
+                program=self.transaction.program,
+                project=self.transaction.project,
+                uuid=self.entity_id,
+                file_name=self.doc['file_name'],
+            )
+        ]
+        urls_metadata = {url: {'state': 'registered'} for url in urls}
+
         updated_fields = {
             'hashes': {'md5': self.doc['md5sum']},
             'size': self.doc['file_size'],
             'file_name': self.doc['file_name'],
-            'urls': self.doc.get('urls', []),
-            'urls_metadata': self.doc.get('urls_metadata', {}),
+            'urls': urls,
+            'urls_metadata': urls_metadata,
             'metadata': self.doc.get('metadata', {}),
         }
         self.transaction.indexd.create(

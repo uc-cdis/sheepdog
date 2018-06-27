@@ -96,6 +96,7 @@ class FileUploadEntity(UploadEntity):
         self.file_by_hash = None
         self.s3_url = None
         self.urls = []
+        self.urls_metadata = {}
 
     def parse(self, doc):
         """
@@ -249,9 +250,9 @@ class FileUploadEntity(UploadEntity):
                 file_name=file_name,
             )
             self.urls = [url]
-            urls_metadata = {url: {'state': 'registered'}}
+            self.urls_metadata = {url: {'state': 'registered'}}
         else:
-            urls_metadata = {url: {'state': 'registered'} for url in self.urls}
+            self.urls_metadata = {url: {'state': 'registered'} for url in self.urls}
 
         # IndexClient
         self._create_index(did=self.entity_id,
@@ -261,7 +262,7 @@ class FileUploadEntity(UploadEntity):
                            acl=acls,
                            file_name=file_name,
                            metadata=metadata,
-                           urls_metadata=urls_metadata)
+                           urls_metadata=self.urls_metadata)
 
         self._create_alias(
             record=alias, hashes=hashes, size=size, release='private'
