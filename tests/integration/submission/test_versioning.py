@@ -2,6 +2,8 @@ import pytest
 import os
 from gdcdatamodel import models as md
 
+from sheepdog.globals import PRIMARY_URL_TYPE
+
 from tests.integration.submission.utils import (
     put_example_entities_together,
     data_file_creation,
@@ -49,7 +51,7 @@ def test_create_data_file_entity(
     assert indexd_doc.file_name == data_file['file_name']
     assert indexd_doc.hashes['md5'] == data_file['md5sum']
     assert indexd_doc.urls_metadata
-    assert all([url_meta.get('type') == 'cleversafe'
+    assert all([url_meta.get('type') == PRIMARY_URL_TYPE
                 for url_meta in indexd_doc.urls_metadata.values()])
     assert all([url_meta.get('state') == 'registered'
                 for url_meta in indexd_doc.urls_metadata.values()])
@@ -131,7 +133,7 @@ def test_update_data_file_entity(
     assert new_doc.urls_metadata
     assert all([url_meta.get('state') == 'registered'
                 for url_meta in new_doc.urls_metadata.values()])
-    assert all([url_meta.get('type') == 'cleversafe'
+    assert all([url_meta.get('type') == PRIMARY_URL_TYPE
                 for url_meta in new_doc.urls_metadata.values()])
 
     # new fields

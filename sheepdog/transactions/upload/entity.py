@@ -18,6 +18,7 @@ from sheepdog.globals import (
     UNVERIFIED_PROGRAM_NAMES,
     UNVERIFIED_PROJECT_CODES,
     DATA_FILE_CATEGORIES,
+    PRIMARY_URL_TYPE,
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.utils import (
@@ -505,7 +506,9 @@ class UploadEntity(EntityBase):
         # important this is for PlanX. But this change is required for
         # the runners to be able to pick up new files
         urls_metadata = {
-            url: {'state': 'registered', 'type': 'cleversafe'} for url in urls
+            url: {
+                'state': 'registered', 'type': PRIMARY_URL_TYPE
+            } for url in urls
         }
 
         updated_fields = {
