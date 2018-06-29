@@ -195,6 +195,6 @@ ERR_ASYNC_SCHEDULING = (
 # Categories of nodes considered 'file node'
 DATA_FILE_CATEGORIES = ['data_file', 'metadata_file', 'index_file']
 
-# Used to set 'type' in indexd_document.urls_metadata[<url>] to determain
+# Used to set 'type' in indexd_document.urls_metadata[<url>] to determine
 # a primary URL if multiple URLs are present (e.g. backup)
 PRIMARY_URL_TYPE = 'cleversafe'
