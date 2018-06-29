@@ -2,6 +2,8 @@ import pytest
 import os
 from gdcdatamodel import models as md
 
+from sheepdog.globals import PRIMARY_URL_TYPE
+
 from tests.integration.submission.utils import (
     put_example_entities_together,
     data_file_creation,
@@ -13,7 +15,8 @@ from tests.integration.submission.utils import (
 
 
 def test_create_data_file_entity(
-        client, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
+        client, indexd_server, indexd_client, pg_driver, cgci_blgsp,
+        submitter):
     """
     Create a new node in the database.
 
@@ -47,6 +50,11 @@ def test_create_data_file_entity(
     assert indexd_doc.size == data_file['file_size']
     assert indexd_doc.file_name == data_file['file_name']
     assert indexd_doc.hashes['md5'] == data_file['md5sum']
+    assert indexd_doc.urls_metadata
+    assert all([url_meta.get('type') == PRIMARY_URL_TYPE
+                for url_meta in indexd_doc.urls_metadata.values()])
+    assert all([url_meta.get('state') == 'registered'
+                for url_meta in indexd_doc.urls_metadata.values()])
 
     # entry in indexd has no version
     assert indexd_doc.version is None
@@ -61,7 +69,8 @@ def test_create_data_file_entity(
     }
 )
 def test_update_data_file_entity(
-        client_toggled, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
+        client_toggled, indexd_server, indexd_client, pg_driver, cgci_blgsp,
+        submitter):
     """
     Update an existing node in the database.
 
@@ -121,6 +130,11 @@ def test_update_data_file_entity(
     assert new_doc.size == new_data_file['file_size']
     assert new_doc.file_name == new_data_file['file_name']
     assert new_doc.hashes['md5'] == new_data_file['md5sum']
+    assert new_doc.urls_metadata
+    assert all([url_meta.get('state') == 'registered'
+                for url_meta in new_doc.urls_metadata.values()])
+    assert all([url_meta.get('type') == PRIMARY_URL_TYPE
+                for url_meta in new_doc.urls_metadata.values()])
 
     # new fields
     assert new_doc.size != old_doc.size
@@ -148,13 +162,15 @@ def test_update_data_file_entity(
         ['read_group.json', 'submitted_unaligned_reads_new.json']
     )
 
-    assert resp.status_code == 400, 'indexd doc state should not be in "submitted" state'
+    assert resp.status_code == 400, ('indexd doc state should not be in '
+                                     '"submitted" state')
 
 
 # simulate a project's api that lets you do this
 @pytest.mark.config_toggle(parameters={'CREATE_REPLACEABLE': True})
 def test_creating_new_versioned_file(
-        client_toggled, indexd_server, indexd_client, pg_driver, cgci_blgsp, submitter):
+        client_toggled, indexd_server, indexd_client, pg_driver, cgci_blgsp,
+        submitter):
     """
     Create a new version of a file
     """
@@ -198,7 +214,8 @@ def test_creating_new_versioned_file(
             release_indexd_doc(pg_driver, indexd_client, did)
 
             indexd_doc = indexd_client.get(did)
-            message = 'Should have been assigned version {}'.format(version_number)
+            message = 'Should have been assigned version {}'.format(
+                version_number)
             assert indexd_doc.version == version_number, message
 
         return sur_entity['id']

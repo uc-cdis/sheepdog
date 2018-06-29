@@ -18,7 +18,7 @@ from sheepdog.transactions.upload.entity import (
     UploadEntity,
     lookup_node,
 )
-from sheepdog.globals import DATA_FILE_CATEGORIES
+from sheepdog.globals import DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE
 
 
 class NonFileUploadEntity(UploadEntity):
@@ -250,9 +250,20 @@ class FileUploadEntity(UploadEntity):
                 file_name=file_name,
             )
             self.urls = [url]
-            self.urls_metadata = {url: {'state': 'registered'}}
+            # NOTE: setting 'type' here is somewhat GDC specific and we are not
+            # sure how important this is for PlanX. But this change is required
+            # for the runners to be able to pick up new files
+            self.urls_metadata = {
+                url: {'state': 'registered', 'type': PRIMARY_URL_TYPE}
+            }
         else:
-            self.urls_metadata = {url: {'state': 'registered'} for url in self.urls}
+            # NOTE: Read above comment
+            self.urls_metadata = {
+                url: {
+                    'state': 'registered',
+                    'type': PRIMARY_URL_TYPE
+                } for url in self.urls
+            }
 
         # IndexClient
         self._create_index(did=self.entity_id,
@@ -313,7 +324,11 @@ class FileUploadEntity(UploadEntity):
             acl=self.transaction.get_phsids(),
             metadata=self.get_metadata(),
             form='object',
-            urls_metadata={url: {'state': 'registered'} for url in urls}
+            urls_metadata={
+                url: {
+                    'state': 'registered', 'type': PRIMARY_URL_TYPE
+                } for url in urls
+            }
         )
         new_doc = Document(None, None, index_json)
 
