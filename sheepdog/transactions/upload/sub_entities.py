@@ -250,9 +250,9 @@ class FileUploadEntity(UploadEntity):
                 file_name=file_name,
             )
             self.urls = [url]
-            # NOTE: This is somewhat GDC specific and we are not sure how
-            # important this is for PlanX. But this change is required for
-            # the runners to be able to pick up new files
+            # NOTE: setting 'type' here is somewhat GDC specific and we are not
+            # sure how important this is for PlanX. But this change is required
+            # for the runners to be able to pick up new files
             self.urls_metadata = {
                 url: {'state': 'registered', 'type': 'cleversafe'}
             }

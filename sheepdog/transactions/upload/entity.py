@@ -501,7 +501,12 @@ class UploadEntity(EntityBase):
                 file_name=self.doc['file_name'],
             )
         ]
-        urls_metadata = {url: {'state': 'registered'} for url in urls}
+        # NOTE: Setting 'type' is somewhat GDC specific and we are not sure how
+        # important this is for PlanX. But this change is required for
+        # the runners to be able to pick up new files
+        urls_metadata = {
+            url: {'state': 'registered', 'type': 'cleversafe'} for url in urls
+        }
 
         updated_fields = {
             'hashes': {'md5': self.doc['md5sum']},
