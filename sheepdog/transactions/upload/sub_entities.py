@@ -324,7 +324,11 @@ class FileUploadEntity(UploadEntity):
             acl=self.transaction.get_phsids(),
             metadata=self.get_metadata(),
             form='object',
-            urls_metadata={url: {'state': 'registered'} for url in urls}
+            urls_metadata={
+                url: {
+                    'state': 'registered', 'type': 'cleversafe'
+                } for url in urls
+            }
         )
         new_doc = Document(None, None, index_json)
 
