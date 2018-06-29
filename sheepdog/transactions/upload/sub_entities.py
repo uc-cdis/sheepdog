@@ -250,9 +250,20 @@ class FileUploadEntity(UploadEntity):
                 file_name=file_name,
             )
             self.urls = [url]
-            self.urls_metadata = {url: {'state': 'registered'}}
+            # NOTE: This is somewhat GDC specific and we are not sure how
+            # important this is for PlanX. But this change is required for
+            # the runners to be able to pick up new files
+            self.urls_metadata = {
+                url: {'state': 'registered', 'type': 'cleversafe'}
+            }
         else:
-            self.urls_metadata = {url: {'state': 'registered'} for url in self.urls}
+            # NOTE: Read above comment
+            self.urls_metadata = {
+                url: {
+                    'state': 'registered',
+                    'type': 'cleversafe'
+                } for url in self.urls
+            }
 
         # IndexClient
         self._create_index(did=self.entity_id,
