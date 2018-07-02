@@ -50,7 +50,7 @@ DEFAULT_URL = generate_s3_url(
 # Regex because sometimes you don't get to upload a UUID, and the UUID is
 # part of the s3 url.
 UUID_REGEX = r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
-REGEX_URL = r's3://{}/{}/{}/{}/{}/{}'.format(
+REGEX_URL = r's3://{}/{}/{}-{}/{}/{}'.format(
     SUBMISSION['host'],
     SUBMISSION['bucket'],
     PROGRAM,
