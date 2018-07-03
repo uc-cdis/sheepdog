@@ -430,16 +430,11 @@ def generate_s3_url(host, bucket, program, project, uuid, file_name):
     if not host.startswith('s3://'):
         host = 's3://' + host
 
-    if not host.endswith('/'):
-        host += '/'
-
     if bucket.startswith('/'):
         bucket = bucket[1:]
 
-    if not bucket.endswith('/'):
-        bucket += '/'
-
-    return host + bucket + generate_s3_key(program, project, uuid, file_name)
+    return '/'.join(
+        [host, bucket, generate_s3_key(program, project, uuid, file_name)])
 
 
 def generate_s3_key(program, project, uuid, file_name):
