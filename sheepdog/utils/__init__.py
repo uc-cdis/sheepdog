@@ -413,7 +413,7 @@ def generate_s3_url(host, bucket, program, project, uuid, file_name):
     is uploaded
 
     Example:
-        s3://HOST/BUCKET/PROGRAM/PROJECT/UUID/FILENAME
+        s3://HOST/BUCKET/PROGRAM-PROJECT/UUID/FILENAME
 
     Args:
         host (str): s3 hostname
@@ -430,17 +430,23 @@ def generate_s3_url(host, bucket, program, project, uuid, file_name):
     if not host.startswith('s3://'):
         host = 's3://' + host
 
-    if not host.endswith('/'):
-        host += '/'
-
     if bucket.startswith('/'):
         bucket = bucket[1:]
 
-    if not bucket.endswith('/'):
-        bucket += '/'
+    return '/'.join(
+        [host, bucket, generate_s3_key(program, project, uuid, file_name)])
 
-    key = '{}/{}/{}/{}'.format(program, project, uuid, file_name)
-    return host + bucket + key
+
+def generate_s3_key(program, project, uuid, file_name):
+    """Generate an object store key given program, project, uuid and file_name
+
+    NOTE: This is an attempt to centralize object store key generation and move
+    it outside of `sheepdog.utils.s3.make_s3_request`
+
+    Returns:
+        str: Key in form: <program>-<project>/<uuid>/<file_name>
+    """
+    return '{}-{}/{}/{}'.format(program, project, uuid, file_name)
 
 
 def is_property_hidden(key, schema, exclude_id):
@@ -557,9 +563,9 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
     if action not in ['upload', 'upload_part', 'complete_multipart']:
         data = ''
 
-    resp = s3.make_s3_request(
-        project_id, uuid, indexd_doc.file_name, data, args, headers, method, action
-    )
+    key_name = generate_s3_key(program, project, uuid, indexd_doc.file_name)
+
+    resp = s3.make_s3_request(key_name, data, args, headers, method, action)
 
     if action in ['upload', 'complete_multipart'] and resp.status == 200:
         set_indexd_state(indexd_doc, s3_url, UPLOADED_STATE)
