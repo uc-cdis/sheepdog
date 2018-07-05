@@ -95,7 +95,7 @@ def dictionary_version():
             else dictionary.settings.get('_dict_version', 'Unknown')
         )
     except (AttributeError, KeyError, TypeError):
-        return True
+        return 'Unknown'
 
 def dictionary_commit():
     """
@@ -115,7 +115,7 @@ def dictionary_commit():
             else dictionary.settings.get('_dict_commit', 'Unknown')
         )
     except (AttributeError, KeyError, TypeError):
-        return True
+        return 'Unknown'
 
 def submitted_state():
     """
