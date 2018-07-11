@@ -22,7 +22,11 @@ from userdatamodel.driver import SQLAlchemyDriver
 
 from sheepdog.auth import AuthDriver
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
-from sheepdog.version_data import VERSION, COMMIT, DICTVERSION, DICTCOMMIT
+from sheepdog.version_data import VERSION, COMMIT
+from sheepdog.globals import (
+    dictionary_version,
+    dictionary_commit,
+)
 
 # recursion depth is increased for complex graph traversals
 sys.setrecursionlimit(10000)
@@ -101,8 +105,8 @@ def health_check():
 @app.route('/_version', methods=['GET'])
 def version():
     dictver = {
-        'version': DICTVERSION,
-        'commit': DICTCOMMIT,
+        'version': dictionary_version(),
+        'commit': dictionary_commit(),
     }
     base = {
         'version': VERSION,
