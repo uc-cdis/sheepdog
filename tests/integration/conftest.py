@@ -28,6 +28,7 @@ from sheepdog.test_settings import (
     HMAC_ENCRYPTION_KEY,
     JWT_KEYPAIR_FILES,
 )
+from sheepdog import test_settings
 from tests.integration.api import app as _app, app_init
 
 try:
@@ -106,8 +107,12 @@ def client_toggled(app, request):
     with app.test_client() as client:
         yield client
 
-    # reset app config just in case
-    app.config.from_object("sheepdog.test_settings")
+    # reset app config to the original state
+    app.config.from_object('sheepdog.test_settings')
+
+    for param in params.kwargs['parameters']:
+        if not hasattr(test_settings, param):
+            app.config.pop(param)
 
 
 @pytest.fixture

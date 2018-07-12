@@ -18,6 +18,8 @@ from tests.integration.submission.utils import (
     DATA_FILES,
     post_example_entities_together,
     put_example_entities_together,
+    data_file_creation,
+    read_json_data,
 )
 
 
@@ -669,3 +671,112 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
     assert len(r.data.strip().split('\n')) == case_count + 1
+
+
+def test_create_dry_run(client, pg_driver, cgci_blgsp, submitter,
+                        indexd_client):
+    """Test dry run create doesn't add nodes in graph or indexd
+    """
+    resp_json, sur_entity_dr = data_file_creation(
+        client, submitter, sur_filename='submitted_unaligned_reads.json',
+        dry_run=True
+    )
+
+    node_id = sur_entity_dr['id']
+
+    assert resp_json['code'] == 200
+    with pg_driver.session_scope():
+        assert pg_driver.nodes().get(node_id) is None
+    assert indexd_client.get(node_id) is None
+
+
+@pytest.mark.config_toggle(
+    parameters={
+        'CREATE_REPLACEABLE': True,
+        'ENFORCE_FILE_HASH_SIZE_UNIQUENESS': False,
+        'IS_GDC': True,
+    }
+)
+def test_update_dry_run(client_toggled, pg_driver, cgci_blgsp, submitter,
+                        indexd_client):
+    """Testing a dry run node update request
+    1. Create a node first
+    2. Make a dry run update request with updated ndoe information
+    3. Assert no changes were made
+    """
+    resp_json, sur_entity_dr = data_file_creation(
+        client_toggled, submitter, sur_filename='submitted_unaligned_reads.json')
+
+    # Check that creation was successfull
+    assert resp_json['code'] == 201
+
+    node_id = sur_entity_dr['id']
+    old_doc = indexd_client.get(node_id)
+
+    new_version = read_json_data(
+        os.path.join(DATA_DIR, 'submitted_unaligned_reads_new.json'))
+
+    # Make a dry run update request
+    path = BLGSP_PATH + '_dry_run'
+    resp = client_toggled.put(path, headers=submitter,
+                              data=json.dumps(new_version))
+
+    assert resp.json['code'] == 200
+    node_id_dr = resp.json['entities'][0]['id']
+    new_doc = indexd_client.get(node_id_dr)
+
+    # UUID should be the same
+    assert node_id == node_id_dr
+    # Docs should be the same, because it was a dry run
+    assert old_doc.to_json() == new_doc.to_json()
+
+
+def test_commit_dry_run_transaction(client, pg_driver, cgci_blgsp, submitter,
+                                    indexd_client):
+    """This test does the following:
+    1. Makes a dry run node creation request, which will create a transaction
+        and return the transaction id in the response
+    2. Assert that no entries were created in the database or indexd
+    3. Commit the previously returned dry run transaction
+    4. Assert that everything was created properly
+    """
+    resp_json, sur_entity_dr = data_file_creation(
+        client, submitter, sur_filename='submitted_unaligned_reads.json',
+        dry_run=True)
+    tx_id = resp_json['transaction_id']
+
+    file_meta = read_json_data(os.path.join(DATA_DIR,
+                                            'submitted_unaligned_reads.json'))
+
+    # Make sure no indexd record was created
+    assert indexd_client.get(sur_entity_dr['id']) is None
+
+    # Make sure no file node was created
+    with pg_driver.session_scope():
+        assert pg_driver.nodes().get(sur_entity_dr['id']) is None
+
+    # Commit previous dry_run transaction
+    commit_path = os.path.join(BLGSP_PATH, 'transactions', str(tx_id), 'commit')
+    response = client.post(commit_path, headers=submitter)
+
+    assert response.status_code == 201, response.json
+
+    # Make sure only one submitted unaligned reads was created
+    sur_entities = [e for e in response.json['entities']
+                    if e['type'] == 'submitted_unaligned_reads']
+    assert len(sur_entities) == 1
+
+    # Make sure everything is correct in graph and indexd
+    sur_entity = sur_entities[0]
+
+    with pg_driver.session_scope():
+        node = pg_driver.nodes().get(sur_entity['id'])
+        assert node.file_name == file_meta['file_name']
+        assert node.file_size == file_meta['file_size']
+        assert node.md5sum == file_meta['md5sum']
+
+    sur_indexd = indexd_client.get(sur_entity['id'])
+    assert sur_indexd is not None
+    assert sur_indexd.file_name == file_meta['file_name']
+    assert sur_indexd.size == file_meta['file_size']
+    assert sur_indexd.hashes['md5'] == file_meta['md5sum']
