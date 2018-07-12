@@ -675,6 +675,8 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
 
 def test_create_dry_run(client, pg_driver, cgci_blgsp, submitter,
                         indexd_client):
+    """Test dry run create doesn't add nodes in graph or indexd
+    """
     resp_json, sur_entity_dr = data_file_creation(
         client, submitter, sur_filename='submitted_unaligned_reads.json',
         dry_run=True
@@ -697,6 +699,11 @@ def test_create_dry_run(client, pg_driver, cgci_blgsp, submitter,
 )
 def test_update_dry_run(client_toggled, pg_driver, cgci_blgsp, submitter,
                         indexd_client):
+    """Testing a dry run node update request
+    1. Create a node first
+    2. Make a dry run update request with updated ndoe information
+    3. Assert no changes were made
+    """
     resp_json, sur_entity_dr = data_file_creation(
         client_toggled, submitter, sur_filename='submitted_unaligned_reads.json')
 
@@ -726,6 +733,13 @@ def test_update_dry_run(client_toggled, pg_driver, cgci_blgsp, submitter,
 
 def test_commit_dry_run_transaction(client, pg_driver, cgci_blgsp, submitter,
                                     indexd_client):
+    """This test does the following:
+    1. Makes a dry run node creation request, which will create a transaction
+        and return the transaction id in the response
+    2. Assert that no entries were created in the database or indexd
+    3. Commit the previously returned dry run transaction
+    4. Assert that everything was created properly
+    """
     resp_json, sur_entity_dr = data_file_creation(
         client, submitter, sur_filename='submitted_unaligned_reads.json',
         dry_run=True)
