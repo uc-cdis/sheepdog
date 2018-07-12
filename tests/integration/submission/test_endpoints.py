@@ -673,6 +673,57 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     assert len(r.data.strip().split('\n')) == case_count + 1
 
 
+def test_create_dry_run(client, pg_driver, cgci_blgsp, submitter,
+                        indexd_client):
+    resp_json, sur_entity_dr = data_file_creation(
+        client, submitter, sur_filename='submitted_unaligned_reads.json',
+        dry_run=True
+    )
+
+    node_id = sur_entity_dr['id']
+
+    assert resp_json['code'] == 200
+    with pg_driver.session_scope():
+        assert pg_driver.nodes().get(node_id) is None
+    assert indexd_client.get(node_id) is None
+
+
+@pytest.mark.config_toggle(
+    parameters={
+        'CREATE_REPLACEABLE': True,
+        'ENFORCE_FILE_HASH_SIZE_UNIQUENESS': False,
+        'IS_GDC': True,
+    }
+)
+def test_update_dry_run(client_toggled, pg_driver, cgci_blgsp, submitter,
+                        indexd_client):
+    resp_json, sur_entity_dr = data_file_creation(
+        client_toggled, submitter, sur_filename='submitted_unaligned_reads.json')
+
+    # Check that creation was successfull
+    assert resp_json['code'] == 201
+
+    node_id = sur_entity_dr['id']
+    old_doc = indexd_client.get(node_id)
+
+    new_version = read_json_data(
+        os.path.join(DATA_DIR, 'submitted_unaligned_reads_new.json'))
+
+    # Make a dry run update request
+    path = BLGSP_PATH + '_dry_run'
+    resp = client_toggled.put(path, headers=submitter,
+                              data=json.dumps(new_version))
+
+    assert resp.json['code'] == 200
+    node_id_dr = resp.json['entities'][0]['id']
+    new_doc = indexd_client.get(node_id_dr)
+
+    # UUID should be the same
+    assert node_id == node_id_dr
+    # Docs should be the same, because it was a dry run
+    assert old_doc.to_json() == new_doc.to_json()
+
+
 def test_commit_dry_run_transaction(client, pg_driver, cgci_blgsp, submitter,
                                     indexd_client):
     resp_json, sur_entity_dr = data_file_creation(

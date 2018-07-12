@@ -187,7 +187,15 @@ class FileUploadEntity(UploadEntity):
         if not self.node:
             return
 
+        # next do node creation
+        super(FileUploadEntity, self).flush_to_session()
+
         if self.transaction.dry_run:
+            # FIXME: we could override rollback() method and revert indexd
+            # changes within it, this would involve some sort of caching and
+            # iterating through all of the affected entities etc. A better
+            # way to go around is to probably implement a dry_run in indexd or
+            # indexclient
             return
 
         role = self.action
@@ -212,9 +220,6 @@ class FileUploadEntity(UploadEntity):
         except Exception as e:
             self.logger.exception(e)
             self.record_error(str(e))
-
-        # next do node creation
-        super(FileUploadEntity, self).flush_to_session()
 
     def _register_index(self):
         """
