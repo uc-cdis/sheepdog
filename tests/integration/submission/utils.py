@@ -169,7 +169,7 @@ def data_file_creation(client, headers, method='post', sur_filename=''):
     assert resp.status_code in (200, 201), assert_message
 
     for entity in resp.json['entities']:
-        if entity['type'] == 'submitted_unaligned_reads':
+        if entity['type'] in ('submitted_unaligned_reads', 'submitted_aligned_reads'):
             sur_entity = entity
 
     return resp.json, sur_entity

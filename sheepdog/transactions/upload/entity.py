@@ -361,6 +361,7 @@ class UploadEntity(EntityBase):
 
         is_data_file = category in self.DATA_FILE_CATEGORIES
 
+        # TODO: Setting acl is handled by FileUploadEntity, leaving these here in case of backward compatability.
         if is_data_file:
             # check if open_acl is requested and the node type can be set open
             if self.doc.get('open_acl', None) and self._config.get('IS_GDC', False):
@@ -596,7 +597,7 @@ class UploadEntity(EntityBase):
         prop_keys = (pg_props.keys() + self.node._pg_links.keys()+special_keys)
         self.node.project_id = self.transaction.project_id
         default_props = self.get_system_property_defaults()
-
+        self.doc.pop("open_acl", None)
         # Set properties
         for key, val in self.doc.iteritems():
 
