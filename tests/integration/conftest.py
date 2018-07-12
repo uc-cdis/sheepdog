@@ -100,14 +100,20 @@ def client_toggled(app, request):
     """
     params = request.node.get_marker('config_toggle')
 
+    old_configs = {}
     for parameter, value in params.kwargs['parameters'].items():
+        old_configs[parameter] = app.config.get(parameter)
         app.config[parameter] = value
 
     with app.test_client() as client:
         yield client
 
-    # reset app config just in case
-    app.config.from_object("sheepdog.test_settings")
+    # reset app config to the original state
+    for parameter, value in old_configs.items():
+        if value is not None:
+            app.config[parameter] = value
+        else:
+            app.config.pop(parameter)
 
 
 @pytest.fixture
