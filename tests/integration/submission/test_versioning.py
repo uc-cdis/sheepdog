@@ -155,6 +155,9 @@ def test_update_data_file_entity(
     # entry in indexd has no version
     assert new_doc.version is None
 
+    # both entries should have acl from program-project
+    assert set(new_doc.acl) == set(old_doc.acl) == {u'phs000235', u'phs000527'}
+
     # make sure that a node cannot be updated after it's in state submitted:
     # manually change file state to submitted
     with pg_driver.session_scope():

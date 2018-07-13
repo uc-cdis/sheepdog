@@ -16,10 +16,9 @@ from sheepdog.utils import (
 from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.upload.entity import (
     UploadEntity,
-    lookup_node,
-    POSSIBLE_OPEN_FILE_NODES
+    lookup_node
 )
-from sheepdog.globals import DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE
+from sheepdog.globals import DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE, POSSIBLE_OPEN_FILE_NODES
 
 
 class NonFileUploadEntity(UploadEntity):

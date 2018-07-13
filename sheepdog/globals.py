@@ -198,3 +198,17 @@ DATA_FILE_CATEGORIES = ['data_file', 'metadata_file', 'index_file']
 # Used to set 'type' in indexd_document.urls_metadata[<url>] to determine
 # a primary URL if multiple URLs are present (e.g. backup)
 PRIMARY_URL_TYPE = 'cleversafe'
+
+# TODO: This should probably go into the dictionary and be
+# read from there. For now, these are the only nodes that will
+# be allowed to be set to 'open'.
+POSSIBLE_OPEN_FILE_NODES = [
+    'biospecimen_supplement',
+    'clinical_supplement',
+    'copy_number_segment',
+    'gene_expression'
+    'masked_somatic_mutation',
+    'methylation_beta_value',
+    'mirna_expression',
+    'file',
+]
