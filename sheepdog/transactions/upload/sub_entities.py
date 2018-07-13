@@ -361,6 +361,7 @@ class FileUploadEntity(UploadEntity):
             'uploading',
             'uploaded',
             'validating',
+            'error'
         ]
         is_data_file = node._dictionary.get('category') in DATA_FILE_CATEGORIES
         if not is_data_file:
