@@ -108,10 +108,14 @@ def assert_single_entity_from_response(resp):
     return entities[0]
 
 
-def post_example_entities_together(client, submitter, data_fnames=None):
+def post_example_entities_together(client, submitter, data_fnames=None,
+                                   dry_run=False):
     if not data_fnames:
         data_fnames = DATA_FILES
     path = BLGSP_PATH
+    if dry_run:
+        path = os.path.join(BLGSP_PATH, '_dry_run')
+
     data = []
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), 'r') as f:
@@ -119,10 +123,14 @@ def post_example_entities_together(client, submitter, data_fnames=None):
     return client.post(path, headers=submitter, data=json.dumps(data))
 
 
-def put_example_entities_together(client, headers, data_fnames=None):
+def put_example_entities_together(client, headers, data_fnames=None,
+                                  dry_run=False):
     if not data_fnames:
         data_fnames = DATA_FILES
     path = BLGSP_PATH
+    if dry_run:
+        path = os.path.join(path, '_dry_run')
+
     data = []
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), 'r') as f:
@@ -136,7 +144,8 @@ def read_json_data(filepath):
     return json_data
 
 
-def data_file_creation(client, headers, method='post', sur_filename=''):
+def data_file_creation(client, headers, method='post', sur_filename='',
+                       dry_run=False):
     """
     Boilerplate setup code for some tests
 
@@ -150,7 +159,8 @@ def data_file_creation(client, headers, method='post', sur_filename=''):
         sur_filename (str): filename to use for the submitted unaligned reads file
 
     Returns:
-        pytest_flask.plugin.JSONResponse: http response from sheepdog
+        tuple (dict, pytest_flask.plugin.JSONResponse): file metadata dict and
+            sheepdog response
     """
 
     if method == 'post':
@@ -161,7 +171,8 @@ def data_file_creation(client, headers, method='post', sur_filename=''):
     test_fnames = DATA_FILES + ['read_group.json']
     resp = upload_function(client,
                            headers,
-                           data_fnames=test_fnames + [sur_filename])
+                           data_fnames=test_fnames + [sur_filename],
+                           dry_run=dry_run)
 
     assert_message = 'Unable to create nodes: {}'.format(
         [entity for entity in resp.json['entities'] if entity['errors']]

@@ -218,7 +218,7 @@ class UploadEntity(EntityBase):
             raise UserError('Unable to update a node in state "submitted"')
 
         # only update the fields with the new metadata
-        if self._is_replaceable:
+        if self._is_replaceable and not self.transaction.dry_run:
             self._update_indexd_doc(indexd_doc)
 
     def flush_to_session(self):
