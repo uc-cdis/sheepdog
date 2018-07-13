@@ -19,28 +19,13 @@ from sheepdog.globals import (
     UNVERIFIED_PROJECT_CODES,
     DATA_FILE_CATEGORIES,
     PRIMARY_URL_TYPE,
-)
+    POSSIBLE_OPEN_FILE_NODES)
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.utils import (
     generate_s3_url,
     get_suggestion,
     get_indexd,
 )
-
-
-# TODO: This should probably go into the dictionary and be
-# read from there. For now, these are the only nodes that will
-# be allowed to be set to 'open'.
-POSSIBLE_OPEN_FILE_NODES = [
-    'biospecimen_supplement',
-    'clinical_supplement',
-    'copy_number_segment',
-    'gene_expression'
-    'masked_somatic_mutation',
-    'methylation_beta_value',
-    'mirna_expression',
-    'file',
-]
 
 
 def lookup_node(psql_driver, label, node_id=None, secondary_keys=None):
@@ -361,6 +346,7 @@ class UploadEntity(EntityBase):
 
         is_data_file = category in self.DATA_FILE_CATEGORIES
 
+        # TODO: Setting acl is handled by FileUploadEntity, leaving these here in case of backward compatability.
         if is_data_file:
             # check if open_acl is requested and the node type can be set open
             if self.doc.get('open_acl', None) and self._config.get('IS_GDC', False):
@@ -468,7 +454,6 @@ class UploadEntity(EntityBase):
 
         self.action = 'update'
         self.entity_id = node.node_id
-
         return node
 
     def _update_indexd_doc(self, indexd_doc):
@@ -518,6 +503,7 @@ class UploadEntity(EntityBase):
             'urls': urls,
             'urls_metadata': urls_metadata,
             'metadata': self.doc.get('metadata', {}),
+            'acl': self.node.acl
         }
         self.transaction.indexd.create(
             did=old_doc['did'],
@@ -596,6 +582,9 @@ class UploadEntity(EntityBase):
         prop_keys = (pg_props.keys() + self.node._pg_links.keys()+special_keys)
         self.node.project_id = self.transaction.project_id
         default_props = self.get_system_property_defaults()
+
+        # At this point doc has been parsed, remove open_acl to avoid invalid property error
+        self.doc.pop("open_acl", None)
 
         # Set properties
         for key, val in self.doc.iteritems():

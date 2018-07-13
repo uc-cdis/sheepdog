@@ -16,9 +16,9 @@ from sheepdog.utils import (
 from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.upload.entity import (
     UploadEntity,
-    lookup_node,
+    lookup_node
 )
-from sheepdog.globals import DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE
+from sheepdog.globals import DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE, POSSIBLE_OPEN_FILE_NODES
 
 
 class NonFileUploadEntity(UploadEntity):
@@ -132,7 +132,7 @@ class FileUploadEntity(UploadEntity):
         node = super(FileUploadEntity, self).get_node_create(
             skip_node_lookup=skip_node_lookup,
         )
-        node.acl = self.transaction.get_phsids()
+        node.acl = self.get_file_acl()
 
         return node
 
@@ -246,7 +246,7 @@ class FileUploadEntity(UploadEntity):
         if is_project_public(project_node):
             acls = ['*']
         else:
-            acls = self.transaction.get_phsids()
+            acls = self.node.acl
 
         if not self.urls:
             url = generate_s3_url(
@@ -330,7 +330,7 @@ class FileUploadEntity(UploadEntity):
             size=self.node._props.get('file_size'),
             file_name=file_name,
             urls=urls,
-            acl=self.transaction.get_phsids(),
+            acl=self.node.acl,
             metadata=self.get_metadata(),
             form='object',
             urls_metadata={
@@ -361,6 +361,7 @@ class FileUploadEntity(UploadEntity):
             'uploading',
             'uploaded',
             'validating',
+            'error'
         ]
         is_data_file = node._dictionary.get('category') in DATA_FILE_CATEGORIES
         if not is_data_file:
@@ -546,15 +547,21 @@ class FileUploadEntity(UploadEntity):
         self.logger.debug('Recreating new {}'.format(cls.__name__))
         node = cls(self.entity_id)
 
-        # check if open_acl is requested and the node type can be set open
-        if self.doc.get('open_acl', None) and self._config.get('IS_GDC', False):
-            if self.entity_type in POSSIBLE_OPEN_FILE_NODES:
-                node.acl = [u'open']
-            else:
-                node.acl = self.transaction.get_phsids()
+        node.acl = self.get_file_acl()
 
         self.action = 'version'
         return node
+
+    @classmethod
+    def get_open_file_type(cls):
+        return POSSIBLE_OPEN_FILE_NODES
+
+    def get_file_acl(self):
+        # check if open_acl is requested and the node type can be set open
+        if self.doc.get('open_acl', None) and self._config.get('IS_GDC', False):
+            if self.entity_type in self.get_open_file_type():
+                return [u'open']
+        return self.transaction.get_phsids()
 
     def get_file_from_index_by_hash(self):
         """

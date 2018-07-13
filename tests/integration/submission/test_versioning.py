@@ -3,6 +3,7 @@ import os
 from gdcdatamodel import models as md
 
 from sheepdog.globals import PRIMARY_URL_TYPE
+from sheepdog.transactions.upload.sub_entities import FileUploadEntity
 
 from tests.integration.submission.utils import (
     put_example_entities_together,
@@ -12,6 +13,12 @@ from tests.integration.submission.utils import (
     DATA_FILES,
     release_indexd_doc,
 )
+
+# Python 2 and 3 compatible
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 
 
 def test_create_data_file_entity(
@@ -148,6 +155,9 @@ def test_update_data_file_entity(
     # entry in indexd has no version
     assert new_doc.version is None
 
+    # both entries should have acl from program-project
+    assert set(new_doc.acl) == set(old_doc.acl) == {u'phs000235', u'phs000527'}
+
     # make sure that a node cannot be updated after it's in state submitted:
     # manually change file state to submitted
     with pg_driver.session_scope():
@@ -167,15 +177,18 @@ def test_update_data_file_entity(
 
 
 # simulate a project's api that lets you do this
-@pytest.mark.config_toggle(parameters={'CREATE_REPLACEABLE': True})
+@pytest.mark.config_toggle(parameters={'CREATE_REPLACEABLE': True, 'IS_GDC': True})
+@pytest.mark.parametrize('file_name, entity_type, expected_acl', [
+    ('submitted_unaligned_reads.json', md.SubmittedUnalignedReads, ['phs000235', 'phs000527']),
+    ('submitted_aligned_reads.json', md.SubmittedAlignedReads, ["open"])])  # case to test open acl
 def test_creating_new_versioned_file(
+        file_name, entity_type, expected_acl,
         client_toggled, indexd_server, indexd_client, pg_driver, cgci_blgsp,
         submitter):
     """
     Create a new version of a file
     """
-
-    def create_node(version_number=None):
+    def create_node(version_number=None, file_name=file_name):
         """Create a node and possibly assign it a version
 
         Args:
@@ -184,17 +197,18 @@ def test_creating_new_versioned_file(
         Returns:
             str: UUID of node submitted to the api
         """
-
-        _, sur_entity = data_file_creation(
-            client_toggled,
-            submitter,
-            method='put',
-            sur_filename='submitted_unaligned_reads.json',
-        )
+        # Patch open file type to test open access file with type SubmittedAlignedReads
+        with patch.object(FileUploadEntity, "get_open_file_type", lambda x: ["submitted_aligned_reads"]):
+            _, sur_entity = data_file_creation(
+                client_toggled,
+                submitter,
+                method='put',
+                sur_filename=file_name,
+            )
 
         did = sur_entity['id']
         with pg_driver.session_scope():
-            query = pg_driver.nodes(md.SubmittedUnalignedReads)
+            query = pg_driver.nodes(entity_type)
 
             # only one in the database
             assert query.count() == 1
@@ -224,7 +238,8 @@ def test_creating_new_versioned_file(
     # create versions 1, 2, 3, None (no version on the last one)
     accepted_versions = ['1', '2', '3', None]
     uuids = [create_node(version_number=v) for v in accepted_versions]
-    created_versions = [indexd_client.get(uuid).version for uuid in uuids]
+    created_versions = [indexd_client.get(uuid) for uuid in uuids]
     # this order is guaranteed
     for created, accepted in zip(created_versions, accepted_versions):
-        assert created == accepted
+        assert created.version == accepted
+        assert created.acl == expected_acl

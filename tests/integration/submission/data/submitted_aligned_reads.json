@@ -1,0 +1,15 @@
+{
+    "type": "submitted_aligned_reads",
+    "submitter_id": "CGCI-file-2",
+        "read_groups": {
+        "submitter_id": "test-readgroup-1"
+    },
+    "data_format": "BAM",
+    "file_size": 5962718282,
+    "file_name": "C500.CGCI-file1.bam",
+    "md5sum": "35b39360cc41a7b635980159aef265ba",
+    "experimental_strategy": "WGS",
+    "data_type": "Aligned Reads",
+    "data_category": "Sequencing Data",
+    "open_acl": true
+}
