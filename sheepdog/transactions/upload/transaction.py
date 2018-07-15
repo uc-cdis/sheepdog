@@ -48,11 +48,12 @@ class UploadTransaction(TransactionBase):
         Keyword Args:
             See TransactionBase.__init__()
         """
+        #: HTTP[S] proxies used for requests to external services
+        # Base class doesn't know about this, so pop first
+        self.external_proxies = kwargs.pop('external_proxies', {})
         super(UploadTransaction, self).__init__(**kwargs)
         self.documents = []
         self.json_validator = validators.GDCJSONValidator()
-        #: HTTP[S] proxies used for requests to external services
-        self.external_proxies = kwargs.pop('external_proxies', {})
 
         # The dbGapXReferencer conditionally requires cases to exist in
         # dbGaP prior to submission to the GDC
