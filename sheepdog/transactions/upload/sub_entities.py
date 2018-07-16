@@ -173,6 +173,8 @@ class FileUploadEntity(UploadEntity):
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
 
+        node.acl = self.get_file_acl()
+
         return node
 
     def flush_to_session(self):
