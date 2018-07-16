@@ -348,7 +348,6 @@ class FileUploadEntity(UploadEntity):
         Check that a node is a file that can be updated. True if:
 
         #. The node is a file
-        #. It has a file_state in the list of states below
 
         Args:
             node (psqlgraph.Node):
@@ -356,23 +355,10 @@ class FileUploadEntity(UploadEntity):
         Return:
             bool: whether the node is an updatable file
         """
-        allowed_states = [
-            'registered',
-            'uploading',
-            'uploaded',
-            'validating',
-            'error'
-        ]
-        is_data_file = node._dictionary.get('category') in DATA_FILE_CATEGORIES
-        if not is_data_file:
-            return False
-
-        file_state = get_indexd_state(
-            node.node_id,
-            self.s3_url,
-            self.transaction.indexd
-        )
-        return file_state in allowed_states
+        # NOTE: As long as the node.state != 'submitted' we should be able
+        # to update the node. The node.state == 'submitted' check is done in
+        # UploadEntity.instantiate
+        return node._dictionary.get('category') in DATA_FILE_CATEGORIES
 
     def _populate_file_exist_in_index(self):
         """

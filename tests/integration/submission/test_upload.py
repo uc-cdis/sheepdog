@@ -467,11 +467,10 @@ def test_is_updatable_file(client, pg_driver, indexd_client):
         'uploading',
         'uploaded',
         'validating',
+        'validated',
+        'error',
     ]
 
-    DISALLOWED_STATES = [
-        'validated',
-    ]
     transaction = MagicMock()
     transaction.indexd = indexd_client
     entity = FileUploadEntity(transaction)
@@ -484,10 +483,3 @@ def test_is_updatable_file(client, pg_driver, indexd_client):
 
         # check if updatable
         assert entity.is_updatable_file_node(node)
-
-    for file_state in DISALLOWED_STATES:
-        # set node's url state in indexd
-        indexd_doc = indexd_client.get(did)
-        set_indexd_state(indexd_doc, url, file_state)
-        # check if not updatable
-        assert not entity.is_updatable_file_node(node)
