@@ -193,12 +193,17 @@ class FileUploadEntity(UploadEntity):
         # next do node creation
         super(FileUploadEntity, self).flush_to_session()
 
+        # FIXME: we could override rollback() method and revert indexd
+        # changes within it, this would involve some sort of caching and
+        # iterating through all of the affected entities etc. A better
+        # way to go around is to probably implement a dry_run in indexd or
+        # indexclient
         if self.transaction.dry_run:
-            # FIXME: we could override rollback() method and revert indexd
-            # changes within it, this would involve some sort of caching and
-            # iterating through all of the affected entities etc. A better
-            # way to go around is to probably implement a dry_run in indexd or
-            # indexclient
+           return
+
+        # FIXME: In order to avoid incorrect data inside indexd, we skip
+        # further requests to indexd here
+        if not self.transaction.success:
             return
 
         role = self.action
