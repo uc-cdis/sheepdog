@@ -212,3 +212,12 @@ POSSIBLE_OPEN_FILE_NODES = [
     'mirna_expression',
     'file',
 ]
+
+# A list of indexd file states for which nodes can still be modified
+UPDATABLE_FILE_STATES = [
+    'registered',
+    'uploading',
+    'uploaded',
+    'validating',
+    'error',
+]

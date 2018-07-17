@@ -32,7 +32,7 @@ def put_entity_from_file(
         client, file_path, submitter, put_path=BLGSP_PATH, validate=True):
     with open(os.path.join(DATA_DIR, file_path), 'r') as f:
         entity = f.read()
-    r = client.put(put_path, headers=submitter(put_path, 'put'), data=entity)
+    r = client.put(put_path, headers=submitter, data=entity)
     if validate:
         assert r.status_code == 200, r.data
     return r

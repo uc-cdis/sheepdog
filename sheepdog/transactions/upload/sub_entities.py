@@ -19,7 +19,9 @@ from sheepdog.transactions.upload.entity import (
     UploadEntity,
     lookup_node
 )
-from sheepdog.globals import DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE, POSSIBLE_OPEN_FILE_NODES
+from sheepdog.globals import (
+    DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE, POSSIBLE_OPEN_FILE_NODES,
+    UPDATABLE_FILE_STATES)
 
 
 class NonFileUploadEntity(UploadEntity):
@@ -299,9 +301,6 @@ class FileUploadEntity(UploadEntity):
         UUID as a previous one
 
         """
-        if self.transaction.dry_run:
-            return
-
         # If indexd record is not replaceable, update existing document
         if not self._is_replaceable:
             document = self.file_by_uuid
@@ -405,6 +404,7 @@ class FileUploadEntity(UploadEntity):
         Check that a node is a file that can be updated. True if:
 
         #. The node is a file
+        #. The file state is in sheepdog.globals.UPDATABLE_FILE_STATES
 
         Args:
             node (psqlgraph.Node):
@@ -412,10 +412,16 @@ class FileUploadEntity(UploadEntity):
         Return:
             bool: whether the node is an updatable file
         """
-        # NOTE: As long as the node.state != 'submitted' we should be able
-        # to update the node. The node.state == 'submitted' check is done in
-        # UploadEntity.instantiate
-        return node._dictionary.get('category') in DATA_FILE_CATEGORIES
+        if not node._dictionary.get('category') in DATA_FILE_CATEGORIES:
+            return False
+
+        file_state = get_indexd_state(
+            node.node_id,
+            self.s3_url,
+            self.transaction.indexd
+        )
+
+        return file_state in UPDATABLE_FILE_STATES
 
     def _populate_file_exist_in_index(self):
         """

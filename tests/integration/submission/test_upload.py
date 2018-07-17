@@ -22,6 +22,7 @@ except ImportError:
     from mock import patch
 
 from gdcdatamodel.models import SubmittedAlignedReads
+from sheepdog.globals import UPDATABLE_FILE_STATES
 from sheepdog.transactions.upload.sub_entities import FileUploadEntity
 from sheepdog.test_settings import SUBMISSION
 from sheepdog.utils import (
@@ -30,7 +31,7 @@ from sheepdog.utils import (
 )
 from tests.integration.submission.test_versioning import release_indexd_doc
 from tests.integration.submission.utils import (
-    data_file_creation, read_json_data
+    data_file_creation, read_json_data, put_entity_from_file
 )
 from tests.integration.submission.test_endpoints import DATA_DIR
 
@@ -314,21 +315,13 @@ def test_is_updatable_file(client, pg_driver, indexd_client):
         hashes={'md5': '0'*32},
         size=1,
     )
-    ALLOWED_STATES = [
-        'registered',
-        'uploading',
-        'uploaded',
-        'validating',
-        'validated',
-        'error',
-    ]
 
     transaction = MagicMock()
     transaction.indexd = indexd_client
     entity = FileUploadEntity(transaction)
     entity.s3_url = url
 
-    for file_state in ALLOWED_STATES:
+    for file_state in UPDATABLE_FILE_STATES:
         # set node's url state in indexd
         indexd_doc = indexd_client.get(did)
         set_indexd_state(indexd_doc, url, file_state)
@@ -542,12 +535,10 @@ def test_cannot_update_node_in_state_submitted(
         sur_node = pg_driver.nodes().get(node_id)
         sur_node.state = 'submitted'
 
-    new_version = read_json_data(
-        os.path.join(DATA_DIR, 'submitted_unaligned_reads_new.json'))
+    resp = put_entity_from_file(
+        client, os.path.join(DATA_DIR, 'submitted_unaligned_reads_new.json'),
+        submitter, validate=False)
 
-    # Actual update call - should fail
-    resp = client.put(BLGSP_PATH, headers=submitter,
-                      data=json.dumps(new_version))
     doc_after_put = indexd_client.get(node_id)
 
     assert resp.status_code == 400
