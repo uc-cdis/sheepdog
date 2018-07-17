@@ -541,8 +541,37 @@ def test_cannot_update_node_in_state_submitted(
 
     doc_after_put = indexd_client.get(node_id)
 
-    assert resp.status_code == 400
+    assert resp.status_code == 400, resp.json
     assert doc_original.to_json() == doc_after_put.to_json()
+
+
+@pytest.mark.config_toggle(
+    parameters={
+        'CREATE_REPLACEABLE': True,
+        'ENFORCE_FILE_HASH_SIZE_UNIQUENESS': False
+    }
+)
+def test_cannot_update_node_if_file_is_validated(
+        client_toggled, pg_driver, indexd_client, submitter, cgci_blgsp):
+    _, sur_entity = data_file_creation(
+        client_toggled, submitter,
+        sur_filename='submitted_unaligned_reads.json')
+    node_id = sur_entity['id']
+    doc_original = indexd_client.get(node_id)
+
+    # Set file state to 'validated', which should prevent the node update
+    doc_original.urls_metadata[doc_original.urls[0]]['state'] = 'validated'
+    doc_original.patch()
+
+    resp = put_entity_from_file(
+        client_toggled,
+        os.path.join(DATA_DIR, 'submitted_unaligned_reads_new.json'),
+        submitter, validate=False)
+
+    doc_potentially_updated = indexd_client.get(doc_original.did)
+
+    assert resp.status_code == 400, resp.json
+    assert doc_original.to_json() == doc_potentially_updated.to_json()
 
 
 @pytest.mark.config_toggle(
@@ -559,7 +588,7 @@ def test_update_multiple_one_fails(
     Test performs the following:
     1. Create several nodes + submitted unaligned reads node
     2. Create submitted aligned reads node
-    3. Set submitted unaligned reads node state to "submitted", which will
+    3. Set submitted unaligned reads file state to "validated", which will
     prevent the node from being updated
     4. Send a request to update both aligned and unaligned reads nodes
     5. Verify that none of the nodes were updated
@@ -583,7 +612,6 @@ def test_update_multiple_one_fails(
 
     sar_node_id = resp.json['entities'][0]['id']
 
-    sur_doc_old = indexd_client.get(sur_node_id).to_json()
     sar_doc_old = indexd_client.get(sar_node_id).to_json()
 
     # Modify submitted aligned reads metadata
@@ -596,11 +624,13 @@ def test_update_multiple_one_fails(
     sur_new = read_json_data(
         os.path.join(DATA_DIR, 'submitted_unaligned_reads.json'))
 
-    # Set unaligned reads node state to 'submitted', which will prevent the
+    # Set unaligned reads file state to 'validated', which will prevent the
     # node update
-    with pg_driver.session_scope():
-        sur_node = pg_driver.nodes().get(sur_node_id)
-        sur_node.state = 'submitted'
+    sur_doc = indexd_client.get(sur_node_id)
+    sur_doc.urls_metadata[sur_doc.urls[0]]['state'] = 'validated'
+    sur_doc.patch()
+
+    sur_doc_old = sur_doc.to_json()
 
     data = [sar_new, sur_new]
     # The whole transaction should fail
@@ -611,6 +641,6 @@ def test_update_multiple_one_fails(
     sar_doc_new = indexd_client.get(sar_doc_old['did']).to_json()
     sur_doc_new = indexd_client.get(sur_node_id).to_json()
 
-    assert resp.status_code == 400
+    assert resp.status_code == 400, resp.json
     assert sur_doc_old == sur_doc_new
     assert sar_doc_new == sar_doc_old
