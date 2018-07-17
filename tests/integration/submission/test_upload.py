@@ -4,6 +4,7 @@ index service).
 """
 import copy
 import json
+import os
 import re
 
 import pytest
@@ -28,6 +29,10 @@ from sheepdog.utils import (
     set_indexd_state,
 )
 from tests.integration.submission.test_versioning import release_indexd_doc
+from tests.integration.submission.utils import (
+    data_file_creation, read_json_data
+)
+from tests.integration.submission.test_endpoints import DATA_DIR
 
 PROGRAM = 'CGCI'
 PROJECT = 'BLGSP'
@@ -98,7 +103,8 @@ def submit_metadata_file(client, admin, submitter, data=None):
 
 
 def assert_alias_created(
-        indexd_client, project_id='CGCI-BLGSP', submitter_id=DEFAULT_SUBMITTER_ID):
+        indexd_client, project_id='CGCI-BLGSP',
+        submitter_id=DEFAULT_SUBMITTER_ID):
     alias = '{}/{}'.format(project_id, submitter_id)
     doc_by_alias = indexd_client.global_get(alias)
     assert doc_by_alias
@@ -183,8 +189,8 @@ def test_data_file_already_indexed(
         client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting when the file is already indexed in the index client and
-    1. ID is not provided. sheepdog should fall back on the hash/size of the file
-    to find it in indexing service.
+    1. ID is not provided. sheepdog should fall back on the hash/size of the
+    file to find it in indexing service.
     2. ID is provided
     """
     submit_first_experiment(client, submitter)
@@ -219,14 +225,12 @@ def test_data_file_already_indexed(
     assert entity['id'] == record1.did
 
 
-@pytest.mark.parametrize(
-    'new_urls,id_provided', [
-        (['some/new/url/location/to/add'], False),
-        (['some/new/url/location/to/add'], True),
-        ([DEFAULT_URL, 'some/new/url/location/to/add', 'some/other/url'], False),
-        ([DEFAULT_URL, 'some/new/url/location/to/add', 'some/other/url'], True),
-    ]
-)
+@pytest.mark.parametrize('new_urls,id_provided', [
+    (['some/new/url/location/to/add'], False),
+    (['some/new/url/location/to/add'], True),
+    ([DEFAULT_URL, 'some/new/url/location/to/add', 'some/other/url'], False),
+    ([DEFAULT_URL, 'some/new/url/location/to/add', 'some/other/url'], True),
+])
 def test_data_file_update_urls(
         new_urls, id_provided,
         client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
@@ -260,6 +264,77 @@ def test_data_file_update_urls(
 
     # make sure original url and new url are in the resulting document
     assert set(record1.urls) == set(record.urls) or set(new_urls)
+
+
+@pytest.mark.config_toggle(
+    parameters={
+        'CREATE_REPLACEABLE': True
+    }
+)
+def test_data_file_update_recreate_index(
+        client_toggled, pg_driver, cgci_blgsp, indexd_client, submitter):
+    resp_json, sur_entity = data_file_creation(
+        client_toggled, submitter,
+        sur_filename='submitted_unaligned_reads.json')
+
+    assert resp_json['code'] == 201
+
+    node_id = sur_entity['id']
+    old_doc = indexd_client.get(node_id)
+
+    new_version = read_json_data(
+        os.path.join(DATA_DIR, 'submitted_unaligned_reads_new.json')
+    )
+
+    resp = client_toggled.put(
+        BLGSP_PATH, headers=submitter, data=json.dumps(new_version))
+
+    assert resp.status_code == 200
+
+    new_doc_json = indexd_client.get(node_id).to_json()
+    assert old_doc.to_json() != new_doc_json
+    assert old_doc.to_json()['rev'] != new_doc_json['rev']
+    assert new_doc_json['file_name'] == new_version['file_name']
+    assert new_doc_json['hashes']['md5'] == new_version['md5sum']
+    assert new_doc_json['size'] == new_version['file_size']
+
+
+def test_is_updatable_file(client, pg_driver, indexd_client):
+    """Test _is_updatable_file_node method
+    """
+
+    did = 'bef870b0-1d2a-4873-b0db-14994b2f89bd'
+    url = '/some/url'
+
+    # Create dummy file node and corresponding indexd record
+    node = SubmittedAlignedReads(did)
+    indexd_client.create(
+        did=did,
+        urls=[url],
+        hashes={'md5': '0'*32},
+        size=1,
+    )
+    ALLOWED_STATES = [
+        'registered',
+        'uploading',
+        'uploaded',
+        'validating',
+        'validated',
+        'error',
+    ]
+
+    transaction = MagicMock()
+    transaction.indexd = indexd_client
+    entity = FileUploadEntity(transaction)
+    entity.s3_url = url
+
+    for file_state in ALLOWED_STATES:
+        # set node's url state in indexd
+        indexd_doc = indexd_client.get(did)
+        set_indexd_state(indexd_doc, url, file_state)
+
+        # check if updatable
+        assert entity.is_updatable_file_node(node)
 
 
 """ ----- TESTS THAT SHOULD RESULT IN SUBMISSION FAILURES ARE BELOW  ----- """
@@ -350,10 +425,10 @@ def test_data_file_update_url_different_file_not_indexed(
     assert record.to_json() == record1.to_json()
 
 
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash') # noqa
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid') # noqa
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index') # noqa
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias') # noqa
 def test_data_file_update_url_id_provided_different_file_already_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
         client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
@@ -376,7 +451,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     document_with_id.urls = [DEFAULT_URL]
 
     different_file_matching_hash_and_size = MagicMock()
-    different_file_matching_hash_and_size.did = '14fd1746-61bb-401a-96d2-342cfaf70000'
+    different_file_matching_hash_and_size.did = '14fd1746-61bb-401a-96d2-342cfaf70000' # noqa
     different_file_matching_hash_and_size.urls = [DEFAULT_URL]
 
     get_index_uuid.return_value = document_with_id
@@ -409,9 +484,14 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     assert_single_entity_from_response(resp)
 
 
-@pytest.mark.config_toggle(parameters={'ENFORCE_FILE_HASH_SIZE_UNIQUENESS': False})
+@pytest.mark.config_toggle(
+    parameters={
+        'ENFORCE_FILE_HASH_SIZE_UNIQUENESS': False
+    }
+)
 def test_dont_enforce_file_hash_size_uniqueness(
-        client_toggled, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
+        client_toggled, pg_driver, admin, submitter, cgci_blgsp,
+        indexd_client):
     """
     Check that able to submit two files with different did and urls but
     duplicate hash and size if ENFORCE_FILE_HASH_SIZE_UNIQUENESS set to False
@@ -425,7 +505,7 @@ def test_dont_enforce_file_hash_size_uniqueness(
     submit_metadata_file(client_toggled, admin, submitter, data=metadata_file)
     assert_single_record(indexd_client)
 
-    # release_indexd_doc(pg_driver, indexd_client, DEFAULT_UUID)
+    release_indexd_doc(pg_driver, indexd_client, DEFAULT_UUID)
     # now submit again but change url and id
     new_id = DEFAULT_UUID.replace('0', '1')  # use different uuid
     new_url = 'some/new/url/location/to/add'
@@ -447,39 +527,99 @@ def test_dont_enforce_file_hash_size_uniqueness(
     assert indexd_client.get(new_id).urls == [new_url]
 
 
-def test_is_updatable_file(client, pg_driver, indexd_client):
-    """Test _is_updatable_file_node method
+def test_cannot_update_node_in_state_submitted(
+        client, pg_driver, indexd_client, submitter, cgci_blgsp):
+    """Verify that indexd document is not updated after the node was submitted
+    """
+    _, sur_entity = data_file_creation(
+        client, submitter, sur_filename='submitted_unaligned_reads.json')
+
+    node_id = sur_entity['id']
+    doc_original = indexd_client.get(node_id)
+
+    # Set node state to 'submitted'
+    with pg_driver.session_scope():
+        sur_node = pg_driver.nodes().get(node_id)
+        sur_node.state = 'submitted'
+
+    new_version = read_json_data(
+        os.path.join(DATA_DIR, 'submitted_unaligned_reads_new.json'))
+
+    # Actual update call - should fail
+    resp = client.put(BLGSP_PATH, headers=submitter,
+                      data=json.dumps(new_version))
+    doc_after_put = indexd_client.get(node_id)
+
+    assert resp.status_code == 400
+    assert doc_original.to_json() == doc_after_put.to_json()
+
+
+@pytest.mark.config_toggle(
+    parameters={
+        'CREATE_REPLACEABLE': True,
+    }
+)
+def test_update_multiple_one_fails(
+        client_toggled, pg_driver, submitter, cgci_blgsp, indexd_client):
+    """Test that updating multiple nodes at the same time with one of the nodes
+    being in incorrect state will result in a failure of the whole update
+    transaction, i.e. no nodes should be updated
+
+    Test performs the following:
+    1. Create several nodes + submitted unaligned reads node
+    2. Create submitted aligned reads node
+    3. Set submitted unaligned reads node state to "submitted", which will
+    prevent the node from being updated
+    4. Send a request to update both aligned and unaligned reads nodes
+    5. Verify that none of the nodes were updated
     """
 
-    did = 'bef870b0-1d2a-4873-b0db-14994b2f89bd'
-    url = '/some/url'
+    resp, sur_entity = data_file_creation(
+        client_toggled, submitter,
+        sur_filename='submitted_unaligned_reads.json')
 
-    # Create dummy file node and corresponding indexd record
-    node = SubmittedAlignedReads(did)
-    indexd_client.create(
-        did=did,
-        urls=[url],
-        hashes={'md5': '0'*32},
-        size=1,
-    )
-    ALLOWED_STATES = [
-        'registered',
-        'uploading',
-        'uploaded',
-        'validating',
-        'validated',
-        'error',
-    ]
+    assert resp['code'] == 201
 
-    transaction = MagicMock()
-    transaction.indexd = indexd_client
-    entity = FileUploadEntity(transaction)
-    entity.s3_url = url
+    sur_node_id = sur_entity['id']
 
-    for file_state in ALLOWED_STATES:
-        # set node's url state in indexd
-        indexd_doc = indexd_client.get(did)
-        set_indexd_state(indexd_doc, url, file_state)
+    sar_old = read_json_data(
+        os.path.join(DATA_DIR, 'submitted_aligned_reads.json'))
 
-        # check if updatable
-        assert entity.is_updatable_file_node(node)
+    # Create Submitted aligned reads file node
+    resp = client_toggled.post(BLGSP_PATH, headers=submitter,
+                               data=json.dumps(sar_old))
+    assert resp.status_code == 201
+
+    sar_node_id = resp.json['entities'][0]['id']
+
+    sur_doc_old = indexd_client.get(sur_node_id).to_json()
+    sar_doc_old = indexd_client.get(sar_node_id).to_json()
+
+    # Modify submitted aligned reads metadata
+    sar_new = copy.deepcopy(sar_old)
+    sar_new['file_name'] = 'submitted_aligned_reads_new.bam'
+    sar_new['md5sum'] = 'ac4ca6d336b57a94b34e923d3d7a627a'
+    sar_new['file_size'] = 12288
+
+    # Load updated submitted unaligned reads metadata
+    sur_new = read_json_data(
+        os.path.join(DATA_DIR, 'submitted_unaligned_reads.json'))
+
+    # Set unaligned reads node state to 'submitted', which will prevent the
+    # node update
+    with pg_driver.session_scope():
+        sur_node = pg_driver.nodes().get(sur_node_id)
+        sur_node.state = 'submitted'
+
+    data = [sar_new, sur_new]
+    # The whole transaction should fail
+    resp = client_toggled.put(BLGSP_PATH, headers=submitter,
+                              data=json.dumps(data))
+
+    # Should both contain old data
+    sar_doc_new = indexd_client.get(sar_doc_old['did']).to_json()
+    sur_doc_new = indexd_client.get(sur_node_id).to_json()
+
+    assert resp.status_code == 400
+    assert sur_doc_old == sur_doc_new
+    assert sar_doc_new == sar_doc_old

@@ -11,6 +11,7 @@ from sheepdog.utils import (
     is_project_public,
     generate_s3_url,
     get_indexd_state,
+    get_indexd,
 )
 
 from sheepdog.transactions.entity_base import EntityErrors
@@ -292,14 +293,70 @@ class FileUploadEntity(UploadEntity):
         """
         Call the index client for the transaction to update an
         index record for this entity.
-        """
-        document = self.file_by_uuid
 
-        if self.urls:
-            urls_to_add = [url for url in self.urls if url not in document.urls]
-            if urls_to_add:
-                document.urls.extend(urls_to_add)
-                document.patch()
+        1. If a record is not replaceable - update the existing document
+        2. If a record is replaceable - recreate the document with the same
+        UUID as a previous one
+
+        """
+        if self.transaction.dry_run:
+            return
+
+        # If indexd record is not replaceable, update existing document
+        if not self._is_replaceable:
+            document = self.file_by_uuid
+
+            if self.urls:
+                urls_to_add = [url for url in self.urls
+                               if url not in document.urls]
+                if urls_to_add:
+                    document.urls.extend(urls_to_add)
+                    document.patch()
+            return
+
+        indexd_doc = get_indexd(self.entity_id, self.transaction.indexd,
+                                return_not_found=True)
+
+        # No indexd record found, nothing to do
+        if not indexd_doc:
+            return
+
+        old_doc = indexd_doc.to_json()
+        indexd_doc.delete()
+
+        # Re-create URL, since the filename might have changed.
+        # NOTE: We don't care about other URLs, since the file was not yet
+        # released, so it won't have any urls other than primary url
+        urls = [
+            generate_s3_url(
+                host=self._config['SUBMISSION']['host'],
+                bucket=self._config['SUBMISSION']['bucket'],
+                program=self.transaction.program,
+                project=self.transaction.project,
+                uuid=self.entity_id,
+                file_name=self.doc['file_name']
+            )
+        ]
+        urls_metadata = {
+            url: {
+                'state': 'registered', 'type': PRIMARY_URL_TYPE
+            } for url in urls
+        }
+
+        # Populate file metadata fields
+        updated_fields = {
+            'hashes': {'md5': self.doc['md5sum']},
+            'size': self.doc['file_size'],
+            'file_name': self.doc['file_name'],
+            'urls': urls,
+            'urls_metadata': urls_metadata,
+            'metadata': self.doc.get('metadata', {}),
+            'acl': self.node.acl or self.get_file_acl()
+        }
+
+        # Re-create indexd doc witht he same UUID
+        self.transaction.indexd.create(
+            did=old_doc['did'], baseid=old_doc['baseid'], **updated_fields)
 
     def _new_version_index(self):
         """

@@ -202,10 +202,6 @@ class UploadEntity(EntityBase):
         if self.node.state == 'submitted':
             raise UserError('Unable to update a node in state "submitted"')
 
-        # only update the fields with the new metadata
-        if self._is_replaceable and not self.transaction.dry_run:
-            self._update_indexd_doc(indexd_doc)
-
     def flush_to_session(self):
         """
         Add graph node to session of the current transaction.
@@ -455,61 +451,6 @@ class UploadEntity(EntityBase):
         self.action = 'update'
         self.entity_id = node.node_id
         return node
-
-    def _update_indexd_doc(self, indexd_doc):
-        """Update an entry in indexd if applicable for a project
-
-        Currently there is no way to update all the fields a document in indexd.
-        For projects that permit it, a submitter can update the node metadata
-        as many times as they want but that means a change in file size,
-        file name, hashes, etc. To get around this we collect the metadata from
-        indexd, delete the entry, and re-create it with the same did and baseid.
-
-        Args:
-            indexd_doc (indexclient.client.Document):
-                IndexClient representation of document in indexd
-        """
-
-        # get old indexd document as json
-        old_doc = indexd_doc.to_json()
-
-        # delete old indexd document
-        indexd_doc.delete()
-
-        # create new updated document (keeping old 'did' and 'baseid')
-        urls = [
-            generate_s3_url(
-                host=self._config['SUBMISSION']['host'],
-                bucket=self._config['SUBMISSION']['bucket'],
-                program=self.transaction.program,
-                project=self.transaction.project,
-                uuid=self.entity_id,
-                file_name=self.doc['file_name'],
-            )
-        ]
-        # NOTE: Setting 'type' is somewhat GDC specific and we are not sure how
-        # important this is for PlanX. But this change is required for
-        # the runners to be able to pick up new files
-        urls_metadata = {
-            url: {
-                'state': 'registered', 'type': PRIMARY_URL_TYPE
-            } for url in urls
-        }
-
-        updated_fields = {
-            'hashes': {'md5': self.doc['md5sum']},
-            'size': self.doc['file_size'],
-            'file_name': self.doc['file_name'],
-            'urls': urls,
-            'urls_metadata': urls_metadata,
-            'metadata': self.doc.get('metadata', {}),
-            'acl': self.node.acl
-        }
-        self.transaction.indexd.create(
-            did=old_doc['did'],
-            baseid=old_doc['baseid'],
-            **updated_fields
-        )
 
     def _merge_doc_links(self, node):
         """
