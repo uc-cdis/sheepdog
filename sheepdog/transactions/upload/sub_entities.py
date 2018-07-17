@@ -202,7 +202,14 @@ class FileUploadEntity(UploadEntity):
            return
 
         # FIXME: In order to avoid incorrect data inside indexd, we skip
-        # further requests to indexd here
+        # further requests to indexd here. However, this won't save us from
+        # the case when something goes wrong during the actual flush: e.g.
+        # out of 20 nodes 10 flushes fine, but then something happens to #11
+        # (networking issue or whatever), then the indexd records for the first
+        # 10 nodes are still going to be changed and we can't rollback them
+        # safely. Implementing some sort of caching might help a bit, but then
+        # again, we will have to send multiple rollback requests to indexd etc,
+        # which may involve retries etc.
         if not self.transaction.success:
             return
 
