@@ -11,6 +11,7 @@ from sheepdog.utils import (
     is_project_public,
     generate_s3_url,
     get_indexd_state,
+    get_indexd,
 )
 
 from sheepdog.transactions.entity_base import EntityErrors
@@ -18,7 +19,9 @@ from sheepdog.transactions.upload.entity import (
     UploadEntity,
     lookup_node
 )
-from sheepdog.globals import DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE, POSSIBLE_OPEN_FILE_NODES
+from sheepdog.globals import (
+    DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE, POSSIBLE_OPEN_FILE_NODES,
+    UPDATABLE_FILE_STATES)
 
 
 class NonFileUploadEntity(UploadEntity):
@@ -190,12 +193,24 @@ class FileUploadEntity(UploadEntity):
         # next do node creation
         super(FileUploadEntity, self).flush_to_session()
 
+        # FIXME: we could override rollback() method and revert indexd
+        # changes within it, this would involve some sort of caching and
+        # iterating through all of the affected entities etc. A better
+        # way to go around is to probably implement a dry_run in indexd or
+        # indexclient
         if self.transaction.dry_run:
-            # FIXME: we could override rollback() method and revert indexd
-            # changes within it, this would involve some sort of caching and
-            # iterating through all of the affected entities etc. A better
-            # way to go around is to probably implement a dry_run in indexd or
-            # indexclient
+           return
+
+        # FIXME: In order to avoid incorrect data inside indexd, we skip
+        # further requests to indexd here. However, this won't save us from
+        # the case when something goes wrong during the actual flush: e.g.
+        # out of 20 nodes 10 flushes fine, but then something happens to #11
+        # (networking issue or whatever), then the indexd records for the first
+        # 10 nodes are still going to be changed and we can't rollback them
+        # safely. Implementing some sort of caching might help a bit, but then
+        # again, we will have to send multiple rollback requests to indexd etc,
+        # which may involve retries etc.
+        if not self.transaction.success:
             return
 
         role = self.action
@@ -292,14 +307,67 @@ class FileUploadEntity(UploadEntity):
         """
         Call the index client for the transaction to update an
         index record for this entity.
-        """
-        document = self.file_by_uuid
 
-        if self.urls:
-            urls_to_add = [url for url in self.urls if url not in document.urls]
-            if urls_to_add:
-                document.urls.extend(urls_to_add)
-                document.patch()
+        1. If a record is not replaceable - update the existing document
+        2. If a record is replaceable - recreate the document with the same
+        UUID as a previous one
+
+        """
+        # If indexd record is not replaceable, update existing document
+        if not self._is_replaceable:
+            document = self.file_by_uuid
+
+            if self.urls:
+                urls_to_add = [url for url in self.urls
+                               if url not in document.urls]
+                if urls_to_add:
+                    document.urls.extend(urls_to_add)
+                    document.patch()
+            return
+
+        indexd_doc = get_indexd(self.entity_id, self.transaction.indexd,
+                                return_not_found=True)
+
+        # No indexd record found, nothing to do
+        if not indexd_doc:
+            return
+
+        old_doc = indexd_doc.to_json()
+        indexd_doc.delete()
+
+        # Re-create URL, since the filename might have changed.
+        # NOTE: We don't care about other URLs, since the file was not yet
+        # released, so it won't have any urls other than primary url
+        urls = [
+            generate_s3_url(
+                host=self._config['SUBMISSION']['host'],
+                bucket=self._config['SUBMISSION']['bucket'],
+                program=self.transaction.program,
+                project=self.transaction.project,
+                uuid=self.entity_id,
+                file_name=self.doc['file_name']
+            )
+        ]
+        urls_metadata = {
+            url: {
+                'state': 'registered', 'type': PRIMARY_URL_TYPE
+            } for url in urls
+        }
+
+        # Populate file metadata fields
+        updated_fields = {
+            'hashes': {'md5': self.doc['md5sum']},
+            'size': self.doc['file_size'],
+            'file_name': self.doc['file_name'],
+            'urls': urls,
+            'urls_metadata': urls_metadata,
+            'metadata': self.doc.get('metadata', {}),
+            'acl': self.node.acl or self.get_file_acl()
+        }
+
+        # Re-create indexd doc witht he same UUID
+        self.transaction.indexd.create(
+            did=old_doc['did'], baseid=old_doc['baseid'], **updated_fields)
 
     def _new_version_index(self):
         """
@@ -348,7 +416,7 @@ class FileUploadEntity(UploadEntity):
         Check that a node is a file that can be updated. True if:
 
         #. The node is a file
-        #. It has a file_state in the list of states below
+        #. The file state is in sheepdog.globals.UPDATABLE_FILE_STATES
 
         Args:
             node (psqlgraph.Node):
@@ -356,15 +424,7 @@ class FileUploadEntity(UploadEntity):
         Return:
             bool: whether the node is an updatable file
         """
-        allowed_states = [
-            'registered',
-            'uploading',
-            'uploaded',
-            'validating',
-            'error'
-        ]
-        is_data_file = node._dictionary.get('category') in DATA_FILE_CATEGORIES
-        if not is_data_file:
+        if not node._dictionary.get('category') in DATA_FILE_CATEGORIES:
             return False
 
         file_state = get_indexd_state(
@@ -372,7 +432,8 @@ class FileUploadEntity(UploadEntity):
             self.s3_url,
             self.transaction.indexd
         )
-        return file_state in allowed_states
+
+        return file_state in UPDATABLE_FILE_STATES
 
     def _populate_file_exist_in_index(self):
         """
