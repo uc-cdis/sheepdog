@@ -1,7 +1,7 @@
 # To run: docker run -v /path/to/wsgi.py:/var/www/sheepdog/wsgi.py --name=sheepdog -p 81:80 sheepdog
 # To check running container: docker exec -it sheepdog /bin/bash
 
-FROM ubuntu:16.04
+FROM pypy:2
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -18,19 +18,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2-dev \
     libxslt1-dev \
     nginx \
-    python2.7 \
-    python-dev \
-    python-pip \
-    python-setuptools \
     sudo \
     vim \
-    && python -m pip install --upgrade pip \
-    && python -m pip install --upgrade setuptools \
-    && python -m pip install uwsgi \
+    && pypy -m pip install --upgrade pip \
+    && pypy -m pip install --upgrade setuptools \
+    && pypy -m pip install --upgrade uwsgi \
     && mkdir /var/www/sheepdog \
     && mkdir -p /var/www/.cache/Python-Eggs/ \
     && chown www-data -R /var/www/.cache/Python-Eggs/ \
     && mkdir /run/nginx/
+
+COPY ./requirements.txt /sheepdog/requirements.txt
+WORKDIR /sheepdog
+RUN pypy -m pip install -r requirements.txt
 
 COPY . /sheepdog
 COPY ./deployment/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
@@ -38,8 +38,7 @@ COPY ./deployment/nginx/nginx.conf /etc/nginx/
 COPY ./deployment/nginx/uwsgi.conf /etc/nginx/sites-available/
 WORKDIR /sheepdog
 
-RUN python -m pip install -r requirements.txt \
-    && COMMIT=`git rev-parse HEAD` && echo "COMMIT=\"${COMMIT}\"" >sheepdog/version_data.py \
+RUN COMMIT=`git rev-parse HEAD` && echo "COMMIT=\"${COMMIT}\"" >sheepdog/version_data.py \
     && VERSION=`git describe --always --tags` && echo "VERSION=\"${VERSION}\"" >>sheepdog/version_data.py \
     && rm /etc/nginx/sites-enabled/default \
     && ln -s /etc/nginx/sites-available/uwsgi.conf /etc/nginx/sites-enabled/uwsgi.conf \
