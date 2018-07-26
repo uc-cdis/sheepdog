@@ -123,8 +123,8 @@ def create_project(program):
                 "primary_site": "Lymph Nodes",
                 "dbgap_accession_number": "phs000527",
                 "state": "active",
-                "dbgap_bypass_prefix": "test-",
-                "dbgap_bypass_range": 10
+                "bypass_case_prefix": "test-",
+                "bypass_case_range": 10
             }
     """
 
