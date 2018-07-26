@@ -557,7 +557,7 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
     print(resp)
 
 
-def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter, index_client):
+def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter, index_client, require_index_exists_off):
     """
     Test that submitting a valid data file creates an index and an alias.
     """

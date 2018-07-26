@@ -53,6 +53,9 @@ def pg_config():
         database=test_db,
     )
 
+@pytest.fixture
+def require_index_exists(app, monkeypatch):
+    monkeypatch.setitem(app.config, 'REQUIRE_FILE_INDEX_EXISTS', True)
 
 def wait_for_indexd_alive(port):
     url = 'http://localhost:{}/_status'.format(port)

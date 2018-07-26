@@ -246,11 +246,12 @@ class FileUploadEntity(UploadEntity):
                     # the index service.
                     if not self.file_exists:
                         if (self._config.get('REQUIRE_FILE_INDEX_EXISTS', False)):
-                            raise NoIndexForFileError(self.file_index)
+                            raise NoIndexForFileError()
                         else:
                             self._register_index()
                     else:
                         # store object_id in the node
+                        # self.file_index = self.object_id
                         self.object_id = getattr(self.file_by_hash, 'did', None)
 
                 elif role == 'update':
@@ -263,7 +264,7 @@ class FileUploadEntity(UploadEntity):
                         self._update_index()
                     else:
                         if (self._config.get('REQUIRE_FILE_INDEX_EXISTS', False)):
-                            raise NoIndexForFileError(self.file_index)
+                            raise NoIndexForFileError()
 
                 else:
                     message = 'Unknown role {}'.format(role)

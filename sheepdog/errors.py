@@ -20,6 +20,6 @@ class UnsupportedError(UserError):
         super(UnsupportedError, self).__init__(message, code, json)
 
 class NoIndexForFileError(UserError):
-    def __init__(self, file_id):
-        self.message = "Existing index is required for file creation/update. File {} does not exist.".format(file_id)
+    def __init__(self):
+        self.message = "Existing index is required for file creation/update."
         self.code = 400

@@ -75,7 +75,7 @@ def submit_metadata_file(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_not_indexed(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, require_index_exists_off):
     """
     Test node and data file creation when neither exist and no ID is provided.
     """
@@ -119,7 +119,7 @@ def test_data_file_not_indexed(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_not_indexed_id_provided(
         create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+        client, pg_driver, admin, submitter, cgci_blgsp, require_index_exists_off):
     """
     Test node and data file creation when neither exist and an ID is provided.
     That ID should be used for the node and file index creation
