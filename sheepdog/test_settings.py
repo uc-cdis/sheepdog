@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from .config import LEGACY_MODE
+from .config import LEGACY_MODE, REQUIRE_FILE_INDEX_EXISTS
 
 SIGNPOST = {
     "host": "http://localhost:8000",

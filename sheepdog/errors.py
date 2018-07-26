@@ -18,3 +18,8 @@ class UnsupportedError(UserError):
             .format(file_format, ",".join(SUPPORTED_FORMATS))
         )
         super(UnsupportedError, self).__init__(message, code, json)
+
+class NoIndexForFileError(UserError):
+    def __init__(self, file_id):
+        self.message = "Existing index is required for file creation/update. File {} does not exist.".format(file_id)
+        self.code = 400

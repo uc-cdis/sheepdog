@@ -129,6 +129,10 @@ def app_init(app):
     app.config['AUTO_MIGRATE_DATABASE'] = (
         app.config.get('AUTO_MIGRATE_DATABASE', True)
     )
+    app.config['REQUIRE_FILE_INDEX_EXISTS'] = (
+        # If True, enforce indexd record exists before file node registration
+        app.config.get('REQUIRE_FILE_INDEX_EXISTS', False)
+    )
 
     app_register_blueprints(app)
     db_init(app)
