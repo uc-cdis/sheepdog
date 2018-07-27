@@ -115,6 +115,36 @@ def test_data_file_not_indexed(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+def test_create_no_file_index(create_alias, create_index, get_index_uuid, get_index_hash, client, pg_driver, admin, submitter, cgci_blgsp, require_index_exists_on):
+    """
+    With REQUIRE_FILE_INDEX_EXISTS = True.
+    Test that submitting a data file that does not exist in indexd raises an error and does not create an index or an alias.
+    """
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    get_index_uuid.return_value = None
+    get_index_hash.return_value = None
+
+    # raises error
+    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    assert resp.status_code == 400
+
+    # no index creation
+    assert create_index.call_count == 0
+
+    # no alias creation
+    assert not create_alias.called
+
+    # response
+    assert_negative_response(resp)
+    entity = assert_single_entity_from_response(resp)
+    assert entity['action'] == 'create'
+
+
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_not_indexed_id_provided(
         create_alias, create_index, get_index_uuid, get_index_hash,
         client, pg_driver, admin, submitter, cgci_blgsp,
