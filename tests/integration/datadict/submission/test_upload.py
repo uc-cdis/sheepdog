@@ -115,36 +115,6 @@ def test_data_file_not_indexed(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
-def test_create_no_file_index(create_alias, create_index, get_index_uuid, get_index_hash, client, pg_driver, admin, submitter, cgci_blgsp, require_index_exists_on):
-    """
-    With REQUIRE_FILE_INDEX_EXISTS = True.
-    Test that submitting a data file that does not exist in indexd raises an error and does not create an index or an alias.
-    """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
-
-    get_index_uuid.return_value = None
-    get_index_hash.return_value = None
-
-    # raises error
-    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
-    assert resp.status_code == 400
-
-    # no index creation
-    assert create_index.call_count == 0
-
-    # no alias creation
-    assert not create_alias.called
-
-    # response
-    assert_negative_response(resp)
-    entity = assert_single_entity_from_response(resp)
-    assert entity['action'] == 'create'
-
-
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 def test_data_file_not_indexed_id_provided(
         create_alias, create_index, get_index_uuid, get_index_hash,
         client, pg_driver, admin, submitter, cgci_blgsp,
@@ -532,7 +502,7 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     document.urls = [DEFAULT_URL]
     get_index_uuid.return_value = document
 
-    # index yeilds no match given hash/size
+    # index yields no match given hash/size
     get_index_hash.return_value = None
 
     submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
@@ -590,7 +560,7 @@ def test_data_file_update_url_different_file_not_indexed(
     document.urls = [DEFAULT_URL]
     get_index_uuid.return_value = document
 
-    # index yeilds no match given hash/size
+    # index yields no match given hash/size
     get_index_hash.return_value = None
 
     submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
@@ -674,3 +644,84 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     # response
     assert_negative_response(resp)
     assert_single_entity_from_response(resp)
+
+
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+def test_create_no_file_index(create_alias, create_index, get_index_uuid, get_index_hash, client, pg_driver, admin, submitter, cgci_blgsp, require_index_exists_on):
+    """
+    With REQUIRE_FILE_INDEX_EXISTS = True.
+    Test submitting a data file that does not exist in indexd (should raise an error and should not create an index or an alias).
+    """
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    # no record in indexd for this file
+    get_index_uuid.return_value = None
+    get_index_hash.return_value = None
+
+    # creating raises an error
+    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    assert resp.status_code == 400
+
+    # no index or alias creation
+    assert not create_index.called
+    assert not create_alias.called
+
+    # response
+    assert_negative_response(resp)
+    entity = assert_single_entity_from_response(resp)
+    assert entity['action'] == 'create'
+
+
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+def test_update_no_file_index(
+        create_alias, create_index, get_index_uuid, get_index_hash,
+        client, pg_driver, admin, submitter, cgci_blgsp, require_index_exists_on):
+    """
+    With REQUIRE_FILE_INDEX_EXISTS = True.
+    Test updating a data file that does not exist in indexd (should raise an error and should not create an index or an alias).
+    """
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    # create a file
+    document = MagicMock()
+    document.did = DEFAULT_UUID
+    document.urls = [DEFAULT_URL]
+    get_index_uuid.return_value = document
+    get_index_hash.return_value = document
+    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    assert resp.status_code == 200
+
+    # update by changing url
+    new_url = 'some/new/url/location/to/add'
+    updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
+    updated_file['urls'] = new_url
+    updated_file['md5sum'] = DEFAULT_FILE_HASH.replace('0', '2')
+    updated_file['file_size'] = DEFAULT_FILE_SIZE + 1
+
+    # no record in indexd for this file
+    get_index_uuid.return_value = None
+    get_index_hash.return_value = None
+
+    # updating raises an error
+    resp = submit_metadata_file(
+        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+    assert resp.status_code == 400
+
+    # no index or alias creation
+    assert not create_index.called
+    assert not create_alias.called
+
+    # make sure original url is still there and new url is NOT
+    assert DEFAULT_URL in document.urls
+    assert new_url not in document.urls
+
+    # response
+    assert_negative_response(resp)
+    entity = assert_single_entity_from_response(resp)
+    assert entity['action'] == 'update'
