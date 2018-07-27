@@ -246,7 +246,7 @@ class FileUploadEntity(UploadEntity):
                     # the index service.
                     if not self.file_exists:
                         if (self._config.get('REQUIRE_FILE_INDEX_EXISTS', False)):
-                            raise NoIndexForFileError()
+                            raise NoIndexForFileError(self.entity_id)
                         else:
                             self._register_index()
                     else:

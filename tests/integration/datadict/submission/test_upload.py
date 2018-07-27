@@ -650,7 +650,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
-def test_create_no_file_index(create_alias, create_index, get_index_uuid, get_index_hash, client, pg_driver, admin, submitter, cgci_blgsp, require_index_exists_on):
+def test_create_file_no_required_index(create_alias, create_index, get_index_uuid, get_index_hash, client, pg_driver, admin, submitter, cgci_blgsp, require_index_exists_on):
     """
     With REQUIRE_FILE_INDEX_EXISTS = True.
     Test submitting a data file that does not exist in indexd (should raise an error and should not create an index or an alias).
