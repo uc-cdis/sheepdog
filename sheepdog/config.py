@@ -21,5 +21,3 @@ else:
     logger.info(
         "Running in ACTIVE mode. The Elasticsearch 'GDC_ES_INDEX' "
         "environment variable and the active mapping will be used. ")
-
-REQUIRE_FILE_INDEX_EXISTS = False
