@@ -249,16 +249,12 @@ class FileUploadEntity(UploadEntity):
                             raise NoIndexForFileError(self.entity_id)
                         else:
                             self._register_index()
-                    else:
-                        # store object_id in the node
-                        self.object_id = getattr(self.file_by_hash, 'did', None)
 
                 elif role == 'update':
                     # Check if the category for the node is data_file or
                     # metadata_file, in which case, register a UUID and alias in
                     # the index service.
                     if self.file_exists:
-                        # store object_id in the node
                         self._update_index()
 
                 else:
