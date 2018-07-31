@@ -655,7 +655,7 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     assert data[0]['id'] == case_id
 
 
-def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
+def test_export_all_node_types(client, pg_driver, indexd_client, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope() as s:
         case = pg_driver.nodes(md.Case).first()
@@ -665,12 +665,11 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
         s.add(new_case)
         case_count = pg_driver.nodes(md.Case).count()
     path = '/v0/submission/CGCI/BLGSP/export/?node_label=case'
-    r = client.get(
-        path,
-        headers=submitter)
-    assert r.status_code == 200, r.data
-    assert r.headers['Content-Disposition'].endswith('tsv')
-    assert len(r.data.strip().split('\n')) == case_count + 1
+
+    resp = client.get(path, headers=submitter)
+    assert resp.status_code == 200, r.data
+    assert resp.headers['Content-Disposition'].endswith('tsv')
+    assert len(resp.data.strip().split('\n')) == case_count + 1
 
 
 def test_create_dry_run(client, pg_driver, cgci_blgsp, submitter,
