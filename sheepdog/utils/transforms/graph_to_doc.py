@@ -850,6 +850,11 @@ def export_all(node_label, project_id, db, **kwargs):
         yield '{}\n'.format('\t'.join(titles))
         for result in query.yield_per(1000):
             row = []
+
+            # This query might return a single node not in a list.
+            if not isinstance(result, list):
+                result = [result]
+
             # Write in the properties from just the node.
             node = result[0]
             for prop in props:
