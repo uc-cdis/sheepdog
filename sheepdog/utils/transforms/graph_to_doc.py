@@ -382,7 +382,9 @@ def _get_links(file_format, schema, exclude_id):
 
 def is_property_hidden(key, schema, exclude_id):
     """
-    Boolean whether key should be hidden
+    Boolean whether key should be hidden.
+
+    systemProperties are properties used for bookkeeping but aren't user facing.
 
     Args:
         key (str): node property to check
@@ -396,19 +398,24 @@ def is_property_hidden(key, schema, exclude_id):
     # TODO: Make this a configurable blacklist
     blacklist = ['id', 'project_id', 'batch_id', 'state_comment']
 
-    is_system_prop = key in schema['systemProperties'] and key not in blacklist
 
-    # If it's part of node._props then don't hide it.
+    is_system_prop = ((
+        key in schema['systemProperties'] and
+        key not in ['id', 'project_id']) or
+        key in ['batch_id', 'state_comment']
+    )
+
+    # If it's a system property then hide it.
     if is_system_prop:
-        return False
+        return True
 
     # Special exception if blacklist becomes configurable in the future,
     # and `id` is not included in the blacklist.
     elif exclude_id and key == 'id':
         return True
 
-    # If not a system prop then hide.
-    return True
+    # If not a system property then don't hide.
+    return False
 
 
 def entity_to_template(label, exclude_id=True, file_format='tsv', **kwargs):
@@ -852,7 +859,7 @@ def export_all(node_label, project_id, db, **kwargs):
             row = []
 
             # This query might return a single node not in a list.
-            if not isinstance(result, list):
+            if not isinstance(result, list) and not isinstance(result, tuple):
                 result = [result]
 
             # Write in the properties from just the node.
