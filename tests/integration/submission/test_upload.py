@@ -21,7 +21,7 @@ except ImportError:
     from mock import MagicMock
     from mock import patch
 
-from gdcdatamodel.models import SubmittedAlignedReads
+from gdcdatamodel.models import SubmittedAlignedReads, Case
 from sheepdog.globals import UPDATABLE_FILE_STATES
 from sheepdog.transactions.upload.sub_entities import FileUploadEntity
 from sheepdog.test_settings import SUBMISSION
@@ -644,3 +644,41 @@ def test_update_multiple_one_fails(
     assert resp.status_code == 400, resp.json
     assert sur_doc_old == sur_doc_new
     assert sar_doc_new == sar_doc_old
+
+
+@pytest.mark.config_toggle(
+    parameters={
+        'CREATE_REPLACEABLE': True
+    }
+)
+def test_update_released_node(client_toggled, pg_driver, submitter, cgci_blgsp, indexd_client):
+    resp_json, sur_entity = data_file_creation(
+        client_toggled, submitter,
+        sur_filename='submitted_unaligned_reads.json')
+
+    # Release submitted nodes
+    with pg_driver.session_scope():
+        for entity in resp_json['entities']:
+            node = pg_driver.nodes().get(entity['id'])
+            node.state = 'released'
+
+        node = pg_driver.nodes().get(sur_entity['id'])
+        node.state = 'released'
+
+    # Load original case.json to validate the values
+    case_json = read_json_data(
+        os.path.join(DATA_DIR, 'case.json')
+    )
+    import pdb; pdb.set_trace()
+    with pg_driver.session_scope():
+        case_node = (
+            pg_driver.nodes(Case).props(submitter_id=case_json['submitter_id'])
+            .one()
+        )
+        assert case_node.primary_site == case_json.get('primary_site')
+
+    # Update case
+    case_json['primary_site'] = 'Breast'
+    response = client_toggled.put(BLGSP_PATH, headers=submitter, data=json.dumps(case_json))
+
+    assert response.status_code == 200
