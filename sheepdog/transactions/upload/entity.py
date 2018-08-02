@@ -720,25 +720,21 @@ class UploadEntity(EntityBase):
             for link in links:
                 # Get target information
                 target_id = link.get('id')
-                target_label = (
-                    self.node
-                    ._pg_links
-                    .get(name, {})
-                    .get('dst_type', None)
-                    .label
-                )
+                target_type = self.node._pg_links.get(name, {}).get('dst_type')
+                target_label = target_type.label
+
                 target = self.get_skeleton_node(target_label, link)
 
                 # Query for targets
                 nodes = lookup_node(
                     self.transaction.db_driver,
-                    self.node._pg_links[name]['dst_type'].label,
+                    target_label,
                     node_id=target_id,
                     secondary_keys=target._secondary_keys
                 ).all()
 
                 # Verify any link to projects is in the correct project
-                if self.node._pg_links[name]['dst_type'] == models.Project:
+                if target_type == models.Project:
                     for node in nodes:
                         if node.code != self.transaction.project:
                             self.record_error(
@@ -796,9 +792,9 @@ class UploadEntity(EntityBase):
                     'Tumor', 'Xenograft Tissue'
                 ]
                 max_parent_sample_children = 10
-                if (self.node == models.Sample)\
-                        and (self.node._pg_links[name]['dst_type'] == models.Sample)\
-                        and self._config.get('IS_GDC', False):
+                if (isinstance(self.node, models.Sample) and
+                        target_type == models.Sample and
+                        self._config.get('IS_GDC', False)):
 
                     # check if it's linking to a parent node
                     if nodes[0].sample_type in parent_sample_types:

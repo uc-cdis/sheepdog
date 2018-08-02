@@ -24,6 +24,7 @@ from sheepdog.globals import (
     UPDATABLE_FILE_STATES
 )
 from sheepdog.errors import UserError
+from sqlalchemy.orm.exc import NoResultFound
 
 
 class NonFileUploadEntity(UploadEntity):
@@ -102,8 +103,8 @@ class FileUploadEntity(UploadEntity):
         self.s3_url = None
         self.urls = []
         self.urls_metadata = {}
+        # This will be used to cache incoming edges in case of node re-creation
         self.edges_in = set()
-        self.edges_out = set()
 
     def instantiate(self):
         super(FileUploadEntity, self).instantiate()
@@ -203,13 +204,21 @@ class FileUploadEntity(UploadEntity):
     def set_association_proxies(self):
         super(FileUploadEntity, self).set_association_proxies()
 
-        for node_id in self.edges_in:
-            # TODO: link edges in
-            pass
+        for node_label, node_id in self.edges_in:
+            try:
+                child_node = lookup_node(
+                    self.transaction.db_driver, node_label, node_id,
+                    secondary_keys=()).one()
+            except NoResultFound:
+                # NOTE: This might happen if the node has been deleted and
+                # we don't have to recreate the link anymore.
+                continue
 
-        for node_id in self.edges_out:
-            # TODO: link edges out
-            pass
+            for name, info in self.node._pg_backrefs.iteritems():
+                if isinstance(child_node, info['src_type']):
+                    if child_node not in getattr(self.node, name):
+                        getattr(self.node, name).append(child_node)
+                    break
 
     def flush_to_session(self):
         """
@@ -614,7 +623,6 @@ class FileUploadEntity(UploadEntity):
         Create a new node in the old node's place if it exists in indexd. with
         graph node state = 'released'.
         """
-        self.file_by_uuid = self.get_file_from_index_by_uuid(self.old_uuid)
 
         nodes = lookup_node(
             self.transaction.db_driver,
@@ -626,12 +634,10 @@ class FileUploadEntity(UploadEntity):
         self.old_uuid = nodes.one().node_id
         self.file_by_uuid = self.get_file_from_index_by_uuid(self.entity_id)
 
-        # Cache edges and later relink the file node
+        # Cache incoming edges and relink the file node later
         self.edges_in = {
-            edge.src.node_id for node in nodes for edge in node.edges_in
-        }
-        self.edges_out = {
-            edge.dst.node_id for node in nodes for edge in node.edges_out
+            (edge.src.label, edge.src.node_id)
+            for node in nodes for edge in node.edges_in
         }
 
         # Remove old node from the graph

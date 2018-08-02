@@ -712,7 +712,7 @@ def test_update_released_non_file_node(
         assert case_node_upd.state == case_node_old.state
         # Make sure edges are preserved
         assert edges_in_old == edges_in_new
-        assert edges_out_old == edges_out_old
+        assert edges_out_old == edges_out_new
 
 
 @pytest.mark.config_toggle(
