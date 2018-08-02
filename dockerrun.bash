@@ -2,6 +2,8 @@
 
 cd /var/www/sheepdog
 
+export PYTHONUNBUFFERED=TRUE
+
 (
   # Wait for nginx to create uwsgi.sock
   let count=0
