@@ -15,7 +15,7 @@ codacy-coverage
 Sphinx==1.6.5
 sphinx_rtd_theme
 -e git+https://git@github.com/uc-cdis/cdisutils-test.git@0.2.2#egg=cdisutilstest
--e git+https://git@github.com/uc-cdis/indexd.git@1.0.4#egg=indexd
+-e git+https://git@github.com/uc-cdis/indexd.git@0.7.0#egg=indexd
 
 # indexd dependencies
 -e git+https://git@github.com/uc-cdis/doiclient.git@1.0.0#egg=doiclient

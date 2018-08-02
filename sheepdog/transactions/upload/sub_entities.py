@@ -21,7 +21,9 @@ from sheepdog.transactions.upload.entity import (
 )
 from sheepdog.globals import (
     DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE, POSSIBLE_OPEN_FILE_NODES,
-    UPDATABLE_FILE_STATES)
+    UPDATABLE_FILE_STATES
+)
+from sheepdog.errors import UserError
 
 
 class NonFileUploadEntity(UploadEntity):
@@ -100,6 +102,23 @@ class FileUploadEntity(UploadEntity):
         self.s3_url = None
         self.urls = []
         self.urls_metadata = {}
+        self.edges_in = set()
+        self.edges_out = set()
+
+    def instantiate(self):
+        super(FileUploadEntity, self).instantiate()
+
+        if not self.node or not self.entity_id:
+            return
+
+        indexd_doc = get_indexd(
+            self.entity_id, self.transaction.indexd, return_not_found=True)
+
+        if not indexd_doc:
+            return
+
+        if self.node.state == 'submitted':
+            raise UserError('Unable to update a node in state "submitted"')
 
     def parse(self, doc):
         """
@@ -130,11 +149,11 @@ class FileUploadEntity(UploadEntity):
         """
         self._populate_file_exist_in_index()
         self._set_entity_id()
-
         # call to super must happen after setting node and file ids here
         node = super(FileUploadEntity, self).get_node_create(
             skip_node_lookup=skip_node_lookup,
         )
+
         node.acl = self.get_file_acl()
 
         return node
@@ -149,6 +168,9 @@ class FileUploadEntity(UploadEntity):
         """
         # entity_id is set to the node_id here
         node = super(FileUploadEntity, self).get_node_merge()
+
+        if node.state == 'released':
+            node = self.get_node_recreate()
 
         self._populate_file_exist_in_index()
         self._is_valid_index_id_for_graph()
@@ -177,6 +199,17 @@ class FileUploadEntity(UploadEntity):
             )
 
         return node
+
+    def set_association_proxies(self):
+        super(FileUploadEntity, self).set_association_proxies()
+
+        for node_id in self.edges_in:
+            # TODO: link edges in
+            pass
+
+        for node_id in self.edges_out:
+            # TODO: link edges out
+            pass
 
     def flush_to_session(self):
         """
@@ -581,6 +614,7 @@ class FileUploadEntity(UploadEntity):
         Create a new node in the old node's place if it exists in indexd. with
         graph node state = 'released'.
         """
+        self.file_by_uuid = self.get_file_from_index_by_uuid(self.old_uuid)
 
         nodes = lookup_node(
             self.transaction.db_driver,
@@ -591,6 +625,16 @@ class FileUploadEntity(UploadEntity):
 
         self.old_uuid = nodes.one().node_id
         self.file_by_uuid = self.get_file_from_index_by_uuid(self.entity_id)
+
+        # Cache edges and later relink the file node
+        self.edges_in = {
+            edge.src.node_id for node in nodes for edge in node.edges_in
+        }
+        self.edges_out = {
+            edge.dst.node_id for node in nodes for edge in node.edges_out
+        }
+
+        # Remove old node from the graph
         with self.transaction.db_driver.session_scope() as session:
             for node in nodes:
                 session.delete(node)

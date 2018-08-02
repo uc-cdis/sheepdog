@@ -186,22 +186,6 @@ class UploadEntity(EntityBase):
 
         self._set_node_properties()
 
-        if not self.entity_id:
-            return
-
-        # indexd document doesn't exist, then there's no more work to do
-        indexd_doc = get_indexd(
-            self.entity_id,
-            self.transaction.indexd,
-            return_not_found=True
-        )
-        if not indexd_doc:
-            return
-
-        # cannot update a node in state submitted
-        if self.node.state == 'submitted':
-            raise UserError('Unable to update a node in state "submitted"')
-
     def flush_to_session(self):
         """
         Add graph node to session of the current transaction.
@@ -336,11 +320,7 @@ class UploadEntity(EntityBase):
         self.logger.debug('Creating new {}'.format(cls.__name__))
         node = cls(self.entity_id)
 
-        # Get node category
-        node_class = psqlgraph.Node.get_subclass(self.entity_type)
-        category = dictionary.schema.get(node_class.label)['category']
-
-        is_data_file = category in self.DATA_FILE_CATEGORIES
+        is_data_file = cls._dictionary['category'] in self.DATA_FILE_CATEGORIES
 
         # TODO: Setting acl is handled by FileUploadEntity, leaving these here in case of backward compatability.
         if is_data_file:
@@ -411,10 +391,6 @@ class UploadEntity(EntityBase):
                 .format(node.project_id, self.transaction.project_id),
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
-
-        # if it's released then we can make a new node in it's place
-        if node.state == 'released':
-            return self.get_node_recreate()
 
         self._merge_doc_links(node)
 
