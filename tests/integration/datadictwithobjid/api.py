@@ -72,6 +72,12 @@ def db_init(app):
 def app_init(app):
     # Register duplicates only at runtime
     app.logger.info('Initializing app')
+
+    app.config['REQUIRE_FILE_INDEX_EXISTS'] = (
+        # If True, enforce indexd record exists before file node registration
+        app.config.get('REQUIRE_FILE_INDEX_EXISTS', False)
+    )
+
     app_register_blueprints(app)
     db_init(app)
     # exclude es init as it's not used yet

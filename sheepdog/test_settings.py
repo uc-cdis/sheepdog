@@ -79,3 +79,5 @@ JWT_KEYPAIR_FILES = OrderedDict([
         ('resources/keys/test_public_key_2.pem', 'resources/keys/test_private_key_2.pem'),
     ),
 ])
+
+REQUIRE_FILE_INDEX_EXISTS = True
