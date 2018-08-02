@@ -21,7 +21,7 @@ except ImportError:
     from mock import MagicMock
     from mock import patch
 
-from gdcdatamodel.models import SubmittedAlignedReads
+from gdcdatamodel.models import SubmittedAlignedReads, Case
 from sheepdog.globals import UPDATABLE_FILE_STATES
 from sheepdog.transactions.upload.sub_entities import FileUploadEntity
 from sheepdog.test_settings import SUBMISSION
@@ -117,6 +117,18 @@ def assert_single_record(indexd_client):
     records = [r for r in indexd_client.list()]
     assert len(records) == 1
     return records[0]
+
+
+def get_edges(node):
+    """Return incoming and outgoing edges for a given node.
+
+    NOTE: This method must be called within a session.
+    """
+
+    edges_in = {edge.src.node_id for edge in node.edges_in}
+    edges_out = {edge.dst.node_id for edge in node.edges_out}
+
+    return edges_in, edges_out
 
 
 def test_data_file_not_indexed(
@@ -644,3 +656,138 @@ def test_update_multiple_one_fails(
     assert resp.status_code == 400, resp.json
     assert sur_doc_old == sur_doc_new
     assert sar_doc_new == sar_doc_old
+
+
+@pytest.mark.config_toggle(
+    parameters={
+        'CREATE_REPLACEABLE': True
+    }
+)
+def test_update_released_non_file_node(
+        client_toggled, pg_driver, submitter, cgci_blgsp, indexd_client):
+    resp_json, sur_entity = data_file_creation(
+        client_toggled, submitter,
+        sur_filename='submitted_unaligned_reads.json')
+
+    # Release submitted nodes
+    with pg_driver.session_scope():
+        for entity in resp_json['entities']:
+            node = pg_driver.nodes().get(entity['id'])
+            node.state = 'released'
+
+        node = pg_driver.nodes().get(sur_entity['id'])
+        node.state = 'released'
+
+    # Load original case.json to validate the values
+    case_json = read_json_data(
+        os.path.join(DATA_DIR, 'case.json')
+    )
+    with pg_driver.session_scope():
+        case_node_old = (
+            pg_driver.nodes(Case).props(submitter_id=case_json['submitter_id'])
+            .one()
+        )
+        assert case_node_old.primary_site == case_json.get('primary_site')
+
+        # Save edges and then validate that they are still intact
+        edges_in_old, edges_out_old = get_edges(case_node_old)
+
+    # Update metadata of a case
+    case_json['primary_site'] = 'Breast'
+    response = client_toggled.put(
+        BLGSP_PATH, headers=submitter, data=json.dumps(case_json))
+
+    assert response.status_code == 200, response.json
+
+    with pg_driver.session_scope():
+        case_node_upd = (
+            pg_driver.nodes(Case).props(submitter_id=case_json['submitter_id'])
+            .one()
+        )
+        edges_in_new, edges_out_new = get_edges(case_node_upd)
+
+        # Make sure that metadata updated successfully
+        assert case_node_upd.primary_site == 'Breast'
+        # Make sure that state hasn't changed
+        assert case_node_upd.state == case_node_old.state
+        # Make sure edges are preserved
+        assert edges_in_old == edges_in_new
+        assert edges_out_old == edges_out_new
+
+
+@pytest.mark.config_toggle(
+    parameters={
+        'CREATE_REPLACEABLE': True
+    }
+)
+def test_links_inherited_for_file_nodes(
+        client_toggled, pg_driver, submitter, cgci_blgsp, indexd_client):
+    resp_json, sar_entity = data_file_creation(
+        client_toggled, submitter,
+        sur_filename='submitted_aligned_reads.json'
+    )
+
+    additional_nodes = [
+        'aligned_reads_index.json',
+    ]
+
+    meta_jsons = []
+    for node_meta_filename in additional_nodes:
+        meta_json = read_json_data(
+            os.path.join(DATA_DIR, node_meta_filename))
+        meta_jsons.append(meta_json)
+
+    resp_2 = client_toggled.post(
+        BLGSP_PATH, headers=submitter, data=json.dumps(meta_jsons))
+
+    # Make sure that additional entities were created
+    assert resp_2.status_code == 201
+
+    # Release all of the nodes
+    with pg_driver.session_scope():
+        for entity in resp_json['entities'] + resp_2.json['entities']:
+            pg_driver.nodes().get(entity['id']).state = 'released'
+
+        pg_driver.nodes().get(sar_entity['id']).state = 'released'
+
+    # Save children edges for Submitted Aligned Reads file node
+    with pg_driver.session_scope():
+        sar_node = pg_driver.nodes().get(sar_entity['id'])
+
+        edges_in_old, edges_out_old = get_edges(sar_node)
+
+    # Update Submitted Aligned Reads file node payload
+    sar_json = read_json_data(
+        os.path.join(DATA_DIR, 'submitted_aligned_reads.json')
+    )
+    sar_json['file_name'] = 'submitted_aligned_reads_updated.bam'
+    sar_json['file_size'] = 120489
+
+    # Actual call to update Submitted Aligned Reads Node
+    resp_upd = client_toggled.put(
+        BLGSP_PATH, headers=submitter, data=json.dumps(sar_json))
+
+    # Make sure update successful
+    assert resp_upd.status_code == 200
+
+    sar_id_upd = resp_upd.json['entities'][0]['id']
+
+    # Fetch old and updated indexd docs
+    indexd_old = indexd_client.get(sar_node.node_id)
+    indexd_upd = indexd_client.get(sar_id_upd)
+
+    # Verify that links have been recreated for the new node
+    with pg_driver.session_scope():
+        sar_node_upd = pg_driver.nodes().get(sar_id_upd)
+        edges_in_new, edges_out_new = get_edges(sar_node_upd)
+
+        # New node got created
+        assert sar_node.node_id != sar_node_upd.node_id
+        assert sar_node_upd.state == 'validated'
+        # Indexd records are different and new info is there
+        assert indexd_old.to_json() != indexd_upd.to_json()
+        assert indexd_upd.file_name == sar_json['file_name']
+        assert indexd_upd.size == sar_json['file_size']
+        # Edges were relinked properly
+        assert edges_in_new == edges_in_old
+        assert edges_out_new == edges_out_old

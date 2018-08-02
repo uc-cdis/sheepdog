@@ -1,0 +1,13 @@
+{
+  "submitted_aligned_reads_files": {
+    "submitter_id": "CGCI-file-3"
+  }, 
+  "data_type": "Aligned Reads Index", 
+  "file_name": "test_aligned_reads_index.bai", 
+  "md5sum": "07ca75b9c13c0ddc579fafe845dc4e97", 
+  "data_format": "BAI", 
+  "submitter_id": "test_aligned_reads_index_1", 
+  "data_category": "Sequencing Reads", 
+  "file_size": 393, 
+  "type": "aligned_reads_index"
+}

@@ -21,7 +21,10 @@ from sheepdog.transactions.upload.entity import (
 )
 from sheepdog.globals import (
     DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE, POSSIBLE_OPEN_FILE_NODES,
-    UPDATABLE_FILE_STATES)
+    UPDATABLE_FILE_STATES
+)
+from sheepdog.errors import UserError
+from sqlalchemy.orm.exc import NoResultFound
 
 
 class NonFileUploadEntity(UploadEntity):
@@ -100,6 +103,23 @@ class FileUploadEntity(UploadEntity):
         self.s3_url = None
         self.urls = []
         self.urls_metadata = {}
+        # This will be used to cache incoming edges in case of node re-creation
+        self.edges_in = set()
+
+    def instantiate(self):
+        super(FileUploadEntity, self).instantiate()
+
+        if not self.node or not self.entity_id:
+            return
+
+        indexd_doc = get_indexd(
+            self.entity_id, self.transaction.indexd, return_not_found=True)
+
+        if not indexd_doc:
+            return
+
+        if self.node.state == 'submitted':
+            raise UserError('Unable to update a node in state "submitted"')
 
     def parse(self, doc):
         """
@@ -130,11 +150,11 @@ class FileUploadEntity(UploadEntity):
         """
         self._populate_file_exist_in_index()
         self._set_entity_id()
-
         # call to super must happen after setting node and file ids here
         node = super(FileUploadEntity, self).get_node_create(
             skip_node_lookup=skip_node_lookup,
         )
+
         node.acl = self.get_file_acl()
 
         return node
@@ -149,6 +169,9 @@ class FileUploadEntity(UploadEntity):
         """
         # entity_id is set to the node_id here
         node = super(FileUploadEntity, self).get_node_merge()
+
+        if node.state == 'released':
+            node = self.get_node_recreate()
 
         self._populate_file_exist_in_index()
         self._is_valid_index_id_for_graph()
@@ -177,6 +200,25 @@ class FileUploadEntity(UploadEntity):
             )
 
         return node
+
+    def set_association_proxies(self):
+        super(FileUploadEntity, self).set_association_proxies()
+
+        for node_label, node_id in self.edges_in:
+            try:
+                child_node = lookup_node(
+                    self.transaction.db_driver, node_label, node_id,
+                    secondary_keys=()).one()
+            except NoResultFound:
+                # NOTE: This might happen if the node has been deleted and
+                # we don't have to recreate the link anymore.
+                continue
+
+            for name, info in self.node._pg_backrefs.iteritems():
+                if isinstance(child_node, info['src_type']):
+                    if child_node not in getattr(self.node, name):
+                        getattr(self.node, name).append(child_node)
+                    break
 
     def flush_to_session(self):
         """
@@ -591,6 +633,14 @@ class FileUploadEntity(UploadEntity):
 
         self.old_uuid = nodes.one().node_id
         self.file_by_uuid = self.get_file_from_index_by_uuid(self.entity_id)
+
+        # Cache incoming edges and relink the file node later
+        self.edges_in = {
+            (edge.src.label, edge.src.node_id)
+            for node in nodes for edge in node.edges_in
+        }
+
+        # Remove old node from the graph
         with self.transaction.db_driver.session_scope() as session:
             for node in nodes:
                 session.delete(node)
