@@ -102,12 +102,13 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
     """
     doc = flask.request.get_data()
     content_type = flask.request.headers.get('Content-Type', '').lower()
+    is_gdc = flask.current_app.config.get('IS_GDC')
     if content_type == 'text/csv':
         doc_format = 'csv'
-        data, errors = utils.transforms.CSVToJSONConverter().convert(doc)
+        data, errors = utils.transforms.CSVToJSONConverter(is_gdc).convert(doc)
     elif content_type in ['text/tab-separated-values', 'text/tsv']:
         doc_format = 'tsv'
-        data, errors = utils.transforms.TSVToJSONConverter().convert(doc)
+        data, errors = utils.transforms.TSVToJSONConverter(is_gdc).convert(doc)
     else:
         doc_format = 'json'
         data = utils.parse.parse_request_json()
@@ -153,7 +154,7 @@ def unpack_bulk_wrapper(wrapper):
     )
 
 
-def _add_wrapper_to_bulk_transaction(transaction, wrapper, index):
+def _add_wrapper_to_bulk_transaction(transaction, wrapper, index, is_gdc=False):
     required_keys = {'doc_format', 'doc', 'name'}
     # Check object keys
     if required_keys - set(wrapper.keys()):
@@ -172,9 +173,11 @@ def _add_wrapper_to_bulk_transaction(transaction, wrapper, index):
         except Exception as e:
             raise UserError('Unable to parse doc {}: {}'.format(name, e))
     elif doc_format == 'tsv':
-        data, errors = utils.transforms.TSVToJSONConverter().convert(doc)
+        data, errors = utils.transforms.TSVToJSONConverter(
+            is_gdc=is_gdc).convert(doc)
     elif doc_format == 'csv':
-        data, errors = utils.transforms.CSVToJSONConverter().convert(doc)
+        data, errors = utils.transforms.CSVToJSONConverter(
+            is_gdc=is_gdc).convert(doc)
     else:
         raise UnsupportedError(doc_format)
 
@@ -182,14 +185,15 @@ def _add_wrapper_to_bulk_transaction(transaction, wrapper, index):
     transaction.add_doc(name, doc_format, doc, data)
 
 
-def bulk_transaction_worker(transaction, wrappers):
+def bulk_transaction_worker(transaction, wrappers, is_gdc=False):
     session = transaction.db_driver.session_scope(can_inherit=False)
 
     with session, transaction:
         # Add all docs to bulk transaction
         for i, wrapper in enumerate(wrappers):
             try:
-                _add_wrapper_to_bulk_transaction(transaction, wrapper, i)
+                _add_wrapper_to_bulk_transaction(transaction, wrapper, i,
+                                                 is_gdc)
             except UserError as exception:
                 name, doc, doc_format = unpack_bulk_wrapper(wrapper)
                 transaction.add_doc(name, doc_format, doc, {})
@@ -242,6 +246,7 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
             raise UserError(invalid_format_msg)
 
     is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
+    is_gdc = flask.current_app.config.get('IS_GDC')
 
     transaction = BulkUploadTransaction(
         program=program,
@@ -264,11 +269,10 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
                 "transaction_id": transaction.transaction_id,
             }
         flask.current_app.async_pool.schedule(
-            bulk_transaction_worker, transaction, wrappers
-        )
+            bulk_transaction_worker, transaction, wrappers, is_gdc)
         return flask.jsonify(response)
     else:
-        response, code = bulk_transaction_worker(transaction, wrappers)
+        response, code = bulk_transaction_worker(transaction, wrappers, is_gdc)
         return flask.jsonify(response), code
 
 

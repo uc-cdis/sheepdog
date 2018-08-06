@@ -2,11 +2,13 @@
 TODO
 """
 
+from logging import getLogger
 import csv
 import StringIO
 
 from flask import current_app
 from psqlgraph import Node
+from cdislogging import get_stream_handler
 
 from sheepdog.errors import (
     UserError,
@@ -15,6 +17,10 @@ from sheepdog.utils.transforms.bcr_xml_to_json import (
     BcrBiospecimenXmlToJsonParser,
     BcrClinicalXmlToJsonParser,
 )
+
+
+logger = getLogger(__name__)
+logger.addHandler(get_stream_handler())
 
 
 def parse_bool_from_string(value):
@@ -79,10 +85,11 @@ class DelimitedConverter(object):
     TODO
     """
 
-    def __init__(self):
+    def __init__(self, is_gdc=False):
         self.reader = csv.reader(StringIO.StringIO(''))
         self.errors = []
         self.docs = []
+        self.is_gdc = is_gdc
 
     def set_reader(self, _):
         """
@@ -101,7 +108,7 @@ class DelimitedConverter(object):
             self.set_reader(doc)
             map(self.add_row, self.reader)
         except Exception as e:
-            current_app.logger.exception(e)
+            logger.exception(e)
             raise UserError('Unable to parse document')
         return self.docs, self.errors
 
@@ -212,7 +219,7 @@ class DelimitedConverter(object):
         # Though it needs to be <type 'int'> only as indexd allows only integer size
         # Per Joe, The change of the model will require a full database migration and a maintanance shutdown
         # Below is a sad temporary workaround:
-        if current_app.config.get('IS_GDC', False):
+        if self.is_gdc:
             if key == 'file_size':
                 return int(value)
 
@@ -228,7 +235,7 @@ class DelimitedConverter(object):
             else:
                 return value_type(value)
         except Exception as exception:  # pylint: disable=broad-except
-            current_app.logger.exception(exception)
+            logger.exception(exception)
             return value
 
     @property
