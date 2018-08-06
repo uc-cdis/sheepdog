@@ -114,7 +114,9 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
         data = utils.parse.parse_request_json()
         errors = None
     # TODO: use errors value somehow instead of just logging it?
-    flask.current_app.logger.error('Data conversion errors: {}'.format(errors))
+    if errors:
+        flask.current_app.logger.error(
+            'Data conversion errors: {}'.format(errors))
 
     name = flask.request.headers.get('X-Document-Name', None)
     doc_args = [name, doc_format, doc, data]
