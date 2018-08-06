@@ -2,7 +2,6 @@
 TODO
 """
 
-from logging import getLogger
 import csv
 import StringIO
 
@@ -145,7 +144,8 @@ class DelimitedConverter(object):
             if value == 'null':
                 doc[key] = None
             else:
-                converted = self.convert_type(cls, key, value, self.is_gdc)
+                converted = self.convert_type(
+                    cls, key, value, enforce_int_file_size=self.is_gdc)
                 if converted is not None:
                     doc[key] = converted
 
@@ -161,7 +161,8 @@ class DelimitedConverter(object):
         """
         TODO
         """
-        converted_value = self.convert_type(cls, key, value, self.is_gdc)
+        converted_value = self.convert_type(
+            cls, key, value, enforce_int_file_size=self.is_gdc)
         if converted_value is None:
             return
         if value == 'null':
@@ -205,19 +206,23 @@ class DelimitedConverter(object):
             links[link] = {link_id: {prop: converted_value}}
 
     @staticmethod
-    def convert_type(to_cls, key, value, is_gdc=False):
+    def convert_type(to_cls, key, value, enforce_int_file_size=False):
         """
         Cast value based on key.
         TODO
+
+        FIXME: ``enforce_int_file_size`` is a GDC specific param and will have
+        to be removed once the comment below is resolved.
         """
         if value is None:
             return None
 
-        # Currently, gdcdatamodel.models.File.__pg_properties__['file_size'] = (<type 'float'>, <type 'int'>, <type 'long'>)
-        # Though it needs to be <type 'int'> only as indexd allows only integer size
-        # Per Joe, The change of the model will require a full database migration and a maintanance shutdown
+        # FIXME: Currently, gdcdatamodel.models.File.__pg_properties__['file_size'] = (<type 'float'>, <type 'int'>, <type 'long'>)
+        # Though it needs to be <type 'int'> only as indexd allows only integer
+        # size. Per Joe, The change of the model will require a full database
+        # migration and a maintanance shutdown.
         # Below is a sad temporary workaround:
-        if is_gdc:
+        if enforce_int_file_size:
             if key == 'file_size':
                 return int(value)
 
