@@ -6,7 +6,6 @@ from logging import getLogger
 import csv
 import StringIO
 
-from flask import current_app
 from psqlgraph import Node
 from cdislogging import get_stream_handler
 
@@ -147,7 +146,7 @@ class DelimitedConverter(object):
             if value == 'null':
                 doc[key] = None
             else:
-                converted = self.convert_type(cls, key, value)
+                converted = self.convert_type(cls, key, value, self.is_gdc)
                 if converted is not None:
                     doc[key] = converted
 
@@ -163,7 +162,7 @@ class DelimitedConverter(object):
         """
         TODO
         """
-        converted_value = self.convert_type(cls, key, value)
+        converted_value = self.convert_type(cls, key, value, self.is_gdc)
         if converted_value is None:
             return
         if value == 'null':
@@ -207,7 +206,7 @@ class DelimitedConverter(object):
             links[link] = {link_id: {prop: converted_value}}
 
     @staticmethod
-    def convert_type(to_cls, key, value):
+    def convert_type(to_cls, key, value, is_gdc=False):
         """
         Cast value based on key.
         TODO
@@ -219,7 +218,7 @@ class DelimitedConverter(object):
         # Though it needs to be <type 'int'> only as indexd allows only integer size
         # Per Joe, The change of the model will require a full database migration and a maintanance shutdown
         # Below is a sad temporary workaround:
-        if self.is_gdc:
+        if is_gdc:
             if key == 'file_size':
                 return int(value)
 

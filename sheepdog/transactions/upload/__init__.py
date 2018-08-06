@@ -113,7 +113,9 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
         doc_format = 'json'
         data = utils.parse.parse_request_json()
         errors = None
-    # TODO: use errors value?
+    # TODO: use errors value somehow instead of just logging it?
+    flask.current_app.logger.error('Data conversion errors: {}'.format(errors))
+
     name = flask.request.headers.get('X-Document-Name', None)
     doc_args = [name, doc_format, doc, data]
     is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
@@ -173,11 +175,9 @@ def _add_wrapper_to_bulk_transaction(transaction, wrapper, index, is_gdc=False):
         except Exception as e:
             raise UserError('Unable to parse doc {}: {}'.format(name, e))
     elif doc_format == 'tsv':
-        data, errors = utils.transforms.TSVToJSONConverter(
-            is_gdc=is_gdc).convert(doc)
+        data, _ = utils.transforms.TSVToJSONConverter(is_gdc).convert(doc)
     elif doc_format == 'csv':
-        data, errors = utils.transforms.CSVToJSONConverter(
-            is_gdc=is_gdc).convert(doc)
+        data, _ = utils.transforms.CSVToJSONConverter(is_gdc).convert(doc)
     else:
         raise UnsupportedError(doc_format)
 
