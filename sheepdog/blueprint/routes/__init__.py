@@ -177,18 +177,6 @@ routes = [
         methods=['PUT', 'POST'],
     ),
     new_route(
-        '/<program>/<project>/release',
-        views.program.project.create_release_project_viewer(),
-        endpoint='release_project',
-        methods=['PUT', 'POST'],
-    ),
-    new_route(
-        '/<program>/<project>/release/_dry_run',
-        views.program.project.create_release_project_viewer(dry_run=True),
-        endpoint='release_project_dry_run',
-        methods=['PUT', 'POST'],
-    ),
-    new_route(
         '/<program>/<project>/review',
         views.program.project.create_review_project_viewer(),
         endpoint='review_project',
