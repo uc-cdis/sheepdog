@@ -5,8 +5,8 @@ TODO
 import csv
 import StringIO
 
-from flask import current_app
 from psqlgraph import Node
+from cdislogging import get_logger
 
 from sheepdog.errors import (
     UserError,
@@ -15,6 +15,9 @@ from sheepdog.utils.transforms.bcr_xml_to_json import (
     BcrBiospecimenXmlToJsonParser,
     BcrClinicalXmlToJsonParser,
 )
+
+
+logger = get_logger(__name__)
 
 
 def parse_bool_from_string(value):
@@ -79,10 +82,11 @@ class DelimitedConverter(object):
     TODO
     """
 
-    def __init__(self):
+    def __init__(self, is_gdc=False):
         self.reader = csv.reader(StringIO.StringIO(''))
         self.errors = []
         self.docs = []
+        self.is_gdc = is_gdc
 
     def set_reader(self, _):
         """
@@ -101,7 +105,7 @@ class DelimitedConverter(object):
             self.set_reader(doc)
             map(self.add_row, self.reader)
         except Exception as e:
-            current_app.logger.exception(e)
+            logger.exception(e)
             raise UserError('Unable to parse document')
         return self.docs, self.errors
 
@@ -140,7 +144,8 @@ class DelimitedConverter(object):
             if value == 'null':
                 doc[key] = None
             else:
-                converted = self.convert_type(cls, key, value)
+                converted = self.convert_type(
+                    cls, key, value, enforce_int_file_size=self.is_gdc)
                 if converted is not None:
                     doc[key] = converted
 
@@ -156,7 +161,8 @@ class DelimitedConverter(object):
         """
         TODO
         """
-        converted_value = self.convert_type(cls, key, value)
+        converted_value = self.convert_type(
+            cls, key, value, enforce_int_file_size=self.is_gdc)
         if converted_value is None:
             return
         if value == 'null':
@@ -200,19 +206,23 @@ class DelimitedConverter(object):
             links[link] = {link_id: {prop: converted_value}}
 
     @staticmethod
-    def convert_type(to_cls, key, value):
+    def convert_type(to_cls, key, value, enforce_int_file_size=False):
         """
         Cast value based on key.
         TODO
+
+        FIXME: ``enforce_int_file_size`` is a GDC specific param and will have
+        to be removed once the comment below is resolved.
         """
         if value is None:
             return None
 
-        # Currently, gdcdatamodel.models.File.__pg_properties__['file_size'] = (<type 'float'>, <type 'int'>, <type 'long'>)
-        # Though it needs to be <type 'int'> only as indexd allows only integer size
-        # Per Joe, The change of the model will require a full database migration and a maintanance shutdown
+        # FIXME: Currently, gdcdatamodel.models.File.__pg_properties__['file_size'] = (<type 'float'>, <type 'int'>, <type 'long'>)
+        # Though it needs to be <type 'int'> only as indexd allows only integer
+        # size. Per Joe, The change of the model will require a full database
+        # migration and a maintanance shutdown.
         # Below is a sad temporary workaround:
-        if current_app.config.get('IS_GDC', False):
+        if enforce_int_file_size:
             if key == 'file_size':
                 return int(value)
 
@@ -228,7 +238,7 @@ class DelimitedConverter(object):
             else:
                 return value_type(value)
         except Exception as exception:  # pylint: disable=broad-except
-            current_app.logger.exception(exception)
+            logger.exception(exception)
             return value
 
     @property
