@@ -156,7 +156,7 @@ def unpack_bulk_wrapper(wrapper):
     )
 
 
-def _add_wrapper_to_bulk_transaction(transaction, wrapper, index, is_gdc=False):
+def _add_wrapper_to_bulk_transaction(transaction, wrapper, index):
     required_keys = {'doc_format', 'doc', 'name'}
     # Check object keys
     if required_keys - set(wrapper.keys()):
@@ -166,6 +166,7 @@ def _add_wrapper_to_bulk_transaction(transaction, wrapper, index, is_gdc=False):
         )
 
     name, doc, doc_format = unpack_bulk_wrapper(wrapper)
+    is_gdc = transaction._config.get('IS_GDC')
 
     # Parse doc
     doc_format = wrapper['doc_format'].lower()
@@ -185,15 +186,14 @@ def _add_wrapper_to_bulk_transaction(transaction, wrapper, index, is_gdc=False):
     transaction.add_doc(name, doc_format, doc, data)
 
 
-def bulk_transaction_worker(transaction, wrappers, is_gdc=False):
+def bulk_transaction_worker(transaction, wrappers):
     session = transaction.db_driver.session_scope(can_inherit=False)
 
     with session, transaction:
         # Add all docs to bulk transaction
         for i, wrapper in enumerate(wrappers):
             try:
-                _add_wrapper_to_bulk_transaction(transaction, wrapper, i,
-                                                 is_gdc)
+                _add_wrapper_to_bulk_transaction(transaction, wrapper, i)
             except UserError as exception:
                 name, doc, doc_format = unpack_bulk_wrapper(wrapper)
                 transaction.add_doc(name, doc_format, doc, {})
@@ -246,7 +246,6 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
             raise UserError(invalid_format_msg)
 
     is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
-    is_gdc = flask.current_app.config.get('IS_GDC')
 
     transaction = BulkUploadTransaction(
         program=program,
@@ -269,10 +268,10 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
                 "transaction_id": transaction.transaction_id,
             }
         flask.current_app.async_pool.schedule(
-            bulk_transaction_worker, transaction, wrappers, is_gdc)
+            bulk_transaction_worker, transaction, wrappers)
         return flask.jsonify(response)
     else:
-        response, code = bulk_transaction_worker(transaction, wrappers, is_gdc)
+        response, code = bulk_transaction_worker(transaction, wrappers)
         return flask.jsonify(response), code
 
 

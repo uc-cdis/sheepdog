@@ -7,7 +7,7 @@ import csv
 import StringIO
 
 from psqlgraph import Node
-from cdislogging import get_stream_handler
+from cdislogging import get_logger
 
 from sheepdog.errors import (
     UserError,
@@ -18,8 +18,7 @@ from sheepdog.utils.transforms.bcr_xml_to_json import (
 )
 
 
-logger = getLogger(__name__)
-logger.addHandler(get_stream_handler())
+logger = get_logger(__name__)
 
 
 def parse_bool_from_string(value):
