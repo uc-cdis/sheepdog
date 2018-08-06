@@ -54,7 +54,7 @@ def post_blgsp_files(client, headers):
     ('admin', 200, False),
 ])
 def test_to_delete(headers, status_code, to_delete, request, client,
-    pg_driver, cgci_blgsp, submitter):
+    pg_driver, cgci_blgsp, submitter, require_index_exists_off):
     """Try to set the sysan of a node with admin credentials
 
     Url:
@@ -99,7 +99,7 @@ def do_reassign(client, headers):
 
     return client.put(reassign_path, headers=headers, data=data), did, s3_url
 
-def test_reassign_with_admin(client, pg_driver, cgci_blgsp, submitter, index_client, admin):
+def test_reassign_with_admin(client, pg_driver, cgci_blgsp, submitter, index_client, admin, require_index_exists_off):
     """Try to reassign a node's remote URL
 
     Url:
@@ -112,7 +112,7 @@ def test_reassign_with_admin(client, pg_driver, cgci_blgsp, submitter, index_cli
     assert index_client.get(did), 'Did not register with indexd?'
     assert s3_url in index_client.get(did).urls, 'Did not successfully reassign'
 
-def test_reassign_without_admin(client, pg_driver, cgci_blgsp, submitter, index_client):
+def test_reassign_without_admin(client, pg_driver, cgci_blgsp, submitter, index_client, require_index_exists_off):
     """Try to reassign a node's remote URL
 
     Url:
