@@ -447,6 +447,9 @@ def create_files_viewer(dry_run=False):
             dry_run=dry_run,
         )
 
+        if isinstance(resp, flask.Response):
+            return resp
+
         return flask.Response(
             resp.read(), status=resp.status, headers=resp.getheaders(),
             mimetype='text/xml'
