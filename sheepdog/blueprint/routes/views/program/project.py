@@ -17,7 +17,7 @@ from sheepdog import models
 from sheepdog import transactions
 from sheepdog import utils
 from sheepdog.errors import (
-    AuthError,
+    AuthZError,
     NotFoundError,
     UserError,
 )
@@ -43,6 +43,7 @@ def create_viewer(method, bulk=False, dry_run=False):
     with ``dry_run`` being either True or False.
     """
     if method == 'POST':
+        print "in create viewer, POST method section"
         auth_roles = [ROLES['CREATE']]
         transaction_role = ROLES['CREATE']
     elif method == 'PUT':
@@ -359,6 +360,7 @@ def create_files_viewer(dry_run=False, reassign=False):
     """
     Create a view function for handling file operations.
     """
+    print "inside create_files_viewer"
     auth_roles = [
         ROLES['CREATE'], ROLES['UPDATE'], ROLES['DELETE'], ROLES['DOWNLOAD'],
         ROLES['READ'], ROLES['ADMIN'],
@@ -428,6 +430,7 @@ def create_files_viewer(dry_run=False, reassign=False):
             else:
                 raise UserError('Method GET not allowed on file', code=405)
         elif flask.request.method == 'POST':
+            print "in POST section of create_files_viewer"
             if flask.request.args.get('uploadId'):
                 action = 'complete_multipart'
             elif flask.request.args.get('uploads') is not None:
@@ -455,7 +458,7 @@ def create_files_viewer(dry_run=False, reassign=False):
         project_id = program + '-' + project
         role = PERMISSIONS[action]
         if role not in flask.g.user.roles[project_id]:
-            raise AuthError(
+            raise AuthZError(
                 "You don't have {} role to do '{}'".format(role, action)
             )
 
