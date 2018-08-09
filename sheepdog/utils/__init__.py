@@ -347,7 +347,7 @@ def get_indexd_state(did, url, indexd_client, return_not_found=False):
 
     # If url is provided return url's 'state' or None
     if url is not None:
-        return indexd_doc.get(url, {}).get('state')
+        return indexd_doc.urls_metadata.get(url, {}).get('state')
 
     # If url is None, lookup primary url
     for url, url_meta in indexd_doc.urls_metadata.items():
