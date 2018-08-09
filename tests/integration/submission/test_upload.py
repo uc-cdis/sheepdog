@@ -22,7 +22,7 @@ except ImportError:
     from mock import patch
 
 from gdcdatamodel.models import SubmittedAlignedReads, Case
-from sheepdog.globals import UPDATABLE_FILE_STATES
+from sheepdog.globals import UPDATABLE_FILE_STATES, RELEASED_NODE_STATES
 from sheepdog.transactions.upload.sub_entities import FileUploadEntity
 from sheepdog.test_settings import SUBMISSION
 from sheepdog.utils import (
@@ -663,8 +663,10 @@ def test_update_multiple_one_fails(
         'CREATE_REPLACEABLE': True
     }
 )
+@pytest.mark.parametrize('released_state', RELEASED_NODE_STATES)
 def test_update_released_non_file_node(
-        client_toggled, pg_driver, submitter, cgci_blgsp, indexd_client):
+        client_toggled, pg_driver, submitter, cgci_blgsp, indexd_client,
+        released_state):
     resp_json, sur_entity = data_file_creation(
         client_toggled, submitter,
         sur_filename='submitted_unaligned_reads.json')
@@ -673,10 +675,10 @@ def test_update_released_non_file_node(
     with pg_driver.session_scope():
         for entity in resp_json['entities']:
             node = pg_driver.nodes().get(entity['id'])
-            node.state = 'released'
+            node.state = released_state
 
         node = pg_driver.nodes().get(sur_entity['id'])
-        node.state = 'released'
+        node.state = released_state
 
     # Load original case.json to validate the values
     case_json = read_json_data(
@@ -720,8 +722,10 @@ def test_update_released_non_file_node(
         'CREATE_REPLACEABLE': True
     }
 )
+@pytest.mark.parametrize('released_state', RELEASED_NODE_STATES)
 def test_links_inherited_for_file_nodes(
-        client_toggled, pg_driver, submitter, cgci_blgsp, indexd_client):
+        client_toggled, pg_driver, submitter, cgci_blgsp, indexd_client,
+        released_state):
     resp_json, sar_entity = data_file_creation(
         client_toggled, submitter,
         sur_filename='submitted_aligned_reads.json'
@@ -746,9 +750,9 @@ def test_links_inherited_for_file_nodes(
     # Release all of the nodes
     with pg_driver.session_scope():
         for entity in resp_json['entities'] + resp_2.json['entities']:
-            pg_driver.nodes().get(entity['id']).state = 'released'
+            pg_driver.nodes().get(entity['id']).state = released_state
 
-        pg_driver.nodes().get(sar_entity['id']).state = 'released'
+        pg_driver.nodes().get(sar_entity['id']).state = released_state
 
     # Save children edges for Submitted Aligned Reads file node
     with pg_driver.session_scope():

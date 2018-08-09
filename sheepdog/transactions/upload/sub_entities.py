@@ -21,7 +21,7 @@ from sheepdog.transactions.upload.entity import (
 )
 from sheepdog.globals import (
     DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE, POSSIBLE_OPEN_FILE_NODES,
-    UPDATABLE_FILE_STATES
+    UPDATABLE_FILE_STATES, RELEASED_NODE_STATES
 )
 from sheepdog.errors import UserError
 from sqlalchemy.orm.exc import NoResultFound
@@ -170,7 +170,7 @@ class FileUploadEntity(UploadEntity):
         # entity_id is set to the node_id here
         node = super(FileUploadEntity, self).get_node_merge()
 
-        if node.state == 'released':
+        if node.state in RELEASED_NODE_STATES:
             node = self.get_node_recreate()
 
         self._populate_file_exist_in_index()
