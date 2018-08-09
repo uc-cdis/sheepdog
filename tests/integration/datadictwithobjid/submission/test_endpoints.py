@@ -169,6 +169,8 @@ def test_put_entity_creation_valid(client, pg_driver, cgci_blgsp, submitter):
 def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter):
     # token for TCGA
     headers = {'Authorization': 'test'}
+    print "in test_unauthorized_post in test_endpoints.py, headers are: "
+    print headers
     data = json.dumps({
         "type": "case",
         "submitter_id": "BLGSP-71-06-00019",
@@ -177,6 +179,7 @@ def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter):
         }
     })
     resp = client.post(BLGSP_PATH, headers=headers, data=data)
+    print resp.status_code
     assert resp.status_code == 403
 
 
