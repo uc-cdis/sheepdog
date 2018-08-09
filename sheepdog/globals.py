@@ -221,3 +221,9 @@ UPDATABLE_FILE_STATES = [
     'validating',
     'error',
 ]
+
+# Below is the list of node states that are treated as "released"
+RELEASED_NODE_STATES = [
+    'released',
+    'live',
+]
