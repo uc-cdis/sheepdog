@@ -22,7 +22,7 @@ except ImportError:
     from mock import patch
 
 from gdcdatamodel.models import SubmittedAlignedReads, Case
-from sheepdog.globals import UPDATABLE_FILE_STATES
+from sheepdog.globals import UPDATABLE_FILE_STATES, RELEASED_NODE_STATES
 from sheepdog.transactions.upload.sub_entities import FileUploadEntity
 from sheepdog.test_settings import SUBMISSION
 from sheepdog.utils import (
@@ -663,7 +663,7 @@ def test_update_multiple_one_fails(
         'CREATE_REPLACEABLE': True
     }
 )
-@pytest.mark.parametrize('released_state', ['released', 'live'])
+@pytest.mark.parametrize('released_state', RELEASED_NODE_STATES)
 def test_update_released_non_file_node(
         client_toggled, pg_driver, submitter, cgci_blgsp, indexd_client,
         released_state):
@@ -722,7 +722,7 @@ def test_update_released_non_file_node(
         'CREATE_REPLACEABLE': True
     }
 )
-@pytest.mark.parametrize('released_state', ['released', 'live'])
+@pytest.mark.parametrize('released_state', RELEASED_NODE_STATES)
 def test_links_inherited_for_file_nodes(
         client_toggled, pg_driver, submitter, cgci_blgsp, indexd_client,
         released_state):
