@@ -31,6 +31,7 @@ from sheepdog.globals import (
     UPLOADING_PARTS,
     DATA_FILE_CATEGORIES,
     STATES_COMITTABLE_DRY_RUN,
+    PRIMARY_URL_TYPE,
 )
 from sheepdog.utils.transforms.graph_to_doc import (
     entity_to_template,
@@ -344,16 +345,16 @@ def get_indexd_state(did, url, indexd_client, return_not_found=False):
     if indexd_doc is None:
         return None
 
-    # Get url from urls_metadata if None is provided
-    if url is None:
-        urls = indexd_doc.urls_metadata.keys()
-        if len(urls) == 0:
-            raise UserError('No urls found for {}'.format(did))
-        elif len(urls) > 1:
-            raise UserError('Multiple urls found for {}: {}'.format(did, urls))
-        url = urls[0]
+    # If url is provided return url's 'state' or None
+    if url is not None:
+        return indexd_doc.get(url, {}).get('state')
 
-    return indexd_doc.urls_metadata[url].get('state')
+    # If url is None, lookup primary url
+    for url, url_meta in indexd_doc.urls_metadata.items():
+        if url_meta.get('type') == PRIMARY_URL_TYPE:
+            return url_meta.get('state')
+
+    raise UserError('No primary url found for {}'.format(did))
 
 
 def set_indexd_state(indexd_doc, url, state):
