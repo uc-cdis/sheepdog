@@ -630,3 +630,20 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
     assert len(r.data.strip().split('\n')) == case_count + 1
+
+
+def test_export_json_error(client, cgci_blgsp, submitter):
+    """
+    Certain node types don't make to export through the
+    ``/{program}/{project}/export`` endpoint, specifically ``_all`` and
+    ``root``. Test that trying to export using these as the node_label argument
+    fails with 400.
+    """
+    for node_label in ['_all', 'root']:
+        path = (
+            '/v0/submission/CGCI/BLGSP/export/'
+            '?file_format=json'
+            '&node_label={}'.format(node_label)
+        )
+        response = client.get(path, headers=submitter)
+        assert response.status_code == 400

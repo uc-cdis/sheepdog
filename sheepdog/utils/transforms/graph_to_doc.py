@@ -32,6 +32,13 @@ log = get_logger(__name__)
 
 TEMPLATE_NAME = 'submission_templates.tar.gz'
 
+# This is the list of node types which cannot be exported using the export
+# endpoint.
+UNSUPPORTED_EXPORT_NODE_TYPES = [
+    '_all',
+    'root',
+]
+
 
 def parse_ids(ids):
     """
@@ -702,6 +709,14 @@ class ExportFile(object):
         return self.result
 
 
+def validate_export_node(node_label):
+    if node_label in UNSUPPORTED_EXPORT_NODE_TYPES:
+        raise UserError(
+            message='cannot export {}'.format(node_label),
+            code=400,
+        )
+
+
 def export_all(node_label, project_id, file_format, db, **kwargs):
     """
     Export all nodes of type with name ``node_label`` to a TSV file and yield
@@ -834,19 +849,15 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
         # (<Case(...[uuid]...)>, u'...[uuid]...', u'exp-01')
 
         if file_format == "json":
-          yield '{ "data": ['        
-        else: # json
-          # Yield the lines of the file.
-          yield '{}\n'.format('\t'.join(titles))
-        
+            yield '{ "data": ['
+        else:  # json
+            # Yield the lines of the file.
+            yield '{}\n'.format('\t'.join(titles))
+
         js_list_separator = ''
         for result in query.yield_per(1000):
             row = []
-            json_obj = {
-              "link_fields": {
-
-              }
-            }
+            json_obj = {"link_fields": {}}
             # Write in the properties from just the node.
             node = result[0]
             for prop in props:
@@ -855,17 +866,16 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
             # Tack on the linked properties.
             row.extend(map(lambda col: col or '', result[1:]))
             for idx, title in enumerate(titles_linked):
-              json_obj["link_fields"][title] = result[idx+1] or ''
+                json_obj["link_fields"][title] = result[idx + 1] or ''
             # Convert row elements to string if they are not
             for idx, val in enumerate(row):
                 if not isinstance(val, str):
                     row[idx] = str(row[idx])
             if file_format == "json":
-              yield js_list_separator + json.dumps(json_obj)
+                yield js_list_separator + json.dumps(json_obj)
             else:
-              yield '{}\n'.format('\t'.join(row))
+                yield '{}\n'.format('\t'.join(row))
             js_list_separator = ','
-        
-        if file_format == "json":
-          yield ']}'
 
+        if file_format == "json":
+            yield ']}'
