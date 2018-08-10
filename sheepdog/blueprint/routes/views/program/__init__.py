@@ -109,6 +109,7 @@ def create_project(program):
     :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
     :resheader Content-Type: |resheader_Content-Type|
     :statuscode 200: Registered successfully.
+    :statuscode 400: User error.
     :statuscode 404: Program not found.
     :statuscode 403: Unauthorized request.
 
@@ -162,6 +163,15 @@ def create_project(program):
         if not node:
             # Create a new project node
             node_uuid = str(uuid.uuid5(PROJECT_SEED, project.encode('utf-8')))
+            if (
+                flask.current_app
+                .db.nodes(models.Project)
+                .ids(node_uuid)
+                .first()
+            ):
+                raise UserError('ERROR: Project {} already exists in DB'
+                                .format(project))
+
             node = models.Project(node_uuid)  # pylint: disable=not-callable
             node.programs = [program_node]
             action = 'create'
@@ -188,22 +198,19 @@ def create_project(program):
             role=ROLES['UPDATE'],
             flask_config=flask.current_app.config
         )
-        try:
-            with UploadTransaction(**transaction_args) as trans:
-                node = session.merge(node)
-                session.commit()
-                entity = UploadEntityFactory.create(
-                    trans, doc=None, config=flask.current_app.config)
-                entity.action = action
-                entity.doc = doc
-                entity.entity_type = 'project'
-                entity.unique_keys = node._secondary_keys_dicts
-                entity.node = node
-                entity.entity_id = entity.node.node_id
-                trans.entities = [entity]
-                return flask.jsonify(trans.json)
-        except sqlalchemy.exc.IntegrityError as e:
-            raise UserError(e.message)
+        with UploadTransaction(**transaction_args) as trans:
+            node = session.merge(node)
+            session.commit()
+            entity = UploadEntityFactory.create(
+                trans, doc=None, config=flask.current_app.config)
+            entity.action = action
+            entity.doc = doc
+            entity.entity_type = 'project'
+            entity.unique_keys = node._secondary_keys_dicts
+            entity.node = node
+            entity.entity_id = entity.node.node_id
+            trans.entities = [entity]
+            return flask.jsonify(trans.json)
 
 
 def create_transactions_viewer(operation, dry_run=False):
