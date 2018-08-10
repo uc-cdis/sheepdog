@@ -61,6 +61,16 @@ def put_cgci(client, auth=None):
     r = client.put(path, headers=headers, data=data)
     return r
 
+def put_cgci2(client, auth=None):
+    path = '/v0/submission'
+    headers = auth
+    data = json.dumps({
+        'name': 'CGCI2', 'type': 'program',
+        'dbgap_accession_number': 'phs0002352'
+    })
+    r = client.put(path, headers=headers, data=data)
+    return r
+
 
 def put_cgci_blgsp(client, auth=None):
     put_cgci(client, auth=auth)
@@ -127,6 +137,7 @@ def test_program_creation_endpoint_for_program_not_supported(
 def test_project_creation_endpoint(client, pg_driver, admin):
     resp = put_cgci_blgsp(client, auth=admin)
     assert resp.status_code == 200
+
     resp = client.get('/v0/submission/CGCI/')
     with pg_driver.session_scope():
         assert pg_driver.nodes(md.Project).count() == 1
@@ -151,6 +162,23 @@ def test_project_creation_without_admin_token(client, pg_driver, submitter, admi
             "name": "Burkitt Lymphoma Genome Sequencing Project",
             "state": "open"}))
     assert resp.status_code == 403
+
+
+def test_project_creation_invalid_due_to_registed_project_name(client, pg_driver, admin):
+    resp = put_cgci_blgsp(client, auth=admin)
+    assert resp.status_code == 200
+    resp = put_cgci2(client, auth=admin)
+    assert resp.status_code == 200
+
+    path = '/v0/submission/CGCI2/'
+    resp = client.put(
+        path, headers=admin, data=json.dumps({
+            "type": "project",
+            "code": "BLGSP",
+            "dbgap_accession_number": "phs000527",
+            "name": "Burkitt Lymphoma Genome Sequencing Project",
+            "state": "open"}))
+    assert resp.status_code == 400
 
 
 def test_put_entity_creation_valid(client, pg_driver, cgci_blgsp, submitter):
