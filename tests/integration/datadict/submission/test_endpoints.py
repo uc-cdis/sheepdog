@@ -184,7 +184,7 @@ def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter):
     # token for TCGA
     headers = submitter
     data = json.dumps({
-        "type": "case",
+        "type": "experiment",
         "submitter_id": "BLGSP-71-06-00019",
         "projects": {
             "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
