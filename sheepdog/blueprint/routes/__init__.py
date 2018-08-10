@@ -68,6 +68,11 @@ routes = [
         methods=['PUT', 'POST', 'PATCH'],
     ),
     new_route(
+        '/<program>',
+        views.program.delete_project,
+        method=['DELETE'],
+    ),
+    new_route(
         '/<program>/<project>',
         views.program.project.create_viewer('POST'),
         endpoint='create_entities',
