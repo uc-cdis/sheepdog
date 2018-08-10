@@ -38,6 +38,23 @@ UNSUPPORTED_EXPORT_NODE_TYPES = [
     '_all',
     'root',
 ]
+UNSUPPORTED_EXPORT_NODE_CATEGORIES = [
+    'internal',
+]
+
+
+def get_node_category(node_type):
+    """
+    Get the category for the given node type specified
+
+    Args:
+        node_type (str): the type of node
+
+    Returns:
+        str: node category
+    """
+    cls = psqlgraph.Node.get_subclass(node_type)
+    return cls._dictionary.get('category')
 
 
 def parse_ids(ids):
@@ -710,11 +727,31 @@ class ExportFile(object):
 
 
 def validate_export_node(node_label):
+    """
+    Raise a ``UserError`` if there is any reason that nodes with the type
+    specified by ``node_label`` should not be exported. This m
+
+    Args:
+        node_label (str): string of the node type
+
+    Return:
+        None
+
+    Raises:
+        UserError: if the node cannot be exported
+    """
+    if node_label not in dictionary.schema:
+        raise UserError(
+            'dictionary does not have node with type {}'.format(node_label)
+        )
     if node_label in UNSUPPORTED_EXPORT_NODE_TYPES:
         raise UserError(
             message='cannot export {}'.format(node_label),
             code=400,
         )
+    category = get_node_category(node_label)
+    if category in UNSUPPORTED_EXPORT_NODE_CATEGORIES:
+        raise UserError('cannot export node with category `internal`')
 
 
 def export_all(node_label, project_id, file_format, db, **kwargs):

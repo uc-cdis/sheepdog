@@ -18,6 +18,7 @@ import urlparse
 import boto
 import flask
 from fuzzywuzzy.process import extract
+import psqlgraph
 
 from sheepdog import dictionary
 from sheepdog import models
@@ -41,6 +42,7 @@ from sheepdog.utils.transforms.graph_to_doc import (
     entity_to_template_delimited,
     entity_to_template_json,
     entity_to_template_str,
+    get_node_category,
 )
 from . import parse
 from . import s3

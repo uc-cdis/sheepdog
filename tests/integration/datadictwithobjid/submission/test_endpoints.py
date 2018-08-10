@@ -516,6 +516,7 @@ def test_invalid_json(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 400
     assert 'Expecting value' in resp.json['message']
 
+
 def test_get_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope():
@@ -595,6 +596,7 @@ def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter,
     assert sur_entity, 'No submitted_unaligned_reads entity created'
     assert index_client.get(object_id), 'No indexd document created'
 
+
 def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope():
@@ -614,6 +616,7 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     assert len(data) == 1
     assert data[0]['id'] == case_id
 
+
 def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope() as s:
@@ -632,18 +635,20 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     assert len(r.data.strip().split('\n')) == case_count + 1
 
 
-def test_export_json_error(client, cgci_blgsp, submitter):
+@pytest.mark.parametrize('file_type', ['json', 'tsv'])
+def test_export_error(client, cgci_blgsp, submitter, file_type):
     """
-    Certain node types don't make to export through the
-    ``/{program}/{project}/export`` endpoint, specifically ``_all`` and
-    ``root``. Test that trying to export using these as the node_label argument
-    fails with 400.
+    Certain node types and categories cant't be exported through the
+    ``/{program}/{project}/export`` endpoint (such as ``_all`` and ``root``).
+    Test that trying to export using these as the node_label argument fails
+    with 400.
     """
-    for node_label in ['_all', 'root']:
+    for node_label in ['root', '_all']:
         path = (
             '/v0/submission/CGCI/BLGSP/export/'
-            '?file_format=json'
-            '&node_label={}'.format(node_label)
+            '?file_format={}'
+            '&node_label={}'
+            .format(file_type, node_label)
         )
         response = client.get(path, headers=submitter)
         assert response.status_code == 400
