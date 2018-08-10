@@ -7,7 +7,8 @@ from psqlgraph import PsqlGraphDriver
 
 from authutils.oauth2 import client as oauth2_client
 from authutils.oauth2.client import blueprint as oauth2_blueprint
-from authutils import AuthError
+from authutils import AuthNError
+from authutils import AuthZError
 from cdispyutils.log import get_handler
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators, postgres_admin
@@ -193,8 +194,8 @@ def _log_and_jsonify_exception(e):
     """
     Log an exception and return the jsonified version along with the code.
 
-    This is the error handling mechanism for ``APIErrors`` and
-    ``AuthError``.
+    This is the error handling mechanism for ``APIErrors``,
+    ``AuthNError``, and ``AuthZError``.
     """
     app.logger.exception(e)
     if hasattr(e, 'json') and e.json:
@@ -208,7 +209,8 @@ app.register_error_handler(APIError, _log_and_jsonify_exception)
 app.register_error_handler(
     sheepdog.errors.APIError, _log_and_jsonify_exception
 )
-app.register_error_handler(AuthError, _log_and_jsonify_exception)
+app.register_error_handler(AuthNError, _log_and_jsonify_exception)
+app.register_error_handler(AuthZError, _log_and_jsonify_exception)
 
 
 def run_for_development(**kwargs):

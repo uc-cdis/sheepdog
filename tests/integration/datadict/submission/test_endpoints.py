@@ -191,7 +191,7 @@ def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter):
         }
     })
     resp = client.post(BLGSP_PATH, headers=headers, data=data)
-    print resp
+    print resp.json
     assert resp.status_code == 403
 
 
