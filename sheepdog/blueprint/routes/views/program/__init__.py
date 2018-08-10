@@ -188,20 +188,22 @@ def create_project(program):
             role=ROLES['UPDATE'],
             flask_config=flask.current_app.config
         )
-
-        with UploadTransaction(**transaction_args) as trans:
-            node = session.merge(node)
-            session.commit()
-            entity = UploadEntityFactory.create(
-                trans, doc=None, config=flask.current_app.config)
-            entity.action = action
-            entity.doc = doc
-            entity.entity_type = 'project'
-            entity.unique_keys = node._secondary_keys_dicts
-            entity.node = node
-            entity.entity_id = entity.node.node_id
-            trans.entities = [entity]
-            return flask.jsonify(trans.json)
+        try:
+            with UploadTransaction(**transaction_args) as trans:
+                node = session.merge(node)
+                session.commit()
+                entity = UploadEntityFactory.create(
+                    trans, doc=None, config=flask.current_app.config)
+                entity.action = action
+                entity.doc = doc
+                entity.entity_type = 'project'
+                entity.unique_keys = node._secondary_keys_dicts
+                entity.node = node
+                entity.entity_id = entity.node.node_id
+                trans.entities = [entity]
+                return flask.jsonify(trans.json)
+        except sqlalchemy.exc.IntegrityError as e:
+            raise UserError(e.message)
 
 
 def create_transactions_viewer(operation, dry_run=False):
