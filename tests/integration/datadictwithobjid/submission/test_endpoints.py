@@ -208,20 +208,6 @@ def test_unauthenticated_post(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 401
 
 
-def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter):
-    # token for TCGA
-    headers = submitter
-    data = json.dumps({
-        "type": "case",
-        "submitter_id": "BLGSP-71-06-00019",
-        "projects": {
-            "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
-        }
-    })
-    resp = client.post(BLGSP_PATH, headers=headers, data=data)
-    assert resp.status_code == 403
-
-
 def test_unauthorized_post_with_incorrect_role(client, pg_driver, cgci_blgsp, member):
     # token only has _member_ role in CGCI
     headers = member
