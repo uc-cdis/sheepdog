@@ -180,9 +180,9 @@ def test_unauthenticated_post(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 401
 
 
-def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter):
+def test_unauthorized_post(client, pg_driver, cgci_blgsp, unauthorized):
     # token for TCGA
-    headers = submitter
+    headers = unauthorized
     data = json.dumps({
         "type": "case",
         "submitter_id": "BLGSP-71-06-00019",
