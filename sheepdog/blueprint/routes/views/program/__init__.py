@@ -13,6 +13,7 @@ from sheepdog import auth
 from sheepdog import dictionary
 from sheepdog import models
 from sheepdog import utils
+from sheepdog.auth import current_user
 from sheepdog.blueprint.routes.views.program import project
 from sheepdog.errors import (
     APINotImplemented,
@@ -135,7 +136,7 @@ def create_project(program):
                 "state": "active"
             }
     """
-    auth.admin_auth()
+    current_user.require_admin()
     doc = utils.parse.parse_request_json()
     if not isinstance(doc, dict):
         raise UserError('Program endpoint only supports single documents')

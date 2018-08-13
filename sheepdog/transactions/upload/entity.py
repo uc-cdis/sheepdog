@@ -612,7 +612,7 @@ class UploadEntity(EntityBase):
 
     def get_user_roles(self, user=None):
         user = user or self.transaction.user
-        return user.roles.get(self.transaction.project_id, [])
+        return user.projects.get(self.transaction.project_id, [])
 
     def is_case_creation_allowed(self, case_id):
         """

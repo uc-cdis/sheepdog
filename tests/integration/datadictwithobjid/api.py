@@ -20,7 +20,6 @@ from indexd.auth.drivers.alchemy import SQLAlchemyAuthDriver
 from psqlgraph import PsqlGraphDriver
 from userdatamodel.driver import SQLAlchemyDriver
 
-from sheepdog.auth import AuthDriver
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
 from sheepdog.version_data import VERSION, COMMIT
 from sheepdog.globals import (
@@ -62,11 +61,6 @@ def db_init(app):
         app.config['SIGNPOST']['host'],
         version=app.config['SIGNPOST']['version'],
         auth=app.config['SIGNPOST']['auth'])
-    try:
-        app.logger.info('Initializing Auth driver')
-        app.auth = AuthDriver(app.config["AUTH_ADMIN_CREDS"], app.config["INTERNAL_AUTH"])
-    except Exception:
-        app.logger.exception("Couldn't initialize auth, continuing anyway")
 
 
 def app_init(app):
@@ -248,16 +242,6 @@ def setup_sqlite3_alias_tables():
                 PRAGMA table_info ('{table}')
             '''.format(table=table))
 
-def setup_sqlite3_auth_tables(username, password):
-    """Setup the SQLite3 auth database."""
-    auth_driver = SQLAlchemyAuthDriver('sqlite:///auth.sq3')
-    try:
-        auth_driver.add(username, password)
-    except Exception as error:
-        print('Unable to create auth tables')
-        print(error)
-
 def indexd_init(username, password):
     setup_sqlite3_index_tables()
     setup_sqlite3_alias_tables()
-    setup_sqlite3_auth_tables(username, password)

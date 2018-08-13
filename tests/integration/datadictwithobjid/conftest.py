@@ -21,7 +21,7 @@ from datamodelutils import models, validators
 
 import sheepdog
 import utils
-from sheepdog.auth import roles
+from sheepdog.auth import ROLES
 from sheepdog.test_settings import (
     PSQL_USER_DB_CONNECTION,
     Fernet,
@@ -40,6 +40,7 @@ def get_parent(path):
 
 PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/datadictwithobjid/schemas'
 
+
 @pytest.fixture(scope='session')
 def pg_config():
     test_host = 'localhost'
@@ -53,13 +54,16 @@ def pg_config():
         database=test_db,
     )
 
+
 @pytest.fixture
 def require_index_exists_on(app, monkeypatch):
     monkeypatch.setitem(app.config, 'REQUIRE_FILE_INDEX_EXISTS', True)
 
+
 @pytest.fixture
 def require_index_exists_off(app, monkeypatch):
     monkeypatch.setitem(app.config, 'REQUIRE_FILE_INDEX_EXISTS', False)
+
 
 def wait_for_indexd_alive(port):
     url = 'http://localhost:{}/_status'.format(port)
@@ -246,13 +250,16 @@ def admin(pg_driver):
 def member(pg_driver):
     return create_user_header(pg_driver, 'member')
 
+
 @pytest.fixture()
 def cgci_blgsp(client, admin):
     put_cgci_blgsp(client, admin)
 
+
 @pytest.fixture()
 def index_client():
     return IndexClient(SIGNPOST['host'], SIGNPOST['version'], SIGNPOST['auth'])
+
 
 def dictionary_setup(_app):
     url = 's3://testurl'

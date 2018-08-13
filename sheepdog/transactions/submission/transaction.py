@@ -34,7 +34,7 @@ class SubmissionTransaction(TransactionBase):
         if utils.should_send_email(self.app_config):
             self.smtp_conf = smtp_conf
 
-        if ROLE_SUBMIT not in self.user.roles.get(self.project_id, []):
+        if ROLE_SUBMIT not in self.user.projects.get(self.project_id, []):
             self.record_error(
                 'You do not have submit permission for project {}'
                 .format(self.project_id),

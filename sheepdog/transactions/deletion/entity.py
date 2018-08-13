@@ -25,7 +25,7 @@ class DeletionEntity(EntityBase):
         self.neighbors = [edge.src for edge in node.edges_in]
 
         # Check user permissions for deleting nodes
-        roles = self.transaction.user.roles.get(self.transaction.project_id, [])
+        roles = self.transaction.user.projects.get(self.transaction.project_id, [])
         if 'delete' not in roles:
             self.record_error(
                 'You do not have delete permission for project {}'
