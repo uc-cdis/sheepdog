@@ -3,6 +3,18 @@
 cd /var/www/sheepdog
 
 export PYTHONUNBUFFERED=TRUE
+#
+# Update certificate authority index -
+# environment may have mounted more authorities
+# - ex: /usr/local/share/ca-certificates/cdis-ca.crt into system bundle       
+#
+update-ca-certificates
+#
+# Enable debug flag based on GEN3_DEBUG environment
+#
+if [ -f ./wsgi.py && "$GEN3_DEBUG" == "True" ]; then
+  echo -e "\napplication.debug=True\n" >> ./wsgi.py
+fi  
 
 (
   # Wait for nginx to create uwsgi.sock
