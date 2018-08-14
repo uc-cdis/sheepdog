@@ -213,12 +213,6 @@ def create_project(program):
             return flask.jsonify(trans.json)
 
 
-@utils.assert_project_exists
-def delete_project(program, project):
-    """
-    Delete project under a specific program
-    """
-
 def create_transactions_viewer(operation, dry_run=False):
 
     # TODO TODO !!

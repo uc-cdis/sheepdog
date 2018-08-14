@@ -6,7 +6,7 @@ View functions for routes in the blueprint for '/<program>/<project>' paths.
 """
 
 import json
-
+import copy
 import flask
 import sqlalchemy
 import yaml
@@ -845,3 +845,21 @@ def create_clinical_viewer(dry_run=False):
         )
 
     return update_entities_clinical_bcr
+
+
+@utils.assert_project_exists
+def delete_project(program, project):
+    """
+    Delete project under a specific program
+    """
+    from sheepdog import transactions
+    from sheepdog import auth
+    auth.admin_auth()
+    with flask.current_app.db.session_scope() as session:
+        node = utils.lookup_project(flask.current_app.db, program, project)
+        if node.edges_in:
+            raise UserError('ERROR: Can not delete the project. Project {} is not empty'.format(project))
+        session.delete(node)
+        session.commit()
+        return flask.jsonify({"Message": "The project is successfully delelted"})
+

@@ -658,3 +658,62 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
     assert len(r.data.strip().split('\n')) == case_count + 1
+
+
+def test_put_entity_creation_validi2(client, pg_driver, cgci_blgsp, submitter):
+    headers = submitter
+    data = json.dumps({
+        "type": "experiment",
+        "submitter_id": "BLGSP-71-06-00019",
+        "projects": {
+            "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
+        }
+    })
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+
+
+def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
+    """
+    Test that raises exception when attemping to delete non-empty project
+    """
+    headers = submitter
+    resp = client.put(
+        BLGSP_PATH, headers=headers, data=json.dumps({
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {
+                "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
+            }}))
+    assert resp.status_code == 200
+
+    path = '/v0/submission/CGCI/BLGSP'
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 400
+
+
+def test_delete_project_without_admin_token(client, pg_driver, cgci_blgsp, member):
+    """
+    Test that raises exception when attemping to delete non-empty project
+    """
+    path = '/v0/submission/CGCI/BLGSP'
+    resp = client.delete(path, headers=member)
+    assert resp.status_code == 403
+
+
+def test_delete_wrong_project(client, pg_driver, cgci_blgsp, submitter, admin):
+    """
+    Test that raises exception when attemping to delete non-empty project
+    """
+    path = '/v0/submission/CGCI/some_project'
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 404
+
+
+def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
+    """
+    Test that raises exception when attemping to delete non-empty project
+    """
+    path = '/v0/submission/CGCI/BLGSP'
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 200
