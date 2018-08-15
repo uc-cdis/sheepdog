@@ -25,6 +25,7 @@ from sheepdog.errors import (
 from sheepdog.globals import (
     DELIMITERS,
     SUPPORTED_FORMATS,
+    MAX_EXPORTED_CHILDREN,
 )
 
 
@@ -556,7 +557,7 @@ class ExportFile(object):
         Walk down spanning tree of graph, traversing to edges_in and filtering
         by self.category.
         """
-        for edge in node.edges_in:
+        for edge in node.edges_in[:MAX_EXPORTED_CHILDREN]:
             if edge.src.props.get('project_id') != node.project_id:
                 log.warn(
                     "skip edge %s for %s that's not in project %s", str(edge),
@@ -834,11 +835,11 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
         # (<Case(...[uuid]...)>, u'...[uuid]...', u'exp-01')
 
         if file_format == "json":
-          yield '{ "data": ['        
+          yield '{ "data": ['
         else: # json
           # Yield the lines of the file.
           yield '{}\n'.format('\t'.join(titles))
-        
+
         js_list_separator = ''
         for result in query.yield_per(1000):
             row = []
@@ -865,7 +866,6 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
             else:
               yield '{}\n'.format('\t'.join(row))
             js_list_separator = ','
-        
+
         if file_format == "json":
           yield ']}'
-
