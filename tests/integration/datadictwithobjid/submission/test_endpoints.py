@@ -712,13 +712,23 @@ def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
         assert not project
 
 
-def test_delete_non_program(client, pg_driver, cgci_blgsp, admin):
+def test_delete_empty_non_program(client, pg_driver, cgci_blgsp, admin):
     """
     Test that raise an exception when attempting to delete a non-empty program
     """
     path = '/v0/submission/CGCI'
     resp = client.delete(path, headers=admin)
     assert resp.status_code == 400
+
+
+def test_delete_program_without_admin_token(client, pg_driver, admin, member):
+    """
+    Test that successfully delete an empty program
+    """
+    path = '/v0/submission/CGCI'
+    put_cgci(client, admin)
+    resp = client.delete(path, headers=member)
+    assert resp.status_code == 403
 
 
 def test_delete_program(client, pg_driver, admin):

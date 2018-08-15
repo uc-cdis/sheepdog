@@ -10,7 +10,6 @@ import json
 import flask
 import sqlalchemy
 import yaml
-import copy
 
 from sheepdog import auth
 from sheepdog import dictionary
