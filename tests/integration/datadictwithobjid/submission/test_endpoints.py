@@ -663,7 +663,7 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
 
 def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
     """
-    Test that raises exception when attemping to delete non-empty project
+    Test that raises an exception when attemping to delete non-empty project
     """
     headers = submitter
     resp = client.put(
@@ -681,7 +681,7 @@ def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter, admi
 
 def test_delete_project_without_admin_token(client, pg_driver, cgci_blgsp, member):
     """
-    Test that raises exception when attemping to delete non-empty project
+    Test that raises an exception when attemping to delete non-empty project
     """
     path = '/v0/submission/CGCI/BLGSP'
     resp = client.delete(path, headers=member)
@@ -690,7 +690,7 @@ def test_delete_project_without_admin_token(client, pg_driver, cgci_blgsp, membe
 
 def test_delete_non_existed_project(client, pg_driver, cgci_blgsp, submitter, admin):
     """
-    Test that raises exception when attemping to delete a non-existed project
+    Test that raises an exception when attemping to delete a non-existed project
     """
     path = '/v0/submission/CGCI/NOT_EXIST'
     resp = client.delete(path, headers=admin)
@@ -699,7 +699,7 @@ def test_delete_non_existed_project(client, pg_driver, cgci_blgsp, submitter, ad
 
 def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
     """
-    Test that successfully delete an empty  project
+    Test that successfully deletes an empty project
     """
     path = '/v0/submission/CGCI/BLGSP'
     resp = client.delete(path, headers=admin)
@@ -714,7 +714,7 @@ def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
 
 def test_delete_empty_non_program(client, pg_driver, cgci_blgsp, admin):
     """
-    Test that raise an exception when attempting to delete a non-empty program
+    Test that raises an exception when attempting to delete a non-empty program
     """
     path = '/v0/submission/CGCI'
     resp = client.delete(path, headers=admin)
@@ -723,7 +723,7 @@ def test_delete_empty_non_program(client, pg_driver, cgci_blgsp, admin):
 
 def test_delete_program_without_admin_token(client, pg_driver, admin, member):
     """
-    Test that successfully delete an empty program
+    Test that successfully deletes an empty program
     """
     path = '/v0/submission/CGCI'
     put_cgci(client, admin)
@@ -733,7 +733,7 @@ def test_delete_program_without_admin_token(client, pg_driver, admin, member):
 
 def test_delete_program(client, pg_driver, admin):
     """
-    Test that successfully delete an empty program
+    Test that successfully deletes an empty program
     """
     path = '/v0/submission/CGCI'
     put_cgci(client, admin)
@@ -747,9 +747,22 @@ def test_delete_program(client, pg_driver, admin):
         assert not program
 
 
+def test_update_program_without_admin_token(client, pg_driver, admin, member):
+    """
+    Test that successfully updates a program
+    """
+    put_cgci(client, admin)
+    data = json.dumps({
+        'name': 'CGCI', 'type': 'program',
+        'dbgap_accession_number': 'phs000235_2'
+    })
+    resp = client.put('/v0/submission', headers=member, data=data)
+    assert resp.status_code == 403
+
+
 def test_update_program(client, pg_driver, admin):
     """
-    Test that successfully update an program
+    Test that successfully updates a program
     """
     put_cgci(client, admin)
     data = json.dumps({
