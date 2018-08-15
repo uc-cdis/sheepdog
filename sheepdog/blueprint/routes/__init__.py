@@ -65,12 +65,12 @@ routes = [
     new_route(
         '/<program>',
         views.program.create_project,
-        methods=['PUT', 'POST'],
+        methods=['PUT', 'POST', 'PATCH'],
     ),
     new_route(
-        '/<program>/<project>',
-        views.program.project.update_project_name,
-        methods=['PATCH'],
+        '/<program>',
+        views.program.delete_program,
+        methods=['DELETE'],
     ),
     new_route(
         '/<program>/<project>',

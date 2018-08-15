@@ -688,7 +688,7 @@ def test_delete_project_without_admin_token(client, pg_driver, cgci_blgsp, membe
     assert resp.status_code == 403
 
 
-def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
+def test_delete_non_existed_project(client, pg_driver, cgci_blgsp, submitter, admin):
     """
     Test that raises exception when attemping to delete a non-existed project
     """
@@ -705,23 +705,12 @@ def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
     resp = client.delete(path, headers=admin)
     assert resp.status_code == 200
 
-
-def test_update_project_name(client, pg_driver, cgci_blgsp, submitter, admin):
-    path = '/v0/submission/CGCI/BLGSP'
-    new_path = '/v0/submission/CGCI/NEW_NAME'
-    resp = client.put(
-        path,
-        headers=submitter,
-        data=json.dumps({
-            "type": "experiment",
-            "submitter_id": "BLGSP-71-06-00019",
-            "projects": {
-                "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
-            }}))
-    resp = client.patch(path+'?new_name=NEW_NAME', headers=admin)
-    assert resp.status_code == 200
-    resp = client.get('/v0/submission/CGCI', headers=admin)
-    assert resp.json['links'] == ['/v0/submission/CGCI/NEW_NAME']
-    resp = client.get(new_path+'/entities/daa208a7-f57a-562c-a04a-7a7c77542c98', headers=submitter)
+def test_delete_program(client, pg_driver, admin):
+    """
+    Test that successfully delete an empty program
+    """
+    path = '/v0/submission/CGCI'
+    put_cgci(client, admin)
+    resp = client.delete(path, headers=admin)
     assert resp.status_code == 200
 

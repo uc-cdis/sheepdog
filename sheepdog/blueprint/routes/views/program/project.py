@@ -876,20 +876,3 @@ def delete_project(program, project):
             trans.write_transaction_log()
             session.commit()
             return flask.jsonify(trans.json)
-
-
-@utils.assert_program_exists
-def update_project_name(program, project):
-    """
-    Update project name
-    """
-    auth.admin_auth()
-    with flask.current_app.db.session_scope() as session:
-        node = utils.lookup_project(flask.current_app.db, program, project)
-        if not node:
-            raise UserError('ERROR: The project {} does not exist'.format(project))
-        new_name = flask.request.args.get('new_name')
-        if new_name:
-            node.code = new_name
-        session.commit()
-        return flask.jsonify({'message': 'Successfully update the project name'})
