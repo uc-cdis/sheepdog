@@ -9,6 +9,7 @@ import uuid
 
 import boto
 import pytest
+import flask
 from flask import g
 from moto import mock_s3
 
@@ -672,7 +673,6 @@ def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter, admi
             "projects": {
                 "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
             }}))
-    assert resp.status_code == 200
 
     path = '/v0/submission/CGCI/BLGSP'
     resp = client.delete(path, headers=admin)
@@ -704,6 +704,22 @@ def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
     path = '/v0/submission/CGCI/BLGSP'
     resp = client.delete(path, headers=admin)
     assert resp.status_code == 200
+    with flask.current_app.db.session_scope():
+        project = (
+            flask.current_app.
+            db.nodes(md.Project).
+            props(code='BLGSP').first())
+        assert not project
+
+
+def test_delete_non_program(client, pg_driver, cgci_blgsp, admin):
+    """
+    Test that raise an exception when attempting to delete a non-empty program
+    """
+    path = '/v0/submission/CGCI'
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 400
+
 
 def test_delete_program(client, pg_driver, admin):
     """
@@ -713,4 +729,29 @@ def test_delete_program(client, pg_driver, admin):
     put_cgci(client, admin)
     resp = client.delete(path, headers=admin)
     assert resp.status_code == 200
+    with flask.current_app.db.session_scope():
+        program = (
+            flask.current_app.
+            db.nodes(md.Program).
+            props(name='CGCI').first())
+        assert not program
+
+
+def test_update_program(client, pg_driver, admin):
+    """
+    Test that successfully update an program
+    """
+    put_cgci(client, admin)
+    data = json.dumps({
+        'name': 'CGCI', 'type': 'program',
+        'dbgap_accession_number': 'phs000235_2'
+    })
+    resp = client.put('/v0/submission', headers=admin, data=data)
+    assert resp.status_code == 200
+    with flask.current_app.db.session_scope():
+        program = (
+            flask.current_app.
+            db.nodes(md.Program).
+            props(name='CGCI').first())
+        assert program.props['dbgap_accession_number'] == 'phs000235_2'
 
