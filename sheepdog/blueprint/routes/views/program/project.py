@@ -6,10 +6,11 @@ View functions for routes in the blueprint for '/<program>/<project>' paths.
 """
 
 import json
-import copy
+
 import flask
 import sqlalchemy
 import yaml
+import copy
 
 from sheepdog import auth
 from sheepdog import dictionary
@@ -847,19 +848,48 @@ def create_clinical_viewer(dry_run=False):
     return update_entities_clinical_bcr
 
 
-@utils.assert_project_exists
+@utils.assert_program_exists
 def delete_project(program, project):
     """
     Delete project under a specific program
     """
-    from sheepdog import transactions
-    from sheepdog import auth
     auth.admin_auth()
     with flask.current_app.db.session_scope() as session:
         node = utils.lookup_project(flask.current_app.db, program, project)
+        if not node:
+            raise UserError('ERROR: The project {} does not exist'.format(project))
         if node.edges_in:
-            raise UserError('ERROR: Can not delete the project. Project {} is not empty'.format(project))
-        session.delete(node)
-        session.commit()
-        return flask.jsonify({"Message": "The project is successfully delelted"})
+            raise UserError('ERROR: Can not delete the project.\
+                             Project {} is not empty'.format(project))
+        transaction_args = dict(
+                                program=program,
+                                project=project,
+                                user=flask.g.user,
+                                flask_config=flask.current_app.config
+                            )
+        with (
+                transactions.deletion.transaction.
+                DeletionTransaction(**transaction_args)
+             ) as trans:
+            session.delete(node)
+            trans.claim_transaction_log()
+            trans.write_transaction_log()
+            session.commit()
+            return flask.jsonify(trans.json)
 
+
+@utils.assert_program_exists
+def update_project_name(program, project):
+    """
+    Update project name
+    """
+    auth.admin_auth()
+    with flask.current_app.db.session_scope() as session:
+        node = utils.lookup_project(flask.current_app.db, program, project)
+        if not node:
+            raise UserError('ERROR: The project {} does not exist'.format(project))
+        new_name = flask.request.args.get('new_name')
+        if new_name:
+            node.code = new_name
+        session.commit()
+        return flask.jsonify({'message': 'Successfully update the project name'})

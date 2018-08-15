@@ -660,19 +660,6 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     assert len(r.data.strip().split('\n')) == case_count + 1
 
 
-def test_put_entity_creation_validi2(client, pg_driver, cgci_blgsp, submitter):
-    headers = submitter
-    data = json.dumps({
-        "type": "experiment",
-        "submitter_id": "BLGSP-71-06-00019",
-        "projects": {
-            "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
-        }
-    })
-    resp = client.put(BLGSP_PATH, headers=headers, data=data)
-    assert resp.status_code == 200, resp.data
-
-
 def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
     """
     Test that raises exception when attemping to delete non-empty project
@@ -701,19 +688,40 @@ def test_delete_project_without_admin_token(client, pg_driver, cgci_blgsp, membe
     assert resp.status_code == 403
 
 
-def test_delete_wrong_project(client, pg_driver, cgci_blgsp, submitter, admin):
+def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
     """
-    Test that raises exception when attemping to delete non-empty project
+    Test that raises exception when attemping to delete a non-existed project
     """
-    path = '/v0/submission/CGCI/some_project'
+    path = '/v0/submission/CGCI/NOT_EXIST'
     resp = client.delete(path, headers=admin)
-    assert resp.status_code == 404
+    assert resp.status_code == 400
 
 
 def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
     """
-    Test that raises exception when attemping to delete non-empty project
+    Test that successfully delete an empty  project
     """
     path = '/v0/submission/CGCI/BLGSP'
     resp = client.delete(path, headers=admin)
     assert resp.status_code == 200
+
+
+def test_update_project_name(client, pg_driver, cgci_blgsp, submitter, admin):
+    path = '/v0/submission/CGCI/BLGSP'
+    new_path = '/v0/submission/CGCI/NEW_NAME'
+    resp = client.put(
+        path,
+        headers=submitter,
+        data=json.dumps({
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {
+                "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
+            }}))
+    resp = client.patch(path+'?new_name=NEW_NAME', headers=admin)
+    assert resp.status_code == 200
+    resp = client.get('/v0/submission/CGCI', headers=admin)
+    assert resp.json['links'] == ['/v0/submission/CGCI/NEW_NAME']
+    resp = client.get(new_path+'/entities/daa208a7-f57a-562c-a04a-7a7c77542c98', headers=submitter)
+    assert resp.status_code == 200
+
