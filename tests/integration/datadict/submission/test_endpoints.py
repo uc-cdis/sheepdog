@@ -166,7 +166,7 @@ def test_put_entity_creation_valid(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
 
-def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter):
+def test_unauthenticated_post(client, pg_driver, cgci_blgsp, submitter):
     # token for TCGA
     headers = {'Authorization': 'test'}
     data = json.dumps({
@@ -177,7 +177,7 @@ def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter):
         }
     })
     resp = client.post(BLGSP_PATH, headers=headers, data=data)
-    assert resp.status_code == 403
+    assert resp.status_code == 401
 
 
 def test_unauthorized_post_with_incorrect_role(client, pg_driver, cgci_blgsp, member):

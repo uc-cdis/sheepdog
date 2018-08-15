@@ -225,7 +225,7 @@ def encoded_jwt(private_key, user):
     kid = JWT_KEYPAIR_FILES.keys()[0]
     scopes = ['openid']
     return generate_signed_access_token(
-        kid, private_key, user, 3600, scopes, forced_exp_time=None)
+        kid, private_key, user, 3600, scopes, forced_exp_time=None).token
 
 
 def create_user_header(pg_driver, username):
