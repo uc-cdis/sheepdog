@@ -242,6 +242,16 @@ def setup_sqlite3_alias_tables():
                 PRAGMA table_info ('{table}')
             '''.format(table=table))
 
+def setup_sqlite3_auth_tables(username, password):
+    """Setup the SQLite3 auth database."""
+    auth_driver = SQLAlchemyAuthDriver('sqlite:///auth.sq3')
+    try:
+        auth_driver.add(username, password)
+    except Exception as error:
+        print('Unable to create auth tables')
+        print(error)
+
 def indexd_init(username, password):
     setup_sqlite3_index_tables()
     setup_sqlite3_alias_tables()
+    setup_sqlite3_auth_tables(username, password)

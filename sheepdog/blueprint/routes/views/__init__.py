@@ -9,7 +9,6 @@ from flask import current_app
 import requests
 
 from sheepdog import auth, dictionary, models, utils
-from sheepdog.auth import current_user, set_global_user
 from sheepdog.utils import manifest, parse
 from sheepdog.blueprint.routes.views import program
 from sheepdog.errors import (
@@ -67,7 +66,6 @@ def get_programs():
     return flask.jsonify({'links': links})
 
 
-@set_global_user(app_get_session=lambda app: app.db.session_scope())
 def root_create():
     """
     /
@@ -109,7 +107,7 @@ def root_create():
             "dbgap_accession_number": "phs000178"
         }
     """
-    current_user.require_admin()
+    auth.current_user.require_admin()
     message = None
     node_id = None
     doc = parse.parse_request_json()

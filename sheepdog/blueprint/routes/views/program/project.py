@@ -16,7 +16,6 @@ from sheepdog import dictionary
 from sheepdog import models
 from sheepdog import transactions
 from sheepdog import utils
-from sheepdog.auth import current_user
 from sheepdog.errors import (
     AuthError,
     NotFoundError,
@@ -264,7 +263,7 @@ def create_delete_entities_viewer(dry_run=False):
 
         if to_delete is not None:
             # to_delete is admin only
-            current_user.require_admin()
+            auth.current_user.require_admin()
 
             # get value of that flag from string
             if to_delete.lower() == 'false':
@@ -438,7 +437,7 @@ def create_files_viewer(dry_run=False, reassign=False):
         elif flask.request.method == 'PUT':
             if reassign:
                 # admin only
-                current_user.require_admin()
+                auth.current_user.require_admin()
                 action = 'reassign'
             elif flask.request.args.get('partNumber'):
                 action = 'upload_part'
@@ -455,7 +454,8 @@ def create_files_viewer(dry_run=False, reassign=False):
 
         project_id = program + '-' + project
         role = PERMISSIONS[action]
-        if role not in flask.g.user.projects[project_id]:
+        roles = auth.get_program_project_roles(*project_id.split('-'))
+        if role not in roles:
             raise AuthError(
                 "You don't have {} role to do '{}'".format(role, action)
             )
@@ -549,6 +549,7 @@ def create_release_project_viewer(dry_run=False):
         return transactions.release.handle_release_transaction(program, project, dry_run=dry_run)
 
     return release_project
+
 
 def create_review_project_viewer(dry_run=False):
     """
