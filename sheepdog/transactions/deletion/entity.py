@@ -19,10 +19,10 @@ class DeletionEntity(EntityBase):
         }
 
         if isinstance(node, MissingNode):
-            self.neighbors = []
+            self.neighbors = ()
             return
 
-        self.neighbors = [edge.src for edge in node.edges_in]
+        self.neighbors = (edge.src for edge in node.edges_in)
 
         # Check user permissions for deleting nodes
         roles = self.transaction.user.roles.get(self.transaction.project_id, [])
@@ -84,9 +84,6 @@ class DeletionEntity(EntityBase):
         if not self.node_exists:
             return
 
-        for edge in self.node.get_edges():
-            self.transaction.session.delete(edge)
-
         for association in self.node._pg_edges:
             setattr(self.node, association, [])
 
@@ -107,6 +104,8 @@ class DeletionEntity(EntityBase):
 
                     # Add child dependencies to this entity
                     self.dependents.update(subentity.dependents)
+
+            # For performance, only get the first dependent node
             if self.dependents:
                 break
 
