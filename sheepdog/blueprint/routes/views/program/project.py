@@ -847,7 +847,7 @@ def create_clinical_viewer(dry_run=False):
     return update_entities_clinical_bcr
 
 
-@utils.assert_program_exists
+@utils.assert_project_exists
 def delete_project(program, project):
     """
     Delete project under a specific program
@@ -855,8 +855,6 @@ def delete_project(program, project):
     auth.admin_auth()
     with flask.current_app.db.session_scope() as session:
         node = utils.lookup_project(flask.current_app.db, program, project)
-        if not node:
-            raise UserError('ERROR: The project {} does not exist'.format(project))
         if node.edges_in:
             raise UserError('ERROR: Can not delete the project.\
                              Project {} is not empty'.format(project))
