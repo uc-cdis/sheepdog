@@ -20,7 +20,6 @@ FLAG_IS_ASYNC = 'async'
 
 DELIMITERS = {'csv': ',', 'tsv': '\t'}
 SUPPORTED_FORMATS = ['csv', 'tsv', 'json']
-MAX_EXPORTED_CHILDREN = 1000
 
 ROLES = {
     'ADMIN': 'admin',

@@ -25,7 +25,6 @@ from sheepdog.errors import (
 from sheepdog.globals import (
     DELIMITERS,
     SUPPORTED_FORMATS,
-    MAX_EXPORTED_CHILDREN,
 )
 
 
@@ -557,7 +556,7 @@ class ExportFile(object):
         Walk down spanning tree of graph, traversing to edges_in and filtering
         by self.category.
         """
-        for edge in node.edges_in[:MAX_EXPORTED_CHILDREN]:
+        for edge in node.edges_in:
             if edge.src.props.get('project_id') != node.project_id:
                 log.warn(
                     "skip edge %s for %s that's not in project %s", str(edge),
