@@ -32,12 +32,8 @@ log = get_logger(__name__)
 
 TEMPLATE_NAME = 'submission_templates.tar.gz'
 
-# This is the list of node types which cannot be exported using the export
-# endpoint.
-UNSUPPORTED_EXPORT_NODE_TYPES = [
-    '_all',
-    'root',
-]
+# This is the list of node categories which cannot be exported using the export
+# endpoint, which will cover unsupported types like `root` and `_all`.
 UNSUPPORTED_EXPORT_NODE_CATEGORIES = [
     'internal',
 ]
@@ -743,11 +739,6 @@ def validate_export_node(node_label):
     if node_label not in dictionary.schema:
         raise UserError(
             'dictionary does not have node with type {}'.format(node_label)
-        )
-    if node_label in UNSUPPORTED_EXPORT_NODE_TYPES:
-        raise UserError(
-            message='cannot export {}'.format(node_label),
-            code=400,
         )
     category = get_node_category(node_label)
     if category in UNSUPPORTED_EXPORT_NODE_CATEGORIES:
