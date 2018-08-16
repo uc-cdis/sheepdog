@@ -9,6 +9,7 @@ import uuid
 
 import boto
 import pytest
+import flask
 from flask import g
 from moto import mock_s3
 
@@ -57,6 +58,16 @@ def put_cgci(client, auth=None):
     data = json.dumps({
         'name': 'CGCI', 'type': 'program',
         'dbgap_accession_number': 'phs000235'
+    })
+    r = client.put(path, headers=headers, data=data)
+    return r
+
+def put_cgci2(client, auth=None):
+    path = '/v0/submission'
+    headers = auth
+    data = json.dumps({
+        'name': 'CGCI2', 'type': 'program',
+        'dbgap_accession_number': 'phs0002352'
     })
     r = client.put(path, headers=headers, data=data)
     return r
@@ -127,6 +138,7 @@ def test_program_creation_endpoint_for_program_not_supported(
 def test_project_creation_endpoint(client, pg_driver, admin):
     resp = put_cgci_blgsp(client, auth=admin)
     assert resp.status_code == 200
+
     resp = client.get('/v0/submission/CGCI/')
     with pg_driver.session_scope():
         assert pg_driver.nodes(md.Project).count() == 1
@@ -151,6 +163,23 @@ def test_project_creation_without_admin_token(client, pg_driver, submitter, admi
             "name": "Burkitt Lymphoma Genome Sequencing Project",
             "state": "open"}))
     assert resp.status_code == 403
+
+
+def test_project_creation_invalid_due_to_registed_project_name(client, pg_driver, admin):
+    resp = put_cgci_blgsp(client, auth=admin)
+    assert resp.status_code == 200
+    resp = put_cgci2(client, auth=admin)
+    assert resp.status_code == 200
+
+    path = '/v0/submission/CGCI2/'
+    resp = client.put(
+        path, headers=admin, data=json.dumps({
+            "type": "project",
+            "code": "BLGSP",
+            "dbgap_accession_number": "phs000527",
+            "name": "Burkitt Lymphoma Genome Sequencing Project",
+            "state": "open"}))
+    assert resp.status_code == 400
 
 
 def test_put_entity_creation_valid(client, pg_driver, cgci_blgsp, submitter):
@@ -652,3 +681,123 @@ def test_export_error(client, cgci_blgsp, submitter, file_type):
         )
         response = client.get(path, headers=submitter)
         assert response.status_code == 400
+
+
+def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
+    """
+    Test that returns error  when attemping to delete non-empty project
+    """
+    headers = submitter
+    resp = client.put(
+        BLGSP_PATH, headers=headers, data=json.dumps({
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {
+                "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
+            }}))
+
+    path = '/v0/submission/CGCI/BLGSP'
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 400
+
+
+def test_delete_project_without_admin_token(client, pg_driver, cgci_blgsp, member):
+    """
+    Test that returns error when attemping to delete non-empty project
+    """
+    path = '/v0/submission/CGCI/BLGSP'
+    resp = client.delete(path, headers=member)
+    assert resp.status_code == 403
+
+
+def test_delete_non_existed_project(client, pg_driver, cgci_blgsp, submitter, admin):
+    """
+    Test that returns error when attemping to delete a non-existed project
+    """
+    path = '/v0/submission/CGCI/NOT_EXIST'
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 404
+
+
+def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
+    """
+    Test that successfully deletes an empty project
+    """
+    path = '/v0/submission/CGCI/BLGSP'
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 204
+    with flask.current_app.db.session_scope():
+        project = (
+            flask.current_app.
+            db.nodes(md.Project).
+            props(code='BLGSP').first())
+        assert not project
+
+
+def test_delete_empty_non_program(client, pg_driver, cgci_blgsp, admin):
+    """
+    Test that return error  when attempting to delete a non-empty program
+    """
+    path = '/v0/submission/CGCI'
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 400
+
+
+def test_delete_program_without_admin_token(client, pg_driver, admin, member):
+    """
+    Test that returns error since the client does not have
+    privillege to delele the program
+    """
+    path = '/v0/submission/CGCI'
+    put_cgci(client, admin)
+    resp = client.delete(path, headers=member)
+    assert resp.status_code == 403
+
+
+def test_delete_program(client, pg_driver, admin):
+    """
+    Test that successfully deletes an empty program
+    """
+    path = '/v0/submission/CGCI'
+    put_cgci(client, admin)
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 204
+    with flask.current_app.db.session_scope():
+        program = (
+            flask.current_app.
+            db.nodes(md.Program).
+            props(name='CGCI').first())
+        assert not program
+
+
+def test_update_program_without_admin_token(client, pg_driver, admin, member):
+    """
+    Test that returns authentication error since client does not have
+    privilege to update the program
+    """
+    put_cgci(client, admin)
+    data = json.dumps({
+        'name': 'CGCI', 'type': 'program',
+        'dbgap_accession_number': 'phs000235_2'
+    })
+    resp = client.put('/v0/submission', headers=member, data=data)
+    assert resp.status_code == 403
+
+
+def test_update_program(client, pg_driver, admin):
+    """
+    Test that successfully updates a program
+    """
+    put_cgci(client, admin)
+    data = json.dumps({
+        'name': 'CGCI', 'type': 'program',
+        'dbgap_accession_number': 'phs000235_2'
+    })
+    resp = client.put('/v0/submission', headers=admin, data=data)
+    assert resp.status_code == 200
+    with flask.current_app.db.session_scope():
+        program = (
+            flask.current_app.
+            db.nodes(md.Program).
+            props(name='CGCI').first())
+        assert program.props['dbgap_accession_number'] == 'phs000235_2'

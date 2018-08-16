@@ -109,6 +109,7 @@ def create_project(program):
     :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
     :resheader Content-Type: |resheader_Content-Type|
     :statuscode 200: Registered successfully.
+    :statuscode 400: User error.
     :statuscode 404: Program not found.
     :statuscode 403: Unauthorized request.
 
@@ -162,6 +163,15 @@ def create_project(program):
         if not node:
             # Create a new project node
             node_uuid = str(uuid.uuid5(PROJECT_SEED, project.encode('utf-8')))
+            if (
+                flask.current_app
+                .db.nodes(models.Project)
+                .ids(node_uuid)
+                .first()
+            ):
+                raise UserError('ERROR: Project {} already exists in DB'
+                                .format(project))
+
             node = models.Project(node_uuid)  # pylint: disable=not-callable
             node.programs = [program_node]
             action = 'create'
@@ -188,7 +198,6 @@ def create_project(program):
             role=ROLES['UPDATE'],
             flask_config=flask.current_app.config
         )
-
         with UploadTransaction(**transaction_args) as trans:
             node = session.merge(node)
             session.commit()
@@ -202,6 +211,24 @@ def create_project(program):
             entity.entity_id = entity.node.node_id
             trans.entities = [entity]
             return flask.jsonify(trans.json)
+
+
+@utils.assert_program_exists
+def delete_program(program):
+    """
+    Delete a program given program name. If the program
+    is not empty raise an appropriate exception
+    """
+    auth.admin_auth()
+    with flask.current_app.db.session_scope() as session:
+        node = utils.lookup_program(flask.current_app.db, program)
+        if node.edges_in:
+            raise UserError('ERROR: Can not delete the program.\
+                             Program {} is not empty'.format(program))
+        session.delete(node)
+        session.commit()
+
+        return flask.jsonify({}), 204
 
 
 def create_transactions_viewer(operation, dry_run=False):
