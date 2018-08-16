@@ -703,7 +703,7 @@ def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
     """
     path = '/v0/submission/CGCI/BLGSP'
     resp = client.delete(path, headers=admin)
-    assert resp.status_code == 200
+    assert resp.status_code == 204
     with flask.current_app.db.session_scope():
         project = (
             flask.current_app.
@@ -739,7 +739,7 @@ def test_delete_program(client, pg_driver, admin):
     path = '/v0/submission/CGCI'
     put_cgci(client, admin)
     resp = client.delete(path, headers=admin)
-    assert resp.status_code == 200
+    assert resp.status_code == 204
     with flask.current_app.db.session_scope():
         program = (
             flask.current_app.

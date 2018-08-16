@@ -227,7 +227,8 @@ def delete_program(program):
                              Program {} is not empty'.format(program))
         session.delete(node)
         session.commit()
-        return flask.jsonify({})
+
+        return flask.jsonify({}), 204
 
 
 def create_transactions_viewer(operation, dry_run=False):

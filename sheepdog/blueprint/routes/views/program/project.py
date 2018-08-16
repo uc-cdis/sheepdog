@@ -872,4 +872,4 @@ def delete_project(program, project):
             trans.claim_transaction_log()
             trans.write_transaction_log()
             session.commit()
-            return flask.jsonify(trans.json)
+            return flask.jsonify(trans.json), 204
