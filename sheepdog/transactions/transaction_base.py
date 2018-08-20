@@ -9,6 +9,7 @@ import flask
 from flask import current_app
 from datamodelutils import validators
 
+from sheepdog import auth
 from sheepdog import models
 from sheepdog import utils
 from sheepdog.errors import (
@@ -69,7 +70,6 @@ class TransactionBase(object):
         self.document_name = kwargs.pop('document_name', None)
         self.dry_run = kwargs.pop('dry_run', False)
         self.role = kwargs.pop('role', None)
-        self.user = kwargs.pop('user', None)
         # To be pulled from flask request context if not provided
         self.logger = kwargs.pop('logger', None) or current_app.logger
         self.signpost = kwargs.pop('signpost', None) or current_app.signpost
@@ -85,7 +85,7 @@ class TransactionBase(object):
         self.transactional_errors = []
 
         self.logger.info("User %s: new transaction for project %s",
-                         self.user, self.project_id)
+                         auth.current_user.id, self.project_id)
 
         #: Verify that this transaction is allowed
         self.assert_project_state()
@@ -452,7 +452,7 @@ class TransactionBase(object):
         """
         timestamp = self.get_transaction_timestamp()
         with self.fetch_transaction_log() as tx_log:
-            tx_log.submitter = self.user.username
+            tx_log.submitter = current_user.username
             for entity in self.entities:
                 if not entity.node or isinstance(entity.node, MissingNode):
                     continue

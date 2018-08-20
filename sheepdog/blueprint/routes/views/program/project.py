@@ -847,3 +847,30 @@ def create_clinical_viewer(dry_run=False):
         )
 
     return update_entities_clinical_bcr
+
+
+@utils.assert_project_exists
+def delete_project(program, project):
+    """
+    Delete project under a specific program
+    """
+    auth.current_user.require_admin()
+    with flask.current_app.db.session_scope() as session:
+        node = utils.lookup_project(flask.current_app.db, program, project)
+        if node.edges_in:
+            raise UserError('ERROR: Can not delete the project.\
+                             Project {} is not empty'.format(project))
+        transaction_args = dict(
+            program=program,
+            project=project,
+            flask_config=flask.current_app.config
+        )
+        with (
+                transactions.deletion.transaction.
+                DeletionTransaction(**transaction_args)
+             ) as trans:
+            session.delete(node)
+            trans.claim_transaction_log()
+            trans.write_transaction_log()
+            session.commit()
+            return flask.jsonify(trans.json), 204

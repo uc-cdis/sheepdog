@@ -213,6 +213,24 @@ def create_project(program):
             return flask.jsonify(trans.json)
 
 
+@utils.assert_program_exists
+def delete_program(program):
+    """
+    Delete a program given program name. If the program
+    is not empty raise an appropriate exception
+    """
+    auth.current_user.require_admin()
+    with flask.current_app.db.session_scope() as session:
+        node = utils.lookup_program(flask.current_app.db, program)
+        if node.edges_in:
+            raise UserError('ERROR: Can not delete the program.\
+                             Program {} is not empty'.format(program))
+        session.delete(node)
+        session.commit()
+
+        return flask.jsonify({}), 204
+
+
 def create_transactions_viewer(operation, dry_run=False):
 
     # TODO TODO !!

@@ -29,6 +29,7 @@ def transaction_worker(transaction, ids):
 
     return response, code
 
+
 def handle_deletion_request(program, project, ids, to_delete=None, **tx_kwargs):
     """Create and execute a single deletion transaction.
 
@@ -59,7 +60,6 @@ def handle_deletion_request(program, project, ids, to_delete=None, **tx_kwargs):
     transaction = DeletionTransaction(
         program=program,
         project=project,
-        user=flask.g.user,
         logger=flask.current_app.logger,
         signpost=flask.current_app.signpost,
         to_delete=to_delete,
