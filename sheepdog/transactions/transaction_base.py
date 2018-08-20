@@ -452,7 +452,7 @@ class TransactionBase(object):
         """
         timestamp = self.get_transaction_timestamp()
         with self.fetch_transaction_log() as tx_log:
-            tx_log.submitter = current_user.username
+            tx_log.submitter = auth.current_user.username
             for entity in self.entities:
                 if not entity.node or isinstance(entity.node, MissingNode):
                     continue

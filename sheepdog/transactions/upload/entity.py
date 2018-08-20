@@ -612,8 +612,7 @@ class UploadEntity(EntityBase):
                 doc[key] = prop['default']
         return doc
 
-    def get_user_roles(self, user=None):
-        user = user or self.transaction.user
+    def get_user_roles(self):
         return get_program_project_roles(
             *self.transaction.project_id.split('-')
         )
