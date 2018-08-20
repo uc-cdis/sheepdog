@@ -70,14 +70,10 @@ def get_program_project_roles(program, project):
     Return:
         Set[str]: roles
     """
-    # Get the actual CurrentUser instance behind the werkzeug proxy so we can
-    # slap this attributes on it
-    user = current_user._get_current_object()
+    if not hasattr(flask.g, 'sheepdog_roles'):
+        flask.g.sheepdog_roles = dict()
 
-    if not hasattr(user, 'sheepdog_roles'):
-        user.sheepdog_roles = dict()
-
-    if not (program, project) in user.sheepdog_roles:
+    if not (program, project) in flask.g.sheepdog_roles:
         user_roles = set()
         with flask.current_app.db.session_scope():
             if program:
@@ -89,7 +85,7 @@ def get_program_project_roles(program, project):
                 )
                 if program_node:
                     program_id = program_node.dbgap_accession_number
-                    roles = user.projects.get(program_id, set())
+                    roles = current_user.projects.get(program_id, set())
                     user_roles.update(set(roles))
             if project:
                 project_node = (
@@ -100,11 +96,11 @@ def get_program_project_roles(program, project):
                 )
                 if project_node:
                     project_id = project_node.dbgap_accession_number
-                    roles = user.projects.get(project_id, set())
+                    roles = current_user.projects.get(project_id, set())
                     user_roles.update(set(roles))
-        user.sheepdog_roles[(program, project)] = user_roles
+        flask.g.sheepdog_roles[(program, project)] = user_roles
 
-    return user.sheepdog_roles[(program, project)]
+    return flask.g.sheepdog_roles[(program, project)]
 
 
 def authorize_for_project(*required_roles):
