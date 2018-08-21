@@ -337,6 +337,7 @@ def export_entities(program, project):
         filename = '{}.{}'.format(node_label, file_format)
         content_disp = 'attachment; filename={}'.format(filename)
         headers = {'Content-Disposition': content_disp}
+        utils.transforms.graph_to_doc.validate_export_node(node_label)
         return flask.Response(
             utils.transforms.graph_to_doc.export_all(
                 node_label, project_id, file_format, flask.current_app.db
@@ -548,6 +549,7 @@ def create_release_project_viewer(dry_run=False):
         return transactions.release.handle_release_transaction(program, project, dry_run=dry_run)
 
     return release_project
+
 
 def create_review_project_viewer(dry_run=False):
     """
