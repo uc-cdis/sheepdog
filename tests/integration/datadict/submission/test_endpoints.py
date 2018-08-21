@@ -584,6 +584,7 @@ def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter,
     assert sur_entity, 'No submitted_unaligned_reads entity created'
     assert index_client.get(sur_entity['id']), 'No indexd document created'
 
+
 def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope():
@@ -603,6 +604,7 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     assert len(data) == 1
     assert data[0]['id'] == case_id
 
+
 def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope() as s:
@@ -619,6 +621,7 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
     assert len(r.data.strip().split('\n')) == case_count + 1
+
 
 def test_export_all_node_types_json(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)

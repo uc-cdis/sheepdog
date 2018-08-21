@@ -296,9 +296,8 @@ def test_data_file_update_url(
     assert not create_index.called
     assert not create_alias.called
 
-    # make sure original url and new url are in the document and patch gets called
-    assert DEFAULT_URL in document.urls
-    assert new_url in document.urls
+    # make sure new url are in the document and patch gets called
+    assert document.urls == [new_url]
     assert document.patch.called
 
     # response
@@ -408,9 +407,8 @@ def test_data_file_update_url_id_provided(
     assert not create_index.called
     assert not create_alias.called
 
-    # make sure original url and new url are in the document and patch gets called
-    assert DEFAULT_URL in document.urls
-    assert new_url in document.urls
+    # make sure new url are in the document and patch gets called
+    assert document.urls == [new_url]
     assert document.patch.called
 
     # response

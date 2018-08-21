@@ -318,11 +318,9 @@ class FileUploadEntity(UploadEntity):
         """
         document = self.file_by_uuid or self.file_by_hash
 
-        if self.urls:
-            urls_to_add = [url for url in self.urls if url not in document.urls]
-            if urls_to_add:
-                document.urls.extend(urls_to_add)
-                document.patch()
+        if self.urls is not None:
+            document.urls = self.urls
+            document.patch()
 
     @staticmethod
     def use_object_id(entity_type):
