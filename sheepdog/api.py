@@ -2,7 +2,6 @@ import os
 import sys
 
 from flask import Flask, jsonify
-from flask_sqlalchemy_session import flask_scoped_session
 from psqlgraph import PsqlGraphDriver
 
 from authutils.oauth2 import client as oauth2_client
@@ -14,7 +13,6 @@ from datamodelutils import models, validators, postgres_admin
 
 
 from indexclient.client import IndexClient as SignpostClient
-from userdatamodel.driver import SQLAlchemyDriver
 
 import sheepdog
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
@@ -71,8 +69,6 @@ def db_init(app):
     )
     if app.config.get('AUTO_MIGRATE_DATABASE'):
         migrate_database(app)
-    app.userdb = SQLAlchemyDriver(app.config['PSQL_USER_DB_CONNECTION'])
-    flask_scoped_session(app.userdb.Session, app)
 
     app.oauth_client = oauth2_client.OAuthClient(**app.config['OAUTH2'])
 
