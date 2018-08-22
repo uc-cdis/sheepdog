@@ -799,7 +799,7 @@ class UploadEntity(EntityBase):
                     # check if it's linking to a parent node
                     if nodes[0].sample_type in parent_sample_types:
                         # if so, only allow 10 children to the parent
-                        if len(nodes[0].samples == max_parent_sample_children):
+                        if len(nodes[0].child_samples) >= max_parent_sample_children:
                             self.record_error(
                                 'Unable to link to {} Sample, would create links over allowed amount ({})'
                                 .format(nodes[0].node_id, max_parent_sample_children),
