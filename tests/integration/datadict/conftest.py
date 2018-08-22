@@ -18,7 +18,6 @@ from datamodelutils import models, validators
 
 import sheepdog
 import utils
-from sheepdog.auth import ROLES
 from sheepdog.test_settings import (
     Fernet,
     HMAC_ENCRYPTION_KEY,

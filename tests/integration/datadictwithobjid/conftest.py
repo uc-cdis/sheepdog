@@ -16,7 +16,7 @@ from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
 
 import sheepdog
-from sheepdog.test_settings import JWT_KEYPAIR_FILES, SIGNPOST
+from sheepdog.test_settings import SIGNPOST
 from tests.integration.datadictwithobjid.api import app as _app, app_init, indexd_init
 from tests.integration.datadictwithobjid.submission.test_endpoints import put_cgci_blgsp
 import utils
