@@ -17,13 +17,14 @@ from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
 
 import sheepdog
-import utils
 from sheepdog.test_settings import (
     Fernet,
     HMAC_ENCRYPTION_KEY,
     JWT_KEYPAIR_FILES,
     SIGNPOST,
 )
+
+from tests import utils
 from tests.integration.datadict.api import app as _app, app_init, indexd_init
 from tests.integration.datadict.submission.test_endpoints import put_cgci_blgsp
 
@@ -129,7 +130,7 @@ def app(tmpdir, request):
     _app.logger.setLevel(os.environ.get("GDC_LOG_LEVEL", "WARNING"))
 
     _app.jwt_public_keys = {_app.config['USER_API']: {
-            'key-test': utils.read_file('../resources/keys/test_public_key.pem')
+            'key-test': utils.read_file('./integration/resources/keys/test_public_key.pem')
     }}
     return _app
 

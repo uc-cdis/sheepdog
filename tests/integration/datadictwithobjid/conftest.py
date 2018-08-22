@@ -1,3 +1,4 @@
+from imp import reload
 import os
 import json
 from multiprocessing import Process
@@ -16,12 +17,12 @@ from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
 
 import sheepdog
+
 from sheepdog.test_settings import SIGNPOST
 from tests.integration.datadictwithobjid.api import app as _app, app_init, indexd_init
 from tests.integration.datadictwithobjid.submission.test_endpoints import put_cgci_blgsp
-import utils
+from tests import utils
 
-from imp import reload
 
 
 def get_parent(path):
@@ -118,7 +119,7 @@ def app(tmpdir, request):
     _app.logger.setLevel(os.environ.get("GDC_LOG_LEVEL", "WARNING"))
 
     _app.jwt_public_keys = {_app.config['USER_API']: {
-        'key-test': utils.read_file('../resources/keys/test_public_key.pem')
+        'key-test': utils.read_file('./integration/resources/keys/test_public_key.pem')
     }}
     return _app
 

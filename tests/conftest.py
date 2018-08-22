@@ -3,7 +3,8 @@ import pytest
 
 from sheepdog.auth import ROLES
 from sheepdog.test_settings import JWT_KEYPAIR_FILES
-import utils
+
+from tests import utils
 
 
 @pytest.fixture(scope='session')
