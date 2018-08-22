@@ -1,6 +1,7 @@
 """
 Classes and functions for upload.
 """
+
 import uuid
 
 import psqlgraph
@@ -10,6 +11,7 @@ from psqlgraph.exc import ValidationError
 
 from sheepdog import dictionary
 from sheepdog import models
+from sheepdog.auth import get_program_project_roles
 from sheepdog.errors import InternalError
 from sheepdog.globals import (
     REGEX_UUID,
@@ -610,9 +612,10 @@ class UploadEntity(EntityBase):
                 doc[key] = prop['default']
         return doc
 
-    def get_user_roles(self, user=None):
-        user = user or self.transaction.user
-        return user.roles.get(self.transaction.project_id, [])
+    def get_user_roles(self):
+        return get_program_project_roles(
+            *self.transaction.project_id.split('-')
+        )
 
     def is_case_creation_allowed(self, case_id):
         """

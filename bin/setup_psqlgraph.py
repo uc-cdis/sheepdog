@@ -108,6 +108,7 @@ def create_indexes(host, user, password, database):
                 'dst_id, src_id',
             ]))
 
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()

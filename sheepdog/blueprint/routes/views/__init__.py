@@ -107,7 +107,7 @@ def root_create():
             "dbgap_accession_number": "phs000178"
         }
     """
-    auth.admin_auth()
+    auth.current_user.require_admin()
     message = None
     node_id = None
     doc = parse.parse_request_json()

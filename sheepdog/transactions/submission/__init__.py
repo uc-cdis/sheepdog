@@ -30,7 +30,6 @@ def handle_submission_transaction(program, project, *doc_args, **tx_kwargs):
         smtp_conf=smtp_conf,
         program=program,
         project=project,
-        user=flask.g.user,
         logger=flask.current_app.logger,
         signpost=flask.current_app.signpost,
         db_driver=db_driver,

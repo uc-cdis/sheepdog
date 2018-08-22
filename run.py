@@ -1,14 +1,19 @@
 #!/usr/bin/env python
 
+from collections import defaultdict
+from mock import patch, PropertyMock
 import os
-from sheepdog.api import run_for_development
+
+import requests
+
 from flask import current_app
 from gdcdatamodel import models as md
-from mock import patch, PropertyMock
 from psqlgraph import PolyNode as Node
+
+from sheepdog.api import run_for_development
 from sheepdog.auth import roles as all_roles
-from collections import defaultdict
-import requests
+
+
 requests.packages.urllib3.disable_warnings()
 
 all_role_values = all_roles.values()
@@ -90,9 +95,6 @@ def run_with_fake_auth():
         return project_ids
 
     with patch(
-            'sheepdog.api.AuthDriver',
-            spec=True
-    ) as _,patch(
         'sheepdog.auth.FederatedUser.roles',
         new_callable=PropertyMock,
         return_value=roles,

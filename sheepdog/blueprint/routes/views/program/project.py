@@ -263,7 +263,7 @@ def create_delete_entities_viewer(dry_run=False):
 
         if to_delete is not None:
             # to_delete is admin only
-            auth.admin_auth()
+            auth.current_user.require_admin()
 
             # get value of that flag from string
             if to_delete.lower() == 'false':
@@ -438,7 +438,7 @@ def create_files_viewer(dry_run=False, reassign=False):
         elif flask.request.method == 'PUT':
             if reassign:
                 # admin only
-                auth.admin_auth()
+                auth.current_user.require_admin()
                 action = 'reassign'
             elif flask.request.args.get('partNumber'):
                 action = 'upload_part'
@@ -455,7 +455,8 @@ def create_files_viewer(dry_run=False, reassign=False):
 
         project_id = program + '-' + project
         role = PERMISSIONS[action]
-        if role not in flask.g.user.roles[project_id]:
+        roles = auth.get_program_project_roles(*project_id.split('-'))
+        if role not in roles:
             raise AuthError(
                 "You don't have {} role to do '{}'".format(role, action)
             )
@@ -854,18 +855,17 @@ def delete_project(program, project):
     """
     Delete project under a specific program
     """
-    auth.admin_auth()
+    auth.current_user.require_admin()
     with flask.current_app.db.session_scope() as session:
         node = utils.lookup_project(flask.current_app.db, program, project)
         if node.edges_in:
             raise UserError('ERROR: Can not delete the project.\
                              Project {} is not empty'.format(project))
         transaction_args = dict(
-                                program=program,
-                                project=project,
-                                user=flask.g.user,
-                                flask_config=flask.current_app.config
-                            )
+            program=program,
+            project=project,
+            flask_config=flask.current_app.config
+        )
         with (
                 transactions.deletion.transaction.
                 DeletionTransaction(**transaction_args)
