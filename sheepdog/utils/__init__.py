@@ -4,41 +4,37 @@ Provide utility functions primarily for code in ``sheepdog.blueprint``
 (though some are also used in ``sheepdog.upload``).
 """
 
-from contextlib import contextmanager
 import copy
 import functools
 import json
 import StringIO
 import tarfile
 import time
+from contextlib import contextmanager
+from urlparse import urlparse
 
 import flask
 from fuzzywuzzy.process import extract
 
-from sheepdog import dictionary
-from sheepdog import models
-from sheepdog.errors import (
-    InternalError,
-    NotFoundError,
-    UserError,
-)
+from sheepdog import dictionary, models
+from sheepdog.errors import InternalError, NotFoundError, UserError
 from sheepdog.globals import (
-    submitted_state,
-    TEMPLATE_NAME,
-    UPLOADING_STATE,
-    UPLOADED_STATE,
-    ERROR_STATE,
-    UPLOADING_PARTS,
     DATA_FILE_CATEGORIES,
-    STATES_COMITTABLE_DRY_RUN,
+    ERROR_STATE,
     PRIMARY_URL_TYPE,
+    STATES_COMITTABLE_DRY_RUN,
+    TEMPLATE_NAME,
+    UPLOADED_STATE,
+    UPLOADING_PARTS,
+    UPLOADING_STATE,
+    submitted_state,
 )
 from sheepdog.utils.transforms.graph_to_doc import (
     entity_to_template,
     entity_to_template_str,
 )
-from . import s3
 
+from . import s3
 
 ALLOWED_STATES_FOR_UPLOAD = [
     ERROR_STATE,
@@ -534,18 +530,19 @@ def lookup_program(psql_driver, program):
 
 def proxy_request(project_id, uuid, data, args, headers, method, action,
                   indexd_client, dry_run=False):
+    """Proxy a request to an object storage"""
+
     node = get_node(project_id, uuid)
     indexd_doc = indexd_client.get(uuid)
-
-    program, project = project_id.split('-', 1)
-    s3_url = generate_s3_url(
-        host=flask.current_app.config['SUBMISSION']['host'],
-        bucket=flask.current_app.config['SUBMISSION']['bucket'],
-        program=program,
-        project=project,
-        uuid=uuid,
-        file_name=indexd_doc.file_name,
-    )
+    s3_url = None
+    key_name = None
+    for url, metadata in indexd_doc.urls_metadata.items():
+        if metadata.get('type') == PRIMARY_URL_TYPE:
+            s3_url = url
+            path = urlparse(url).path
+            # /one/two/three -> two/three
+            key_name = '/'.join([p for p in path.split('/') if p][1:])
+            break
 
     check_action_allowed_for_file(action, node, s3_url, indexd_client)
 
@@ -558,18 +555,18 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
 
     if action in ['upload', 'initiate_multipart']:
         set_indexd_state(indexd_doc, s3_url, UPLOADING_STATE)
+
     elif action == 'abort_multipart':
         set_indexd_state(indexd_doc, s3_url, submitted_state())
 
     if action not in ['upload', 'upload_part', 'complete_multipart']:
         data = ''
 
-    key_name = generate_s3_key(program, project, uuid, indexd_doc.file_name)
-
     resp = s3.make_s3_request(key_name, data, args, headers, method, action)
 
     if action in ['upload', 'complete_multipart'] and resp.status == 200:
         set_indexd_state(indexd_doc, s3_url, UPLOADED_STATE)
+
     elif action == 'delete' and resp.status == 204:
         set_indexd_state(indexd_doc, s3_url, submitted_state())
 
