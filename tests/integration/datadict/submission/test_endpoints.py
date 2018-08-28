@@ -166,8 +166,8 @@ def test_put_entity_creation_valid(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
 
-def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter):
-    # token for TCGA
+def test_unauthenticated_post(client, pg_driver, cgci_blgsp, submitter):
+    # send garbage token
     headers = {'Authorization': 'test'}
     data = json.dumps({
         "type": "case",
@@ -177,10 +177,10 @@ def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter):
         }
     })
     resp = client.post(BLGSP_PATH, headers=headers, data=data)
-    assert resp.status_code == 403
+    assert resp.status_code == 401
 
 
-def test_unauthorized_post_with_incorrect_role(client, pg_driver, cgci_blgsp, member):
+def test_unauthorized_post(client, pg_driver, cgci_blgsp, member):
     # token only has _member_ role in CGCI
     headers = member
     resp = client.post(
@@ -557,7 +557,7 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
     print(resp)
 
 
-def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter, index_client):
+def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter, index_client, require_index_exists_off):
     """
     Test that submitting a valid data file creates an index and an alias.
     """
@@ -584,6 +584,7 @@ def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter,
     assert sur_entity, 'No submitted_unaligned_reads entity created'
     assert index_client.get(sur_entity['id']), 'No indexd document created'
 
+
 def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope():
@@ -603,6 +604,7 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     assert len(data) == 1
     assert data[0]['id'] == case_id
 
+
 def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope() as s:
@@ -619,6 +621,7 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
     assert len(r.data.strip().split('\n')) == case_count + 1
+
 
 def test_export_all_node_types_json(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)

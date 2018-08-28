@@ -4,6 +4,8 @@ uploaded entites.
 """
 import uuid
 
+from sheepdog.errors import NoIndexForFileError
+
 from sheepdog import utils
 from sheepdog.transactions.entity_base import EntityErrors
 
@@ -243,7 +245,10 @@ class FileUploadEntity(UploadEntity):
                     # metadata_file, in which case, register a UUID and alias in
                     # the index service.
                     if not self.file_exists:
-                        self._register_index()
+                        if (self._config.get('REQUIRE_FILE_INDEX_EXISTS', False)):
+                            raise NoIndexForFileError(self.entity_id)
+                        else:
+                            self._register_index()
 
                 elif role == 'update':
                     # Check if the category for the node is data_file or
@@ -251,6 +256,7 @@ class FileUploadEntity(UploadEntity):
                     # the index service.
                     if self.file_exists:
                         self._update_index()
+
                 else:
                     message = 'Unknown role {}'.format(role)
                     self.logger.error(message)
@@ -312,11 +318,9 @@ class FileUploadEntity(UploadEntity):
         """
         document = self.file_by_uuid or self.file_by_hash
 
-        if self.urls:
-            urls_to_add = [url for url in self.urls if url not in document.urls]
-            if urls_to_add:
-                document.urls.extend(urls_to_add)
-                document.patch()
+        if self.urls is not None:
+            document.urls = self.urls
+            document.patch()
 
     @staticmethod
     def use_object_id(entity_type):

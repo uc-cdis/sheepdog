@@ -2,7 +2,6 @@ import os
 import sys
 
 from flask import Flask, jsonify
-from flask_sqlalchemy_session import flask_scoped_session
 from psqlgraph import PsqlGraphDriver
 
 from authutils.oauth2 import client as oauth2_client
@@ -14,10 +13,8 @@ from datamodelutils import models, validators, postgres_admin
 
 
 from indexclient.client import IndexClient as SignpostClient
-from userdatamodel.driver import SQLAlchemyDriver
 
 import sheepdog
-from sheepdog.auth import AuthDriver
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
 from sheepdog.version_data import VERSION, COMMIT
 from sheepdog.globals import (
@@ -72,8 +69,6 @@ def db_init(app):
     )
     if app.config.get('AUTO_MIGRATE_DATABASE'):
         migrate_database(app)
-    app.userdb = SQLAlchemyDriver(app.config['PSQL_USER_DB_CONNECTION'])
-    flask_scoped_session(app.userdb.Session, app)
 
     app.oauth_client = oauth2_client.OAuthClient(**app.config['OAUTH2'])
 
@@ -82,11 +77,6 @@ def db_init(app):
         app.config['SIGNPOST']['host'],
         version=app.config['SIGNPOST']['version'],
         auth=app.config['SIGNPOST']['auth'])
-    try:
-        app.logger.info('Initializing Auth driver')
-        app.auth = AuthDriver(app.config["AUTH_ADMIN_CREDS"], app.config["INTERNAL_AUTH"])
-    except Exception:
-        app.logger.exception("Couldn't initialize auth, continuing anyway")
 
 
 def migrate_database(app):
@@ -128,6 +118,10 @@ def app_init(app):
     # default settings
     app.config['AUTO_MIGRATE_DATABASE'] = (
         app.config.get('AUTO_MIGRATE_DATABASE', True)
+    )
+    app.config['REQUIRE_FILE_INDEX_EXISTS'] = (
+        # If True, enforce indexd record exists before file node registration
+        app.config.get('REQUIRE_FILE_INDEX_EXISTS', False)
     )
 
     app_register_blueprints(app)

@@ -263,7 +263,7 @@ def create_delete_entities_viewer(dry_run=False):
 
         if to_delete is not None:
             # to_delete is admin only
-            auth.admin_auth()
+            auth.current_user.require_admin()
 
             # get value of that flag from string
             if to_delete.lower() == 'false':
@@ -337,6 +337,7 @@ def export_entities(program, project):
         filename = '{}.{}'.format(node_label, file_format)
         content_disp = 'attachment; filename={}'.format(filename)
         headers = {'Content-Disposition': content_disp}
+        utils.transforms.graph_to_doc.validate_export_node(node_label)
         return flask.Response(
             utils.transforms.graph_to_doc.export_all(
                 node_label, project_id, file_format, flask.current_app.db
@@ -437,7 +438,7 @@ def create_files_viewer(dry_run=False, reassign=False):
         elif flask.request.method == 'PUT':
             if reassign:
                 # admin only
-                auth.admin_auth()
+                auth.current_user.require_admin()
                 action = 'reassign'
             elif flask.request.args.get('partNumber'):
                 action = 'upload_part'
@@ -454,7 +455,8 @@ def create_files_viewer(dry_run=False, reassign=False):
 
         project_id = program + '-' + project
         role = PERMISSIONS[action]
-        if role not in flask.g.user.roles[project_id]:
+        roles = auth.get_program_project_roles(*project_id.split('-'))
+        if role not in roles:
             raise AuthError(
                 "You don't have {} role to do '{}'".format(role, action)
             )
@@ -548,6 +550,7 @@ def create_release_project_viewer(dry_run=False):
         return transactions.release.handle_release_transaction(program, project, dry_run=dry_run)
 
     return release_project
+
 
 def create_review_project_viewer(dry_run=False):
     """
@@ -845,3 +848,30 @@ def create_clinical_viewer(dry_run=False):
         )
 
     return update_entities_clinical_bcr
+
+
+@utils.assert_project_exists
+def delete_project(program, project):
+    """
+    Delete project under a specific program
+    """
+    auth.current_user.require_admin()
+    with flask.current_app.db.session_scope() as session:
+        node = utils.lookup_project(flask.current_app.db, program, project)
+        if node.edges_in:
+            raise UserError('ERROR: Can not delete the project.\
+                             Project {} is not empty'.format(project))
+        transaction_args = dict(
+            program=program,
+            project=project,
+            flask_config=flask.current_app.config
+        )
+        with (
+                transactions.deletion.transaction.
+                DeletionTransaction(**transaction_args)
+             ) as trans:
+            session.delete(node)
+            trans.claim_transaction_log()
+            trans.write_transaction_log()
+            session.commit()
+            return flask.jsonify(trans.json), 204

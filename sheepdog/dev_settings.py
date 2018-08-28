@@ -52,15 +52,6 @@ PSQLGRAPH = {
     'database': os.getenv("GDC_PG_DBNAME", "sheepdog_automated_test")
 }
 
-PSQL_USER_DB_NAME = 'fence'
-PSQL_USER_DB_USERNAME = 'test'
-PSQL_USER_DB_PASSWORD = 'test'
-PSQL_USER_DB_HOST = 'localhost'
-
-PSQL_USER_DB_CONNECTION = "postgresql://{name}:{password}@{host}/{db}".format(
-    name=PSQL_USER_DB_USERNAME, password=PSQL_USER_DB_PASSWORD, host=PSQL_USER_DB_HOST, db=PSQL_USER_DB_NAME
-)
-
 # API server
 SHEEPDOG_HOST = os.getenv("SHEEPDOG_HOST", "localhost")
 SHEEPDOG_PORT = int(os.getenv("SHEEPDOG_PORT", "5000"))

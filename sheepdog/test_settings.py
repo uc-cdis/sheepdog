@@ -42,14 +42,6 @@ SLICING = {
     'host': 'localhost',
     'gencode': 'REPLACEME',
 }
-PSQL_USER_DB_NAME = 'test_userapi'
-PSQL_USER_DB_USERNAME = 'postgres'
-PSQL_USER_DB_PASSWORD = 'postgres'
-PSQL_USER_DB_HOST = 'localhost'
-
-PSQL_USER_DB_CONNECTION = "postgresql://{name}:{password}@{host}/{db}".format(
-    name=PSQL_USER_DB_USERNAME, password=PSQL_USER_DB_PASSWORD, host=PSQL_USER_DB_HOST, db=PSQL_USER_DB_NAME
-)
 
 FLASK_SECRET_KEY = 'flask_test_key'
 
@@ -79,3 +71,5 @@ JWT_KEYPAIR_FILES = OrderedDict([
         ('resources/keys/test_public_key_2.pem', 'resources/keys/test_private_key_2.pem'),
     ),
 ])
+
+REQUIRE_FILE_INDEX_EXISTS = True
