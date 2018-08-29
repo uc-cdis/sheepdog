@@ -6,20 +6,7 @@ import psqlgraph
 from sheepdog.transactions.upload.entity import UploadEntity
 from sheepdog.transactions.upload.sub_entities import NonFileUploadEntity
 from sheepdog.transactions.upload.sub_entities import FileUploadEntity
-
-
-def get_node_category(node_type):
-    """
-    Get the category for the given node type specified
-
-    Args:
-        node_type (str): the type of node
-
-    Returns:
-        str: node category
-    """
-    cls = psqlgraph.Node.get_subclass(node_type)
-    return cls._dictionary.get('category')
+from sheepdog.utils import get_node_category
 
 
 class UploadEntityFactory():

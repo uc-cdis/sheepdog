@@ -1,3 +1,4 @@
+from sheepdog.auth import get_program_project_roles
 from sheepdog.globals import (
     submitted_state,
     ALLOWED_DELETION_STATES,
@@ -25,7 +26,9 @@ class DeletionEntity(EntityBase):
         self.neighbors = (edge.src for edge in node.edges_in)
 
         # Check user permissions for deleting nodes
-        roles = self.transaction.user.roles.get(self.transaction.project_id, [])
+        roles = get_program_project_roles(
+            *self.transaction.project_id.split('-')
+        )
         if 'delete' not in roles:
             self.record_error(
                 'You do not have delete permission for project {}'

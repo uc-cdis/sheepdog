@@ -32,6 +32,26 @@ log = get_logger(__name__)
 
 TEMPLATE_NAME = 'submission_templates.tar.gz'
 
+# This is the list of node categories which cannot be exported using the export
+# endpoint, which will cover unsupported types like `root` and `_all`.
+UNSUPPORTED_EXPORT_NODE_CATEGORIES = [
+    'internal',
+]
+
+
+def get_node_category(node_type):
+    """
+    Get the category for the given node type specified
+
+    Args:
+        node_type (str): the type of node
+
+    Returns:
+        str: node category
+    """
+    cls = psqlgraph.Node.get_subclass(node_type)
+    return cls._dictionary.get('category')
+
 
 def parse_ids(ids):
     """
@@ -702,6 +722,29 @@ class ExportFile(object):
         return self.result
 
 
+def validate_export_node(node_label):
+    """
+    Raise a ``UserError`` if there is any reason that nodes with the type
+    specified by ``node_label`` should not be exported. This m
+
+    Args:
+        node_label (str): string of the node type
+
+    Return:
+        None
+
+    Raises:
+        UserError: if the node cannot be exported
+    """
+    if node_label not in dictionary.schema:
+        raise UserError(
+            'dictionary does not have node with type {}'.format(node_label)
+        )
+    category = get_node_category(node_label)
+    if category in UNSUPPORTED_EXPORT_NODE_CATEGORIES:
+        raise UserError('cannot export node with category `internal`')
+
+
 def export_all(node_label, project_id, file_format, db, **kwargs):
     """
     Export all nodes of type with name ``node_label`` to a TSV file and yield
@@ -834,19 +877,15 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
         # (<Case(...[uuid]...)>, u'...[uuid]...', u'exp-01')
 
         if file_format == "json":
-          yield '{ "data": ['
-        else: # json
-          # Yield the lines of the file.
-          yield '{}\n'.format('\t'.join(titles))
+            yield '{ "data": ['
+        else:  # json
+            # Yield the lines of the file.
+            yield '{}\n'.format('\t'.join(titles))
 
         js_list_separator = ''
         for result in query.yield_per(1000):
             row = []
-            json_obj = {
-              "link_fields": {
-
-              }
-            }
+            json_obj = {"link_fields": {}}
             # Write in the properties from just the node.
             node = result[0]
             for prop in props:
@@ -855,16 +894,16 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
             # Tack on the linked properties.
             row.extend(map(lambda col: col or '', result[1:]))
             for idx, title in enumerate(titles_linked):
-              json_obj["link_fields"][title] = result[idx+1] or ''
+                json_obj["link_fields"][title] = result[idx + 1] or ''
             # Convert row elements to string if they are not
             for idx, val in enumerate(row):
                 if not isinstance(val, str):
                     row[idx] = str(row[idx])
             if file_format == "json":
-              yield js_list_separator + json.dumps(json_obj)
+                yield js_list_separator + json.dumps(json_obj)
             else:
-              yield '{}\n'.format('\t'.join(row))
+                yield '{}\n'.format('\t'.join(row))
             js_list_separator = ','
 
         if file_format == "json":
-          yield ']}'
+            yield ']}'

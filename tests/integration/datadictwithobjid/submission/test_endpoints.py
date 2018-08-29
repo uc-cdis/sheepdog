@@ -9,6 +9,7 @@ import uuid
 
 import boto
 import pytest
+import flask
 from flask import g
 from moto import mock_s3
 
@@ -194,8 +195,8 @@ def test_put_entity_creation_valid(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
 
-def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter):
-    # token for TCGA
+def test_unauthenticated_post(client, pg_driver, cgci_blgsp, submitter):
+    # garbage token
     headers = {'Authorization': 'test'}
     data = json.dumps({
         "type": "case",
@@ -205,10 +206,10 @@ def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter):
         }
     })
     resp = client.post(BLGSP_PATH, headers=headers, data=data)
-    assert resp.status_code == 403
+    assert resp.status_code == 401
 
 
-def test_unauthorized_post_with_incorrect_role(client, pg_driver, cgci_blgsp, member):
+def test_unauthorized_post(client, pg_driver, cgci_blgsp, member):
     # token only has _member_ role in CGCI
     headers = member
     resp = client.post(
@@ -217,7 +218,9 @@ def test_unauthorized_post_with_incorrect_role(client, pg_driver, cgci_blgsp, me
             "submitter_id": "BLGSP-71-06-00019",
             "projects": {
                 "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
-            }}))
+            }
+        })
+    )
     assert resp.status_code == 403
 
 
@@ -544,6 +547,7 @@ def test_invalid_json(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 400
     assert 'Expecting value' in resp.json['message']
 
+
 def test_get_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope():
@@ -623,6 +627,7 @@ def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter,
     assert sur_entity, 'No submitted_unaligned_reads entity created'
     assert index_client.get(object_id), 'No indexd document created'
 
+
 def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope():
@@ -642,6 +647,7 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     assert len(data) == 1
     assert data[0]['id'] == case_id
 
+
 def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope() as s:
@@ -658,3 +664,142 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
     assert len(r.data.strip().split('\n')) == case_count + 1
+
+
+@pytest.mark.parametrize('file_type', ['json', 'tsv'])
+def test_export_error(client, cgci_blgsp, submitter, file_type):
+    """
+    Certain node types and categories cant't be exported through the
+    ``/{program}/{project}/export`` endpoint (such as ``_all`` and ``root``).
+    Test that trying to export using these as the node_label argument fails
+    with 400.
+    """
+    for node_label in ['root', '_all']:
+        path = (
+            '/v0/submission/CGCI/BLGSP/export/'
+            '?file_format={}'
+            '&node_label={}'
+            .format(file_type, node_label)
+        )
+        response = client.get(path, headers=submitter)
+        assert response.status_code == 400
+
+
+def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
+    """
+    Test that returns error  when attemping to delete non-empty project
+    """
+    headers = submitter
+    resp = client.put(
+        BLGSP_PATH, headers=headers, data=json.dumps({
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {
+                "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
+            }}))
+
+    path = '/v0/submission/CGCI/BLGSP'
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 400
+
+
+def test_delete_project_without_admin_token(client, pg_driver, cgci_blgsp, member):
+    """
+    Test that returns error when attemping to delete non-empty project
+    """
+    path = '/v0/submission/CGCI/BLGSP'
+    resp = client.delete(path, headers=member)
+    assert resp.status_code == 403
+
+
+def test_delete_non_existed_project(client, pg_driver, cgci_blgsp, submitter, admin):
+    """
+    Test that returns error when attemping to delete a non-existed project
+    """
+    path = '/v0/submission/CGCI/NOT_EXIST'
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 404
+
+
+def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
+    """
+    Test that successfully deletes an empty project
+    """
+    path = '/v0/submission/CGCI/BLGSP'
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 204
+    with flask.current_app.db.session_scope():
+        project = (
+            flask.current_app.
+            db.nodes(md.Project).
+            props(code='BLGSP').first())
+        assert not project
+
+
+def test_delete_empty_non_program(client, pg_driver, cgci_blgsp, admin):
+    """
+    Test that return error  when attempting to delete a non-empty program
+    """
+    path = '/v0/submission/CGCI'
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 400
+
+
+def test_delete_program_without_admin_token(client, pg_driver, admin, member):
+    """
+    Test that returns error since the client does not have
+    privillege to delele the program
+    """
+    path = '/v0/submission/CGCI'
+    put_cgci(client, admin)
+    resp = client.delete(path, headers=member)
+    assert resp.status_code == 403
+
+
+def test_delete_program(client, pg_driver, admin):
+    """
+    Test that successfully deletes an empty program
+    """
+    path = '/v0/submission/CGCI'
+    put_cgci(client, admin)
+    resp = client.delete(path, headers=admin)
+    assert resp.status_code == 204
+    with flask.current_app.db.session_scope():
+        program = (
+            flask.current_app.
+            db.nodes(md.Program).
+            props(name='CGCI').first())
+        assert not program
+
+
+def test_update_program_without_admin_token(client, pg_driver, admin, member):
+    """
+    Test that returns authentication error since client does not have
+    privilege to update the program
+    """
+    put_cgci(client, admin)
+    data = json.dumps({
+        'name': 'CGCI', 'type': 'program',
+        'dbgap_accession_number': 'phs000235_2'
+    })
+    resp = client.put('/v0/submission', headers=member, data=data)
+    assert resp.status_code == 403
+
+
+def test_update_program(client, pg_driver, admin):
+    """
+    Test that successfully updates a program
+    """
+    put_cgci(client, admin)
+    data = json.dumps({
+        'name': 'CGCI', 'type': 'program',
+        'dbgap_accession_number': 'phs000235_2'
+    })
+    resp = client.put('/v0/submission', headers=admin, data=data)
+    assert resp.status_code == 200
+    with flask.current_app.db.session_scope():
+        program = (
+            flask.current_app.
+            db.nodes(md.Program).
+            props(name='CGCI').first())
+        assert program.props['dbgap_accession_number'] == 'phs000235_2'

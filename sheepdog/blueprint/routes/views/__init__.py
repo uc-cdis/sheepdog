@@ -107,7 +107,7 @@ def root_create():
             "dbgap_accession_number": "phs000178"
         }
     """
-    auth.admin_auth()
+    auth.current_user.require_admin()
     message = None
     node_id = None
     doc = parse.parse_request_json()
@@ -131,8 +131,9 @@ def root_create():
             .scalar()
         )
         if node:
-            message = 'Program already exists.'
+            message = 'Program is updated!'
             node_id = node.node_id
+            node.props['dbgap_accession_number'] = phsid
         else:
             node_id = str(uuid.uuid5(PROGRAM_SEED, program.encode('utf-8')))
             session.add(models.Program(  # pylint: disable=not-callable
