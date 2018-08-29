@@ -20,10 +20,10 @@ class DeletionEntity(EntityBase):
         }
 
         if isinstance(node, MissingNode):
-            self.neighbors = []
+            self.neighbors = ()
             return
 
-        self.neighbors = [edge.src for edge in node.edges_in]
+        self.neighbors = (edge.src for edge in node.edges_in)
 
         # Check user permissions for deleting nodes
         roles = get_program_project_roles(
@@ -87,9 +87,6 @@ class DeletionEntity(EntityBase):
         if not self.node_exists:
             return
 
-        for edge in self.node.get_edges():
-            self.transaction.session.delete(edge)
-
         for association in self.node._pg_edges:
             setattr(self.node, association, [])
 
@@ -98,24 +95,22 @@ class DeletionEntity(EntityBase):
     def recursive_test_deletion(self):
         self.logger.info('Attempting deletion of {}'.format(self))
 
-        subentities = [
-            DeletionEntity(self.transaction, n)
-            for n in self.neighbors if n
-        ]
+        for n in self.neighbors:
+            if n:
+                subentity = DeletionEntity(self.transaction, n)
+                self.transaction.graph_validator.record_errors(
+                    self.transaction.db_driver, [subentity])
+                if not subentity.is_valid and subentity.node_exists:
+                    self.dependents[subentity.node.node_id] = subentity
+                    subentity._delete()
+                    subentity.recursive_test_deletion()
 
-        self.transaction.graph_validator.record_errors(
-            self.transaction.db_driver, subentities)
+                    # Add child dependencies to this entity
+                    self.dependents.update(subentity.dependents)
 
-        invalid_neighbor_entities = [e for e in subentities if not e.is_valid]
-
-        for entity in invalid_neighbor_entities:
-            if entity.node_exists:
-                self.dependents[entity.node.node_id] = entity
-                entity._delete()
-                entity.recursive_test_deletion()
-
-                # Add child dependencies to this entity
-                self.dependents.update(entity.dependents)
+            # For performance, only get the first dependent node
+            if self.dependents:
+                break
 
     def error_for_dependents(self):
         """Record error if it has dependents"""
@@ -124,8 +119,8 @@ class DeletionEntity(EntityBase):
 
         if self.dependents:
             self.record_error(
-                ("Unable to delete entity because {} "
-                 "others directly or indirectly depend on it. "
+                ("Unable to delete entity because at least {} "
+                 "other(s) directly or indirectly depend on it. "
                  "You can only delete this entity by deleting its dependents "
                  "prior to, or during the same transaction as this one.")
                 .format(len(self.dependents)),
