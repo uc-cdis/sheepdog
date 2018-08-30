@@ -154,7 +154,11 @@ MESSAGE_500 = 'Internal server error. Sorry, something unexpected went wrong!'
 ENTITY_STATE_CATEGORIES = [
     'biospecimen',
     'clinical',
+    'anaylsis',
+    'notation',
     'data_file',
+    'metadata_file',
+    'index_file',
     # 'cases' => cases are currently `admin` but are manually included
     #      in submission
     # 'annotations' => cases are currently `TBD` but are manually
