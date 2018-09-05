@@ -26,8 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && mkdir /var/www/sheepdog \
     && mkdir -p /var/www/.cache/Python-Eggs/ \
     && chown www-data -R /var/www/.cache/Python-Eggs/ \
-    && mkdir /run/nginx/ \
-    && echo 512 > /proc/sys/net/core/somaxconn
+    && mkdir /run/nginx/
 
 COPY ./requirements.txt /sheepdog/requirements.txt
 WORKDIR /sheepdog
