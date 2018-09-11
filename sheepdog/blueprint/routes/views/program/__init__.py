@@ -67,7 +67,7 @@ def get_projects(program):
         }
     """
     if flask.current_app.config.get('AUTH_SUBMISSION_LIST', True) is True:
-        auth.require_auth()
+        auth.validate_request(aud={'openid'}, purpose=None)
     with flask.current_app.db.session_scope():
         matching_programs = (
             flask.current_app

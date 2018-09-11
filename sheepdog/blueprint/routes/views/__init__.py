@@ -59,7 +59,7 @@ def get_programs():
         }
     """
     if flask.current_app.config.get('AUTH_SUBMISSION_LIST', True) is True:
-        auth.require_auth()
+        auth.validate_request(aud={'openid'}, purpose=None)
     with flask.current_app.db.session_scope():
         programs = current_app.db.nodes(models.Program.name).all()
     links = [flask.url_for('.get_projects', program=p[0]) for p in programs]
