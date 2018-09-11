@@ -614,7 +614,7 @@ class UploadEntity(EntityBase):
 
     def get_user_roles(self):
         return get_program_project_roles(
-            *self.transaction.project_id.split('-')
+            *self.transaction.project_id.split('-', 1)
         )
 
     def is_case_creation_allowed(self, case_id):

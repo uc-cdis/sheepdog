@@ -27,7 +27,7 @@ class DeletionEntity(EntityBase):
 
         # Check user permissions for deleting nodes
         roles = get_program_project_roles(
-            *self.transaction.project_id.split('-')
+            *self.transaction.project_id.split('-', 1)
         )
         if 'delete' not in roles:
             self.record_error(

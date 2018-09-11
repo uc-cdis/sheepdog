@@ -455,7 +455,7 @@ def create_files_viewer(dry_run=False, reassign=False):
 
         project_id = program + '-' + project
         role = PERMISSIONS[action]
-        roles = auth.get_program_project_roles(*project_id.split('-'))
+        roles = auth.get_program_project_roles(*project_id.split('-', 1))
         if role not in roles:
             raise AuthError(
                 "You don't have {} role to do '{}'".format(role, action)
