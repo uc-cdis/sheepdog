@@ -61,7 +61,7 @@ def get_program_project_roles(program, project):
     a ``project_id`` attribute which is actually ``{program}-{project}``, so
     in those places call this function like
 
-        get_program_project_roles(*project_id.split('-'))
+        get_program_project_roles(*project_id.split('-', 1))
 
     Args:
         program (str): program name (NOT id)
