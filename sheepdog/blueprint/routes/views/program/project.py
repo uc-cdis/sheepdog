@@ -101,7 +101,7 @@ def get_project_dictionary(program=None, project=None):
     :func:`get_dicionary`.)
     """
     if flask.current_app.config.get('AUTH_SUBMISSION_LIST', True) is True:
-        auth.require_auth()
+        auth.validate_request(aud={'openid'}, purpose=None)
     keys = dictionary.schema.keys() + ['_all']
     links = [
         flask.url_for(
@@ -173,7 +173,7 @@ def get_project_dictionary_entry(program, project, entry):
     :func:`get_dictionary_entry`.)
     """
     if flask.current_app.config.get('AUTH_SUBMISSION_LIST', True) is True:
-        auth.require_auth()
+        auth.validate_request(aud={'openid'}, purpose=None)
     return get_dictionary_entry(entry)
 
 

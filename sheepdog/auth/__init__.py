@@ -39,9 +39,9 @@ def _log_import_error(module_name):
 # instantiated yet (application out of context error)
 
 try:
-    from authutils import require_auth
+    from authutils.token.validate import validate_request
 except ImportError:
-    _log_import_error('require_auth')
+    _log_import_error('validate_request')
 
 
 def _role_error_msg(user_name, roles, project):
