@@ -380,7 +380,7 @@ class BcrBiospecimenXmlToJsonParser(object):
                     if 'null' in schema['properties'][prop].get('type', []):
                         props[prop] = None
                     continue
-                path, _type = args['path'], args['type']
+                path, _type, default = args['path'], args['type'], args.get("default")
                 if not path:
                     if 'null' in schema['properties'][prop].get('type', []):
                         props[prop] = None
@@ -388,7 +388,7 @@ class BcrBiospecimenXmlToJsonParser(object):
                 result = self.xpath(
                     path, root, single=True, text=True,
                     expected=(not self.ignore_missing_properties),
-                    label='{}: {}'.format(entity_type, entity_id))
+                    label='{}: {}'.format(entity_type, entity_id)) or default
                 # optional null fields are removed
                 if result is None and prop not in\
                         dictionary.schema[entity_type].get('required', []):
