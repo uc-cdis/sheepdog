@@ -162,21 +162,20 @@ class BcrBiospecimenXmlToJsonParser(object):
             depth (int): return depth from root to hit
 
         Return:
-
+            list (dict) | dict: list of path results, or a single result
         Raises:
             ParsingError:
                 if ``single``, ``nullable``, or ``expected`` are True and their
                 respective conditions are violated (see above)
         """
-        result = None
+        result = []
         depths = []
         if root is None:
             root = self.xml_root
 
         # to walk, we stick them all in a list, but it'll only match the first found
         # that way, if multiples are used in the yaml, it's an or
-        # NOTE: if there are multiple hits, this could behave oddly, so watch the
-        # source XML
+        # NOTE: if there are multiple hits, each will be appended to result
         if isinstance(path, list):
             list_path = path
         else:
@@ -184,9 +183,9 @@ class BcrBiospecimenXmlToJsonParser(object):
 
         for xpath_entry in list_path:
             try:
-                result = root.xpath(xpath_entry, namespaces=self.namespaces)
+                result += root.xpath(xpath_entry, namespaces=self.namespaces)
             except etree.XPathEvalError:
-                result = []
+                continue
             except:
                 raise
             rlen = len(result)
@@ -196,7 +195,6 @@ class BcrBiospecimenXmlToJsonParser(object):
                 if depth:
                     for _ in result:
                         depths.append(sum(1 for x in result[0].iterancestors()))
-                break
 
         if (rlen < 1 and expected) and (not isinstance(path, list)):
             raise ParsingError(
