@@ -86,7 +86,8 @@ def migrate_database(app):
         postgres_admin.create_graph_tables(app.db, timeout=1)
     except Exception:
         if not postgres_admin.check_version(app.db):
-            app.logger.exception("Fail to migrate database, continuing anyway")
+            app.logger.exception("ERROR: Fail to migrate database")
+            sys.exit(1)
         # if the version is already up to date, that means there is
         # another migration wins, so silently exit
         return
