@@ -88,9 +88,11 @@ def migrate_database(app):
         if not postgres_admin.check_version(app.db):
             app.logger.exception("ERROR: Fail to migrate database")
             sys.exit(1)
-        # if the version is already up to date, that means there is
-        # another migration wins, so silently exit
-        return
+        else:
+            # if the version is already up to date, that means there is
+            # another migration wins, so silently exit
+            app.logger.exception("The database version matches up. No need to do migration")
+            return
     # hardcoded read role
     read_role = 'peregrine'
     # check if such role exists
