@@ -535,7 +535,10 @@ class FileUploadEntity(UploadEntity):
                 try:
                     document = self.transaction.signpost.get_with_params(params)
                 except requests.HTTPError as e:
-                    raise UserError(code=e.response.status_code, message=e.message)
+                    raise UserError(
+                        code=e.response.status_code,
+                        message="Fail to register the data node in indexd. Detail {}".format(e.message)
+                    )
 
         return document
 
