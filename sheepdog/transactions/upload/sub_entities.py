@@ -98,6 +98,7 @@ class FileUploadEntity(UploadEntity):
             allow updating the linkage to a new file since we're forcing
             a 1:1 between uuids in graph and index service
     """
+
     def __init__(self, *args, **kwargs):
         super(FileUploadEntity, self).__init__(*args, **kwargs)
         self.file_exists = False
@@ -178,6 +179,10 @@ class FileUploadEntity(UploadEntity):
         """
         # entity_id is set to the node_id here
         node = super(FileUploadEntity, self).get_node_merge()
+        if not node:
+            # `get_node_merge` must have errored in `UploadEntity`, which should
+            # record the error, so just pass the `None` return upwards
+            return None
 
         # verify that update is allowed
         if not self.is_updatable_file_node(node):
@@ -345,10 +350,9 @@ class FileUploadEntity(UploadEntity):
         Return:
             bool: whether the node is an updatable file
         """
-        is_updateable = True
-        has_file_state = 'file_state' in node.__pg_properties__
-
-        if has_file_state:
+        if not node:
+            return False
+        if 'file_state' in node.__pg_properties__:
             allowed_states = [
                 'registered',
                 'uploading',
@@ -357,9 +361,8 @@ class FileUploadEntity(UploadEntity):
             ]
             file_state = node._props.get('file_state')
             if file_state and file_state not in allowed_states:
-                is_updateable = False
-
-        return is_updateable
+                return False
+        return True
 
     def _populate_files_from_index(self):
         """
