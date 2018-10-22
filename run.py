@@ -11,7 +11,7 @@ from gdcdatamodel import models as md
 from psqlgraph import PolyNode as Node
 
 from sheepdog.api import run_for_development
-from sheepdog.auth import roles as all_roles
+from sheepdog.auth import ROLES as all_roles
 
 
 requests.packages.urllib3.disable_warnings()
