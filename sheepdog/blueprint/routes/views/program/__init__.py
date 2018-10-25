@@ -218,6 +218,14 @@ def delete_program(program):
     """
     Delete a program given program name. If the program
     is not empty raise an appropriate exception
+
+    Args:
+        program (str): |program_id|
+
+    :statuscode 204: Success.
+    :statuscode 400: User error.
+    :statuscode 404: Program not found.
+    :statuscode 403: Unauthorized request.
     """
     auth.current_user.require_admin()
     with flask.current_app.db.session_scope() as session:

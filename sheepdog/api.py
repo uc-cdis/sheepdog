@@ -2,6 +2,7 @@ import os
 import sys
 
 from flask import Flask, jsonify
+from flasgger import Swagger, Flasgger
 from psqlgraph import PsqlGraphDriver
 
 from authutils.oauth2 import client as oauth2_client
@@ -141,6 +142,24 @@ def app_init(app):
 
 app = Flask(__name__)
 
+app_info = {
+  "swagger": "2.0",
+  "info": {
+    "title": "Sheepdog OpenAPI Specification",
+    "description": "A data submission API for CDIS Gen 3 data commons. Code is available on [GitHub](https://github.com/uc-cdis/sheepdog).",
+    "version": "1.0",
+    "termsOfService": "http://cdis.uchicago.edu/terms/",
+    "contact": {
+        "email": "cdis@uchicago.edu"
+    },
+    "license": {
+        "name": "Apache 2.0",
+        "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  }
+}
+
+
 # Setup logger
 app.logger.addHandler(get_handler())
 
@@ -149,6 +168,17 @@ setup_default_handlers(app)
 
 @app.route('/_status', methods=['GET'])
 def health_check():
+    """
+    Health check endpoint
+    ---
+    tags:
+      - system
+    responses:
+      200:
+        description: Healthy
+      default:
+        description: Unhealthy
+    """
     with app.db.session_scope() as session:
         try:
             session.execute('SELECT 1')
@@ -159,6 +189,15 @@ def health_check():
 
 @app.route('/_version', methods=['GET'])
 def version():
+    """
+    Returns the version of Sheepdog
+    ---
+    tags:
+      - system
+    responses:
+      200:
+        description: successful operation
+    """
     dictver = {
         'version': dictionary_version(),
         'commit': dictionary_commit(),

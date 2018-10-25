@@ -151,10 +151,12 @@ def root_create():
 def get_dictionary():
     """
     /_dictionary
+    GET
 
     Return links to the JSON schema definitions.
 
-    TODO
+    :statuscode 200: Success
+    :statuscode 403: Unauthorized request.
 
     **Example**
 
@@ -187,6 +189,11 @@ def get_dictionary():
 
 
 def get_templates():
+    """
+    get_templates
+
+    :statuscode 200: Success.
+    """
     file_format = flask.request.args.get('format', 'tsv')
     response = flask.make_response(utils.get_all_template(
         file_format,
@@ -201,6 +208,13 @@ def get_templates():
 
 
 def get_template(entity):
+    """
+    get_templates
+
+    :param str entity: entity
+
+    :statuscode 200: Success.
+    """
     file_format = flask.request.args.get('format', 'tsv')
     filename = "submission_{}_template.{}".format(entity, file_format)
     template = utils.entity_to_template_str(entity, file_format)
@@ -212,6 +226,11 @@ def get_template(entity):
 
 
 def validate_upload_manifest():
+    """
+    validate_upload_manifest
+
+    :statuscode 200: Success.
+    """
     content_type = flask.request.headers.get('Content-Type', '').lower()
     if content_type == 'application/json':
         manifest_doc = parse.parse_request_json()

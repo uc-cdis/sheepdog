@@ -1,0 +1,1415 @@
+definitions: {}
+info:
+  contact:
+    email: cdis@uchicago.edu
+  description: A data submission API for CDIS Gen 3 data commons. Code is available
+    on [GitHub](https://github.com/uc-cdis/sheepdog).
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://cdis.uchicago.edu/terms/
+  title: Sheepdog OpenAPI Specification
+  version: '1.0'
+paths:
+  /:
+    get:
+      description: Return the available resources at the top level above programs
+        i.e. registered programs.
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: get_programs
+      tags:
+      - program
+    patch: &id001
+      description: Register a program. The content of the request is a JSON containing
+        the information describing a program.  Authorization for registering programs
+        is limited to administrative users.
+      responses:
+        '200':
+          description: Registered successfully.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: root_create
+      tags:
+      - program
+    post: *id001
+    put: *id001
+  /<program>:
+    delete:
+      description: Delete a program given program name. If the program is not empty
+        raise an appropriate exception
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '204':
+          description: Success.
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: delete_program
+      tags:
+      - program
+    get:
+      description: Return the available resources at the top level of program ``program``,
+        i.e. registered projects.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: get_projects
+      tags:
+      - project
+    patch: &id002
+      description: Register a project. The content of the request is a JSON containing
+        the information describing a project. Authorization for registering projects
+        is limited to administrative users.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Registered successfully.
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: create_project
+      tags:
+      - project
+    post: *id002
+    put: *id002
+  /<program>/<project>:
+    delete:
+      description: Delete project under a specific program
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '204':
+          description: Success.
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: delete_project
+      tags:
+      - project
+    post:
+      description: Create any valid entities specified in the request body.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Project not found.
+      summary: create_entities
+      tags:
+      - entity
+    put:
+      description: Update the entity specified in the request body.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Project not found.
+      summary: create_entities
+      tags:
+      - entity
+  /<program>/<project>/_dictionary:
+    get:
+      description: Return links to the project level JSON schema definitions.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+      summary: get_project_dictionary
+      tags:
+      - dictionary
+  /<program>/<project>/_dictionary/<entry>:
+    get:
+      description: Get the dictionary entry for a specific project.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: entity type to retrieve the schema for (e.g. ``aliquot``)
+        in: path
+        name: entry
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: get_project_dictionary_entry
+      tags:
+      - dictionary
+  /<program>/<project>/_dry_run:
+    post:
+      description: Create any valid entities specified in the request body.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Project not found.
+      summary: create_entities
+      tags:
+      - dry run (transactions are not committed)
+    put:
+      description: Update the entity specified in the request body.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Project not found.
+      summary: create_entities
+      tags:
+      - dry run (transactions are not committed)
+  /<program>/<project>/bulk:
+    post:
+      description: Bulk creation of entities.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Project not found.
+      summary: bulk_create_entities
+      tags:
+      - entity
+    put:
+      description: Bulk update of entities.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Project not found.
+      summary: bulk_create_entities
+      tags:
+      - entity
+  /<program>/<project>/bulk/_dry_run:
+    post:
+      description: Bulk creation of entities.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Project not found.
+      summary: bulk_create_entities
+      tags:
+      - dry run (transactions are not committed)
+    put:
+      description: Bulk update of entities.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Project not found.
+      summary: bulk_create_entities
+      tags:
+      - dry run (transactions are not committed)
+  /<program>/<project>/entities/<entity_id_string>:
+    get:
+      description: Retrieve existing entities by ID.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: A comma-separated list of ids specifying the entities to retrieve.
+        in: path
+        name: entity_id_string
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Entity not found.
+      summary: get_entities_by_id
+      tags:
+      - entity
+  /<program>/<project>/entities/<ids>:
+    delete:
+      description: Delete existing entities. Deletions that would leave nodes without
+        parents, i.e. nodes that do not have an entity from which they were derived,
+        are not allowed.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: A comma separated list of ids specifying the entities to delete.
+          These ids must be official GDC ids.
+        in: path
+        name: ids
+        required: true
+        type: string
+      - description: Set the to_delete sysan as true or false. If none, then don't
+          try to set the sysan, and instead delete the node.
+        in: query
+        name: to_delete
+        required: false
+        type: string
+      responses:
+        '200':
+          description: Entities deleted successfully
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Entity not found.
+      summary: delete_entities
+      tags:
+      - entity
+  /<program>/<project>/entities/_dry_run/<ids>:
+    delete:
+      description: Delete existing entities. Deletions that would leave nodes without
+        parents, i.e. nodes that do not have an entity from which they were derived,
+        are not allowed.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: A comma separated list of ids specifying the entities to delete.
+          These ids must be official GDC ids.
+        in: path
+        name: ids
+        required: true
+        type: string
+      - description: Set the to_delete sysan as true or false. If none, then don't
+          try to set the sysan, and instead delete the node.
+        in: query
+        name: to_delete
+        required: false
+        type: string
+      responses:
+        '200':
+          description: Entities deleted successfully
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Entity not found.
+      summary: delete_entities
+      tags:
+      - dry run (transactions are not committed)
+  /<program>/<project>/export:
+    get: &id003
+      description: 'Return a file with the requested entities as an attachment. Omitting
+        the ``ids`` parameter from the query string will return _ALL_ nodes under
+        the given project. Otherwise, if there is only one entity type in the output,
+        it will return a {node_type}.tsv or {node_type}.json file, e.g.: aliquot.tsv.
+        If there are multiple entity types, it returns ``gdc_export_{one_time_sha}.tar.gz``
+        for tsv format, or ``gdc_export_{one_time_sha}.json`` for json format.'
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Bad Request
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: No id is found
+      summary: export_entities
+      tags:
+      - export
+    post: *id003
+  /<program>/<project>/files/<file_uuid>:
+    delete:
+      description: '``DELETE /<program>/<project>/files/<uuid>``: Delete molecular
+        data from object storage. <br/> ``DELETE /<program>/<project>/files/<uuid>?uploadId=UploadId``:
+        Abort Multipart Upload.'
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: file_operations
+      tags:
+      - file
+    get:
+      description: '``GET /<program>/<project>/files/<uuid>?uploadId=UploadId``: List
+        Parts.'
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: file_operations
+      tags:
+      - file
+    post:
+      description: '``POST /<program>/<project>/files/<uuid>?uploads``: Initiate Multipart
+        Upload. <br/> ``POST /<program>/<project>/files/<uuid>?uploadId=UploadId``:
+        Complete Multipart Upload.'
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: file_operations
+      tags:
+      - file
+    put:
+      description: '``PUT /<program>/<project>/files/<uuid>``: Upload data using single
+        PUT. The request body should contain binary data of the file. <br/> ``PUT
+        /<program>/<project>/files/<uuid>?partNumber=PartNumber&uploadId=UploadId``:
+        Upload Part.'
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: file_operations
+      tags:
+      - file
+  /<program>/<project>/files/<file_uuid>/_dry_run:
+    delete:
+      description: '``DELETE /<program>/<project>/files/<uuid>``: Delete molecular
+        data from object storage. <br/> ``DELETE /<program>/<project>/files/<uuid>?uploadId=UploadId``:
+        Abort Multipart Upload.'
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: file_operations
+      tags:
+      - dry run (transactions are not committed)
+    get:
+      description: '``GET /<program>/<project>/files/<uuid>?uploadId=UploadId``: List
+        Parts.'
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: file_operations
+      tags:
+      - dry run (transactions are not committed)
+    post:
+      description: '``POST /<program>/<project>/files/<uuid>?uploads``: Initiate Multipart
+        Upload. <br/> ``POST /<program>/<project>/files/<uuid>?uploadId=UploadId``:
+        Complete Multipart Upload.'
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: file_operations
+      tags:
+      - dry run (transactions are not committed)
+    put:
+      description: '``PUT /<program>/<project>/files/<uuid>``: Upload data using single
+        PUT. The request body should contain binary data of the file. <br/> ``PUT
+        /<program>/<project>/files/<uuid>?partNumber=PartNumber&uploadId=UploadId``:
+        Upload Part.'
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: file_operations
+      tags:
+      - dry run (transactions are not committed)
+  /<program>/<project>/manifest:
+    get:
+      description: Create a json manifest of the files.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: get_manifest
+      tags:
+      - file
+  /<program>/<project>/open:
+    post: &id004
+      description: Mark a project ``open``. Opening a project means uploads, deletions,
+        etc. are allowed.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: open_project
+      tags:
+      - project
+    put: *id004
+  /<program>/<project>/open/_dry_run:
+    post: &id005
+      description: Mark a project ``open``. Opening a project means uploads, deletions,
+        etc. are allowed.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: open_project
+      tags:
+      - dry run (transactions are not committed)
+    put: *id005
+  /<program>/<project>/release:
+    post: &id006
+      description: Release a project.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: release_project
+      tags:
+      - project
+    put: *id006
+  /<program>/<project>/release/_dry_run:
+    post: &id007
+      description: Release a project.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: release_project
+      tags:
+      - dry run (transactions are not committed)
+    put: *id007
+  /<program>/<project>/review:
+    post: &id008
+      description: Mark a project project for review. Reviewing a project means uploads
+        are locked. An ``open`` or ``submit`` action must be taken after ``review``.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: review_project
+      tags:
+      - project
+    put: *id008
+  /<program>/<project>/review/_dry_run:
+    post: &id009
+      description: Mark a project project for review. Reviewing a project means uploads
+        are locked. An ``open`` or ``submit`` action must be taken after ``review``.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: review_project
+      tags:
+      - dry run (transactions are not committed)
+    put: *id009
+  /<program>/<project>/submit:
+    post: &id010
+      description: Submit a project.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: submit_project
+      tags:
+      - project
+    put: *id010
+  /<program>/<project>/submit/_dry_run:
+    post: &id011
+      description: Submit a project.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: submit_project
+      tags:
+      - dry run (transactions are not committed)
+    put: *id011
+  /<program>/<project>/template:
+    get:
+      description: Get templates for all entity types. In the template, Links are
+        represented as {link_type}.{link_unique_key} for one_to_one  and many_to_one
+        relationships. For many_to_many relationships, they are represented as {link_type}.{link_unique_key}#1
+        to infer user the multiplicity
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+      summary: get_project_templates
+      tags:
+      - dictionary
+  /<program>/<project>/template/<entity>:
+    get:
+      description: Return TSV template of an entity type. In the template, links are
+        represented as {link_type}.{link_unique_key} for one_to_one and many_to_one
+        relationships. For many_to_many relationships, they are represented as {link_type}.{link_unique_key}#1
+        to infer user the multiplicity.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: type of the entity
+        in: path
+        name: entity
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '404':
+          description: Entity type is not found
+      summary: get_project_template
+      tags:
+      - dictionary
+  /<program>/<project>/transactions/<int:transaction_id>/close:
+    post: &id012
+      description: Close a transaction. The transaction is prevented from being committed
+        in the future.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: transaction_id
+        in: path
+        name: transaction_id
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: close_transaction
+      tags:
+      - dry run (transactions are not committed)
+    put: *id012
+  /<program>/<project>/transactions/<int:transaction_id>/commit:
+    post: &id013
+      description: 'See documentation for committing a dry run transaction. This call
+        should only succeed if: 1. transaction_id points to a dry_run transaction
+        2. transaction_id points to a transaction that hasn''t been committed already
+        3. transaction_id points to a successful transaction'
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: transaction_id
+        in: path
+        name: transaction_id
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: commit_dry_run_transaction
+      tags:
+      - dry run (transactions are not committed)
+    put: *id013
+  /<program>/<project>/upload_manifest:
+    get:
+      description: Create a json manifest of the files.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: get_manifest
+      tags:
+      - file
+  /<program>/<project>/xml/biospecimen/bcr:
+    put:
+      description: update_entities_biospecimen_bcr
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: update_entities_biospecimen_bcr
+      tags:
+      - entity
+  /<program>/<project>/xml/biospecimen/bcr/_dry_run:
+    put:
+      description: update_entities_biospecimen_bcr
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: update_entities_biospecimen_bcr
+      tags:
+      - dry run (transactions are not committed)
+  /<program>/<project>/xml/clinical/bcr:
+    put:
+      description: update_entities_clinical_bcr
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: update_entities_clinical_bcr
+      tags:
+      - entity
+  /<program>/<project>/xml/clinical/bcr/_dry_run:
+    put:
+      description: update_entities_clinical_bcr
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: update_entities_clinical_bcr
+      tags:
+      - dry run (transactions are not committed)
+  /_dictionary:
+    get:
+      description: Return links to the JSON schema definitions.
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+      summary: get_dictionary
+      tags:
+      - dictionary
+  /_dictionary/<entry>:
+    get:
+      description: Return the project level JSON schema definition for a given entity
+        type.
+      parameters:
+      - description: entity type to retrieve the schema for (e.g. ``aliquot``)
+        in: path
+        name: entry
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: get_dictionary_entry
+      tags:
+      - dictionary
+  /_status:
+    get:
+      responses:
+        '200':
+          description: Healthy
+        default:
+          description: Unhealthy
+      summary: Health check endpoint
+      tags:
+      - system
+  /_version:
+    get:
+      responses:
+        '200':
+          description: successful operation
+      summary: Returns the version of Sheepdog
+      tags:
+      - system
+  /admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>:
+    delete:
+      description: Delete existing entities. Deletions that would leave nodes without
+        parents, i.e. nodes that do not have an entity from which they were derived,
+        are not allowed.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: A comma separated list of ids specifying the entities to delete.
+          These ids must be official GDC ids.
+        in: path
+        name: ids
+        required: true
+        type: string
+      - description: Set the to_delete sysan as true or false. If none, then don't
+          try to set the sysan, and instead delete the node.
+        in: path
+        name: to_delete
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Entities deleted successfully
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Entity not found.
+      summary: delete_entities
+      tags:
+      - entity
+  /admin/<program>/<project>/files/<file_uuid>/reassign:
+    put:
+      description: '``PUT /internal/<program>/<project>/files/<uuid>/reassign``: Manually
+        (re)assign the S3 url for a given node.'
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: file_operations
+      tags:
+      - file
+  /template:
+    get:
+      description: get_templates
+      responses:
+        '200':
+          description: Success.
+      summary: get_templates
+      tags:
+      - dictionary
+  /template/<entity>:
+    get:
+      description: get_templates
+      parameters:
+      - description: entity
+        in: path
+        name: entity
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+      summary: get_template
+      tags:
+      - dictionary
+  /validation/upload_manifest:
+    post:
+      description: validate_upload_manifest
+      responses:
+        '200':
+          description: Success.
+      summary: validate_upload_manifest
+      tags:
+      - file
+swagger: '2.0'

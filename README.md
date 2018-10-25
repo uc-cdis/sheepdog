@@ -45,6 +45,8 @@ app.register_blueprint(blueprint)
 
 ## Documentation
 
+### Sphinx
+
 Auto-documentation is set up using
 [Sphinx](http://www.sphinx-doc.org/en/stable/). To build it, run
 ```bash
@@ -53,3 +55,9 @@ make html
 ```
 which by default will output the `index.html` page to
 `docs/build/html/index.html`.
+
+### Swagger
+
+[OpenAPI documentation available here.](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/uc-cdis/pidgin/master/openapi/swagger.yml)
+
+The YAML file comtaining the OpenAPI documentation can be found in the `openapi` folder; see the README in that folder for more details.
