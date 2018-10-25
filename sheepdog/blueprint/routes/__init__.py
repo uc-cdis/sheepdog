@@ -249,7 +249,7 @@ routes = [
     new_route(
         '/<program>/<project>/files/<file_uuid>',
         views.program.project.create_files_viewer(),
-        endpoint='file_operations',
+        endpoint='file_operations_get',
         methods=['GET'],
         swagger={
             "description": "``GET /<program>/<project>/files/<uuid>?uploadId=UploadId``: List Parts.",
@@ -259,7 +259,7 @@ routes = [
     new_route(
         '/<program>/<project>/files/<file_uuid>/_dry_run',
         views.program.project.create_files_viewer(dry_run=True),
-        endpoint='file_operations_dry_run',
+        endpoint='file_operations_get_dry_run',
         methods=['GET'],
         swagger={
             "description": "``GET /<program>/<project>/files/<uuid>?uploadId=UploadId``: List Parts.",
@@ -269,7 +269,7 @@ routes = [
     new_route(
         '/<program>/<project>/files/<file_uuid>',
         views.program.project.create_files_viewer(),
-        endpoint='file_operations',
+        endpoint='file_operations_put',
         methods=['PUT'],
         swagger={
             "description": "``PUT /<program>/<project>/files/<uuid>``: Upload data using single PUT. The request body should contain binary data of the file. <br/> ``PUT /<program>/<project>/files/<uuid>?partNumber=PartNumber&uploadId=UploadId``: Upload Part.",
@@ -279,7 +279,7 @@ routes = [
     new_route(
         '/<program>/<project>/files/<file_uuid>/_dry_run',
         views.program.project.create_files_viewer(dry_run=True),
-        endpoint='file_operations_dry_run',
+        endpoint='file_operations_put_dry_run',
         methods=['PUT'],
         swagger={
             "description": "``PUT /<program>/<project>/files/<uuid>``: Upload data using single PUT. The request body should contain binary data of the file. <br/> ``PUT /<program>/<project>/files/<uuid>?partNumber=PartNumber&uploadId=UploadId``: Upload Part.",
@@ -289,7 +289,7 @@ routes = [
     new_route(
         '/<program>/<project>/files/<file_uuid>',
         views.program.project.create_files_viewer(),
-        endpoint='file_operations',
+        endpoint='file_operations_post',
         methods=['POST'],
         swagger={
             "description": "``POST /<program>/<project>/files/<uuid>?uploads``: Initiate Multipart Upload. <br/> ``POST /<program>/<project>/files/<uuid>?uploadId=UploadId``: Complete Multipart Upload.",
@@ -299,7 +299,7 @@ routes = [
     new_route(
         '/<program>/<project>/files/<file_uuid>/_dry_run',
         views.program.project.create_files_viewer(dry_run=True),
-        endpoint='file_operations_dry_run',
+        endpoint='file_operations_post_dry_run',
         methods=['POST'],
         swagger={
             "description": "``POST /<program>/<project>/files/<uuid>?uploads``: Initiate Multipart Upload. <br/> ``POST /<program>/<project>/files/<uuid>?uploadId=UploadId``: Complete Multipart Upload.",
@@ -309,7 +309,7 @@ routes = [
     new_route(
         '/<program>/<project>/files/<file_uuid>',
         views.program.project.create_files_viewer(),
-        endpoint='file_operations',
+        endpoint='file_operations_delete',
         methods=['DELETE'],
         swagger={
             "description": "``DELETE /<program>/<project>/files/<uuid>``: Delete molecular data from object storage. <br/> ``DELETE /<program>/<project>/files/<uuid>?uploadId=UploadId``: Abort Multipart Upload.",
@@ -319,7 +319,7 @@ routes = [
     new_route(
         '/<program>/<project>/files/<file_uuid>/_dry_run',
         views.program.project.create_files_viewer(dry_run=True),
-        endpoint='file_operations_dry_run',
+        endpoint='file_operations_delete_dry_run',
         methods=['DELETE'],
         swagger={
             "description": "``DELETE /<program>/<project>/files/<uuid>``: Delete molecular data from object storage. <br/> ``DELETE /<program>/<project>/files/<uuid>?uploadId=UploadId``: Abort Multipart Upload.",
