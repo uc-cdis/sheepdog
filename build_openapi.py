@@ -37,7 +37,7 @@ def parse_docstring(docstring, path, schema):
 
         # description: first block of text in the docstring
         if docstring_list[0].startswith('/'):
-            start = 2
+            start = 2 # the first 2 lines sometimes describe the path and method
         else:
             start = 0
         i = start
