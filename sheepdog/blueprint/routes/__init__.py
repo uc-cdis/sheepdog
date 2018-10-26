@@ -5,6 +5,7 @@ route is constructed with the ``new_route`` function from
 """
 
 from sheepdog.blueprint.routes import views
+from openapi.definitions import tag_dry_run, tag_dictionary, tag_program, tag_project, tag_export, tag_file, tag_entity
 
 
 def new_route(rule, view_func, endpoint=None, methods=None, options=None, swagger=None, schema=None):
@@ -36,16 +37,6 @@ def new_route(rule, view_func, endpoint=None, methods=None, options=None, swagge
         'swagger': swagger,
         'schema': schema # Swagger schema definitions (defined in openapi/definitions)
     }
-
-
-# names of sections in the Swagger doc
-tag_dry_run = 'dry run (transactions are not committed)'
-tag_dictionary = 'dictionary'
-tag_program = 'program'
-tag_project = 'project'
-tag_export = 'export'
-tag_file = 'file'
-tag_entity = 'entity'
 
 routes = [
     new_route(
@@ -724,7 +715,7 @@ routes = [
             'tags': [tag_file]
         },
         schema={
-            'default': 'schema_error_list'
+            '200': 'schema_error_list'
         }
     ),
     new_route(

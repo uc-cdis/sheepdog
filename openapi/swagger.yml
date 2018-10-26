@@ -1629,6 +1629,8 @@ paths:
       responses:
         '200':
           description: Success.
+          schema:
+            $ref: '#/definitions/schema_error_list'
       summary: Validate a manifest of data files
       tags:
       - file

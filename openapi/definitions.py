@@ -1,3 +1,13 @@
+# names of sections in the Swagger doc
+tag_dry_run = 'dry run (transactions are not committed)'
+tag_dictionary = 'dictionary'
+tag_program = 'program'
+tag_project = 'project'
+tag_export = 'export'
+tag_file = 'file'
+tag_entity = 'entity'
+
+
 definitions = {
     'schema_links': {
         'type': 'object',
