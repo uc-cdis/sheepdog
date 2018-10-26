@@ -92,7 +92,7 @@ paths:
       summary: Get the programs
       tags:
       - program
-    patch: &id001
+    patch:
       description: Register a program. The content of the request is a JSON containing
         the information describing a program.  Authorization for registering programs
         is limited to administrative users.
@@ -111,8 +111,44 @@ paths:
       summary: Create a program
       tags:
       - program
-    post: *id001
-    put: *id001
+    post:
+      description: Register a program. The content of the request is a JSON containing
+        the information describing a program.  Authorization for registering programs
+        is limited to administrative users.
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_program'
+      responses:
+        '200':
+          description: Registered successfully.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: Create a program
+      tags:
+      - program
+    put:
+      description: Register a program. The content of the request is a JSON containing
+        the information describing a program.  Authorization for registering programs
+        is limited to administrative users.
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_program'
+      responses:
+        '200':
+          description: Registered successfully.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: Create a program
+      tags:
+      - program
   /<program>:
     delete:
       description: Delete a program given program name. If the program is not empty
@@ -156,7 +192,7 @@ paths:
       summary: Get the projects
       tags:
       - project
-    patch: &id002
+    patch:
       description: Register a project. The content of the request is a JSON containing
         the information describing a project. Authorization for registering projects
         is limited to administrative users.
@@ -182,8 +218,58 @@ paths:
       summary: Create a project
       tags:
       - project
-    post: *id002
-    put: *id002
+    post:
+      description: Register a project. The content of the request is a JSON containing
+        the information describing a project. Authorization for registering projects
+        is limited to administrative users.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_project'
+      responses:
+        '200':
+          description: Registered successfully.
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: Create a project
+      tags:
+      - project
+    put:
+      description: Register a project. The content of the request is a JSON containing
+        the information describing a project. Authorization for registering projects
+        is limited to administrative users.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_project'
+      responses:
+        '200':
+          description: Registered successfully.
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: Create a project
+      tags:
+      - project
   /<program>/<project>:
     delete:
       description: Delete project under a specific program
@@ -598,7 +684,7 @@ paths:
       tags:
       - dry run (transactions are not committed)
   /<program>/<project>/export:
-    get: &id003
+    get:
       description: 'Return a file with the requested entities as an attachment. Omitting
         the ``ids`` parameter from the query string will return _ALL_ nodes under
         the given project. Otherwise, if there is only one entity type in the output,
@@ -630,7 +716,38 @@ paths:
       summary: Export entities
       tags:
       - export
-    post: *id003
+    post:
+      description: 'Return a file with the requested entities as an attachment. Omitting
+        the ``ids`` parameter from the query string will return _ALL_ nodes under
+        the given project. Otherwise, if there is only one entity type in the output,
+        it will return a {node_type}.tsv or {node_type}.json file, e.g.: aliquot.tsv.
+        If there are multiple entity types, it returns ``gdc_export_{one_time_sha}.tar.gz``
+        for tsv format, or ``gdc_export_{one_time_sha}.json`` for json format.'
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Bad Request
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: No id is found
+      summary: Export entities
+      tags:
+      - export
   /<program>/<project>/files/<file_uuid>:
     delete:
       description: Delete molecular data from object storage.
@@ -966,7 +1083,7 @@ paths:
       tags:
       - file
   /<program>/<project>/open:
-    post: &id004
+    post:
       description: Mark a project ``open``. Opening a project means uploads, deletions,
         etc. are allowed.
       parameters:
@@ -990,9 +1107,32 @@ paths:
       summary: Open a project
       tags:
       - project
-    put: *id004
+    put:
+      description: Mark a project ``open``. Opening a project means uploads, deletions,
+        etc. are allowed.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: Open a project
+      tags:
+      - project
   /<program>/<project>/open/_dry_run:
-    post: &id005
+    post:
       description: Mark a project ``open``. Opening a project means uploads, deletions,
         etc. are allowed.
       parameters:
@@ -1016,9 +1156,32 @@ paths:
       summary: Open a project
       tags:
       - dry run (transactions are not committed)
-    put: *id005
+    put:
+      description: Mark a project ``open``. Opening a project means uploads, deletions,
+        etc. are allowed.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: Open a project
+      tags:
+      - dry run (transactions are not committed)
   /<program>/<project>/release:
-    post: &id006
+    post:
       description: Release a project.
       parameters:
       - description: program_id
@@ -1041,9 +1204,31 @@ paths:
       summary: Release a project
       tags:
       - project
-    put: *id006
+    put:
+      description: Release a project.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: Release a project
+      tags:
+      - project
   /<program>/<project>/release/_dry_run:
-    post: &id007
+    post:
       description: Release a project.
       parameters:
       - description: program_id
@@ -1066,9 +1251,31 @@ paths:
       summary: Release a project
       tags:
       - dry run (transactions are not committed)
-    put: *id007
+    put:
+      description: Release a project.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: Release a project
+      tags:
+      - dry run (transactions are not committed)
   /<program>/<project>/review:
-    post: &id008
+    post:
       description: Mark a project project for review. Reviewing a project means uploads
         are locked. An ``open`` or ``submit`` action must be taken after ``review``.
       parameters:
@@ -1092,9 +1299,32 @@ paths:
       summary: Review a project
       tags:
       - project
-    put: *id008
+    put:
+      description: Mark a project project for review. Reviewing a project means uploads
+        are locked. An ``open`` or ``submit`` action must be taken after ``review``.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: Review a project
+      tags:
+      - project
   /<program>/<project>/review/_dry_run:
-    post: &id009
+    post:
       description: Mark a project project for review. Reviewing a project means uploads
         are locked. An ``open`` or ``submit`` action must be taken after ``review``.
       parameters:
@@ -1118,9 +1348,32 @@ paths:
       summary: Review a project
       tags:
       - dry run (transactions are not committed)
-    put: *id009
+    put:
+      description: Mark a project project for review. Reviewing a project means uploads
+        are locked. An ``open`` or ``submit`` action must be taken after ``review``.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: Review a project
+      tags:
+      - dry run (transactions are not committed)
   /<program>/<project>/submit:
-    post: &id010
+    post:
       description: Submit a project. Submitting a project means that all metadata
         that *currently* exists in the project can be made public in every index built
         after the project is released.
@@ -1145,9 +1398,33 @@ paths:
       summary: Submit a project
       tags:
       - project
-    put: *id010
+    put:
+      description: Submit a project. Submitting a project means that all metadata
+        that *currently* exists in the project can be made public in every index built
+        after the project is released.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: Submit a project
+      tags:
+      - project
   /<program>/<project>/submit/_dry_run:
-    post: &id011
+    post:
       description: Submit a project. Submitting a project means that all metadata
         that *currently* exists in the project can be made public in every index built
         after the project is released.
@@ -1172,7 +1449,31 @@ paths:
       summary: Submit a project
       tags:
       - dry run (transactions are not committed)
-    put: *id011
+    put:
+      description: Submit a project. Submitting a project means that all metadata
+        that *currently* exists in the project can be made public in every index built
+        after the project is released.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Project not found.
+      summary: Submit a project
+      tags:
+      - dry run (transactions are not committed)
   /<program>/<project>/template:
     get:
       description: Get templates for all entity types. In the template, Links are
@@ -1243,7 +1544,7 @@ paths:
       tags:
       - dictionary
   /<program>/<project>/transactions/<int:transaction_id>/close:
-    post: &id012
+    post:
       description: Close a transaction. The transaction is prevented from being committed
         in the future.
       parameters:
@@ -1272,9 +1573,37 @@ paths:
       summary: Close a transaction
       tags:
       - dry run (transactions are not committed)
-    put: *id012
+    put:
+      description: Close a transaction. The transaction is prevented from being committed
+        in the future.
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: transaction_id
+        in: path
+        name: transaction_id
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: Close a transaction
+      tags:
+      - dry run (transactions are not committed)
   /<program>/<project>/transactions/<int:transaction_id>/commit:
-    post: &id013
+    post:
       description: 'Commit a dry run transaction. This call should only succeed if:
         1. transaction_id points to a dry_run transaction; 2. transaction_id points
         to a transaction that hasn''t been committed already; 3. transaction_id points
@@ -1305,7 +1634,37 @@ paths:
       summary: Commit a dry run transaction.
       tags:
       - dry run (transactions are not committed)
-    put: *id013
+    put:
+      description: 'Commit a dry run transaction. This call should only succeed if:
+        1. transaction_id points to a dry_run transaction; 2. transaction_id points
+        to a transaction that hasn''t been committed already; 3. transaction_id points
+        to a successful transaction.'
+      parameters:
+      - description: program_id
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: project_id
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: transaction_id
+        in: path
+        name: transaction_id
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: Commit a dry run transaction.
+      tags:
+      - dry run (transactions are not committed)
   /<program>/<project>/upload_manifest:
     get:
       description: Create a json manifest of the files.

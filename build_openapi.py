@@ -13,6 +13,7 @@ def write_swagger(swagger):
     Generate the Swagger documentation and store it in a file.
     """
     yaml.add_representer(collections.defaultdict, Representer.represent_dict)
+    yaml.Dumper.ignore_aliases = lambda *args : True
     outfile = 'openapi/swagger.yml'
     with open(outfile, 'w') as spec_file:
         main_doc = Flasgger.get_apispecs(swagger)
