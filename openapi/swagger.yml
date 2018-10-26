@@ -1,4 +1,69 @@
-definitions: {}
+definitions:
+  schema_entity:
+    properties:
+      '...fields specific to this entity':
+        type: string
+      type:
+        type: string
+    type: object
+  schema_entity_bulk:
+    properties:
+      doc:
+        type: string
+      doc_format:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    - doc_format
+    - doc
+    type: object
+  schema_entity_list:
+    items:
+      $ref: '#/definitions/schema_entity'
+    type: array
+  schema_error_list:
+    items:
+      type: string
+    type: array
+  schema_links:
+    properties:
+      links:
+        items:
+          type: string
+        type: array
+    required:
+    - links
+    type: object
+  schema_program:
+    properties:
+      dbgap_accession_number:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    required:
+    - name
+    - dbgap_accession_number
+    type: object
+  schema_project:
+    properties:
+      code:
+        type: string
+      dbgap_accession_number:
+        type: string
+      investigator_name:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    required:
+    - name
+    - code
+    type: object
 info:
   contact:
     email: cdis@uchicago.edu
@@ -18,17 +83,24 @@ paths:
       responses:
         '200':
           description: Success
+          schema:
+            $ref: '#/definitions/schema_links'
         '403':
           description: Unauthorized request.
         '404':
           description: Program not found.
-      summary: get_programs
+      summary: Get the programs
       tags:
       - program
     patch: &id001
       description: Register a program. The content of the request is a JSON containing
         the information describing a program.  Authorization for registering programs
         is limited to administrative users.
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_program'
       responses:
         '200':
           description: Registered successfully.
@@ -36,7 +108,7 @@ paths:
           description: Unauthorized request.
         '404':
           description: Program not found.
-      summary: root_create
+      summary: Create a program
       tags:
       - program
     post: *id001
@@ -60,7 +132,7 @@ paths:
           description: Unauthorized request.
         '404':
           description: Program not found.
-      summary: delete_program
+      summary: Delete a program
       tags:
       - program
     get:
@@ -75,11 +147,13 @@ paths:
       responses:
         '200':
           description: Success
+          schema:
+            $ref: '#/definitions/schema_links'
         '403':
           description: Unauthorized request.
         '404':
           description: Program not found.
-      summary: get_projects
+      summary: Get the projects
       tags:
       - project
     patch: &id002
@@ -92,6 +166,10 @@ paths:
         name: program
         required: true
         type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_project'
       responses:
         '200':
           description: Registered successfully.
@@ -101,7 +179,7 @@ paths:
           description: Unauthorized request.
         '404':
           description: Program not found.
-      summary: create_project
+      summary: Create a project
       tags:
       - project
     post: *id002
@@ -129,7 +207,7 @@ paths:
           description: Unauthorized request.
         '404':
           description: Program not found.
-      summary: delete_project
+      summary: Delete a project
       tags:
       - project
     post:
@@ -145,6 +223,10 @@ paths:
         name: project
         required: true
         type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity'
       responses:
         '201':
           description: Entities created successfully
@@ -152,7 +234,7 @@ paths:
           description: At least one entity was invalid.
         '404':
           description: Project not found.
-      summary: create_entities
+      summary: Create entities
       tags:
       - entity
     put:
@@ -168,6 +250,10 @@ paths:
         name: project
         required: true
         type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity'
       responses:
         '201':
           description: Entities created successfully
@@ -175,7 +261,7 @@ paths:
           description: At least one entity was invalid.
         '404':
           description: Project not found.
-      summary: create_entities
+      summary: Update entities
       tags:
       - entity
   /<program>/<project>/_dictionary:
@@ -195,9 +281,11 @@ paths:
       responses:
         '200':
           description: Success
+          schema:
+            $ref: '#/definitions/schema_links'
         '403':
           description: Unauthorized request.
-      summary: get_project_dictionary
+      summary: Get the dictionary schema for entities of a project
       tags:
       - dictionary
   /<program>/<project>/_dictionary/<entry>:
@@ -222,11 +310,13 @@ paths:
       responses:
         '200':
           description: Success
+          schema:
+            $ref: '#/definitions/schema_entity'
         '403':
           description: Unauthorized request.
         '404':
           description: Resource not found.
-      summary: get_project_dictionary_entry
+      summary: Get the dictionary schema for an entity of a project
       tags:
       - dictionary
   /<program>/<project>/_dry_run:
@@ -243,6 +333,10 @@ paths:
         name: project
         required: true
         type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity'
       responses:
         '201':
           description: Entities created successfully
@@ -250,7 +344,7 @@ paths:
           description: At least one entity was invalid.
         '404':
           description: Project not found.
-      summary: create_entities
+      summary: Create entities
       tags:
       - dry run (transactions are not committed)
     put:
@@ -266,6 +360,10 @@ paths:
         name: project
         required: true
         type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity'
       responses:
         '201':
           description: Entities created successfully
@@ -273,7 +371,7 @@ paths:
           description: At least one entity was invalid.
         '404':
           description: Project not found.
-      summary: create_entities
+      summary: Update entities
       tags:
       - dry run (transactions are not committed)
   /<program>/<project>/bulk:
@@ -290,6 +388,10 @@ paths:
         name: project
         required: true
         type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity_bulk'
       responses:
         '201':
           description: Entities created successfully
@@ -297,7 +399,7 @@ paths:
           description: At least one entity was invalid.
         '404':
           description: Project not found.
-      summary: bulk_create_entities
+      summary: Create entities in bulk
       tags:
       - entity
     put:
@@ -313,6 +415,10 @@ paths:
         name: project
         required: true
         type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity_bulk'
       responses:
         '201':
           description: Entities created successfully
@@ -320,7 +426,7 @@ paths:
           description: At least one entity was invalid.
         '404':
           description: Project not found.
-      summary: bulk_create_entities
+      summary: Update entities in bulk
       tags:
       - entity
   /<program>/<project>/bulk/_dry_run:
@@ -337,6 +443,10 @@ paths:
         name: project
         required: true
         type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity_bulk'
       responses:
         '201':
           description: Entities created successfully
@@ -344,7 +454,7 @@ paths:
           description: At least one entity was invalid.
         '404':
           description: Project not found.
-      summary: bulk_create_entities
+      summary: Create entities in bulk
       tags:
       - dry run (transactions are not committed)
     put:
@@ -360,6 +470,10 @@ paths:
         name: project
         required: true
         type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity_bulk'
       responses:
         '201':
           description: Entities created successfully
@@ -367,7 +481,7 @@ paths:
           description: At least one entity was invalid.
         '404':
           description: Project not found.
-      summary: bulk_create_entities
+      summary: Update entities in bulk
       tags:
       - dry run (transactions are not committed)
   /<program>/<project>/entities/<entity_id_string>:
@@ -392,13 +506,15 @@ paths:
       responses:
         '200':
           description: Success.
+          schema:
+            $ref: '#/definitions/schema_entity_list'
         '400':
           description: User error.
         '403':
           description: Unauthorized request.
         '404':
           description: Entity not found.
-      summary: get_entities_by_id
+      summary: Get entities by ID
       tags:
       - entity
   /<program>/<project>/entities/<ids>:
@@ -438,7 +554,7 @@ paths:
           description: Unauthorized request.
         '404':
           description: Entity not found.
-      summary: delete_entities
+      summary: Delete entities
       tags:
       - entity
   /<program>/<project>/entities/_dry_run/<ids>:
@@ -478,7 +594,7 @@ paths:
           description: Unauthorized request.
         '404':
           description: Entity not found.
-      summary: delete_entities
+      summary: Delete entities
       tags:
       - dry run (transactions are not committed)
   /<program>/<project>/export:
@@ -500,6 +616,8 @@ paths:
         name: project
         required: true
         type: string
+      produces:
+      - application/json
       responses:
         '200':
           description: Success
@@ -509,15 +627,13 @@ paths:
           description: Unauthorized request.
         '404':
           description: No id is found
-      summary: export_entities
+      summary: Export entities
       tags:
       - export
     post: *id003
   /<program>/<project>/files/<file_uuid>:
     delete:
-      description: '``DELETE /<program>/<project>/files/<uuid>``: Delete molecular
-        data from object storage. <br/> ``DELETE /<program>/<project>/files/<uuid>?uploadId=UploadId``:
-        Abort Multipart Upload.'
+      description: Delete molecular data from object storage.
       parameters:
       - description: program_id
         in: path
@@ -534,6 +650,10 @@ paths:
         name: uuid
         required: true
         type: string
+      - description: to abort a multipart upload
+        in: query
+        name: uploadId
+        type: string
       responses:
         '200':
           description: Success.
@@ -545,12 +665,11 @@ paths:
           description: File not found.
         '405':
           description: Method Not Allowed.
-      summary: file_operations
+      summary: Delete a data file
       tags:
       - file
     get:
-      description: '``GET /<program>/<project>/files/<uuid>?uploadId=UploadId``: List
-        Parts.'
+      description: Get a data file from object storage
       parameters:
       - description: program_id
         in: path
@@ -567,6 +686,10 @@ paths:
         name: uuid
         required: true
         type: string
+      - description: to list parts
+        in: query
+        name: uploadId
+        type: string
       responses:
         '200':
           description: Success.
@@ -578,13 +701,11 @@ paths:
           description: File not found.
         '405':
           description: Method Not Allowed.
-      summary: file_operations
+      summary: Get a data file
       tags:
       - file
     post:
-      description: '``POST /<program>/<project>/files/<uuid>?uploads``: Initiate Multipart
-        Upload. <br/> ``POST /<program>/<project>/files/<uuid>?uploadId=UploadId``:
-        Complete Multipart Upload.'
+      description: Upload data by multipart upload
       parameters:
       - description: program_id
         in: path
@@ -601,6 +722,14 @@ paths:
         name: uuid
         required: true
         type: string
+      - description: to initiate multipart upload
+        in: query
+        name: uploads
+        type: string
+      - description: to complete multipart upload
+        in: query
+        name: uploadId
+        type: string
       responses:
         '200':
           description: Success.
@@ -612,14 +741,12 @@ paths:
           description: File not found.
         '405':
           description: Method Not Allowed.
-      summary: file_operations
+      summary: Upload data by multipart upload
       tags:
       - file
     put:
-      description: '``PUT /<program>/<project>/files/<uuid>``: Upload data using single
-        PUT. The request body should contain binary data of the file. <br/> ``PUT
-        /<program>/<project>/files/<uuid>?partNumber=PartNumber&uploadId=UploadId``:
-        Upload Part.'
+      description: Upload data using single PUT. The request body should contain binary
+        data of the file.
       parameters:
       - description: program_id
         in: path
@@ -636,6 +763,14 @@ paths:
         name: uuid
         required: true
         type: string
+      - description: to upload part (use with uploadId)
+        in: query
+        name: partNumber
+        type: string
+      - description: to upload part (use with partNumber)
+        in: query
+        name: uploadId
+        type: string
       responses:
         '200':
           description: Success.
@@ -647,14 +782,12 @@ paths:
           description: File not found.
         '405':
           description: Method Not Allowed.
-      summary: file_operations
+      summary: Upload a data file
       tags:
       - file
   /<program>/<project>/files/<file_uuid>/_dry_run:
     delete:
-      description: '``DELETE /<program>/<project>/files/<uuid>``: Delete molecular
-        data from object storage. <br/> ``DELETE /<program>/<project>/files/<uuid>?uploadId=UploadId``:
-        Abort Multipart Upload.'
+      description: Delete molecular data from object storage.
       parameters:
       - description: program_id
         in: path
@@ -671,6 +804,10 @@ paths:
         name: uuid
         required: true
         type: string
+      - description: to abort a multipart upload
+        in: query
+        name: uploadId
+        type: string
       responses:
         '200':
           description: Success.
@@ -682,12 +819,11 @@ paths:
           description: File not found.
         '405':
           description: Method Not Allowed.
-      summary: file_operations
+      summary: Delete a data file
       tags:
       - dry run (transactions are not committed)
     get:
-      description: '``GET /<program>/<project>/files/<uuid>?uploadId=UploadId``: List
-        Parts.'
+      description: Get a data file from object storage
       parameters:
       - description: program_id
         in: path
@@ -704,6 +840,10 @@ paths:
         name: uuid
         required: true
         type: string
+      - description: to list parts
+        in: query
+        name: uploadId
+        type: string
       responses:
         '200':
           description: Success.
@@ -715,13 +855,11 @@ paths:
           description: File not found.
         '405':
           description: Method Not Allowed.
-      summary: file_operations
+      summary: Get a data file
       tags:
       - dry run (transactions are not committed)
     post:
-      description: '``POST /<program>/<project>/files/<uuid>?uploads``: Initiate Multipart
-        Upload. <br/> ``POST /<program>/<project>/files/<uuid>?uploadId=UploadId``:
-        Complete Multipart Upload.'
+      description: Upload data by multipart upload
       parameters:
       - description: program_id
         in: path
@@ -738,6 +876,14 @@ paths:
         name: uuid
         required: true
         type: string
+      - description: to initiate multipart upload
+        in: query
+        name: uploads
+        type: string
+      - description: to complete multipart upload
+        in: query
+        name: uploadId
+        type: string
       responses:
         '200':
           description: Success.
@@ -749,14 +895,12 @@ paths:
           description: File not found.
         '405':
           description: Method Not Allowed.
-      summary: file_operations
+      summary: Upload data by multipart upload
       tags:
       - dry run (transactions are not committed)
     put:
-      description: '``PUT /<program>/<project>/files/<uuid>``: Upload data using single
-        PUT. The request body should contain binary data of the file. <br/> ``PUT
-        /<program>/<project>/files/<uuid>?partNumber=PartNumber&uploadId=UploadId``:
-        Upload Part.'
+      description: Upload data using single PUT. The request body should contain binary
+        data of the file.
       parameters:
       - description: program_id
         in: path
@@ -773,6 +917,14 @@ paths:
         name: uuid
         required: true
         type: string
+      - description: to upload part (use with uploadId)
+        in: query
+        name: partNumber
+        type: string
+      - description: to upload part (use with partNumber)
+        in: query
+        name: uploadId
+        type: string
       responses:
         '200':
           description: Success.
@@ -784,7 +936,7 @@ paths:
           description: File not found.
         '405':
           description: Method Not Allowed.
-      summary: file_operations
+      summary: Upload a data file
       tags:
       - dry run (transactions are not committed)
   /<program>/<project>/manifest:
@@ -810,7 +962,7 @@ paths:
           description: Unauthorized request.
         '404':
           description: Project not found.
-      summary: get_manifest
+      summary: Get a manifest of data files
       tags:
       - file
   /<program>/<project>/open:
@@ -830,12 +982,12 @@ paths:
         type: string
       responses:
         '200':
-          description: Project submitted successfully
+          description: Success
         '403':
           description: Unauthorized request.
         '404':
           description: Project not found.
-      summary: open_project
+      summary: Open a project
       tags:
       - project
     put: *id004
@@ -856,12 +1008,12 @@ paths:
         type: string
       responses:
         '200':
-          description: Project submitted successfully
+          description: Success
         '403':
           description: Unauthorized request.
         '404':
           description: Project not found.
-      summary: open_project
+      summary: Open a project
       tags:
       - dry run (transactions are not committed)
     put: *id005
@@ -881,12 +1033,12 @@ paths:
         type: string
       responses:
         '200':
-          description: Project submitted successfully
+          description: Success
         '403':
           description: Unauthorized request.
         '404':
           description: Project not found.
-      summary: release_project
+      summary: Release a project
       tags:
       - project
     put: *id006
@@ -906,12 +1058,12 @@ paths:
         type: string
       responses:
         '200':
-          description: Project submitted successfully
+          description: Success
         '403':
           description: Unauthorized request.
         '404':
           description: Project not found.
-      summary: release_project
+      summary: Release a project
       tags:
       - dry run (transactions are not committed)
     put: *id007
@@ -932,12 +1084,12 @@ paths:
         type: string
       responses:
         '200':
-          description: Project submitted successfully
+          description: Success
         '403':
           description: Unauthorized request.
         '404':
           description: Project not found.
-      summary: review_project
+      summary: Review a project
       tags:
       - project
     put: *id008
@@ -958,18 +1110,20 @@ paths:
         type: string
       responses:
         '200':
-          description: Project submitted successfully
+          description: Success
         '403':
           description: Unauthorized request.
         '404':
           description: Project not found.
-      summary: review_project
+      summary: Review a project
       tags:
       - dry run (transactions are not committed)
     put: *id009
   /<program>/<project>/submit:
     post: &id010
-      description: Submit a project.
+      description: Submit a project. Submitting a project means that all metadata
+        that *currently* exists in the project can be made public in every index built
+        after the project is released.
       parameters:
       - description: program_id
         in: path
@@ -988,13 +1142,15 @@ paths:
           description: Unauthorized request.
         '404':
           description: Project not found.
-      summary: submit_project
+      summary: Submit a project
       tags:
       - project
     put: *id010
   /<program>/<project>/submit/_dry_run:
     post: &id011
-      description: Submit a project.
+      description: Submit a project. Submitting a project means that all metadata
+        that *currently* exists in the project can be made public in every index built
+        after the project is released.
       parameters:
       - description: program_id
         in: path
@@ -1013,7 +1169,7 @@ paths:
           description: Unauthorized request.
         '404':
           description: Project not found.
-      summary: submit_project
+      summary: Submit a project
       tags:
       - dry run (transactions are not committed)
     put: *id011
@@ -1034,10 +1190,22 @@ paths:
         name: project
         required: true
         type: string
+      - description: output format, ``csv`` or ``tsv``, default is tsv
+        in: query
+        name: format
+        type: string
+      - description: list of entities' categories to include in the template
+        in: query
+        name: categories
+        type: string
+      - description: list of entities' categories to exclude from the template
+        in: query
+        name: exclude
+        type: string
       responses:
         '200':
           description: Success
-      summary: get_project_templates
+      summary: Get templates for all entity types of a project
       tags:
       - dictionary
   /<program>/<project>/template/<entity>:
@@ -1062,12 +1230,16 @@ paths:
         name: entity
         required: true
         type: string
+      - description: output format, ``csv`` or ``tsv``, default is tsv
+        in: query
+        name: format
+        type: string
       responses:
         '200':
           description: Success
         '404':
           description: Entity type is not found
-      summary: get_project_template
+      summary: Get a template for an entity type of a project
       tags:
       - dictionary
   /<program>/<project>/transactions/<int:transaction_id>/close:
@@ -1097,16 +1269,16 @@ paths:
           description: Unauthorized request.
         '404':
           description: Program not found.
-      summary: close_transaction
+      summary: Close a transaction
       tags:
       - dry run (transactions are not committed)
     put: *id012
   /<program>/<project>/transactions/<int:transaction_id>/commit:
     post: &id013
-      description: 'See documentation for committing a dry run transaction. This call
-        should only succeed if: 1. transaction_id points to a dry_run transaction
-        2. transaction_id points to a transaction that hasn''t been committed already
-        3. transaction_id points to a successful transaction'
+      description: 'Commit a dry run transaction. This call should only succeed if:
+        1. transaction_id points to a dry_run transaction; 2. transaction_id points
+        to a transaction that hasn''t been committed already; 3. transaction_id points
+        to a successful transaction.'
       parameters:
       - description: program_id
         in: path
@@ -1130,7 +1302,7 @@ paths:
           description: Unauthorized request.
         '404':
           description: Program not found.
-      summary: commit_dry_run_transaction
+      summary: Commit a dry run transaction.
       tags:
       - dry run (transactions are not committed)
     put: *id013
@@ -1157,12 +1329,15 @@ paths:
           description: Unauthorized request.
         '404':
           description: Project not found.
-      summary: get_manifest
+      summary: Get a manifest of data files
       tags:
       - file
   /<program>/<project>/xml/biospecimen/bcr:
     put:
-      description: update_entities_biospecimen_bcr
+      consumes:
+      - multipart/form-data
+      description: The entities stored in BRC XML are converted to JSON before being
+        updated
       parameters:
       - description: program_id
         in: path
@@ -1174,6 +1349,11 @@ paths:
         name: project
         required: true
         type: string
+      - description: BRC XML file
+        in: formData
+        name: file
+        required: true
+        type: file
       responses:
         '200':
           description: Success.
@@ -1181,12 +1361,15 @@ paths:
           description: Unauthorized request.
         '404':
           description: Program not found.
-      summary: update_entities_biospecimen_bcr
+      summary: Update Biospecimen Supplement entities
       tags:
       - entity
   /<program>/<project>/xml/biospecimen/bcr/_dry_run:
     put:
-      description: update_entities_biospecimen_bcr
+      consumes:
+      - multipart/form-data
+      description: The entities stored in BRC XML are converted to JSON before being
+        updated
       parameters:
       - description: program_id
         in: path
@@ -1198,6 +1381,11 @@ paths:
         name: project
         required: true
         type: string
+      - description: BRC XML file
+        in: formData
+        name: file
+        required: true
+        type: file
       responses:
         '200':
           description: Success.
@@ -1205,12 +1393,15 @@ paths:
           description: Unauthorized request.
         '404':
           description: Program not found.
-      summary: update_entities_biospecimen_bcr
+      summary: Update Biospecimen Supplement entities
       tags:
       - dry run (transactions are not committed)
   /<program>/<project>/xml/clinical/bcr:
     put:
-      description: update_entities_clinical_bcr
+      consumes:
+      - multipart/form-data
+      description: The entities stored in BRC XML are converted to JSON before being
+        updated
       parameters:
       - description: program_id
         in: path
@@ -1222,6 +1413,11 @@ paths:
         name: project
         required: true
         type: string
+      - description: BRC XML file
+        in: formData
+        name: file
+        required: true
+        type: file
       responses:
         '200':
           description: Success.
@@ -1229,12 +1425,15 @@ paths:
           description: Unauthorized request.
         '404':
           description: Program not found.
-      summary: update_entities_clinical_bcr
+      summary: Update Clinical Supplement entities
       tags:
       - entity
   /<program>/<project>/xml/clinical/bcr/_dry_run:
     put:
-      description: update_entities_clinical_bcr
+      consumes:
+      - multipart/form-data
+      description: The entities stored in BRC XML are converted to JSON before being
+        updated
       parameters:
       - description: program_id
         in: path
@@ -1246,6 +1445,11 @@ paths:
         name: project
         required: true
         type: string
+      - description: BRC XML file
+        in: formData
+        name: file
+        required: true
+        type: file
       responses:
         '200':
           description: Success.
@@ -1253,7 +1457,7 @@ paths:
           description: Unauthorized request.
         '404':
           description: Program not found.
-      summary: update_entities_clinical_bcr
+      summary: Update Clinical Supplement entities
       tags:
       - dry run (transactions are not committed)
   /_dictionary:
@@ -1262,9 +1466,11 @@ paths:
       responses:
         '200':
           description: Success
+          schema:
+            $ref: '#/definitions/schema_links'
         '403':
           description: Unauthorized request.
-      summary: get_dictionary
+      summary: Get the dictionary schema
       tags:
       - dictionary
   /_dictionary/<entry>:
@@ -1280,11 +1486,13 @@ paths:
       responses:
         '200':
           description: Success
+          schema:
+            $ref: '#/definitions/schema_entity'
         '403':
           description: Unauthorized request.
         '404':
           description: Resource not found.
-      summary: get_dictionary_entry
+      summary: Get the dictionary schema for an entity
       tags:
       - dictionary
   /_status:
@@ -1342,13 +1550,12 @@ paths:
           description: Unauthorized request.
         '404':
           description: Entity not found.
-      summary: delete_entities
+      summary: Delete entities
       tags:
       - entity
   /admin/<program>/<project>/files/<file_uuid>/reassign:
     put:
-      description: '``PUT /internal/<program>/<project>/files/<uuid>/reassign``: Manually
-        (re)assign the S3 url for a given node.'
+      description: Manually (re)assign the S3 url for a given node.
       parameters:
       - description: program_id
         in: path
@@ -1376,21 +1583,34 @@ paths:
           description: File not found.
         '405':
           description: Method Not Allowed.
-      summary: file_operations
+      summary: Reassign the S3 URL of a data file
       tags:
       - file
   /template:
     get:
-      description: get_templates
+      description: Get templates for all entity types.
+      parameters:
+      - description: output format, ``csv`` or ``tsv``, default is tsv
+        in: query
+        name: format
+        type: string
+      - description: list of entities' categories to include in the template
+        in: query
+        name: categories
+        type: string
+      - description: list of entities' categories to exclude from the template
+        in: query
+        name: exclude
+        type: string
       responses:
         '200':
           description: Success.
-      summary: get_templates
+      summary: Get templates for all entity types
       tags:
       - dictionary
   /template/<entity>:
     get:
-      description: get_templates
+      description: Get a template for an entity type.
       parameters:
       - description: entity
         in: path
@@ -1400,16 +1620,16 @@ paths:
       responses:
         '200':
           description: Success.
-      summary: get_template
+      summary: Get a template for an entity type
       tags:
       - dictionary
   /validation/upload_manifest:
     post:
-      description: validate_upload_manifest
+      description: Generate a list of errors found in JSON Schema validation.
       responses:
         '200':
           description: Success.
-      summary: validate_upload_manifest
+      summary: Validate a manifest of data files
       tags:
       - file
 swagger: '2.0'

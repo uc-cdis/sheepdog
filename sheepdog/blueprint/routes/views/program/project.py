@@ -546,7 +546,7 @@ def create_open_project_viewer(dry_run=False):
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
-        :statuscode 200: Project submitted successfully
+        :statuscode 200: Success
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
@@ -572,7 +572,7 @@ def create_release_project_viewer(dry_run=False):
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
-        :statuscode 200: Project submitted successfully
+        :statuscode 200: Success
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
@@ -602,7 +602,7 @@ def create_review_project_viewer(dry_run=False):
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
-        :statuscode 200: Project submitted successfully
+        :statuscode 200: Success
         :statuscode 404: Project not found.
         :statuscode 403: Unauthorized request.
         """
@@ -655,8 +655,8 @@ def get_project_templates(program, project):
     :param str program: |program_id|
     :param str project: |project_id|
     :query format: output format, ``csv`` or ``tsv``, default is tsv
-    :query categories: target entities' categories
-    :query exclude: entity types to be excluded
+    :query categories: list of entities' categories to include in the template
+    :query exclude: list of entities' categories to exclude from the template
     :statuscode 200 Success
     """
     file_format = flask.request.args.get('format', 'tsv')
@@ -807,12 +807,12 @@ def resubmit_transaction(transaction_log):
 )
 def commit_dry_run_transaction(program, project, transaction_id):
     """
-    See documentation for committing a dry run transaction.
+    Commit a dry run transaction.
 
     This call should only succeed if:
-    1. transaction_id points to a dry_run transaction
-    2. transaction_id points to a transaction that hasn't been committed already
-    3. transaction_id points to a successful transaction
+    1. transaction_id points to a dry_run transaction;
+    2. transaction_id points to a transaction that hasn't been committed already;
+    3. transaction_id points to a successful transaction.
 
     Args:
         program (str): |program_id|
@@ -876,7 +876,7 @@ def create_biospecimen_viewer(dry_run=False):
     @auth.authorize_for_project(ROLES['CREATE'], ROLES['UPDATE'])
     def update_entities_biospecimen_bcr(program, project):
         """
-        update_entities_biospecimen_bcr
+        The entities stored in BRC XML are converted to JSON before being updated
 
         Args:
             program (str): |program_id|
@@ -902,7 +902,7 @@ def create_clinical_viewer(dry_run=False):
     @auth.authorize_for_project(ROLES['CREATE'], ROLES['UPDATE'])
     def update_entities_clinical_bcr(program, project):
         """
-        update_entities_clinical_bcr
+        The entities stored in BRC XML are converted to JSON before being updated
 
         Args:
             program (str): |program_id|

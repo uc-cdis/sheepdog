@@ -190,7 +190,11 @@ def get_dictionary():
 
 def get_templates():
     """
-    get_templates
+    Get templates for all entity types.
+
+    :query format: output format, ``csv`` or ``tsv``, default is tsv
+    :query categories: list of entities' categories to include in the template
+    :query exclude: list of entities' categories to exclude from the template
 
     :statuscode 200: Success.
     """
@@ -209,7 +213,7 @@ def get_templates():
 
 def get_template(entity):
     """
-    get_templates
+    Get a template for an entity type.
 
     :param str entity: entity
 
@@ -227,7 +231,7 @@ def get_template(entity):
 
 def validate_upload_manifest():
     """
-    validate_upload_manifest
+    Generate a list of errors found in JSON Schema validation.
 
     :statuscode 200: Success.
     """

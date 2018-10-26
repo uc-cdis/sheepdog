@@ -14,14 +14,19 @@ def write_swagger(swagger):
     """
     yaml.add_representer(collections.defaultdict, Representer.represent_dict)
     outfile = 'openapi/swagger.yml'
-    with open(outfile, 'w') as f:
+    with open(outfile, 'w') as spec_file:
         main_doc = Flasgger.get_apispecs(swagger)
+
+        from openapi.definitions import definitions
+        main_doc['definitions'] = definitions
+
         main_doc = add_routes_swag(main_doc) # add the blueprints' doc
-        yaml.dump(main_doc, f, default_flow_style=False)
+        yaml.dump(main_doc, spec_file, default_flow_style=False)
+
         print('Generated docs')
 
 
-def parse_docstring(docstring, path):
+def parse_docstring(docstring, path, schema):
     """
     Parse a docstring into its components and translate them into Swagger format.
     """
@@ -40,7 +45,7 @@ def parse_docstring(docstring, path):
             and not docstring_list[i].startswith('Args:'):
             i += 1
         description = ' '.join(docstring_list[start:i])
-        result["description"] = description
+        result['description'] = description
 
         parameters = []
         # parameters listed under 'Args'
@@ -64,7 +69,8 @@ def parse_docstring(docstring, path):
 
         responses = {}
         for line in docstring_list:
-            # parameters listed as 'param'
+
+            # parameters listed as 'param' (path parameters)
             if line.startswith(':param'):
                 parts = line.split(' ')
                 param_name = parts[2].replace(':', '')
@@ -76,6 +82,19 @@ def parse_docstring(docstring, path):
                     'type': 'string',
                     'description': param_desc
                 })
+
+            # parameters listed as 'query' (optional parameter)
+            if line.startswith(':query'):
+                parts = line.split(' ')
+                param_name = parts[1].replace(':', '')
+                param_desc = ' '.join(parts[2:]).replace('|', '')
+                parameters.append({
+                    'name': param_name,
+                    'in': 'query',
+                    'type': 'string',
+                    'description': param_desc
+                })
+
             # responses listed as 'statuscode'
             if line.startswith(':statuscode'):
                 parts = line.split(' ')
@@ -84,10 +103,27 @@ def parse_docstring(docstring, path):
                 responses[status_code] = {
                     'description': desc
                 }
+                # schema of the body for this response
+                if schema and status_code in schema:
+                    ref = '#/definitions/{}'.format(schema[status_code])
+                    responses[status_code]['schema'] = {
+                        '$ref': ref
+                    }
+
+        # description of the input body
+        if schema and 'body' in schema:
+            ref = '#/definitions/{}'.format(schema['body'])
+            parameters.append({
+                'name': 'body',
+                'in': 'body',
+                'schema': {
+                    '$ref': ref
+                }
+            })
 
         if parameters:
-            result["parameters"] = parameters
-        result["responses"] = responses
+            result['parameters'] = parameters
+        result['responses'] = responses
 
     return result
 
@@ -99,13 +135,21 @@ def add_routes_swag(main_doc):
     for route in routes:
 
         spec = {}
-        spec = parse_docstring(route['view_func'].__doc__, route['rule'])
+        docstring = route['view_func'].__doc__
+        spec = parse_docstring(docstring, route['rule'], route['schema'])
 
         if not spec:
             print('This function has no doc: ' + route['view_func'].__name__)
 
         # overwrite parsed info with manually written 'swagger' field info
+        # note: parameters are added, not overwritten
         new_spec = route['swagger'] if route['swagger'] else {}
+        new_params = new_spec.pop('parameters', [])
+        if new_params:
+            if 'parameters' in spec:
+                spec['parameters'].extend(new_params)
+            else:
+                spec['parameters'] = new_params
         spec.update(new_spec)
 
         # methods: GET, PUT, POST, DELETE
@@ -114,7 +158,6 @@ def add_routes_swag(main_doc):
             path = route['rule']
             if path not in main_doc['paths']:
                 main_doc['paths'][path] = {}
-            spec['summary'] = route['view_func'].__name__
             
             main_doc['paths'][path][method.lower()] = spec
 
