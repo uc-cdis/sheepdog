@@ -318,8 +318,13 @@ class FileUploadEntity(UploadEntity):
         """
         document = self.file_by_uuid or self.file_by_hash
 
-        if self.urls is not None:
+        if self.urls != []:
             document.urls = self.urls
+            # remove url metadata for deleted urls if that happens
+            document.urls_metadata = {
+                k: v for (k, v) in document.urls_metadata.iteritems()
+                if k in document.urls
+            }
             document.patch()
 
     @staticmethod
