@@ -162,14 +162,15 @@ def assert_project_exists(func):
     return check_and_call
 
 
-def check_action_allowed_for_file(action, node, s3_url, indexd_client):
-    # get file state from indexd
-    file_state = get_indexd_state(
-        node.node_id,
-        s3_url,
-        indexd_client,
-        return_not_found=True
-    )
+def check_action_allowed_for_file(indexd_doc, node, action, file_state, s3_url):
+
+    # File is released
+    if indexd_doc.version or indexd_doc.metadata.get('release_number'):
+        raise UserError('File is already released')
+
+    # File is submitted but not released
+    if node and node.batch_id:
+        raise UserError('File is already submitted')
 
     # if record not found, allow action
     if file_state is None:
@@ -544,7 +545,12 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
             key_name = '/'.join([p for p in path.split('/') if p][1:])
             break
 
-    check_action_allowed_for_file(action, node, s3_url, indexd_client)
+    if not s3_url:
+        InternalError('URL does not exist for {}'.format(uuid))
+
+    file_state = indexd_doc.urls_metadata[s3_url].get('state')
+
+    check_action_allowed_for_file(indexd_doc, node, action, file_state, s3_url)
 
     if dry_run:
         message = (
