@@ -3,8 +3,9 @@ Subclasses for UploadEntity that handle different types of
 uploaded entites.
 """
 import uuid
+import requests
 
-from sheepdog.errors import NoIndexForFileError
+from sheepdog.errors import NoIndexForFileError, UserError
 
 from sheepdog import utils
 from sheepdog.transactions.entity_base import EntityErrors
@@ -536,7 +537,13 @@ class FileUploadEntity(UploadEntity):
             # if `document` exists, `document.did` is the UUID that is already
             # registered in indexd for this entity.
             if params:
-                document = self.transaction.signpost.get_with_params(params)
+                try:
+                    document = self.transaction.signpost.get_with_params(params)
+                except requests.HTTPError as e:
+                    raise UserError(
+                        code=e.response.status_code,
+                        message="Fail to register the data node in indexd. Detail {}".format(e.message)
+                    )
 
         return document
 

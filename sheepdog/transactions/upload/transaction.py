@@ -109,6 +109,7 @@ class UploadTransaction(TransactionBase):
             # mutated.
             flag_modified(tx_log, 'canonical_json')
 
+        self.json_validator.record_errors(self.entities)
         self.instantiate()
         self.pre_validate()
 
@@ -145,7 +146,6 @@ class UploadTransaction(TransactionBase):
                 )
             checked.add(secondary_keys)
 
-        self.json_validator.record_errors(self.entities)
         self.specify_errors()
 
     def post_validate(self):
