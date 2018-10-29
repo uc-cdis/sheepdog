@@ -1,6 +1,5 @@
 import collections
 from flasgger import Swagger, Flasgger
-from flasgger.utils import swag_from
 import yaml
 from yaml.representer import Representer
 
@@ -159,7 +158,7 @@ def add_routes_swag(main_doc):
             path = route['rule']
             if path not in main_doc['paths']:
                 main_doc['paths'][path] = {}
-            
+
             main_doc['paths'][path][method.lower()] = spec
 
     return main_doc

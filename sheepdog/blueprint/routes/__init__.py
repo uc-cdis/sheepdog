@@ -13,6 +13,8 @@ def new_route(rule, view_func, endpoint=None, methods=None, options=None, swagge
     Construct a dictionary representation of a URL rule to be added to the
     blueprint.
 
+    The 'swagger' and 'schema' parameters are only used for generating the Swagger documentation.
+
     Args:
         rule (str): the path for the URL
         view_func (callable): function to render the page

@@ -2,7 +2,6 @@ import os
 import sys
 
 from flask import Flask, jsonify
-from flasgger import Swagger, Flasgger
 from psqlgraph import PsqlGraphDriver
 
 from authutils.oauth2 import client as oauth2_client
