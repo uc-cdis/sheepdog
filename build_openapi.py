@@ -4,7 +4,7 @@ import re
 import yaml
 from yaml.representer import Representer
 
-from openapi.docstring_parsing import Docstring
+from openapi.docstring_parser import Docstring
 from sheepdog.blueprint.routes import routes
 from sheepdog.api import app
 

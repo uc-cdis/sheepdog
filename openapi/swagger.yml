@@ -88,8 +88,6 @@ paths:
             $ref: '#/definitions/schema_links'
         '403':
           description: Unauthorized request.
-        '404':
-          description: Program not found.
       summary: Get the programs
       tags:
       - program
@@ -108,8 +106,6 @@ paths:
           description: Registered successfully.
         '403':
           description: Unauthorized request.
-        '404':
-          description: Program not found.
       summary: Create a program
       tags:
       - program
@@ -128,8 +124,6 @@ paths:
           description: Registered successfully.
         '403':
           description: Unauthorized request.
-        '404':
-          description: Program not found.
       summary: Create a program
       tags:
       - program
@@ -148,8 +142,6 @@ paths:
           description: Registered successfully.
         '403':
           description: Unauthorized request.
-        '404':
-          description: Program not found.
       summary: Create a program
       tags:
       - program
