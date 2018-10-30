@@ -2000,6 +2000,24 @@ paths:
       summary: Get the dictionary schema for an entity
       tags:
       - dictionary
+  /_status:
+    get:
+      responses:
+        '200':
+          description: Healthy
+        default:
+          description: Unhealthy
+      summary: Health check endpoint
+      tags:
+      - system
+  /_version:
+    get:
+      responses:
+        '200':
+          description: successful operation
+      summary: Returns the version of Sheepdog
+      tags:
+      - system
   /admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>:
     delete:
       description: Delete existing GDC entities. Using the :http:method:`delete` on

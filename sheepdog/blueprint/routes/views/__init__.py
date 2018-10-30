@@ -32,10 +32,9 @@ def get_programs():
 
     Tags:
         program
-    
+
     Responses:
         200 (schema_links): Success
-        404: Program not found.
         403: Unauthorized request.
 
     :reqheader Content-Type: |reqheader_Content-Type|
@@ -90,7 +89,6 @@ def root_create():
     
     Responses:
         200: Registered successfully.
-        404: Program not found.
         403: Unauthorized request.
 
     :reqheader Content-Type:

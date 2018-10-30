@@ -36,7 +36,7 @@ def get_projects(program):
     """
     Return the available resources at the top level of program ``program``,
     i.e. registered projects.
-    
+
     Summary:
         Get the projects
 
@@ -116,7 +116,7 @@ def create_project(program):
         project
 
     Args:
-        program (string): |program_id|
+        program (str): |program_id|
         body (schema_project): input body
     
     Responses:
@@ -243,7 +243,7 @@ def delete_program(program):
         program
 
     Args:
-        program (string): |program_id|
+        program (str): |program_id|
     
     Responses:
         204: Success.

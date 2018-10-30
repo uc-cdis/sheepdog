@@ -71,7 +71,7 @@ def create_viewer(method, bulk=False, dry_run=False):
             program (str): |program_id|
             project (str): |project_id|
             body (schema_entity): input body
-    
+
         Responses:
             201: Entities created successfully
             404: Resource not found.

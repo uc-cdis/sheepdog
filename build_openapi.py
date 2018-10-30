@@ -1,15 +1,12 @@
 import collections
+from flasgger import Swagger, Flasgger
+import re
 import yaml
 from yaml.representer import Representer
-import re
 
 from openapi.docstring_parsing import Docstring
 from sheepdog.blueprint.routes import routes
-
-
-# TODO:
-# request headers
-# add health check and version endpoints
+from sheepdog.api import app
 
 
 def write_swagger(swag_doc):
@@ -24,7 +21,7 @@ def write_swagger(swag_doc):
         print('Generated docs')
 
 
-def translate_to_swag(doc):
+def translate_to_swag(doc, subs):
     """
     Converts a parsed docstring in a dict to a Swagger formatted dict.
     """
@@ -96,7 +93,7 @@ def translate_to_swag(doc):
         for name, props in args.iteritems()
     ])
 
-    subs = parse_sphinx_substitutions()
+    # handle substitutions
     for p in spec['parameters']:
         for k, v in subs.iteritems():
             look_for = '|{}|'.format(k)
@@ -106,6 +103,15 @@ def translate_to_swag(doc):
 
 
 def parse_sphinx_substitutions():
+    """
+    Parse the file containing definitions in Sphinx format into a dict.
+
+    Example:
+        .. |short_name| replace::
+        A detailled definition
+
+        becomes "short_name: A detailled definition"
+    """
     file_name = '../sheepdog/docs/api_reference/substitutions.rst'
     regex = re.compile(r"\|(.*)\|")
     subs = {}
@@ -113,8 +119,7 @@ def parse_sphinx_substitutions():
         with open(file_name, 'r') as f:
             lines = map(lambda i: i.strip(), f.readlines())
             indexes = [i for i, s in enumerate(lines) if 'replace::' in s]
-            for i in range(len(indexes)):
-                start = indexes[i]
+            for i, start in enumerate(indexes):
                 end = indexes[i + 1] if i < len(indexes) - 1 else len(lines)
                 name = regex.findall(lines[start])[0]
                 description = ' '.join(lines[start + 1 : end])
@@ -128,14 +133,23 @@ def build_swag_doc():
     """
     Return a compilation of the Swagger docs of all the blueprints.
     """
-    from openapi.definitions import definitions
     from openapi.app_info import app_info
+    from openapi.definitions import definitions
 
-    swag_doc = app_info.copy()
+    swag_doc = {}
+    subs = parse_sphinx_substitutions()
+
+    # add the Flask endpoints to the documentation
+    with app.app_context():
+        swagger = Swagger(app, template=app_info)
+        swag_doc = Flasgger.get_apispecs(swagger)
+    if 'paths' not in swag_doc:
+        swag_doc['paths'] = {}
+
+    # add the schema definitions
     swag_doc['definitions'] = definitions
-    swag_doc['paths'] = {}
 
-    # Parse each blueprint's docstring
+    # parse and add each blueprint's docstring
     for route in routes:
 
         docstring = route['view_func'].__doc__
@@ -143,8 +157,8 @@ def build_swag_doc():
             print('This endpoint is not documented: {}'.format(route['view_func'].__name__))
 
         parsed_doc = Docstring.from_string(docstring)
-        spec = translate_to_swag(parsed_doc.sections)
-        
+        spec = translate_to_swag(parsed_doc.sections, subs)
+
         # overwrite parsed info with manually written 'swagger' field info
         # (e.g. a PUT and a POST point to the same function but one is for creation and the other for update -> overwritte summary)
         # (e.g. to add a dry_run tag)
