@@ -1,170 +1,170 @@
 import collections
-from flasgger import Swagger, Flasgger
 import yaml
 from yaml.representer import Representer
+import re
 
-from sheepdog.api import app, app_info
+from openapi.docstring_parsing import Docstring
 from sheepdog.blueprint.routes import routes
 
 
-def write_swagger(swagger):
+# TODO:
+# request headers
+# add health check and version endpoints
+
+
+def write_swagger(swag_doc):
     """
-    Generate the Swagger documentation and store it in a file.
+    Write the Swagger documentation in a file.
     """
     yaml.add_representer(collections.defaultdict, Representer.represent_dict)
     yaml.Dumper.ignore_aliases = lambda *args : True
     outfile = 'openapi/swagger.yml'
     with open(outfile, 'w') as spec_file:
-        main_doc = Flasgger.get_apispecs(swagger)
-
-        from openapi.definitions import definitions
-        main_doc['definitions'] = definitions
-
-        main_doc = add_routes_swag(main_doc) # add the blueprints' doc
-        yaml.dump(main_doc, spec_file, default_flow_style=False)
-
+        yaml.dump(swag_doc, spec_file, default_flow_style=False)
         print('Generated docs')
 
 
-def parse_docstring(docstring, path, schema):
+def translate_to_swag(doc):
     """
-    Parse a docstring into its components and translate them into Swagger format.
+    Converts a parsed docstring in a dict to a Swagger formatted dict.
     """
-    result = {}
-    if docstring:
-        docstring_list = [line.strip() for line in docstring.splitlines() if line]
+    summary = doc['Summary'][0].description if doc.get('Summary') else ''
+    spec = {
+        'description': doc.get('Description', ''),
+        'summary': summary,
+        'tags': map(lambda i: i.description, doc.get('Tags', []))
+    }
 
-        # description: first block of text in the docstring
-        if docstring_list[0].startswith('/'):
-            start = 2 # the first 2 lines sometimes describe the path and method
-        else:
-            start = 0
-        i = start
-        while i < len(docstring_list) \
-            and not docstring_list[i].startswith(':') \
-            and not docstring_list[i].startswith('Args:'):
-            i += 1
-        description = ' '.join(docstring_list[start:i])
-        result['description'] = description
+    # Sphinx uses the shortened version of type names -> translate them
+    swagger_types = {
+        'str': 'string',
+        'bool': 'boolean',
+        'int': 'integer'
+    }
 
-        parameters = []
-        # parameters listed under 'Args'
-        if i < len(docstring_list) and docstring_list[i].startswith('Args:'):
-            i += 1
-            while i < len(docstring_list) \
-            and not docstring_list[i].startswith(':'):
-                parts = docstring_list[i].split(' ')
-                if len(parts) < 3: # we're now out of Args list
-                    break
-                param_name = parts[0]
-                param_desc = ' '.join(parts[2:]).replace('|', '')
-                parameters.append({
-                    'name': param_name,
-                    'in': 'path' if (param_name in path) else 'query',
-                    'required': True if (param_name in path) else False,
-                    'type': 'string',
-                    'description': param_desc
-                })
-                i += 1
+    # Responses and status codes
+    resps = doc.get('Responses')
+    spec['responses'] = {}
+    for code, props in resps.iteritems():
+        spec['responses'][code] = {
+            'description': props.description
+        }
+        if props.type:
+            ref = '#/definitions/{}'.format(props.type)
+            spec['responses'][code]['schema'] = {
+                '$ref': ref
+            }
 
-        responses = {}
-        for line in docstring_list:
+    args = doc.get('Args')
 
-            # parameters listed as 'param' (path parameters)
-            if line.startswith(':param'):
-                parts = line.split(' ')
-                param_name = parts[2].replace(':', '')
-                param_desc = ' '.join(parts[3:]).replace('|', '')
-                parameters.append({
-                    'name': param_name,
-                    'in': 'path' if (param_name in path) else 'query',
-                    'required': True if (param_name in path) else False,
-                    'type': 'string',
-                    'description': param_desc
-                })
+    # Path parameters
+    spec['parameters'] = [
+        {
+            'in': 'path',
+            'name': name,
+            'type': swagger_types.get(props.type, props.type),
+            'description': props.description,
+            'required': True
+        }
+        for name, props in args.iteritems()
+        if props.name != 'body'
+    ]
 
-            # parameters listed as 'query' (optional parameter)
-            if line.startswith(':query'):
-                parts = line.split(' ')
-                param_name = parts[1].replace(':', '')
-                param_desc = ' '.join(parts[2:]).replace('|', '')
-                parameters.append({
-                    'name': param_name,
-                    'in': 'query',
-                    'type': 'string',
-                    'description': param_desc
-                })
+    # Body input
+    spec['parameters'].extend([
+        {
+            'in': 'body',
+            'name': name,
+            'description': props.description,
+            'schema': {
+                '$ref': '#/definitions/{}'.format(props.type)
+            }
+        }
+        for name, props in args.iteritems()
+        if props.name == 'body'
+    ])
 
-            # responses listed as 'statuscode'
-            if line.startswith(':statuscode'):
-                parts = line.split(' ')
-                status_code = parts[1].replace(':', '')
-                desc = ' '.join(parts[2:])
-                responses[status_code] = {
-                    'description': desc
-                }
-                # schema of the body for this response
-                if schema and status_code in schema:
-                    ref = '#/definitions/{}'.format(schema[status_code])
-                    responses[status_code]['schema'] = {
-                        '$ref': ref
-                    }
+    # Query parameters
+    args = doc.get('Query Args')
+    spec['parameters'].extend([
+        {
+            'in': 'query',
+            'name': name,
+            'type': swagger_types.get(props.type, props.type),
+            'description': props.description
+        }
+        for name, props in args.iteritems()
+    ])
 
-        # description of the input body
-        if schema and 'body' in schema:
-            ref = '#/definitions/{}'.format(schema['body'])
-            parameters.append({
-                'name': 'body',
-                'in': 'body',
-                'schema': {
-                    '$ref': ref
-                }
-            })
+    subs = parse_sphinx_substitutions()
+    for p in spec['parameters']:
+        for k, v in subs.iteritems():
+            look_for = '|{}|'.format(k)
+            p['description'] = p['description'].replace(look_for, v)
 
-        if parameters:
-            result['parameters'] = parameters
-        result['responses'] = responses
-
-    return result
+    return spec
 
 
-def add_routes_swag(main_doc):
+def parse_sphinx_substitutions():
+    file_name = '../sheepdog/docs/api_reference/substitutions.rst'
+    regex = re.compile(r"\|(.*)\|")
+    subs = {}
+    try:
+        with open(file_name, 'r') as f:
+            lines = map(lambda i: i.strip(), f.readlines())
+            indexes = [i for i, s in enumerate(lines) if 'replace::' in s]
+            for i in range(len(indexes)):
+                start = indexes[i]
+                end = indexes[i + 1] if i < len(indexes) - 1 else len(lines)
+                name = regex.findall(lines[start])[0]
+                description = ' '.join(lines[start + 1 : end])
+                subs[name] = description.strip()
+    except IOError:
+        print('Substitution file {} not found'.format(file_name))
+    return subs
+
+
+def build_swag_doc():
     """
-    Read the Swagger doc for each blueprint and add it to a main doc.
+    Return a compilation of the Swagger docs of all the blueprints.
     """
+    from openapi.definitions import definitions
+    from openapi.app_info import app_info
+
+    swag_doc = app_info.copy()
+    swag_doc['definitions'] = definitions
+    swag_doc['paths'] = {}
+
+    # Parse each blueprint's docstring
     for route in routes:
 
-        spec = {}
         docstring = route['view_func'].__doc__
-        spec = parse_docstring(docstring, route['rule'], route['schema'])
+        if not docstring:
+            print('This endpoint is not documented: {}'.format(route['view_func'].__name__))
 
-        if not spec:
-            print('This function has no doc: ' + route['view_func'].__name__)
-
+        parsed_doc = Docstring.from_string(docstring)
+        spec = translate_to_swag(parsed_doc.sections)
+        
         # overwrite parsed info with manually written 'swagger' field info
+        # (e.g. a PUT and a POST point to the same function but one is for creation and the other for update -> overwritte summary)
+        # (e.g. to add a dry_run tag)
         # note: parameters are added, not overwritten
-        new_spec = route['swagger'] if route['swagger'] else {}
-        new_params = new_spec.pop('parameters', [])
-        if new_params:
-            if 'parameters' in spec:
-                spec['parameters'].extend(new_params)
-            else:
-                spec['parameters'] = new_params
-        spec.update(new_spec)
+        if route['swagger']:
+            new_params = route['swagger'].pop('parameters', [])
+            spec['parameters'].extend(new_params)
+            spec.update(route['swagger'])
+
+        path = route['rule'] # OR? '/v0/submission' + route['rule']
 
         # methods: GET, PUT, POST, DELETE
         for method in route['options'].get('methods', []):
-            # path = '/v0/submission' + route['rule']
-            path = route['rule']
-            if path not in main_doc['paths']:
-                main_doc['paths'][path] = {}
+            if path not in swag_doc['paths']:
+                swag_doc['paths'][path] = {}
+            swag_doc['paths'][path][method.lower()] = spec
 
-            main_doc['paths'][path][method.lower()] = spec
-
-    return main_doc
+    return swag_doc
 
 
 if __name__ == '__main__':
-    with app.app_context():
-        swagger = Swagger(app, template=app_info)
-        write_swagger(swagger)
+    swag_doc = build_swag_doc()
+    write_swagger(swag_doc)

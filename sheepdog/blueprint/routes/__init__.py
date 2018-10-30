@@ -5,7 +5,6 @@ route is constructed with the ``new_route`` function from
 """
 
 from sheepdog.blueprint.routes import views
-from openapi.definitions import tag_dry_run, tag_dictionary, tag_program, tag_project, tag_export, tag_file, tag_entity
 
 
 def new_route(rule, view_func, endpoint=None, methods=None, options=None, swagger=None, schema=None):
@@ -44,106 +43,48 @@ routes = [
     new_route(
         '/',
         views.get_programs,
-        methods=['GET'],
-        swagger={
-            'summary': 'Get the programs',
-            'tags': [tag_program]
-        },
-        schema={
-            '200': 'schema_links' # description of response when status code is 200
-        }
+        methods=['GET']
     ),
     new_route(
         '/',
         views.root_create,
-        methods=['PUT', 'POST', 'PATCH'],
-        swagger={
-            'summary': 'Create a program',
-            'tags': [tag_program]
-        },
-        schema={
-            'body': 'schema_program' # description of input body
-        }
+        methods=['PUT', 'POST', 'PATCH']
     ),
     new_route(
         '/_dictionary',
         views.get_dictionary,
-        methods=['GET'],
-        swagger={
-            'summary': 'Get the dictionary schema',
-            'tags': [tag_dictionary]
-        },
-        schema={
-            '200': 'schema_links'
-        }
+        methods=['GET']
     ),
     new_route(
         '/_dictionary/<entry>',
         views.program.project.get_dictionary_entry,
-        methods=['GET'],
-        swagger={
-            'summary': 'Get the dictionary schema for an entity',
-            'tags': [tag_dictionary]
-        },
-        schema={
-            '200': 'schema_entity'
-        }
+        methods=['GET']
     ),
     new_route(
         '/<program>',
         views.program.get_projects,
-        methods=['GET'],
-        swagger={
-            'summary': 'Get the projects',
-            'tags': [tag_project]
-        },
-        schema={
-            '200': 'schema_links'
-        }
+        methods=['GET']
     ),
     new_route(
         '/<program>',
         views.program.create_project,
-        methods=['PUT', 'POST', 'PATCH'],
-        swagger={
-            'summary': 'Create a project',
-            'tags': [tag_project]
-        },
-        schema={
-            'body': 'schema_project'
-        }
+        methods=['PUT', 'POST', 'PATCH']
     ),
     new_route(
         '/<program>',
         views.program.delete_program,
-        methods=['DELETE'],
-        swagger={
-            'summary': 'Delete a program',
-            'tags': [tag_program]
-        }
+        methods=['DELETE']
     ),
     new_route(
         '/<program>/<project>',
         views.program.project.delete_project,
-        methods=['DELETE'],
-        swagger={
-            'summary': 'Delete a project',
-            'tags': [tag_project]
-        }
+        methods=['DELETE']
     ),
     new_route(
         '/<program>/<project>',
         views.program.project.create_viewer('POST'),
         endpoint='create_entities',
-        methods=['POST'],
-        swagger={
-            'summary': 'Create entities',
-            'description': 'Create any valid entities specified in the request body.',
-            'tags': [tag_entity]
-        },
-        schema={
-            'body': 'schema_entity'
-        }
+        methods=['POST']
     ),
     new_route(
         '/<program>/<project>',
@@ -151,12 +92,7 @@ routes = [
         endpoint='update_entities',
         methods=['PUT'],
         swagger={
-            'summary': 'Update entities',
-            'description': 'Update the entity specified in the request body.',
-            'tags': [tag_entity]
-        },
-        schema={
-            'body': 'schema_entity'
+            'summary': 'Update entities'
         }
     ),
     new_route(
@@ -165,13 +101,8 @@ routes = [
         endpoint='create_entities_dry_run',
         methods=['POST'],
         swagger={
-            'summary': 'Create entities',
-            'description': 'Create any valid entities specified in the request body.',
-            'tags': [tag_dry_run]
+            'tags': ['dry run']
         },
-        schema={
-            'body': 'schema_entity'
-        }
     ),
     new_route(
         '/<program>/<project>/_dry_run',
@@ -180,26 +111,14 @@ routes = [
         methods=['PUT'],
         swagger={
             'summary': 'Update entities',
-            'description': 'Update the entity specified in the request body.',
-            'tags': [tag_dry_run]
-        },
-        schema={
-            'body': 'schema_entity'
+            'tags': ['dry run']
         }
     ),
     new_route(
         '/<program>/<project>/bulk',
         views.program.project.create_viewer('POST', bulk=True),
         endpoint='bulk_create_entities',
-        methods=['POST'],
-        swagger={
-            'summary': 'Create entities in bulk',
-            'description': 'Bulk creation of entities.',
-            'tags': [tag_entity]
-        },
-        schema={
-            'body': 'schema_entity_bulk'
-        }
+        methods=['POST']
     ),
     new_route(
         '/<program>/<project>/bulk',
@@ -207,12 +126,7 @@ routes = [
         endpoint='bulk_update_entities',
         methods=['PUT'],
         swagger={
-            'summary': 'Update entities in bulk',
-            'description': 'Bulk update of entities.',
-            'tags': [tag_entity]
-        },
-        schema={
-            'body': 'schema_entity_bulk'
+            'summary': 'Update entities in bulk'
         }
     ),
     new_route(
@@ -221,12 +135,7 @@ routes = [
         endpoint='bulk_create_entities_dry_run',
         methods=['POST'],
         swagger={
-            'summary': 'Create entities in bulk',
-            'description': 'Bulk creation of entities.',
-            'tags': [tag_dry_run]
-        },
-        schema={
-            'body': 'schema_entity_bulk'
+            'tags': ['dry run']
         }
     ),
     new_route(
@@ -236,62 +145,29 @@ routes = [
         methods=['PUT'],
         swagger={
             'summary': 'Update entities in bulk',
-            'description': 'Bulk update of entities.',
-            'tags': [tag_dry_run]
-        },
-        schema={
-            'body': 'schema_entity_bulk'
+            'tags': ['dry run']
         }
     ),
     new_route(
         '/<program>/<project>/_dictionary',
         views.program.project.get_project_dictionary,
-        methods=['GET'],
-        swagger={
-            'summary': 'Get the dictionary schema for entities of a project',
-            'description': 'Return links to the project level JSON schema definitions.',
-            'tags': [tag_dictionary]
-        },
-        schema={
-            '200': 'schema_links'
-        }
+        methods=['GET']
     ),
     new_route(
         '/<program>/<project>/_dictionary/<entry>',
         views.program.project.get_project_dictionary_entry,
-        methods=['GET'],
-        swagger={
-            'summary': 'Get the dictionary schema for an entity of a project',
-            'description': 'Get the dictionary entry for a specific project.',
-            'tags': [tag_dictionary]
-        },
-        schema={
-            '200': 'schema_entity'
-        }
+        methods=['GET']
     ),
     new_route(
         '/<program>/<project>/entities/<entity_id_string>',
         views.program.project.get_entities_by_id,
-        methods=['GET'],
-        swagger={
-            'summary': 'Get entities by ID',
-            'description': 'Retrieve existing entities by ID.',
-            'tags': [tag_entity]
-        },
-        schema={
-            '200': 'schema_entity_list'
-        }
+        methods=['GET']
     ),
     new_route(
         '/<program>/<project>/entities/<ids>',
         views.program.project.create_delete_entities_viewer(),
         endpoint='delete_entities',
-        methods=['DELETE'],
-        swagger={
-            'summary': 'Delete entities',
-            'description': 'Delete existing entities. Deletions that would leave nodes without parents, i.e. nodes that do not have an entity from which they were derived, are not allowed.',
-            'tags': [tag_entity]
-        }
+        methods=['DELETE']
     ),
     new_route(
         '/<program>/<project>/entities/_dry_run/<ids>',
@@ -299,9 +175,7 @@ routes = [
         endpoint='delete_entities_dry_run',
         methods=['DELETE'],
         swagger={
-            'summary': 'Delete entities',
-            'description': 'Delete existing entities. Deletions that would leave nodes without parents, i.e. nodes that do not have an entity from which they were derived, are not allowed.',
-            'tags': [tag_dry_run]
+            'tags': ['dry run']
         }
     ),
     new_route(
@@ -309,9 +183,7 @@ routes = [
         views.program.project.export_entities,
         methods=['GET', 'POST'],
         swagger={
-            'summary': 'Export entities',
-            'produces': ['application/json'],
-            'tags': [tag_export]
+            'produces': ['application/json']
         }
     ),
     new_route(
@@ -327,8 +199,7 @@ routes = [
                 'in' : 'query',
                 'description': 'to list parts',
                 'type': 'string'
-            }],
-            'tags': [tag_file]
+            }]
         }
     ),
     new_route(
@@ -345,7 +216,7 @@ routes = [
                 'description': 'to list parts',
                 'type': 'string'
             }],
-            'tags': [tag_dry_run]
+            'tags': ['dry run']
         }
     ),
     new_route(
@@ -369,8 +240,7 @@ routes = [
                     'description': 'to upload part (use with partNumber)',
                     'type': 'string'
                 }
-            ],
-            'tags': [tag_file]
+            ]
         }
     ),
     new_route(
@@ -395,7 +265,7 @@ routes = [
                     'type': 'string'
                 }
             ],
-            'tags': [tag_dry_run]
+            'tags': ['dry run']
         }
     ),
     new_route(
@@ -419,8 +289,7 @@ routes = [
                     'description': 'to complete multipart upload',
                     'type': 'string'
                 }
-            ],
-            'tags': [tag_file]
+            ]
         }
     ),
     new_route(
@@ -445,7 +314,7 @@ routes = [
                     'type': 'string'
                 }
             ],
-            'tags': [tag_dry_run]
+            'tags': ['dry run']
         }
     ),
     new_route(
@@ -461,8 +330,7 @@ routes = [
                 'in' : 'query',
                 'description': 'to abort a multipart upload',
                 'type': 'string'
-            }],
-            'tags': [tag_file]
+            }]
         }
     ),
     new_route(
@@ -479,27 +347,19 @@ routes = [
                 'description': 'to abort a multipart upload',
                 'type': 'string'
             }],
-            'tags': [tag_dry_run]
+            'tags': ['dry run']
         }
     ),
     new_route(
         '/<program>/<project>/manifest',
         views.program.project.get_manifest,
-        methods=['GET'],
-        swagger={
-            'summary': 'Get a manifest of data files',
-            'tags': [tag_file]
-        }
+        methods=['GET']
     ),
     new_route(
         '/<program>/<project>/open',
         views.program.project.create_open_project_viewer(),
         endpoint='open_project',
-        methods=['PUT', 'POST'],
-        swagger={
-            'summary': 'Open a project',
-            'tags': [tag_project]
-        }
+        methods=['PUT', 'POST']
     ),
     new_route(
         '/<program>/<project>/open/_dry_run',
@@ -507,19 +367,14 @@ routes = [
         endpoint='open_project_dry_run',
         methods=['PUT', 'POST'],
         swagger={
-            'summary': 'Open a project',
-            'tags': [tag_dry_run]
+            'tags': ['dry run']
         }
     ),
     new_route(
         '/<program>/<project>/release',
         views.program.project.create_release_project_viewer(),
         endpoint='release_project',
-        methods=['PUT', 'POST'],
-        swagger={
-            'summary': 'Release a project',
-            'tags': [tag_project]
-        }
+        methods=['PUT', 'POST']
     ),
     new_route(
         '/<program>/<project>/release/_dry_run',
@@ -527,19 +382,14 @@ routes = [
         endpoint='release_project_dry_run',
         methods=['PUT', 'POST'],
         swagger={
-            'summary': 'Release a project',
-            'tags': [tag_dry_run]
+            'tags': ['dry run']
         }
     ),
     new_route(
         '/<program>/<project>/review',
         views.program.project.create_review_project_viewer(),
         endpoint='review_project',
-        methods=['PUT', 'POST'],
-        swagger={
-            'summary': 'Review a project',
-            'tags': [tag_project]
-        }
+        methods=['PUT', 'POST']
     ),
     new_route(
         '/<program>/<project>/review/_dry_run',
@@ -547,20 +397,14 @@ routes = [
         endpoint='review_project_dry_run',
         methods=['PUT', 'POST'],
         swagger={
-            'summary': 'Review a project',
-            'tags': [tag_dry_run]
+            'tags': ['dry run']
         }
     ),
     new_route(
         '/<program>/<project>/submit',
         views.program.project.create_submit_project_viewer(),
         endpoint='submit_project',
-        methods=['PUT', 'POST'],
-        swagger={
-            'summary': 'Submit a project',
-            'description': 'Submit a project. Submitting a project means that all metadata that *currently* exists in the project can be made public in every index built after the project is released.',
-            'tags': [tag_project]
-        }
+        methods=['PUT', 'POST']
     ),
     new_route(
         '/<program>/<project>/submit/_dry_run',
@@ -568,55 +412,33 @@ routes = [
         endpoint='submit_project_dry_run',
         methods=['PUT', 'POST'],
         swagger={
-            'summary': 'Submit a project',
-            'description': 'Submit a project. Submitting a project means that all metadata that *currently* exists in the project can be made public in every index built after the project is released.',
-            'tags': [tag_dry_run]
+            'tags': ['dry run']
         }
     ),
     new_route(
         '/<program>/<project>/template',
         views.program.project.get_project_templates,
-        methods=['GET'],
-        swagger={
-            'summary': 'Get templates for all entity types of a project',
-            'tags': [tag_dictionary]
-        }
+        methods=['GET']
     ),
     new_route(
         '/<program>/<project>/template/<entity>',
         views.program.project.get_project_template,
-        methods=['GET'],
-        swagger={
-            'summary': 'Get a template for an entity type of a project',
-            'tags': [tag_dictionary]
-        }
+        methods=['GET']
     ),
     new_route(
         '/<program>/<project>/transactions/<int:transaction_id>/close',
         views.program.project.close_transaction,
-        methods=['PUT', 'POST'],
-        swagger={
-            'summary': 'Close a transaction',
-            'tags': [tag_dry_run]
-        }
+        methods=['PUT', 'POST']
     ),
     new_route(
         '/<program>/<project>/transactions/<int:transaction_id>/commit',
         views.program.project.commit_dry_run_transaction,
-        methods=['PUT', 'POST'],
-        swagger={
-            'summary': 'Commit a dry run transaction.',
-            'tags': [tag_dry_run]
-        }
+        methods=['PUT', 'POST']
     ),
     new_route(
         '/<program>/<project>/upload_manifest',
         views.program.project.get_manifest,
-        methods=['GET'],
-        swagger={
-            'summary': 'Get a manifest of data files',
-            'tags': [tag_file]
-        }
+        methods=['GET']
     ),
     new_route(
         '/<program>/<project>/xml/biospecimen/bcr',
@@ -624,7 +446,6 @@ routes = [
         endpoint='update_entities_biospecimen',
         methods=['PUT'],
         swagger={
-            'summary': 'Update Biospecimen Supplement entities',
             'consumes': ['multipart/form-data'],
             'parameters': [{
                 'name': 'file',
@@ -632,8 +453,7 @@ routes = [
                 'description': 'BRC XML file',
                 'type': 'file',
                 'required': True
-            }],
-            'tags': [tag_entity]
+            }]
         }
     ),
     new_route(
@@ -642,7 +462,6 @@ routes = [
         endpoint='update_entities_biospecimen_dry_run',
         methods=['PUT'],
         swagger={
-            'summary': 'Update Biospecimen Supplement entities',
             'consumes': ['multipart/form-data'],
             'parameters': [{
                 'name': 'file',
@@ -651,7 +470,7 @@ routes = [
                 'type': 'file',
                 'required': True
             }],
-            'tags': [tag_dry_run]
+            'tags': ['dry run']
         }
     ),
     new_route(
@@ -660,7 +479,6 @@ routes = [
         endpoint='update_entities_clinical_bcr',
         methods=['PUT'],
         swagger={
-            'summary': 'Update Clinical Supplement entities',
             'consumes': ['multipart/form-data'],
             'parameters': [{
                 'name': 'file',
@@ -668,8 +486,7 @@ routes = [
                 'description': 'BRC XML file',
                 'type': 'file',
                 'required': True
-            }],
-            'tags': [tag_entity]
+            }]
         }
     ),
     new_route(
@@ -678,7 +495,6 @@ routes = [
         endpoint='update_entities_clinical_bcr_dry_run',
         methods=['PUT'],
         swagger={
-            'summary': 'Update Clinical Supplement entities',
             'consumes': ['multipart/form-data'],
             'parameters': [{
                 'name': 'file',
@@ -687,38 +503,23 @@ routes = [
                 'type': 'file',
                 'required': True
             }],
-            'tags': [tag_dry_run]
+            'tags': ['dry run']
         }
     ),
     new_route(
         '/template',
         views.get_templates,
-        methods=['GET'],
-        swagger={
-            'summary': 'Get templates for all entity types',
-            'tags': [tag_dictionary]
-        }
+        methods=['GET']
     ),
     new_route(
         '/template/<entity>',
         views.get_template,
-        methods=['GET'],
-        swagger={
-            'summary': 'Get a template for an entity type',
-            'tags': [tag_dictionary]
-        }
+        methods=['GET']
     ),
     new_route(
         '/validation/upload_manifest',
         views.validate_upload_manifest,
-        methods=['POST'],
-        swagger={
-            'summary': 'Validate a manifest of data files',
-            'tags': [tag_file]
-        },
-        schema={
-            '200': 'schema_error_list'
-        }
+        methods=['POST']
     ),
     new_route(
         '/admin/<program>/<project>/files/<file_uuid>/reassign',
@@ -727,19 +528,13 @@ routes = [
         methods=['PUT'],
         swagger={
             'summary': 'Reassign the S3 URL of a data file',
-            'description': 'Manually (re)assign the S3 url for a given node.',
-            'tags': [tag_file]
+            'description': 'Manually (re)assign the S3 url for a given node.'
         }
     ),
     new_route(
         '/admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>',
         views.program.project.create_delete_entities_viewer(),
         endpoint='delete_entities_admin',
-        methods=['DELETE'],
-        swagger={
-            'summary': 'Delete entities',
-            'description': 'Delete existing entities. Deletions that would leave nodes without parents, i.e. nodes that do not have an entity from which they were derived, are not allowed.',
-            'tags': [tag_entity]
-        }
+        methods=['DELETE']
     ),
 ]

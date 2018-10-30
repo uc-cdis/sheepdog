@@ -56,22 +56,31 @@ def create_viewer(method, bulk=False, dry_run=False):
     @auth.authorize_for_project(*auth_roles)
     def create_entities(program, project):
         """
-        Create GDC entities.
+        Create or update GDC entities.
 
         Using the :http:method:`post` on a project's endpoint will create any
         valid entities specified in the request body.
 
+        Summary:
+            Create entities
+
+        Tags:
+            entity
+
         Args:
             program (str): |program_id|
             project (str): |project_id|
+            body (schema_entity): input body
+    
+        Responses:
+            201: Entities created successfully
+            404: Resource not found.
+            400: At least one entity was invalid.
 
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
         :resheader Content-Type: |resheader_Content-Type|
-        :statuscode 201: Entities created successfully
-        :statuscode 404: Project not found.
-        :statuscode 400: At least one entity was invalid.
         """
         return transactions.upload.handle_single_transaction(
             transaction_role, program, project, dry_run=dry_run
@@ -81,16 +90,23 @@ def create_viewer(method, bulk=False, dry_run=False):
     @auth.authorize_for_project(*auth_roles)
     def bulk_create_entities(program, project):
         """
-        Handle bulk transaction instead of single transaction; see
-        documentation for the ``viewer`` function above.
+        Handle bulk transaction instead of single transaction.
+
+        Summary:
+            Create entities in bulk
+        
+        Tags:
+            entity
 
         Args:
             program (str): |program_id|
             project (str): |project_id|
-
-        :statuscode 201: Entities created successfully
-        :statuscode 404: Project not found.
-        :statuscode 400: At least one entity was invalid.
+            body (schema_entity_bulk): input body
+    
+        Responses:
+            201: Entities created successfully
+            404: Resource not found.
+            400: At least one entity was invalid.
         """
         return transactions.upload.handle_bulk_transaction(
             transaction_role, program, project, dry_run=dry_run
@@ -105,14 +121,21 @@ def create_viewer(method, bulk=False, dry_run=False):
 @utils.assert_project_exists
 def get_project_dictionary(program=None, project=None):
     """
-    Return links to the project level JSON schema definitions. (See :func:`get_dicionary`.)
+    Return links to the project level JSON schema definitions.
+
+    Summary:
+        Get the dictionary schema for entities of a project
+
+    Tags:
+        dictionary
 
     Args:
         program (str): |program_id|
         project (str): |project_id|
-
-    :statuscode 200: Success
-    :statuscode 403: Unauthorized request.
+    
+    Responses:
+        200 (schema_links): Success
+        403: Unauthorized request.
     """
     if flask.current_app.config.get('AUTH_SUBMISSION_LIST', True) is True:
         auth.validate_request(aud={'openid'}, purpose=None)
@@ -132,17 +155,25 @@ def get_dictionary_entry(entry):
     """
     Return the project level JSON schema definition for a given entity
     type.
+    
+    Summary:
+        Get the dictionary schema for an entity
+
+    Tags:
+        dictionary
 
     Args:
         entry (str): entity type to retrieve the schema for (e.g. ``aliquot``)
+    
+    Responses:
+        200 (schema_entity): Success
+        404: Resource not found.
+        403: Unauthorized request.
 
     :reqheader Content-Type: |reqheader_Content-Type|
     :reqheader Accept: |reqheader_Accept|
     :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
     :resheader Content-Type: |resheader_Content-Type|
-    :statuscode 200: Success
-    :statuscode 404: Resource not found.
-    :statuscode 403: Unauthorized request.
 
     **Example**
 
@@ -183,16 +214,23 @@ def get_dictionary_entry(entry):
 @utils.assert_program_exists
 def get_project_dictionary_entry(program, project, entry):
     """
-    Get the dictionary entry for a specific project. (See :func:`get_dictionary_entry`.)
+    Get the dictionary entry for a specific project.
+
+    Summary:
+        Get the dictionary schema for an entity of a project
+
+    Tags:
+        dictionary
 
     Args:
         program (str): |program_id|
         project (str): |project_id|
         entry (str): entity type to retrieve the schema for (e.g. ``aliquot``)
-
-    :statuscode 200: Success
-    :statuscode 404: Resource not found.
-    :statuscode 403: Unauthorized request.
+    
+    Responses:
+        200 (schema_entity): Success
+        404: Resource not found.
+        403: Unauthorized request.
     """
     if flask.current_app.config.get('AUTH_SUBMISSION_LIST', True) is True:
         auth.validate_request(aud={'openid'}, purpose=None)
@@ -212,19 +250,27 @@ def get_entities_by_id(program, project, entity_id_string):
     If any ID is not found in the database, a status code of 404 is returned
     with the missing IDs.
 
+    Summary:
+        Get entities by ID
+
+    Tags:
+        entity
+
     Args:
         program (str): |program_id|
         project (str): |project_id|
         entity_id_string (str): A comma-separated list of ids specifying the entities to retrieve.
 
+    Responses:
+        200 (schema_entity_list): Success.
+        400: User error.
+        404: Entity not found.
+        403: Unauthorized request.
+
     :reqheader Content-Type: |reqheader_Content-Type|
     :reqheader Accept: |reqheader_Accept|
     :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
     :resheader Content-Type: |resheader_Content-Type|
-    :statuscode 200: Success.
-    :statuscode 400: User error.
-    :statuscode 404: Entity not found.
-    :statuscode 403: Unauthorized request.
     """
     entity_ids = entity_id_string.split(',')
     with flask.current_app.db.session_scope():
@@ -259,21 +305,32 @@ def create_delete_entities_viewer(dry_run=False):
         were derived. To prevent catastrophic mistakes, the current philosophy
         is to disallow automatic cascading of deletes. However, to inform a
         user which entities must be deleted for the target entity to be
-        deleted, the API will respond with a list of entities that must be
-        deleted prior to deleting the target entity.
+        deleted, the API will respond with at least one entity that must be deleted prior to deleting the target entity.
 
-        :param str program: |program_id|
-        :param str project: |project_id|
-        :param str ids: A comma separated list of ids specifying the entities to delete. These ids must be official GDC ids.
-        :param bool to_delete: Set the to_delete sysan as true or false. If none, then don't try to set the sysan, and instead delete the node.
+        Summary:
+            Delete entities
+
+        Tags:
+            entity
+
+        Args:
+            program (str): |program_id|
+            project (str): |project_id|
+            ids (str): A comma separated list of ids specifying the entities to delete. These ids must be official GDC ids.
+        
+        Query Args:
+            to_delete (bool): Set the to_delete sysan as true or false. If none, then don't try to set the sysan, and instead delete the node.
+
+        Responses:
+            200: Entities deleted successfully
+            400: User error.
+            404: Entity not found.
+            403: Unauthorized request.
+
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
         :resheader Content-Type: |resheader_Content-Type|
-        :statuscode 200: Entities deleted successfully
-        :statuscode 400: User error.
-        :statuscode 404: Entity not found.
-        :statuscode 403: Unauthorized request.
         """
 
         ids_list = ids.split(',')
@@ -316,6 +373,12 @@ def export_entities(program, project):
     multiple entity types, it returns ``gdc_export_{one_time_sha}.tar.gz`` for
     tsv format, or ``gdc_export_{one_time_sha}.json`` for json format.
 
+    Summary:
+        Export entities
+    
+    Tags:
+        export
+
     Args:
         program (str): |program_id|
         project (str): |project_id|
@@ -327,10 +390,11 @@ def export_entities(program, project):
             whether to recursively find children or not; default is False
         category: category of node to filter on children. Example: clinical
 
-    :statuscode 200: Success
-    :statuscode 400: Bad Request
-    :statuscode 404: No id is found
-    :statuscode 403: Unauthorized request.
+    Responses:
+        200: Success
+        400: Bad Request
+        404: No id is found
+        403: Unauthorized request.
     """
     if flask.request.method == 'GET':
         # Unpack multidict, or values will unnecessarily be lists.
@@ -419,19 +483,26 @@ def create_files_viewer(dry_run=False, reassign=False):
 
         GET /<program>/<project>/files/<uuid>?uploadId=UploadId
             List Parts
+        
+        Tags:
+            file
+        
+        Args:
+            program (str): |program_id|
+            project (str): |project_id|
+            uuid (str): The GDC id of the file to upload.
 
-        :param str program: |program_id|
-        :param str project: |project_id|
-        :param str uuid: The GDC id of the file to upload.
+        Responses:
+            200: Success.
+            400: Bad Request
+            404: File not found.
+            405: Method Not Allowed.
+            403: Unauthorized request.
+
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
         :resheader Content-Type: |resheader_Content-Type|
-        :statuscode 200: Success.
-        :statuscode 404: File not found.
-        :statuscode 403: Unauthorized request.
-        :statuscode 405: Method Not Allowed.
-        :statuscode 400: Bad Request.
         """
         headers = {
             k: v
@@ -506,14 +577,21 @@ def get_manifest(program, project):
     """
     Create a json manifest of the files.
 
+    Summary:
+        Get a manifest of data files
+
+    Tags:
+        file
+
     Args:
         program (str): |program_id|
         project (str): |project_id|
 
-    :statuscode 200: Success
-    :statuscode 400: User error.
-    :statuscode 404: Project not found.
-    :statuscode 403: Unauthorized request.
+    Responses:
+        200: Success
+        400: User error.
+        404: Resource not found.
+        403: Unauthorized request.
     """
     id_string = flask.request.args.get('ids', '').strip()
     if not id_string:
@@ -538,17 +616,26 @@ def create_open_project_viewer(dry_run=False):
     @auth.authorize_for_project(ROLES['RELEASE'])
     def open_project(program, project):
         """
-        Mark a project ``open``. Opening a project means uploads, deletions, etc.
-        are allowed.
+        Mark a project ``open``. Opening a project means uploads, deletions, etc. are allowed.
 
-        :param str program: |program_id|
-        :param str project: |project_id|
+        Summary:
+            Open a project
+
+        Tags:
+            project
+
+        Args:
+            program (str): |program_id|
+            project (str): |project_id|
+
+        Responses:
+            200: Success
+            404: Resource not found.
+            403: Unauthorized request.
+            
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
-        :statuscode 200: Success
-        :statuscode 404: Project not found.
-        :statuscode 403: Unauthorized request.
         """
         return transactions.review.handle_open_transaction(program, project, dry_run=dry_run)
 
@@ -567,14 +654,24 @@ def create_release_project_viewer(dry_run=False):
         """
         Release a project.
 
-        :param str program: |program_id|
-        :param str project: |project_id|
+        Summary:
+            Release a project
+        
+        Tags:
+            project
+
+        Args:
+            program (str): |program_id|
+            project (str): |project_id|
+
+        Responses:
+            200: Success
+            404: Resource not found.
+            403: Unauthorized request.
+
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
-        :statuscode 200: Success
-        :statuscode 404: Project not found.
-        :statuscode 403: Unauthorized request.
         """
         return transactions.release.handle_release_transaction(program, project, dry_run=dry_run)
 
@@ -597,14 +694,24 @@ def create_review_project_viewer(dry_run=False):
         Reviewing a project means uploads are locked. An ``open`` or ``submit``
         action must be taken after ``review``.
 
-        :param str program: |program_id|
-        :param str project: |project_id|
+        Summary:
+            Review a project
+        
+        Tags:
+            project
+
+        Args:
+            program (str): |program_id|
+            project (str): |project_id|
+
+        Responses:
+            200: Success
+            404: Resource not found.
+            403: Unauthorized request.
+
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
-        :statuscode 200: Success
-        :statuscode 404: Project not found.
-        :statuscode 403: Unauthorized request.
         """
         return transactions.review.handle_review_transaction(program, project, dry_run=dry_run)
 
@@ -628,14 +735,24 @@ def create_submit_project_viewer(dry_run=False):
         *currently* exists in the project public in every GDC index built after
         the project is released.
 
-        :param str program: |program_id|
-        :param str project: |project_id|
+        Summary:
+            Submit a project
+        
+        Tags:
+            project
+
+        Args:
+            program (str): |program_id|
+            project (str): |project_id|
+
+        Responses:
+            200: Project submitted successfully
+            404: Resource not found.
+            403: Unauthorized request.
+
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
-        :statuscode 200: Project submitted successfully
-        :statuscode 404: Project not found.
-        :statuscode 403: Unauthorized request.
         """
         return transactions.submission.handle_submission_transaction(program, project, dry_run=dry_run)
 
@@ -652,12 +769,24 @@ def get_project_templates(program, project):
     they are represented as {link_type}.{link_unique_key}#1 to infer user the
     multiplicity
 
-    :param str program: |program_id|
-    :param str project: |project_id|
-    :query format: output format, ``csv`` or ``tsv``, default is tsv
-    :query categories: list of entities' categories to include in the template
-    :query exclude: list of entities' categories to exclude from the template
-    :statuscode 200 Success
+    Summary:
+        Get templates for all entity types of a project
+
+    Tags:
+        dictionary
+
+    Args:
+        program (str): |program_id|
+        project (str): |project_id|
+    
+    Query Args:
+        format (str): output format, ``csv`` or ``tsv``, default is tsv
+        categories (str): list of entities' categories to include in the template
+        exclude (str): list of entities' categories to exclude from the template
+
+    Responses:
+        200: Success
+        404: Resource not found.
     """
     file_format = flask.request.args.get('format', 'tsv')
     template = utils.transforms.graph_to_doc.get_all_template(
@@ -683,12 +812,23 @@ def get_project_template(program, project, entity):
     they are represented as {link_type}.{link_unique_key}#1 to infer user the
     multiplicity.
 
-    :param str program: |program_id|
-    :param str project: |project_id|
-    :param str entity: type of the entity
-    :query format: output format, ``csv`` or ``tsv``, default is tsv
-    :statuscode 200 Success
-    :statuscode 404 Entity type is not found
+    Summary:
+        Get a template for an entity type of a project
+
+    Tags:
+        dictionary
+
+    Args:
+        program (str): |program_id|
+        project (str): |project_id|
+        entity (str): type of the entity
+    
+    Query Args:
+        format (str): output format, ``csv`` or ``tsv``, default is tsv
+
+    Responses:
+        200: Success
+        404: Entity type is not found
     """
     file_format = flask.request.args.get('format', 'tsv')
     template = utils.entity_to_template_str(
@@ -710,14 +850,21 @@ def close_transaction(program, project, transaction_id):
     Close a transaction. The transaction is prevented from being committed in
     the future.
 
+    Summary:
+        Close a transaction
+
+    Tags:
+        dry run
+
     Args:
         program (str): |program_id|
         project (str): |project_id|
-        transaction_id (int): |transaction_id|
+        transaction_id (int): transaction_id
 
-    :statuscode 200: Success.
-    :statuscode 404: Program not found.
-    :statuscode 403: Unauthorized request.
+    Responses:
+        200: Success
+        404: Resource not found.
+        403: Unauthorized request.
     """
     with flask.current_app.db.session_scope():
         try:
@@ -814,14 +961,21 @@ def commit_dry_run_transaction(program, project, transaction_id):
     2. transaction_id points to a transaction that hasn't been committed already;
     3. transaction_id points to a successful transaction.
 
+    Summary:
+        Commit a dry run transaction
+    
+    Tags:
+        dry run
+
     Args:
         program (str): |program_id|
         project (str): |project_id|
-        transaction_id (int): |transaction_id|
+        transaction_id (int): transaction_id
 
-    :statuscode 200: Success.
-    :statuscode 404: Program not found.
-    :statuscode 403: Unauthorized request.
+    Responses:
+        200: Success.
+        404: Resource not found.
+        403: Unauthorized request.
     """
     with flask.current_app.db.session_scope():
         try:
@@ -876,15 +1030,22 @@ def create_biospecimen_viewer(dry_run=False):
     @auth.authorize_for_project(ROLES['CREATE'], ROLES['UPDATE'])
     def update_entities_biospecimen_bcr(program, project):
         """
-        The entities stored in BRC XML are converted to JSON before being updated
+        The entities stored in BRC XML are converted to JSON before being updated.
+
+        Summary:
+            Update Biospecimen Supplement entities
+        
+        Tags:
+            entity
 
         Args:
             program (str): |program_id|
             project (str): |project_id|
 
-        :statuscode 200: Success.
-        :statuscode 404: Program not found.
-        :statuscode 403: Unauthorized request.
+        Responses:
+            200: Success.
+            404: Resource not found.
+            403: Unauthorized request.
         """
         return transactions.upload.handle_biospecimen_bcr_xml_transaction(
             ROLES['UPDATE'],
@@ -902,15 +1063,22 @@ def create_clinical_viewer(dry_run=False):
     @auth.authorize_for_project(ROLES['CREATE'], ROLES['UPDATE'])
     def update_entities_clinical_bcr(program, project):
         """
-        The entities stored in BRC XML are converted to JSON before being updated
+        The entities stored in BRC XML are converted to JSON before being updated.
+
+        Summary:
+            Update Clinical Supplement entities
+        
+        Tags:
+            entity
 
         Args:
             program (str): |program_id|
             project (str): |project_id|
 
-        :statuscode 200: Success.
-        :statuscode 404: Program not found.
-        :statuscode 403: Unauthorized request.
+        Responses:
+            200: Success.
+            404: Resource not found.
+            403: Unauthorized request.
         """
         return transactions.upload.handle_clinical_bcr_xml_transaction(
             ROLES['UPDATE'], program, project, dry_run=dry_run
@@ -924,14 +1092,21 @@ def delete_project(program, project):
     """
     Delete project under a specific program
 
+    Summary:
+        Delete a project
+    
+    Tags:
+        project
+
     Args:
         program (str): |program_id|
         project (str): |project_id|
-
-    :statuscode 204: Success.
-    :statuscode 400: User error.
-    :statuscode 404: Program not found.
-    :statuscode 403: Unauthorized request.
+    
+    Responses:
+        204: Success.
+        400: User error.
+        404: Resource not found.
+        403: Unauthorized request.
     """
     auth.current_user.require_admin()
     with flask.current_app.db.session_scope() as session:

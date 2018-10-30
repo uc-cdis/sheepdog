@@ -36,6 +36,17 @@ def get_projects(program):
     """
     Return the available resources at the top level of program ``program``,
     i.e. registered projects.
+    
+    Summary:
+        Get the projects
+
+    Tags:
+        project
+    
+    Responses:
+        200 (schema_links): Success
+        403: Unauthorized request.
+        404: Program not found.
 
     Args:
         program (str): |program_id|
@@ -44,9 +55,6 @@ def get_projects(program):
     :reqheader Accept: |reqheader_Accept|
     :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
     :resheader Content-Type: |resheader_Content-Type|
-    :statuscode 200: Success
-    :statuscode 403: Unauthorized request.
-    :statuscode 404: Program not found.
 
     **Example**
 
@@ -101,17 +109,26 @@ def create_project(program):
     a project. Authorization for registering projects is limited to
     administrative users.
 
+    Summary:
+        Create a project
+
+    Tags:
+        project
+
     Args:
-        program (str): |program_id|
+        program (string): |program_id|
+        body (schema_project): input body
+    
+    Responses:
+        200: Registered successfully.
+        400: User error.
+        404: Program not found.
+        403: Unauthorized request.
 
     :reqheader Content-Type: |reqheader_Content-Type|
     :reqheader Accept: |reqheader_Accept|
     :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
     :resheader Content-Type: |resheader_Content-Type|
-    :statuscode 200: Registered successfully.
-    :statuscode 400: User error.
-    :statuscode 404: Program not found.
-    :statuscode 403: Unauthorized request.
 
     Example:
 
@@ -219,13 +236,20 @@ def delete_program(program):
     Delete a program given program name. If the program
     is not empty raise an appropriate exception
 
-    Args:
-        program (str): |program_id|
+    Summary:
+        Delete a program
+        
+    Tags:
+        program
 
-    :statuscode 204: Success.
-    :statuscode 400: User error.
-    :statuscode 404: Program not found.
-    :statuscode 403: Unauthorized request.
+    Args:
+        program (string): |program_id|
+    
+    Responses:
+        204: Success.
+        400: User error.
+        404: Program not found.
+        403: Unauthorized request.
     """
     auth.current_user.require_admin()
     with flask.current_app.db.session_scope() as session:
