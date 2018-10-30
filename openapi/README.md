@@ -23,7 +23,7 @@ Example:
 @app.route('/new_endpoint/<param1>')
 def get_new_endpoint_function():
     """
-    Description of this endpoint
+    Detailled description of this endpoint
     ---
     parameters:
       - name: param1
@@ -46,65 +46,67 @@ def get_new_endpoint_function():
 
 Note: if new, the endpoint should have been added to `sheepdog/blueprint/routes/__init__.py`.
 
-* Add a description, path parameters, query parameters and status codes as needed by updating the function's docstring in Sphinx format. This will allow the Sphinx documentation to be updated as well.
+* Describe the endpoint in the function's docstring in the following format (this will allow the Sphinx documentation to be updated as well):
 
-Example:
 ```
 def get_new_endpoint_function(param1):
     """
-    Description of this endpoint
-    
+    Detailled description of this endpoint
+
+    Summary:
+        A short summary of what this endpoint does
+
+    Tags:
+        program
+        
     Args:
-        param1 (str): a path parameter
-    ### OR
-    :param str param1: a path parameter
-    :query query_param1: a query parameter
-    :statuscode 200: Success
-    :statuscode default: Something went wrong
+        param1 (str): description of the path parameter
+        body_input (schema_body_input): description of the body input
+    
+    Query Args:
+        param2 (str): description of the query parameter
+
+    Responses:
+        200 (schema_response_200): Success
+        403: Unauthorized request
     """
     #################
     # function body #
     #################
 ```
+
+* A schema can be made reusable by defining it in the file `definitions.py` in Swagger format.
+
+Example:
+```
+definitions = {
+    'schema_response_200': {
+        'type': 'object',
+        'properties': {
+            'object_name': {
+                'type': 'string',
+            }
+        }
+    },
+    'schema_body_input': { ... }
+}
+```
+
+
 * In `sheepdog/blueprint/routes/__init__.py`:
-    * Use the `swagger` keyword to add more [Swagger properties](https://swagger.io/docs/specification/2-0/basic-structure/), such as `summary` or `tags`.
-    * Note that if a property is defined both here and in the docstring, the value specified here is used. An exception to this rule is `parameters`: all parameters defined either here or in the docstring will be registered.
-    * Use the `schema` keyword to describe the format of an input (key `body`) or an output (key = status code). The schema is to be defined in `openapi/definitions.py`.
+    * If needed, use the `swagger` keyword to overwrite the properties from the docstring or to add more [Swagger properties](https://swagger.io/docs/specification/2-0/basic-structure/) in Swagger format.
+    * Note that parameters defined here do not replace parameters defined in the docstring, but are added to them.
+    * This is useful, for example, to define different summaries for 2 endpoints PUT and POST pointing to the same method.
 
 Example:
 
-In `__init__.py`:
 ```
 new_route(
     '/new_endpoint/<param1>',
     path_to_function.get_new_endpoint_function,
     methods=['GET'],
     swagger={
-        'summary': 'A short summary of what this endpoint does',
-        'parameters': [{
-            'name': 'query_param2',
-            'in' : 'query',
-            'description': 'a new query parameter',
-            'type': 'string'
-        }],
-    },
-    schema={
-        'body': 'schema_input_data' # description of input body
-        '200': 'schema_output_data' # description of response when status code is 200
+        'summary': 'An updated summary of what this endpoint does'
     }
 )
-```
-In `definitions.py`:
-```
-definitions = {
-    'schema_input_data': {
-        'type': 'object',
-        'properties': {
-            'name': {
-                'type': 'string',
-            }
-        }
-    },
-    'schema_output_data': { ... }
-}
 ```
