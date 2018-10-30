@@ -96,8 +96,7 @@ def translate_to_swag(doc, subs):
     # handle substitutions
     for p in spec['parameters']:
         for k, v in subs.iteritems():
-            look_for = '|{}|'.format(k)
-            p['description'] = p['description'].replace(look_for, v)
+            p['description'] = p['description'].replace(k, v)
 
     return spec
 
@@ -113,7 +112,7 @@ def parse_sphinx_substitutions():
         becomes "short_name: A detailled definition"
     """
     file_name = '../sheepdog/docs/api_reference/substitutions.rst'
-    regex = re.compile(r"\|(.*)\|")
+    regex = re.compile(r"(\|.*\|)")
     subs = {}
     try:
         with open(file_name, 'r') as f:
