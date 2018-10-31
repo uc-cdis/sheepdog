@@ -9,9 +9,20 @@ from sheepdog.blueprint.routes import routes
 from sheepdog.api import app
 
 
+# Sphinx uses the shortened version of type names: translate them for Swagger
+swagger_types = {
+    'str': 'string',
+    'bool': 'boolean',
+    'int': 'integer'
+}
+
+
 def write_swagger(swag_doc):
     """
     Write the Swagger documentation in a file.
+
+    Args:
+        swag_doc (dict): Swagger documentation to be dumped
     """
     yaml.add_representer(collections.defaultdict, Representer.represent_dict)
     yaml.Dumper.ignore_aliases = lambda *args : True
@@ -24,19 +35,16 @@ def write_swagger(swag_doc):
 def translate_to_swag(doc, subs):
     """
     Converts a parsed docstring in a dict to a Swagger formatted dict.
+
+    Args:
+        doc (dict): result of the parsing of a detailled docstring
+        subs (dict): substitutions to apply to parameters' descriptions
     """
     summary = doc['Summary'][0].description if doc.get('Summary') else ''
     spec = {
         'description': doc.get('Description', ''),
         'summary': summary,
         'tags': map(lambda i: i.description, doc.get('Tags', []))
-    }
-
-    # Sphinx uses the shortened version of type names -> translate them
-    swagger_types = {
-        'str': 'string',
-        'bool': 'boolean',
-        'int': 'integer'
     }
 
     # Responses and status codes
