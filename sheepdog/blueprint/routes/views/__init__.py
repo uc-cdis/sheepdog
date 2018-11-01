@@ -24,19 +24,23 @@ from sheepdog.globals import (
 
 def get_programs():
     """
-    /
-    GET
-
     Return the available resources at the top level above programs i.e.
     registered programs.
+
+    Summary:
+        Get the programs
+
+    Tags:
+        program
+
+    Responses:
+        200 (schema_links): Success
+        403: Unauthorized request.
 
     :reqheader Content-Type: |reqheader_Content-Type|
     :reqheader Accept: |reqheader_Accept|
     :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
     :resheader Content-Type: |resheader_Content-Type|
-    :statuscode 200: Success
-    :statuscode 404: Program not found.
-    :statuscode 403: Unauthorized request.
 
     **Example**
 
@@ -68,14 +72,24 @@ def get_programs():
 
 def root_create():
     """
-    /
-    PUT POST PATCH
-
     Register a program.
 
     The content of the request is a JSON containing the information
     describing a program.  Authorization for registering programs is
     limited to administrative users.
+
+    Summary:
+        Create a program
+
+    Tags:
+        program
+
+    Args:
+        body (schema_program): input body
+    
+    Responses:
+        200: Registered successfully.
+        403: Unauthorized request.
 
     :reqheader Content-Type:
         |reqheader_Content-Type|
@@ -85,9 +99,6 @@ def root_create():
         |reqheader_X-Auth-Token|
     :resheader Content-Type:
         |resheader_Content-Type|
-    :statuscode 200: Registered successfully.
-    :statuscode 404: Program not found.
-    :statuscode 403: Unauthorized request.
 
     **Example:**
 
@@ -150,11 +161,17 @@ def root_create():
 
 def get_dictionary():
     """
-    /_dictionary
-
     Return links to the JSON schema definitions.
+    
+    Summary:
+        Get the dictionary schema
 
-    TODO
+    Tags:
+        dictionary
+    
+    Responses:
+        200 (schema_links): Success
+        403: Unauthorized request.
 
     **Example**
 
@@ -187,6 +204,23 @@ def get_dictionary():
 
 
 def get_templates():
+    """
+    Get templates for all entity types.
+
+    Summary:
+        Get templates for all entity types
+    
+    Tags:
+        dictionary
+    
+    Query Args:
+        format (str): output format, ``csv`` or ``tsv``, default is tsv
+        categories (str): list of entities' categories to include in the template
+        exclude (str): list of entities' categories to exclude from the template
+
+    Responses:
+        200: Success.
+    """
     file_format = flask.request.args.get('format', 'tsv')
     response = flask.make_response(utils.get_all_template(
         file_format,
@@ -201,6 +235,21 @@ def get_templates():
 
 
 def get_template(entity):
+    """
+    Get a template for an entity type.
+
+    Summary:
+        Get a template for an entity type
+
+    Tags:
+        dictionary
+
+    Args:
+        entity (str): entity
+
+    Responses:
+        200: Success.
+    """
     file_format = flask.request.args.get('format', 'tsv')
     filename = "submission_{}_template.{}".format(entity, file_format)
     template = utils.entity_to_template_str(entity, file_format)
@@ -212,6 +261,18 @@ def get_template(entity):
 
 
 def validate_upload_manifest():
+    """
+    Generate a list of errors found in JSON Schema validation.
+
+    Summary:
+        Validate a manifest of data files
+
+    Tags:
+        file
+
+    Responses:
+        200 (schema_error_list): Success.
+    """
     content_type = flask.request.headers.get('Content-Type', '').lower()
     if content_type == 'application/json':
         manifest_doc = parse.parse_request_json()

@@ -141,6 +141,7 @@ def app_init(app):
 
 app = Flask(__name__)
 
+
 # Setup logger
 app.logger.addHandler(get_handler())
 
@@ -149,6 +150,17 @@ setup_default_handlers(app)
 
 @app.route('/_status', methods=['GET'])
 def health_check():
+    """
+    Health check endpoint
+    ---
+    tags:
+      - system
+    responses:
+      200:
+        description: Healthy
+      default:
+        description: Unhealthy
+    """
     with app.db.session_scope() as session:
         try:
             session.execute('SELECT 1')
@@ -159,6 +171,15 @@ def health_check():
 
 @app.route('/_version', methods=['GET'])
 def version():
+    """
+    Returns the version of Sheepdog
+    ---
+    tags:
+      - system
+    responses:
+      200:
+        description: successful operation
+    """
     dictver = {
         'version': dictionary_version(),
         'commit': dictionary_commit(),
