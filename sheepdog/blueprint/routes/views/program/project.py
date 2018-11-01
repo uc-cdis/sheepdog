@@ -94,7 +94,7 @@ def create_viewer(method, bulk=False, dry_run=False):
 
         Summary:
             Create entities in bulk
-        
+
         Tags:
             entity
 
@@ -102,7 +102,7 @@ def create_viewer(method, bulk=False, dry_run=False):
             program (str): |program_id|
             project (str): |project_id|
             body (schema_entity_bulk): input body
-    
+
         Responses:
             201: Entities created successfully
             404: Resource not found.

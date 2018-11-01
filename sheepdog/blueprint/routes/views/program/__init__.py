@@ -42,7 +42,7 @@ def get_projects(program):
 
     Tags:
         project
-    
+
     Responses:
         200 (schema_links): Success
         403: Unauthorized request.

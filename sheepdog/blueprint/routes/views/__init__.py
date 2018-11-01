@@ -83,7 +83,7 @@ def root_create():
 
     Tags:
         program
-    
+
     Args:
         body (schema_program): input body
     
