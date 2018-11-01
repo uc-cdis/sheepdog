@@ -37,3 +37,5 @@
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. include:: substitutions.rst
