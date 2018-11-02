@@ -539,18 +539,12 @@ class FileUploadEntity(UploadEntity):
             is_valid = False
 
         else:
-            # check that the provided hash/size match those of the file in indexd
-            # submitted hashes have to be a subset of the indexd ones
-            hashes_match = all(
-                item in self.file_by_uuid.hashes.items()
-                for item in self._get_file_hashes().items()
-            )
-            sizes_match = self._get_file_size() == self.file_by_uuid.size
+            file_hashes = self.file_by_uuid.hashes
+            file_size = self.file_by_uuid.size
 
-            if not (hashes_match and sizes_match):
-                error_message = 'Provided hash ({}) and size ({}) do not match those of indexed file for id {}.'.format(
-                    self._get_file_hashes(),
-                    self._get_file_size(),
+            # empty hash and size mean the file is not ready for metadata submission yet
+            if not file_hashes or not file_size:
+                error_message = 'Indexed file of id {} is not ready for metadata submission yet (no hashes and size).'.format(
                     entity_id
                 )
                 self.record_error(
@@ -558,6 +552,27 @@ class FileUploadEntity(UploadEntity):
                     type=EntityErrors.INVALID_VALUE
                 )
                 is_valid = False
+
+            else:
+                # check that the provided hash/size match those of the file in indexd
+                # submitted hashes have to be a subset of the indexd ones
+                hashes_match = all(
+                    item in file_hashes.items()
+                    for item in self._get_file_hashes().items()
+                )
+                sizes_match = self._get_file_size() == file_size
+
+                if not (hashes_match and sizes_match):
+                    error_message = 'Provided hash ({}) and size ({}) do not match those of indexed file of id {}.'.format(
+                        self._get_file_hashes(),
+                        self._get_file_size(),
+                        entity_id
+                    )
+                    self.record_error(
+                        error_message,
+                        type=EntityErrors.INVALID_VALUE
+                    )
+                    is_valid = False
 
         return is_valid
 
