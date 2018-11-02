@@ -702,7 +702,7 @@ def test_data_file_already_indexed_object_id_provided_hash_match(
     document = MagicMock()
     document.did = file['object_id']
     document.size = file['file_size']
-    document.hashes = { 'md5': file['md5sum'] }
+    document.hashes = { 'md5': file['md5sum'], 'other': 'abc123' }
     get_index_uuid.return_value = document
     get_index_hash.return_value = document
 

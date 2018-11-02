@@ -541,14 +541,18 @@ class FileUploadEntity(UploadEntity):
 
         else:
             # check that the provided hash/size match those of the file in indexd
-            # TODO: compare hashes
-            if (self._get_file_hashes() != self.file_by_uuid.hashes or self._get_file_size() != self.file_by_uuid.size):
-                error_message = 'Provided hash ({}) and size ({}) do not match those of indexed file for id {} (hash {}, size {}).'.format(
+            # submitted hashes have to be a subset of the indexd ones
+            hashes_match = all(
+                item in self.file_by_uuid.hashes.items()
+                for item in self._get_file_hashes().items()
+            )
+            sizes_match = self._get_file_size() == self.file_by_uuid.size
+
+            if not (hashes_match and sizes_match):
+                error_message = 'Provided hash ({}) and size ({}) do not match those of indexed file for id {}.'.format(
                     self._get_file_hashes(),
                     self._get_file_size(),
-                    entity_id,
-                    self.file_by_uuid.hashes,
-                    self.file_by_uuid.size
+                    entity_id
                 )
                 self.record_error(
                     error_message,
