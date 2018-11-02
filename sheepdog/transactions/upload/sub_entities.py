@@ -398,7 +398,9 @@ class FileUploadEntity(UploadEntity):
 
             if self.file_exists:
                 if self.object_id:
-                    self._is_valid_index_for_file()
+                    # file is already indexed and object_id is provided: data upload flow
+                    self._is_valid_hash_size_for_file()
+                    # self._is_valid_index_for_file()
                 else:
                     self.object_id = getattr(self.file_by_hash, 'did', None)
             else:
@@ -429,6 +431,7 @@ class FileUploadEntity(UploadEntity):
                     if self._is_index_id_identical_to_node_id():
                         self.entity_id = file_by_hash_index
 
+
     def _is_valid_index_for_file(self):
         """
         Return whether or not uuid provided matches hash/size for file in index.
@@ -436,49 +439,12 @@ class FileUploadEntity(UploadEntity):
         Will first check for an indexed file with provided hash/size.
         Will then check for file with given uuid. Then will make sure
         those uuids match. record_errors will be set with any issues
-
-        If object_id is provided (data upload flow), check that the provided hash and size match the hash size of the existing file in indexd.
         """
         is_valid = True
 
         entity_id = self.entity_id
-
-        # if object_id provided: data upload flow
         if self.use_object_id(self.entity_type):
             entity_id = self.object_id
-
-            # check that the file exists in indexd
-            if not self.file_by_uuid:
-                self.record_error(
-                    'Provided object_id {} does not match any indexed file.'.format(entity_id),
-                    type=EntityErrors.INVALID_VALUE
-                )
-                is_valid = False
-
-            else:
-            # check that the file exists in indexd
-            # if self.file_by_uuid:
-                # check that provided hash/size match those of the file in indexd
-                print('self._get_file_hashes()', self._get_file_hashes())
-                print('self.file_by_uuid._get_file_hashes()', self.file_by_uuid._get_file_hashes())
-                print('self._get_file_size()', self._get_file_size())
-                print('self.file_by_uuid._get_file_size()', self.file_by_uuid._get_file_size())
-                
-                if (self._get_file_hashes() != self.file_by_uuid._get_file_hashes() or self._get_file_size() != self.file_by_uuid._get_file_size()):
-                    error_message = 'Provided hash ({}) and size ({}) do not match those of indexed file for id {} (hash {}, size {}).'.format(
-                        self._get_file_hashes(),
-                        self._get_file_size(),
-                        self.file_by_uuid._get_file_hashes(),
-                        self.file_by_uuid._get_file_size(),
-                        entity_id
-                    )
-                    self.record_error(
-                        error_message,
-                        type=EntityErrors.INVALID_VALUE
-                    )
-                    is_valid = False
-
-            return is_valid
 
         if (not self.file_by_hash or not self.file_by_uuid):
             error_message = (
@@ -519,7 +485,7 @@ class FileUploadEntity(UploadEntity):
             )
             is_valid = False
 
-        if is_valid:
+        if is_valid and not self.use_object_id(self.entity_type):
             is_valid = self._is_index_id_identical_to_node_id()
 
         return is_valid
@@ -550,6 +516,48 @@ class FileUploadEntity(UploadEntity):
                     is_valid = False
 
         return is_valid
+
+
+    def _is_valid_hash_size_for_file(self):
+        """
+        Return whether or not the provided hash and size match those of the existing file in indexd.
+
+        Should only be called when the file already exists in indexd and the object_id is provided.
+        """
+        if not self.use_object_id(self.entity_type) or not self.object_id or not self.file_exists:
+            return False
+
+        is_valid = True
+
+        entity_id = self.object_id
+
+        # check that the file exists in indexd
+        if not self.file_by_uuid:
+            self.record_error(
+                'Provided object_id {} does not match any indexed file.'.format(entity_id),
+                type=EntityErrors.INVALID_VALUE
+            )
+            is_valid = False
+
+        else:
+            # check that the provided hash/size match those of the file in indexd
+            # TODO: compare hashes
+            if (self._get_file_hashes() != self.file_by_uuid.hashes or self._get_file_size() != self.file_by_uuid.size):
+                error_message = 'Provided hash ({}) and size ({}) do not match those of indexed file for id {} (hash {}, size {}).'.format(
+                    self._get_file_hashes(),
+                    self._get_file_size(),
+                    entity_id,
+                    self.file_by_uuid.hashes,
+                    self.file_by_uuid.size
+                )
+                self.record_error(
+                    error_message,
+                    type=EntityErrors.INVALID_VALUE
+                )
+                is_valid = False
+
+        return is_valid
+
 
     def get_file_from_index_by_hash(self):
         """
