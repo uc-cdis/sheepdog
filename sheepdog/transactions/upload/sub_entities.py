@@ -436,12 +436,49 @@ class FileUploadEntity(UploadEntity):
         Will first check for an indexed file with provided hash/size.
         Will then check for file with given uuid. Then will make sure
         those uuids match. record_errors will be set with any issues
+
+        If object_id is provided (data upload flow), check that the provided hash and size match the hash size of the existing file in indexd.
         """
         is_valid = True
 
         entity_id = self.entity_id
+
+        # if object_id provided: data upload flow
         if self.use_object_id(self.entity_type):
             entity_id = self.object_id
+
+            # check that the file exists in indexd
+            if not self.file_by_uuid:
+                self.record_error(
+                    'Provided object_id {} does not match any indexed file.'.format(entity_id),
+                    type=EntityErrors.INVALID_VALUE
+                )
+                is_valid = False
+
+            else:
+            # check that the file exists in indexd
+            # if self.file_by_uuid:
+                # check that provided hash/size match those of the file in indexd
+                print('self._get_file_hashes()', self._get_file_hashes())
+                print('self.file_by_uuid._get_file_hashes()', self.file_by_uuid._get_file_hashes())
+                print('self._get_file_size()', self._get_file_size())
+                print('self.file_by_uuid._get_file_size()', self.file_by_uuid._get_file_size())
+                
+                if (self._get_file_hashes() != self.file_by_uuid._get_file_hashes() or self._get_file_size() != self.file_by_uuid._get_file_size()):
+                    error_message = 'Provided hash ({}) and size ({}) do not match those of indexed file for id {} (hash {}, size {}).'.format(
+                        self._get_file_hashes(),
+                        self._get_file_size(),
+                        self.file_by_uuid._get_file_hashes(),
+                        self.file_by_uuid._get_file_size(),
+                        entity_id
+                    )
+                    self.record_error(
+                        error_message,
+                        type=EntityErrors.INVALID_VALUE
+                    )
+                    is_valid = False
+
+            return is_valid
 
         if (not self.file_by_hash or not self.file_by_uuid):
             error_message = (
@@ -482,7 +519,7 @@ class FileUploadEntity(UploadEntity):
             )
             is_valid = False
 
-        if is_valid and not self.use_object_id(self.entity_type):
+        if is_valid:
             is_valid = self._is_index_id_identical_to_node_id()
 
         return is_valid
