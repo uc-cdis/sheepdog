@@ -400,7 +400,6 @@ class FileUploadEntity(UploadEntity):
                 if self.object_id:
                     # file is already indexed and object_id is provided: data upload flow
                     self._is_valid_hash_size_for_file()
-                    # self._is_valid_index_for_file()
                 else:
                     self.object_id = getattr(self.file_by_hash, 'did', None)
             else:
