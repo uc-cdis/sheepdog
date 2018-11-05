@@ -303,9 +303,9 @@ paths:
       tags:
       - project
     post:
-      description: Create or update GDC entities. Using the :http:method:`post` on
-        a project's endpoint will create any valid entities specified in the request
-        body.
+      description: Create or update any valid entities specified in the request body.
+        To associate an entity with an existing, already indexed data file, specify
+        the `object_id` in the body of the entity.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
           will be created. The `project_id` is the human-readable code, e.g. BRCA.
@@ -335,9 +335,9 @@ paths:
       tags:
       - entity
     put:
-      description: Create or update GDC entities. Using the :http:method:`post` on
-        a project's endpoint will create any valid entities specified in the request
-        body.
+      description: Create or update any valid entities specified in the request body.
+        To associate an entity with an existing, already indexed data file, specify
+        the `object_id` in the body of the entity.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
           will be created. The `project_id` is the human-readable code, e.g. BRCA.
@@ -427,9 +427,9 @@ paths:
       - dictionary
   /<program>/<project>/_dry_run:
     post:
-      description: Create or update GDC entities. Using the :http:method:`post` on
-        a project's endpoint will create any valid entities specified in the request
-        body.
+      description: Create or update any valid entities specified in the request body.
+        To associate an entity with an existing, already indexed data file, specify
+        the `object_id` in the body of the entity.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
           will be created. The `project_id` is the human-readable code, e.g. BRCA.
@@ -459,9 +459,9 @@ paths:
       tags:
       - dry run
     put:
-      description: Create or update GDC entities. Using the :http:method:`post` on
-        a project's endpoint will create any valid entities specified in the request
-        body.
+      description: Create or update any valid entities specified in the request body.
+        To associate an entity with an existing, already indexed data file, specify
+        the `object_id` in the body of the entity.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
           will be created. The `project_id` is the human-readable code, e.g. BRCA.
