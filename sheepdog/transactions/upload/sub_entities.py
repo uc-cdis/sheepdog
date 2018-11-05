@@ -524,6 +524,10 @@ class FileUploadEntity(UploadEntity):
         Should only be called when the file already exists in indexd and the object_id is provided.
         """
         if not self.use_object_id(self.entity_type) or not self.object_id or not self.file_exists:
+            self.record_error(
+                'The object_id of an indexed file must be provided.',
+                type=EntityErrors.INVALID_VALUE
+            )
             return False
 
         is_valid = True
