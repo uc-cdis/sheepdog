@@ -4,7 +4,9 @@ uploaded entites.
 """
 import uuid
 import requests
+import json
 
+from sheepdog.auth import current_token
 from sheepdog.errors import NoIndexForFileError, UserError
 
 from sheepdog import utils
@@ -157,7 +159,14 @@ class FileUploadEntity(UploadEntity):
                 self.file_exists = True
         else:
             self._populate_files_from_index()
-            self._set_node_and_file_ids()
+
+            # file already indexed and object_id provided: data upload flow
+            if self.use_object_id(self.entity_type) and self.object_id and self.file_exists:
+                if self._is_valid_hash_size_for_file():
+                    # update acl and uploader fields in indexd
+                    self._update_acl_uploader_for_file()
+            else:
+                self._set_node_and_file_ids()
 
         # call to super must happen after setting node and file ids here
         node = super(FileUploadEntity, self).get_node_create(
@@ -398,8 +407,7 @@ class FileUploadEntity(UploadEntity):
 
             if self.file_exists:
                 if self.object_id:
-                    # file is already indexed and object_id is provided: data upload flow
-                    self._is_valid_hash_size_for_file()
+                    pass # data upload flow (handled in get_node_create)
                 else:
                     self.object_id = getattr(self.file_by_hash, 'did', None)
             else:
@@ -521,7 +529,7 @@ class FileUploadEntity(UploadEntity):
         """
         Return whether or not the provided hash and size match those of the existing file in indexd.
 
-        Should only be called when the file already exists in indexd and the object_id is provided.
+        Should only be called when the file already exists in indexd and the object_id is provided (data upload flow).
         """
         if not self.use_object_id(self.entity_type) or not self.object_id or not self.file_exists:
             self.record_error(
@@ -579,6 +587,53 @@ class FileUploadEntity(UploadEntity):
                     is_valid = False
 
         return is_valid
+
+
+    def _update_acl_uploader_for_file(self):
+        """
+        Update acl and uploader fields in indexd.
+
+        Should only be called when the file already exists in indexd and the object_id is provided (data upload flow).
+        """
+        if not self.use_object_id(self.entity_type) or not self.object_id or not self.file_exists:
+            self.record_error(
+                'The object_id of an indexed file must be provided.',
+                type=EntityErrors.INVALID_VALUE
+            )
+            return
+
+        # the current uploader must be the file uploader, and acl must be empty
+        current_uploader = current_token["context"]["user"]["name"]
+        file_uploader = self.file_by_uuid.uploader
+        file_acl = self.file_by_uuid.acl
+        if current_uploader == file_uploader and not file_acl:
+            url = '/index/' + self.object_id
+            new_acl = ['read', 'write']
+            data = json.dumps({
+                'acl': new_acl,
+                'uploader': None
+            })
+            file_rev = self.file_by_uuid.rev
+
+            # update acl and uploader fields in indexd
+            try:
+                return self.transaction.signpost._put(
+                    url,
+                    headers={'content-type': 'application/json'},
+                    data=data,
+                    params={'rev': file_rev},
+                    auth=self.transaction.signpost.auth
+                )
+            except requests.HTTPError as e:
+                raise UserError(
+                    code=e.response.status_code,
+                    message="Failed to update acl and uploader fields in indexd: {}".format(e.message)
+                )
+        else:
+            self.record_error(
+                'Failed to update acl and uploader fields in indexd: uploader username does not match or acl is not empty.',
+                type=EntityErrors.INVALID_VALUE
+            )
 
 
     def get_file_from_index_by_hash(self):

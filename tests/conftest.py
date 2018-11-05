@@ -7,6 +7,11 @@ from sheepdog.test_settings import JWT_KEYPAIR_FILES
 from tests import utils
 
 
+SUBMITTER_USERNAME = 'submitter'
+ADMIN_USERNAME = 'admin'
+MEMBER_USERNAME = 'member'
+
+
 @pytest.fixture(scope='session')
 def iss():
     """
@@ -69,18 +74,23 @@ def create_user_header(encoded_jwt):
 def submitter(create_user_header):
     project_ids = ['phs000218', 'phs000235', 'phs000178']
     project_access = {project: ROLES.values() for project in project_ids}
-    return create_user_header('submitter', project_access)
+    return create_user_header(SUBMITTER_USERNAME, project_access)
+
+
+@pytest.fixture()
+def submitter_name():
+    return SUBMITTER_USERNAME
 
 
 @pytest.fixture()
 def admin(create_user_header):
     project_ids = ['phs000218', 'phs000235', 'phs000178']
     project_access = {project: ROLES.values() for project in project_ids}
-    return create_user_header('admin', project_access, is_admin=True)
+    return create_user_header(ADMIN_USERNAME, project_access, is_admin=True)
 
 
 @pytest.fixture()
 def member(create_user_header):
     project_ids = ['phs000218', 'phs000235', 'phs000178']
     project_access = {project: ['_member'] for project in project_ids}
-    return create_user_header('member', project_access)
+    return create_user_header(MEMBER_USERNAME, project_access)
