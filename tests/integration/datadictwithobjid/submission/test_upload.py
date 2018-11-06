@@ -484,8 +484,8 @@ def test_data_file_already_indexed_object_id_provided_hash_match(
     assert data[0]['object_id'] == file['object_id']
 
     # check that the acl and uploader fields have been updated in indexd
-    assert document.acl != []
-    assert document.uploader == None
+    assert document.acl
+    assert document.uploader is None
 
 
 """ ----- TESTS THAT SHOULD RESULT IN SUBMISSION FAILURES ARE BELOW  ----- """
@@ -802,7 +802,7 @@ def test_data_file_already_indexed_object_id_provided_hash_no_match(
     entity = assert_single_entity_from_response(resp)
 
     # check that the acl and uploader fields have NOT been updated in indexd
-    assert document.acl == []
+    assert not document.acl
     assert document.uploader == DEFAULT_SUBMITTER_ID
 
 
@@ -859,5 +859,5 @@ def test_data_file_already_indexed_object_id_provided_no_hash(
     entity = assert_single_entity_from_response(resp)
 
     # check that the acl and uploader fields have NOT been updated in indexd
-    assert document.acl == []
+    assert not document.acl
     assert document.uploader == DEFAULT_SUBMITTER_ID

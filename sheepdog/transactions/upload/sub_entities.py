@@ -617,7 +617,7 @@ class FileUploadEntity(UploadEntity):
 
             # update acl and uploader fields in indexd
             try:
-                return self.transaction.signpost._put(
+                self.transaction.signpost._put(
                     url,
                     headers={'content-type': 'application/json'},
                     data=data,
