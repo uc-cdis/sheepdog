@@ -607,21 +607,18 @@ class FileUploadEntity(UploadEntity):
         file_uploader = self.file_by_uuid.uploader
         file_acl = self.file_by_uuid.acl
         if current_uploader == file_uploader and not file_acl:
-            url = '/index/' + self.object_id
-            new_acl = ['read', 'write']
+            # update acl and uploader fields in indexd
             data = json.dumps({
-                'acl': new_acl,
+                'acl': ['read', 'write'],
                 'uploader': None
             })
-            file_rev = self.file_by_uuid.rev
-
-            # update acl and uploader fields in indexd
+            url = '/index/' + self.object_id
             try:
                 self.transaction.signpost._put(
                     url,
                     headers={'content-type': 'application/json'},
                     data=data,
-                    params={'rev': file_rev},
+                    params={'rev': self.file_by_uuid.rev},
                     auth=self.transaction.signpost.auth
                 )
             except requests.HTTPError as e:
@@ -631,7 +628,7 @@ class FileUploadEntity(UploadEntity):
                 )
         else:
             self.record_error(
-                'Failed to update acl and uploader fields in indexd: uploader username does not match or acl is not empty.',
+                'Failed to update acl and uploader fields in indexd: current uploader ({}) is not original file uploader ({}) and/or acl ({}) is not empty.'.format(current_uploader, file_uploader, file_acl),
                 type=EntityErrors.INVALID_VALUE
             )
 
