@@ -423,8 +423,7 @@ def test_data_file_update_url_id_provided(
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._update_acl_uploader_for_file')
 def test_data_file_already_indexed_object_id_provided_hash_match(
-        update_acl_uploader_indexd, create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, submitter_name, cgci_blgsp):
+        update_acl_uploader_indexd, create_alias, create_index, get_index_uuid, get_index_hash, client, pg_driver, admin, submitter, submitter_name, cgci_blgsp):
     """
     Test submitting when the file is already indexed in the index client,
     an id is provided in the submission, and the size and hash match those
@@ -458,12 +457,6 @@ def test_data_file_already_indexed_object_id_provided_hash_match(
             return None
     get_index_uuid.side_effect = get_index_by_uuid
 
-    # mock the update of acl and uploader fields in indexd
-    def _update_acl_uploader_indexd():
-        document.acl = ['read', 'write']
-        document.uploader = None
-    update_acl_uploader_indexd.side_effect = _update_acl_uploader_indexd
-
     resp = submit_metadata_file(
         client, pg_driver, admin, submitter, cgci_blgsp, data=file)
 
@@ -484,8 +477,7 @@ def test_data_file_already_indexed_object_id_provided_hash_match(
     assert data[0]['object_id'] == file['object_id']
 
     # check that the acl and uploader fields have been updated in indexd
-    assert document.acl
-    assert document.uploader is None
+    assert update_acl_uploader_indexd.called
 
 
 """ ----- TESTS THAT SHOULD RESULT IN SUBMISSION FAILURES ARE BELOW  ----- """
