@@ -538,8 +538,6 @@ class FileUploadEntity(UploadEntity):
             )
             return False
 
-        is_valid = True
-
         entity_id = self.object_id
 
         # check that the file exists in indexd
@@ -548,45 +546,43 @@ class FileUploadEntity(UploadEntity):
                 'Provided object_id {} does not match any indexed file.'.format(entity_id),
                 type=EntityErrors.INVALID_VALUE
             )
-            is_valid = False
+            return False
 
-        else:
-            file_hashes = self.file_by_uuid.hashes
-            file_size = self.file_by_uuid.size
+        file_hashes = self.file_by_uuid.hashes
+        file_size = self.file_by_uuid.size
 
-            # empty hash and size mean the file is not ready for metadata submission yet
-            if not file_hashes or not file_size:
-                error_message = 'Indexed file of id {} is not ready for metadata submission yet (no hashes and size).'.format(
-                    entity_id
-                )
-                self.record_error(
-                    error_message,
-                    type=EntityErrors.INVALID_VALUE
-                )
-                is_valid = False
+        # empty hash and size mean the file is not ready for metadata submission yet
+        if not file_hashes or not file_size:
+            error_message = 'Indexed file of id {} is not ready for metadata submission yet (no hashes and size).'.format(
+                entity_id
+            )
+            self.record_error(
+                error_message,
+                type=EntityErrors.INVALID_VALUE
+            )
+            return False
 
-            else:
-                # check that the provided hash/size match those of the file in indexd
-                # submitted hashes have to be a subset of the indexd ones
-                hashes_match = all(
-                    item in file_hashes.items()
-                    for item in self._get_file_hashes().items()
-                )
-                sizes_match = self._get_file_size() == file_size
+        # check that the provided hash/size match those of the file in indexd
+        # submitted hashes have to be a subset of the indexd ones
+        hashes_match = all(
+            item in file_hashes.items()
+            for item in self._get_file_hashes().items()
+        )
+        sizes_match = self._get_file_size() == file_size
 
-                if not (hashes_match and sizes_match):
-                    error_message = 'Provided hash ({}) and size ({}) do not match those of indexed file of id {}.'.format(
-                        self._get_file_hashes(),
-                        self._get_file_size(),
-                        entity_id
-                    )
-                    self.record_error(
-                        error_message,
-                        type=EntityErrors.INVALID_VALUE
-                    )
-                    is_valid = False
+        if not (hashes_match and sizes_match):
+            error_message = 'Provided hash ({}) and size ({}) do not match those of indexed file of id {}.'.format(
+                self._get_file_hashes(),
+                self._get_file_size(),
+                entity_id
+            )
+            self.record_error(
+                error_message,
+                type=EntityErrors.INVALID_VALUE
+            )
+            return False
 
-        return is_valid
+        return True
 
 
     def _update_acl_uploader_for_file(self):
@@ -606,30 +602,30 @@ class FileUploadEntity(UploadEntity):
         current_uploader = current_token["context"]["user"]["name"]
         file_uploader = self.file_by_uuid.uploader
         file_acl = self.file_by_uuid.acl
-        if current_uploader == file_uploader and not file_acl:
-            # update acl and uploader fields in indexd
-            data = json.dumps({
-                'acl': ['read', 'write'],
-                'uploader': None
-            })
-            url = '/index/' + self.object_id
-            try:
-                self.transaction.signpost._put(
-                    url,
-                    headers={'content-type': 'application/json'},
-                    data=data,
-                    params={'rev': self.file_by_uuid.rev},
-                    auth=self.transaction.signpost.auth
-                )
-            except requests.HTTPError as e:
-                raise UserError(
-                    code=e.response.status_code,
-                    message="Failed to update acl and uploader fields in indexd: {}".format(e.message)
-                )
-        else:
+        if not current_uploader == file_uploader or file_acl:
             self.record_error(
                 'Failed to update acl and uploader fields in indexd: current uploader ({}) is not original file uploader ({}) and/or acl ({}) is not empty.'.format(current_uploader, file_uploader, file_acl),
                 type=EntityErrors.INVALID_VALUE
+            )
+            return
+
+        # update acl and uploader fields in indexd
+        data = json.dumps({
+            'acl': ['read', 'write'],
+            'uploader': None
+        })
+        url = '/index/' + self.object_id
+        try:
+            self.transaction.signpost._put(
+                url,
+                headers={'content-type': 'application/json'},
+                data=data,
+                params={'rev': self.file_by_uuid.rev},
+                auth=self.transaction.signpost.auth
+            )
+        except requests.HTTPError as e:
+            self.record_error(
+                "Failed to update acl and uploader fields in indexd: {}".format(e.message)
             )
 
 
