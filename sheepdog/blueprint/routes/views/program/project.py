@@ -56,10 +56,9 @@ def create_viewer(method, bulk=False, dry_run=False):
     @auth.authorize_for_project(*auth_roles)
     def create_entities(program, project):
         """
-        Create or update GDC entities.
+        Create or update any valid entities specified in the request body.
 
-        Using the :http:method:`post` on a project's endpoint will create any
-        valid entities specified in the request body.
+        To associate an entity with an existing, already indexed data file, specify the `object_id` in the body of the entity.
 
         Summary:
             Create entities

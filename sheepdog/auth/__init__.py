@@ -15,6 +15,7 @@ import flask
 import authutils
 from authutils import ROLES, dbgap
 from authutils.user import AuthError, current_user, set_global_user
+from authutils.token.validate import current_token
 from cdiserrors import AuthZError
 
 from sheepdog import models
