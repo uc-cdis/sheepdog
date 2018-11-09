@@ -406,9 +406,7 @@ class FileUploadEntity(UploadEntity):
                 self.entity_id = str(uuid.uuid4())
 
             if self.file_exists:
-                if self.object_id:
-                    pass # data upload flow (handled in get_node_create)
-                else:
+                if not self.object_id:
                     self.object_id = getattr(self.file_by_hash, 'did', None)
             else:
                 self.file_index = self.object_id
