@@ -246,13 +246,31 @@ class DelimitedConverter(object):
             **kwargs
         ))
 
+
+class DictWithArrayReader(csv.DictReader):
+    """
+    Handle array fields by converting them to a list.
+
+    Example:
+        1,2,3 -> ['1','2','3']
+    """
+
+    def next(self):
+        item = csv.DictReader.next(self)
+        item = {
+            k: v.split(',') if v and ',' in v else v
+            for k, v in item.iteritems()
+        }
+        return item
+
+
 class TSVToJSONConverter(DelimitedConverter):
 
     def set_reader(self, doc):
         # Standardize the new line format
         doc = '\n'.join(strip(doc).splitlines())
         f = StringIO.StringIO(doc)
-        self.reader = csv.DictReader(f, delimiter='\t')
+        self.reader = DictWithArrayReader(f, delimiter='\t')
 
 
 class CSVToJSONConverter(DelimitedConverter):
@@ -261,4 +279,4 @@ class CSVToJSONConverter(DelimitedConverter):
         # Standardize the new line format
         doc = '\n'.join(strip(doc).splitlines())
         f = StringIO.StringIO(doc)
-        self.reader = csv.DictReader(f, delimiter=',')
+        self.reader = DictWithArrayReader(f, delimiter=',')
