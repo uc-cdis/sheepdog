@@ -31,6 +31,16 @@ def parse_bool_from_string(value):
     return mapping.get(strip(value).lower(), value)
 
 
+def parse_list_from_string(value):
+    """
+    Handle array fields by converting them to a list.
+
+    Example:
+        1,2,3 -> ['1','2','3']
+    """
+    return [x.strip() for x in value.split(',')]
+
+
 def set_row_type(row):
     """Get the class for a row dict, setting 'type'. Coerce '' -> None."""
     row['type'] = row.get('type', None)
@@ -215,6 +225,8 @@ class DelimitedConverter(object):
         try:
             if value_type == bool:
                 return parse_bool_from_string(value)
+            elif value_type == list:
+                return parse_list_from_string(value)
             elif strip(value) == '':
                 return None
             else:
@@ -247,30 +259,13 @@ class DelimitedConverter(object):
         ))
 
 
-class DictWithArrayReader(csv.DictReader):
-    """
-    Handle array fields by converting them to a list.
-
-    Example:
-        1,2,3 -> ['1','2','3']
-    """
-
-    def next(self):
-        item = csv.DictReader.next(self)
-        return {
-            k: [x.strip() for x in v.split(',')]
-            if v and ',' in v else v
-            for k, v in item.iteritems()
-        }
-
-
 class TSVToJSONConverter(DelimitedConverter):
 
     def set_reader(self, doc):
         # Standardize the new line format
         doc = '\n'.join(strip(doc).splitlines())
         f = StringIO.StringIO(doc)
-        self.reader = DictWithArrayReader(f, delimiter='\t')
+        self.reader = csv.DictReader(f, delimiter='\t')
 
 
 class CSVToJSONConverter(DelimitedConverter):
@@ -279,4 +274,4 @@ class CSVToJSONConverter(DelimitedConverter):
         # Standardize the new line format
         doc = '\n'.join(strip(doc).splitlines())
         f = StringIO.StringIO(doc)
-        self.reader = DictWithArrayReader(f, delimiter=',')
+        self.reader = csv.DictReader(f, delimiter=',')
