@@ -257,11 +257,11 @@ class DictWithArrayReader(csv.DictReader):
 
     def next(self):
         item = csv.DictReader.next(self)
-        item = {
-            k: v.split(',') if v and ',' in v else v
+        return {
+            k: [x.strip() for x in v.split(',')]
+            if v and ',' in v else v
             for k, v in item.iteritems()
         }
-        return item
 
 
 class TSVToJSONConverter(DelimitedConverter):
