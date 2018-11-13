@@ -229,11 +229,24 @@ def get_node_non_link_json(node, props):
     return entity
 
 
+def list_to_comma_string(val):
+    """
+    Handle array fields by converting them to a comma-separated string.
+
+    Example:
+        ['1','2','3'] -> 1,2,3
+    """
+
+    if isinstance(val, list):
+        val = ','.join(val)
+    return val
+
+
 def get_tsv_dict_non_links(entity, non_link_titles):
     """Return non-link portion of tsv dict for single entity."""
     return {
-        key: (entity[key] if entity[key] is not None else '')
-        if not isinstance(entity[key], list) else ','.join(entity[key])
+        key: list_to_comma_string(entity[key])
+        if entity[key] is not None else ''
         for key in non_link_titles
     }
 
@@ -890,9 +903,7 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
             # Write in the properties from just the node.
             node = result[0]
             for prop in props:
-                val = node[prop]
-                if isinstance(val, list):
-                    val = ','.join(val)
+                val = list_to_comma_string(node[prop])
                 row.append(val or '')
                 json_obj[prop] = val or ''
             # Tack on the linked properties.
