@@ -4,6 +4,7 @@ index service).
 """
 import json
 import copy
+import os
 
 from test_endpoints import put_cgci_blgsp
 
@@ -61,11 +62,12 @@ def submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp):
 
 
 def submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=None):
+        client, pg_driver, admin, submitter, cgci_blgsp, data=None, headers={}):
     data = data or DEFAULT_METADATA_FILE
     put_cgci_blgsp(client, admin)
     data = json.dumps(data)
-    resp = client.put(BLGSP_PATH, headers=submitter, data=data)
+    headers.update(submitter)
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
     return resp
 
 
@@ -109,6 +111,29 @@ def test_data_file_not_indexed(
     # FIXME this is a temporary solution so these tests will probably
     #       need to change in the future
     assert entity['id'] == did
+
+
+def test_tsv_submission_handle_array_type():
+    """
+    When submitting a TSV file, array fields should be converted to lists.
+    """
+
+    file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/experimental_metadata.tsv')
+    doc = None
+    with open(file_path, 'r') as f:
+        doc = f.read()
+    assert doc
+
+    from sheepdog.utils.transforms import TSVToJSONConverter
+    data, errors = TSVToJSONConverter().convert(doc)
+    assert data
+    assert not errors
+
+    for row in data:
+        # make sure the array is handled properly
+        array = row['array_field']
+        assert isinstance(array, list)
+        assert len(array) > 0
 
 
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')

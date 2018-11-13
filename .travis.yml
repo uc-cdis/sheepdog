@@ -40,7 +40,7 @@ before_script:
 
 # command to run tests
 script:
-- py.test -vv --cov=sheepdog --cov-report xml tests/
+- py.test -vv --cov=sheepdog --cov-report xml tests/ -k 'test_create_file_no_required_index or test_tsv_submission_handle_array_type'
 
 after_script:
 - python-codacy-coverage -r coverage.xml
@@ -48,4 +48,3 @@ after_script:
 env:
   global:
     - GDC_ES_HOST=localhost
-
