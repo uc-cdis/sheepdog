@@ -7,6 +7,7 @@ import StringIO
 
 from flask import current_app
 from psqlgraph import Node
+from dictionaryutils import DataDictionary, dictionary
 
 from sheepdog.errors import (
     UserError,
@@ -209,6 +210,15 @@ class DelimitedConverter(object):
         else:
             links[link] = {link_id: {prop: converted_value}}
 
+
+    @staticmethod
+    def get_prop_type(node_name, prop_name):
+        from dictionaryutils import DataDictionary, dictionary
+        node_props = dictionary.schema.get(node_name, {})
+        key_props = node_props['properties'].get(prop_name, {})
+        return key_props.get('type', '')
+
+
     @staticmethod
     def convert_type(to_cls, key, value):
         """
@@ -219,13 +229,18 @@ class DelimitedConverter(object):
             return None
 
         key, value = strip(key), strip(value)
-        types = to_cls.__pg_properties__.get(key, (str,))
-        types = types or (str,)
-        value_type = types[0]
+        # types = to_cls.__pg_properties__.get(key, (str,))
+        # types = types or (str,)
+        # value_type = types[0]
+
+        node_props = dictionary.schema.get(to_cls.label, {})
+        key_props = node_props['properties'].get(key, {})
+        value_type = key_props.get('type', '')
+
         try:
             if value_type == bool:
                 return parse_bool_from_string(value)
-            elif value_type == list:
+            elif value_type == 'array':
                 return parse_list_from_string(value)
             elif strip(value) == '':
                 return None
