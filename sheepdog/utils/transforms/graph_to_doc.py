@@ -233,6 +233,7 @@ def get_tsv_dict_non_links(entity, non_link_titles):
     """Return non-link portion of tsv dict for single entity."""
     return {
         key: (entity[key] if entity[key] is not None else '')
+        if not isinstance(entity[key], list) else ','.join(entity[key])
         for key in non_link_titles
     }
 
