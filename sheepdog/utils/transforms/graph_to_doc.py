@@ -890,10 +890,11 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
             # Write in the properties from just the node.
             node = result[0]
             for prop in props:
-                if isinstance(node[prop], list):
-                    node[prop] = ','.join(node[prop])
-                row.append(node[prop] or '')
-                json_obj[prop] = node[prop] or ''
+                val = node[prop]
+                if isinstance(val, list):
+                    val = ','.join(val)
+                row.append(val or '')
+                json_obj[prop] = val or ''
             # Tack on the linked properties.
             row.extend(map(lambda col: col or '', result[1:]))
             for idx, title in enumerate(titles_linked):
