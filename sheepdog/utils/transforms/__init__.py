@@ -226,7 +226,7 @@ class DelimitedConverter(object):
         try:
             if value_type == bool:
                 return parse_bool_from_string(value)
-            elif value_type == 'array':
+            elif value_type == list:
                 return parse_list_from_string(value)
             elif strip(value) == '':
                 return None
