@@ -19,6 +19,7 @@ from indexd.alias.drivers.alchemy import SQLAlchemyAliasDriver
 from indexd.auth.drivers.alchemy import SQLAlchemyAuthDriver
 from psqlgraph import PsqlGraphDriver
 
+import sheepdog
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
 from sheepdog.version_data import VERSION, COMMIT
 from sheepdog.globals import (
@@ -78,7 +79,14 @@ def app_init(app):
         app.logger.error(
             'Secret key not set in config! Authentication will not work'
         )
+    sheepdog_blueprint = sheepdog.create_blueprint(
+        'submission'
+    )
 
+    try:
+        app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
+    except AssertionError:
+        app.logger.info('Blueprint is already registered!!!')
 
 app = Flask(__name__)
 
@@ -148,6 +156,7 @@ OLD_SQLITE = sqlite3.sqlite_version_info < (3, 7, 16)
 INDEX_HOST = 'index.sq3'
 ALIAS_HOST = 'alias.sq3'
 
+
 INDEX_TABLES = {
     'index_record': [
         (0, u'did', u'VARCHAR', 1, None, 1),
@@ -188,13 +197,6 @@ ALIAS_TABLES = {
     ],
 }
 
-INDEX_CONFIG = {
-    'driver': SQLAlchemyIndexDriver('sqlite:///index.sq3'),
-}
-
-ALIAS_CONFIG = {
-    'driver': SQLAlchemyAliasDriver('sqlite:///alias.sq3'),
-}
 
 def setup_sqlite3_index_tables():
     """Setup the SQLite3 index database."""

@@ -13,7 +13,7 @@ import flask
 from flask import g
 from moto import mock_s3
 
-from gdcdatamodel import models as md
+from datamodelutils import models as md
 from sheepdog.transactions.upload import UploadTransaction
 from tests.integration.datadict.submission.utils import data_fnames
 

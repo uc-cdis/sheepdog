@@ -31,6 +31,16 @@ def parse_bool_from_string(value):
     return mapping.get(strip(value).lower(), value)
 
 
+def parse_list_from_string(value):
+    """
+    Handle array fields by converting them to a list.
+
+    Example:
+        1,2,3 -> ['1','2','3']
+    """
+    return [x.strip() for x in value.split(',')]
+
+
 def set_row_type(row):
     """Get the class for a row dict, setting 'type'. Coerce '' -> None."""
     row['type'] = row.get('type', None)
@@ -199,6 +209,7 @@ class DelimitedConverter(object):
         else:
             links[link] = {link_id: {prop: converted_value}}
 
+
     @staticmethod
     def convert_type(to_cls, key, value):
         """
@@ -215,6 +226,8 @@ class DelimitedConverter(object):
         try:
             if value_type == bool:
                 return parse_bool_from_string(value)
+            elif value_type == list:
+                return parse_list_from_string(value)
             elif strip(value) == '':
                 return None
             else:
@@ -245,6 +258,7 @@ class DelimitedConverter(object):
             message=message, columns=columns, line=self.reader.line_num,
             **kwargs
         ))
+
 
 class TSVToJSONConverter(DelimitedConverter):
 
