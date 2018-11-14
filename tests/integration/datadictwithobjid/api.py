@@ -188,13 +188,7 @@ ALIAS_TABLES = {
     ],
 }
 
-INDEX_CONFIG = {
-    'driver': SQLAlchemyIndexDriver('sqlite:///index.sq3'),
-}
 
-ALIAS_CONFIG = {
-    'driver': SQLAlchemyAliasDriver('sqlite:///alias.sq3'),
-}
 
 def setup_sqlite3_index_tables():
     """Setup the SQLite3 index database."""

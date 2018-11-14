@@ -11,7 +11,7 @@ import requests_mock
 from mock import patch
 from flask.testing import make_test_environ_builder
 from psqlgraph import PsqlGraphDriver
-from gdcdatamodel.models import Edge, Node
+from datamodelutils import models
 from cdispyutils.hmac4 import get_auth
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
@@ -130,11 +130,11 @@ def pg_driver(request, client):
 
     def tearDown():
         with pg_driver.engine.begin() as conn:
-            for table in Node().get_subclass_table_names():
-                if table != Node.__tablename__:
+            for table in models.Node().get_subclass_table_names():
+                if table != models.Node.__tablename__:
                     conn.execute('delete from {}'.format(table))
-            for table in Edge().get_subclass_table_names():
-                if table != Edge.__tablename__:
+            for table in models.Edge().get_subclass_table_names():
+                if table != models.Edge.__tablename__:
                     conn.execute('delete from {}'.format(table))
             conn.execute('delete from versioned_nodes')
             conn.execute('delete from _voided_nodes')
