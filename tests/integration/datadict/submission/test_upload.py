@@ -113,7 +113,7 @@ def test_data_file_not_indexed(
     assert entity['id'] == did
 
 
-def test_tsv_submission_handle_array_type(app):
+def test_tsv_submission_handle_array_type(client):
     """
     When submitting a TSV file, array fields should be converted to lists.
     """
