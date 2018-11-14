@@ -62,12 +62,11 @@ def submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp):
 
 
 def submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=None, headers={}):
+        client, pg_driver, admin, submitter, cgci_blgsp, data=None):
     data = data or DEFAULT_METADATA_FILE
     put_cgci_blgsp(client, admin)
     data = json.dumps(data)
-    headers.update(submitter)
-    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    resp = client.put(BLGSP_PATH, headers=submitter, data=data)
     return resp
 
 
