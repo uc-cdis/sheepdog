@@ -117,7 +117,18 @@ def test_tsv_submission_handle_array_type(client):
     When submitting a TSV file, array fields should be converted to lists.
     """
 
+    file_data = copy.deepcopy(DEFAULT_METADATA_FILE)
+    file_data['array_field'] = ' code a, codeb '
+
+    # convert the file to TSV
     file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/experimental_metadata.tsv')
+    with open(file_path, 'w') as f:
+        import csv
+        dw = csv.DictWriter(f, sorted(file_data.keys()), delimiter='\t')
+        dw.writeheader()
+        dw.writerow(file_data)
+
+    # read the TSV data
     doc = None
     with open(file_path, 'r') as f:
         doc = f.read()
@@ -126,13 +137,13 @@ def test_tsv_submission_handle_array_type(client):
     from sheepdog.utils.transforms import TSVToJSONConverter
     data, errors = TSVToJSONConverter().convert(doc)
     assert data
+    assert len(data) == 1
     assert not errors
 
-    for row in data:
-        # make sure the array is handled properly
-        array = row['array_field']
-        assert isinstance(array, list)
-        assert len(array) > 0
+    # make sure the array is handled properly
+    array = data[0]['array_field']
+    assert isinstance(array, list)
+    assert array == ['code a', 'codeb']
 
 
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
