@@ -121,17 +121,6 @@ def version():
 
     return jsonify(base), 200
 
-@app.errorhandler(404)
-def page_not_found(e):
-    return jsonify(message=e.description), e.code
-
-
-@app.errorhandler(500)
-def server_error(e):
-    app.logger.exception(e)
-    return jsonify(message="internal server error"), 500
-
-
 def _log_and_jsonify_exception(e):
     """
     Log an exception and return the jsonified version along with the code.

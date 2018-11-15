@@ -2,7 +2,7 @@ boto==2.36.0
 cryptography==2.1.2
 dictionaryutils==2.0.0
 envelopes==0.4
-Flask==0.10.1
+Flask==0.12.4
 flask-cors==3.0.3
 Flask-SQLAlchemy-Session==1.1
 fuzzywuzzy==0.6.1
