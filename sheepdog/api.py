@@ -15,7 +15,13 @@ from datamodelutils import models, validators, postgres_admin
 from indexclient.client import IndexClient as SignpostClient
 
 import sheepdog
-from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
+from sheepdog.errors import (
+    APIError,
+    setup_default_handlers,
+    UnhealthyCheck,
+    NotFoundError,
+    InternalError
+)
 from sheepdog.version_data import VERSION, COMMIT
 from sheepdog.globals import (
     dictionary_version,
@@ -192,12 +198,12 @@ def version():
 
     return jsonify(base), 200
 
-@app.errorhandler(404)
+@app.errorhandler(NotFoundError)
 def page_not_found(e):
     return jsonify(message=e.description), e.code
 
 
-@app.errorhandler(500)
+@app.errorhandler(InternalError)
 def server_error(e):
     app.logger.exception(e)
     return jsonify(message="internal server error"), 500
