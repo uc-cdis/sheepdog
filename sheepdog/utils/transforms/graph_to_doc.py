@@ -157,7 +157,8 @@ def get_tsv_dict_plural_links(entity, link_titles):
 
         link = entity[link_name]
         if len(link) >= link_id and alias_root in link[link_id-1]:
-            tsv_dict[key] = link[int(link_id)-1][alias_root]
+            val = link[int(link_id)-1][alias_root]
+            tsv_dict[key] = list_to_comma_string(val)
 
     return tsv_dict
 
@@ -903,13 +904,14 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
             # Write in the properties from just the node.
             node = result[0]
             for prop in props:
-                val = list_to_comma_string(node[prop])
-                row.append(val or '')
-                json_obj[prop] = val or ''
+                val = list_to_comma_string(node[prop] or '')
+                row.append(val)
+                json_obj[prop] = val
             # Tack on the linked properties.
             row.extend(map(lambda col: col or '', result[1:]))
             for idx, title in enumerate(titles_linked):
-                json_obj["link_fields"][title] = result[idx + 1] or ''
+                val = list_to_comma_string(result[idx + 1] or '')
+                json_obj["link_fields"][title] = val
             # Convert row elements to string if they are not
             for idx, val in enumerate(row):
                 if not isinstance(val, str):
