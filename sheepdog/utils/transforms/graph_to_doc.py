@@ -179,7 +179,7 @@ def get_tsv_dict_singular_links(entity, link_titles):
             log.warning('called on plural links: %s', links)
 
         if links:
-            tsv_dict[key] = links[0][link_alias]
+            tsv_dict[key] = list_to_comma_string(links[0][link_alias])
         else:
             tsv_dict[key] = ''
 
@@ -238,6 +238,9 @@ def list_to_comma_string(val):
         ['1','2','3'] -> 1,2,3
     """
 
+    if val is None:
+        return ''
+
     if isinstance(val, list):
         val = ','.join(val)
     return val
@@ -247,7 +250,6 @@ def get_tsv_dict_non_links(entity, non_link_titles):
     """Return non-link portion of tsv dict for single entity."""
     return {
         key: list_to_comma_string(entity[key])
-        if entity[key] is not None else ''
         for key in non_link_titles
     }
 
@@ -904,13 +906,13 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
             # Write in the properties from just the node.
             node = result[0]
             for prop in props:
-                val = list_to_comma_string(node[prop] or '')
+                val = list_to_comma_string(node[prop])
                 row.append(val)
                 json_obj[prop] = val
             # Tack on the linked properties.
             row.extend(map(lambda col: col or '', result[1:]))
             for idx, title in enumerate(titles_linked):
-                val = list_to_comma_string(result[idx + 1] or '')
+                val = list_to_comma_string(result[idx + 1])
                 json_obj["link_fields"][title] = val
             # Convert row elements to string if they are not
             for idx, val in enumerate(row):
