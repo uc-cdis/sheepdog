@@ -383,10 +383,10 @@ def export_entities(program, project):
         project (str): |project_id|
 
     Query Args:
-        ids (str): one or a list of gdc ids seperated by commas.
+        ids (str): one or a list of node IDs seperated by commas.
         format (str): output format, ``json`` or ``tsv`` or ``csv``; default is tsv
         with_children (str): whether to recursively find children or not; default is False
-        category (str): category of node to filter on children. Example: clinical
+        category (str): category of node to filter on children. Example: ``clinical``
 
     Responses:
         200: Success

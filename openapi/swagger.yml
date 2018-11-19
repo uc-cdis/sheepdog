@@ -763,7 +763,7 @@ paths:
         name: program
         required: true
         type: string
-      - description: 'category of node to filter on children. Example: clinical'
+      - description: 'category of node to filter on children. Example: ``clinical``'
         in: query
         name: category
         type: string
@@ -771,7 +771,7 @@ paths:
         in: query
         name: with_children
         type: string
-      - description: one or a list of gdc ids seperated by commas.
+      - description: one or a list of node IDs seperated by commas.
         in: query
         name: ids
         type: string
@@ -813,7 +813,7 @@ paths:
         name: program
         required: true
         type: string
-      - description: 'category of node to filter on children. Example: clinical'
+      - description: 'category of node to filter on children. Example: ``clinical``'
         in: query
         name: category
         type: string
@@ -821,7 +821,7 @@ paths:
         in: query
         name: with_children
         type: string
-      - description: one or a list of gdc ids seperated by commas.
+      - description: one or a list of node IDs seperated by commas.
         in: query
         name: ids
         type: string
