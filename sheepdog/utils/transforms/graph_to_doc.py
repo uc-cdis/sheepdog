@@ -910,10 +910,9 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
                 row.append(val)
                 json_obj[prop] = val
             # Tack on the linked properties.
-            row.extend(map(lambda col: col or '', result[1:]))
+            row.extend(map(lambda col: list_to_comma_string(col), result[1:]))
             for idx, title in enumerate(titles_linked):
-                val = list_to_comma_string(result[idx + 1])
-                json_obj["link_fields"][title] = val
+                json_obj["link_fields"][title] = result[idx + 1] or ''
             # Convert row elements to string if they are not
             for idx, val in enumerate(row):
                 if not isinstance(val, str):
