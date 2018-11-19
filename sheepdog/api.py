@@ -15,7 +15,13 @@ from datamodelutils import models, validators, postgres_admin
 from indexclient.client import IndexClient as SignpostClient
 
 import sheepdog
-from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
+from sheepdog.errors import (
+    APIError,
+    setup_default_handlers,
+    UnhealthyCheck,
+    NotFoundError,
+    InternalError
+)
 from sheepdog.version_data import VERSION, COMMIT
 from sheepdog.globals import (
     dictionary_version,

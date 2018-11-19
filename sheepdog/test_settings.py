@@ -20,7 +20,6 @@ SUBMISSION = {
     "host": 'host',
 }
 
-DICTIONARY_URL = 'https://testdictionary.json'
 
 STORAGE = {"s3": {"keys": {}, "kwargs": {}}}
 STORAGE["s3"]["keys"]["host"] = {"access_key": "fake",

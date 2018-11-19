@@ -11,7 +11,7 @@ import requests_mock
 from mock import patch
 from flask.testing import make_test_environ_builder
 from psqlgraph import PsqlGraphDriver
-from gdcdatamodel.models import Edge, Node
+from datamodelutils import models
 from cdispyutils.hmac4 import get_auth
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
@@ -78,6 +78,7 @@ def wait_for_indexd_not_alive(port):
 def app(tmpdir, request):
 
     port = 8000
+    dictionary_setup(_app)
     # this is to make sure sqlite is initialized
     # for every unit test
     reload(default_settings)
@@ -110,11 +111,11 @@ def app(tmpdir, request):
         wait_for_indexd_not_alive(port)
 
     _app.config.from_object("sheepdog.test_settings")
+    _app.config["PATH_TO_SCHEMA_DIR"] = PATH_TO_SCHEMA_DIR
 
     request.addfinalizer(teardown)
 
     app_init(_app)
-    dictionary_setup(_app)
 
     _app.logger.setLevel(os.environ.get("GDC_LOG_LEVEL", "WARNING"))
 
@@ -130,11 +131,11 @@ def pg_driver(request, client):
 
     def tearDown():
         with pg_driver.engine.begin() as conn:
-            for table in Node().get_subclass_table_names():
-                if table != Node.__tablename__:
+            for table in models.Node().get_subclass_table_names():
+                if table != models.Node.__tablename__:
                     conn.execute('delete from {}'.format(table))
-            for table in Edge().get_subclass_table_names():
-                if table != Edge.__tablename__:
+            for table in models.Edge().get_subclass_table_names():
+                if table != models.Edge.__tablename__:
                     conn.execute('delete from {}'.format(table))
             conn.execute('delete from versioned_nodes')
             conn.execute('delete from _voided_nodes')
@@ -175,11 +176,3 @@ def dictionary_setup(_app):
         from gdcdatamodel import validators as vd
         models.init(md)
         validators.init(vd)
-        sheepdog_blueprint = sheepdog.create_blueprint(
-            'submission'
-        )
-
-        try:
-            _app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
-        except AssertionError:
-            _app.logger.info('Blueprint is already registered!!!')

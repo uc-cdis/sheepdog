@@ -7,7 +7,7 @@ import json
 
 import pytest
 
-from gdcdatamodel import models as md
+from datamodelutils import models as md
 from tests.integration.datadict.submission.test_endpoints import post_example_entities_together
 from tests.integration.datadict.submission.utils import data_fnames
 
