@@ -131,7 +131,7 @@ def get_project_dictionary(program=None, project=None):
     Args:
         program (str): |program_id|
         project (str): |project_id|
-    
+
     Responses:
         200 (schema_links): Success
         403: Unauthorized request.
@@ -154,7 +154,7 @@ def get_dictionary_entry(entry):
     """
     Return the project level JSON schema definition for a given entity
     type.
-    
+
     Summary:
         Get the dictionary schema for an entity
 
@@ -163,7 +163,7 @@ def get_dictionary_entry(entry):
 
     Args:
         entry (str): entity type to retrieve the schema for (e.g. ``aliquot``)
-    
+
     Responses:
         200 (schema_entity): Success
         404: Resource not found.
@@ -225,7 +225,7 @@ def get_project_dictionary_entry(program, project, entry):
         program (str): |program_id|
         project (str): |project_id|
         entry (str): entity type to retrieve the schema for (e.g. ``aliquot``)
-    
+
     Responses:
         200 (schema_entity): Success
         404: Resource not found.
@@ -316,7 +316,7 @@ def create_delete_entities_viewer(dry_run=False):
             program (str): |program_id|
             project (str): |project_id|
             ids (str): A comma separated list of ids specifying the entities to delete. These ids must be official GDC ids.
-        
+
         Query Args:
             to_delete (bool): Set the to_delete sysan as true or false. If none, then don't try to set the sysan, and instead delete the node.
 
@@ -374,7 +374,7 @@ def export_entities(program, project):
 
     Summary:
         Export entities
-    
+
     Tags:
         export
 
@@ -382,12 +382,11 @@ def export_entities(program, project):
         program (str): |program_id|
         project (str): |project_id|
 
-    Query Parameters:
-        ids: one or a list of gdc ids seperated by commas.
-        format: output format, ``json`` or ``tsv`` or ``csv``; default is tsv
-        with_children:
-            whether to recursively find children or not; default is False
-        category: category of node to filter on children. Example: clinical
+    Query Args:
+        ids (str): one or a list of node IDs seperated by commas.
+        format (str): output format, ``json`` or ``tsv`` or ``csv``; default is tsv
+        with_children (str): whether to recursively find children or not; default is False
+        category (str): category of node to filter on children. Example: ``clinical``
 
     Responses:
         200: Success
@@ -482,10 +481,10 @@ def create_files_viewer(dry_run=False, reassign=False):
 
         GET /<program>/<project>/files/<uuid>?uploadId=UploadId
             List Parts
-        
+
         Tags:
             file
-        
+
         Args:
             program (str): |program_id|
             project (str): |project_id|
@@ -631,7 +630,7 @@ def create_open_project_viewer(dry_run=False):
             200: Success
             404: Resource not found.
             403: Unauthorized request.
-            
+
         :reqheader Content-Type: |reqheader_Content-Type|
         :reqheader Accept: |reqheader_Accept|
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
@@ -655,7 +654,7 @@ def create_release_project_viewer(dry_run=False):
 
         Summary:
             Release a project
-        
+
         Tags:
             project
 
@@ -695,7 +694,7 @@ def create_review_project_viewer(dry_run=False):
 
         Summary:
             Review a project
-        
+
         Tags:
             project
 
@@ -736,7 +735,7 @@ def create_submit_project_viewer(dry_run=False):
 
         Summary:
             Submit a project
-        
+
         Tags:
             project
 
@@ -777,7 +776,7 @@ def get_project_templates(program, project):
     Args:
         program (str): |program_id|
         project (str): |project_id|
-    
+
     Query Args:
         format (str): output format, ``csv`` or ``tsv``, default is tsv
         categories (str): list of entities' categories to include in the template
@@ -821,7 +820,7 @@ def get_project_template(program, project, entity):
         program (str): |program_id|
         project (str): |project_id|
         entity (str): type of the entity
-    
+
     Query Args:
         format (str): output format, ``csv`` or ``tsv``, default is tsv
 
@@ -962,7 +961,7 @@ def commit_dry_run_transaction(program, project, transaction_id):
 
     Summary:
         Commit a dry run transaction
-    
+
     Tags:
         dry run
 
@@ -1033,7 +1032,7 @@ def create_biospecimen_viewer(dry_run=False):
 
         Summary:
             Update Biospecimen Supplement entities
-        
+
         Tags:
             entity
 
@@ -1066,7 +1065,7 @@ def create_clinical_viewer(dry_run=False):
 
         Summary:
             Update Clinical Supplement entities
-        
+
         Tags:
             entity
 
@@ -1093,14 +1092,14 @@ def delete_project(program, project):
 
     Summary:
         Delete a project
-    
+
     Tags:
         project
 
     Args:
         program (str): |program_id|
         project (str): |project_id|
-    
+
     Responses:
         204: Success.
         400: User error.

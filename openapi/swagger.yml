@@ -763,6 +763,22 @@ paths:
         name: program
         required: true
         type: string
+      - description: 'category of node to filter on children. Example: ``clinical``'
+        in: query
+        name: category
+        type: string
+      - description: whether to recursively find children or not; default is False
+        in: query
+        name: with_children
+        type: string
+      - description: one or a list of node IDs seperated by commas.
+        in: query
+        name: ids
+        type: string
+      - description: output format, ``json`` or ``tsv`` or ``csv``; default is tsv
+        in: query
+        name: format
+        type: string
       produces:
       - application/json
       responses:
@@ -796,6 +812,22 @@ paths:
         in: path
         name: program
         required: true
+        type: string
+      - description: 'category of node to filter on children. Example: ``clinical``'
+        in: query
+        name: category
+        type: string
+      - description: whether to recursively find children or not; default is False
+        in: query
+        name: with_children
+        type: string
+      - description: one or a list of node IDs seperated by commas.
+        in: query
+        name: ids
+        type: string
+      - description: output format, ``json`` or ``tsv`` or ``csv``; default is tsv
+        in: query
+        name: format
         type: string
       produces:
       - application/json
