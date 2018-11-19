@@ -8,7 +8,7 @@ class Argument(object):
         name (type): description
     """
 
-    re_arg = re.compile(r"([\w_]+)(?: \(([\w_]+)\))?: ([\w\s_.,'\"`()|]+)")
+    re_arg = re.compile(r"([\w_]+)(?: \(([\w_]+)\))?: ([\w\s_.,;:'\"`()|]+)")
     #                     ^ name        ^ type        ^ description
 
     def __init__(self, name = None, arg_type = None, description = None):
