@@ -1,0 +1,2175 @@
+definitions:
+  schema_entity:
+    properties:
+      '...fields specific to this entity':
+        type: string
+      type:
+        type: string
+    type: object
+  schema_entity_bulk:
+    properties:
+      doc:
+        type: string
+      doc_format:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    - doc_format
+    - doc
+    type: object
+  schema_entity_list:
+    items:
+      $ref: '#/definitions/schema_entity'
+    type: array
+  schema_error_list:
+    items:
+      type: string
+    type: array
+  schema_links:
+    properties:
+      links:
+        items:
+          type: string
+        type: array
+    required:
+    - links
+    type: object
+  schema_program:
+    properties:
+      dbgap_accession_number:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    required:
+    - name
+    - dbgap_accession_number
+    type: object
+  schema_project:
+    properties:
+      code:
+        type: string
+      dbgap_accession_number:
+        type: string
+      investigator_name:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    required:
+    - name
+    - code
+    type: object
+info:
+  contact:
+    email: cdis@uchicago.edu
+  description: A data submission API for CDIS Gen 3 data commons. Code is available
+    on [GitHub](https://github.com/uc-cdis/sheepdog).
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://cdis.uchicago.edu/terms/
+  title: Sheepdog OpenAPI Specification
+  version: '1.0'
+paths:
+  /:
+    get:
+      description: Return the available resources at the top level above programs
+        i.e. registered programs.
+      parameters: []
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: '#/definitions/schema_links'
+        '403':
+          description: Unauthorized request.
+      summary: Get the programs
+      tags:
+      - program
+    patch:
+      description: Register a program. The content of the request is a JSON containing
+        the information describing a program.  Authorization for registering programs
+        is limited to administrative users.
+      parameters:
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_program'
+      responses:
+        '200':
+          description: Registered successfully.
+        '403':
+          description: Unauthorized request.
+      summary: Create a program
+      tags:
+      - program
+    post:
+      description: Register a program. The content of the request is a JSON containing
+        the information describing a program.  Authorization for registering programs
+        is limited to administrative users.
+      parameters:
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_program'
+      responses:
+        '200':
+          description: Registered successfully.
+        '403':
+          description: Unauthorized request.
+      summary: Create a program
+      tags:
+      - program
+    put:
+      description: Register a program. The content of the request is a JSON containing
+        the information describing a program.  Authorization for registering programs
+        is limited to administrative users.
+      parameters:
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_program'
+      responses:
+        '200':
+          description: Registered successfully.
+        '403':
+          description: Unauthorized request.
+      summary: Create a program
+      tags:
+      - program
+  /<program>:
+    delete:
+      description: Delete a program given program name. If the program is not empty
+        raise an appropriate exception
+      parameters:
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '204':
+          description: Success.
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: Delete a program
+      tags:
+      - program
+    get:
+      description: Return the available resources at the top level of program ``program``,
+        i.e. registered projects.
+      parameters:
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: '#/definitions/schema_links'
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: Get the projects
+      tags:
+      - project
+    patch:
+      description: Register a project. The content of the request is a JSON containing
+        the information describing a project. Authorization for registering projects
+        is limited to administrative users.
+      parameters:
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_project'
+      responses:
+        '200':
+          description: Registered successfully.
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: Create a project
+      tags:
+      - project
+    post:
+      description: Register a project. The content of the request is a JSON containing
+        the information describing a project. Authorization for registering projects
+        is limited to administrative users.
+      parameters:
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_project'
+      responses:
+        '200':
+          description: Registered successfully.
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: Create a project
+      tags:
+      - project
+    put:
+      description: Register a project. The content of the request is a JSON containing
+        the information describing a project. Authorization for registering projects
+        is limited to administrative users.
+      parameters:
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_project'
+      responses:
+        '200':
+          description: Registered successfully.
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Program not found.
+      summary: Create a project
+      tags:
+      - project
+  /<program>/<project>:
+    delete:
+      description: Delete project under a specific program
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '204':
+          description: Success.
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Delete a project
+      tags:
+      - project
+    post:
+      description: Create or update any valid entities specified in the request body.
+        To associate an entity with an existing, already indexed data file, specify
+        the `object_id` in the body of the entity.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity'
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Resource not found.
+      summary: Create entities
+      tags:
+      - entity
+    put:
+      description: Create or update any valid entities specified in the request body.
+        To associate an entity with an existing, already indexed data file, specify
+        the `object_id` in the body of the entity.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity'
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Resource not found.
+      summary: Update entities
+      tags:
+      - entity
+  /<program>/<project>/_dictionary:
+    get:
+      description: Return links to the project level JSON schema definitions.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: '#/definitions/schema_links'
+        '403':
+          description: Unauthorized request.
+      summary: Get the dictionary schema for entities of a project
+      tags:
+      - dictionary
+  /<program>/<project>/_dictionary/<entry>:
+    get:
+      description: Get the dictionary entry for a specific project.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: entity type to retrieve the schema for (e.g. ``aliquot``)
+        in: path
+        name: entry
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: '#/definitions/schema_entity'
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Get the dictionary schema for an entity of a project
+      tags:
+      - dictionary
+  /<program>/<project>/_dry_run:
+    post:
+      description: Create or update any valid entities specified in the request body.
+        To associate an entity with an existing, already indexed data file, specify
+        the `object_id` in the body of the entity.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity'
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Resource not found.
+      summary: Create entities
+      tags:
+      - dry run
+    put:
+      description: Create or update any valid entities specified in the request body.
+        To associate an entity with an existing, already indexed data file, specify
+        the `object_id` in the body of the entity.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity'
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Resource not found.
+      summary: Update entities
+      tags:
+      - dry run
+  /<program>/<project>/bulk:
+    post:
+      description: Handle bulk transaction instead of single transaction.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity_bulk'
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Resource not found.
+      summary: Create entities in bulk
+      tags:
+      - entity
+    put:
+      description: Handle bulk transaction instead of single transaction.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity_bulk'
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Resource not found.
+      summary: Update entities in bulk
+      tags:
+      - entity
+  /<program>/<project>/bulk/_dry_run:
+    post:
+      description: Handle bulk transaction instead of single transaction.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity_bulk'
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Resource not found.
+      summary: Create entities in bulk
+      tags:
+      - dry run
+    put:
+      description: Handle bulk transaction instead of single transaction.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: input body
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/schema_entity_bulk'
+      responses:
+        '201':
+          description: Entities created successfully
+        '400':
+          description: At least one entity was invalid.
+        '404':
+          description: Resource not found.
+      summary: Update entities in bulk
+      tags:
+      - dry run
+  /<program>/<project>/entities/<entity_id_string>:
+    get:
+      description: Retrieve existing GDC entities by ID. The return type of a :http:method:`get`
+        on this endpoint is a JSON array containing JSON object elements, each corresponding
+        to a provided ID. Return results are unordered. If any ID is not found in
+        the database, a status code of 404 is returned with the missing IDs.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: A comma
+        in: path
+        name: entity_id_string
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+          schema:
+            $ref: '#/definitions/schema_entity_list'
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Entity not found.
+      summary: Get entities by ID
+      tags:
+      - entity
+  /<program>/<project>/entities/<ids>:
+    delete:
+      description: Delete existing GDC entities. Using the :http:method:`delete` on
+        a project's endpoint will *completely delete* an entity. The GDC does not
+        allow deletions or creations that would leave nodes without parents, i.e.
+        nodes that do not have an entity from which they were derived. To prevent
+        catastrophic mistakes, the current philosophy is to disallow automatic cascading
+        of deletes. However, to inform a user which entities must be deleted for the
+        target entity to be deleted, the API will respond with at least one entity
+        that must be deleted prior to deleting the target entity.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: A comma separated list of ids specifying the entities to delete.
+          These ids must be official GDC ids.
+        in: path
+        name: ids
+        required: true
+        type: string
+      - description: Set the to_delete sysan as true or false. If none, then don't
+          try to set the sysan, and instead delete the node.
+        in: query
+        name: to_delete
+        type: boolean
+      responses:
+        '200':
+          description: Entities deleted successfully
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Entity not found.
+      summary: Delete entities
+      tags:
+      - entity
+  /<program>/<project>/entities/_dry_run/<ids>:
+    delete:
+      description: Delete existing GDC entities. Using the :http:method:`delete` on
+        a project's endpoint will *completely delete* an entity. The GDC does not
+        allow deletions or creations that would leave nodes without parents, i.e.
+        nodes that do not have an entity from which they were derived. To prevent
+        catastrophic mistakes, the current philosophy is to disallow automatic cascading
+        of deletes. However, to inform a user which entities must be deleted for the
+        target entity to be deleted, the API will respond with at least one entity
+        that must be deleted prior to deleting the target entity.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: A comma separated list of ids specifying the entities to delete.
+          These ids must be official GDC ids.
+        in: path
+        name: ids
+        required: true
+        type: string
+      - description: Set the to_delete sysan as true or false. If none, then don't
+          try to set the sysan, and instead delete the node.
+        in: query
+        name: to_delete
+        type: boolean
+      responses:
+        '200':
+          description: Entities deleted successfully
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Entity not found.
+      summary: Delete entities
+      tags:
+      - dry run
+  /<program>/<project>/export:
+    get:
+      description: 'Return a file with the requested entities as an attachment. Omitting
+        the ``ids`` parameter from the query string will return _ALL_ nodes under
+        the given project. Otherwise, if there is only one entity type in the output,
+        it will return a {node_type}.tsv or {node_type}.json file, e.g.: aliquot.tsv.
+        If there are multiple entity types, it returns ``gdc_export_{one_time_sha}.tar.gz``
+        for tsv format, or ``gdc_export_{one_time_sha}.json`` for json format.'
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: 'category of node to filter on children. Example: ``clinical``'
+        in: query
+        name: category
+        type: string
+      - description: whether to recursively find children or not; default is False
+        in: query
+        name: with_children
+        type: string
+      - description: one or a list of node IDs seperated by commas.
+        in: query
+        name: ids
+        type: string
+      - description: output format, ``json`` or ``tsv`` or ``csv``; default is tsv
+        in: query
+        name: format
+        type: string
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Bad Request
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: No id is found
+      summary: Export entities
+      tags:
+      - export
+    post:
+      description: 'Return a file with the requested entities as an attachment. Omitting
+        the ``ids`` parameter from the query string will return _ALL_ nodes under
+        the given project. Otherwise, if there is only one entity type in the output,
+        it will return a {node_type}.tsv or {node_type}.json file, e.g.: aliquot.tsv.
+        If there are multiple entity types, it returns ``gdc_export_{one_time_sha}.tar.gz``
+        for tsv format, or ``gdc_export_{one_time_sha}.json`` for json format.'
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: 'category of node to filter on children. Example: ``clinical``'
+        in: query
+        name: category
+        type: string
+      - description: whether to recursively find children or not; default is False
+        in: query
+        name: with_children
+        type: string
+      - description: one or a list of node IDs seperated by commas.
+        in: query
+        name: ids
+        type: string
+      - description: output format, ``json`` or ``tsv`` or ``csv``; default is tsv
+        in: query
+        name: format
+        type: string
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Bad Request
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: No id is found
+      summary: Export entities
+      tags:
+      - export
+  /<program>/<project>/files/<file_uuid>:
+    delete:
+      description: Delete molecular data from object storage.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: to abort a multipart upload
+        in: query
+        name: uploadId
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: Delete a data file
+      tags:
+      - file
+    get:
+      description: Get a data file from object storage
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: to list parts
+        in: query
+        name: uploadId
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: Get a data file
+      tags:
+      - file
+    post:
+      description: Upload data by multipart upload
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: to initiate multipart upload
+        in: query
+        name: uploads
+        type: string
+      - description: to complete multipart upload
+        in: query
+        name: uploadId
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: Upload data by multipart upload
+      tags:
+      - file
+    put:
+      description: Upload data using single PUT. The request body should contain binary
+        data of the file.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: to upload part (use with uploadId)
+        in: query
+        name: partNumber
+        type: string
+      - description: to upload part (use with partNumber)
+        in: query
+        name: uploadId
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: Upload a data file
+      tags:
+      - file
+  /<program>/<project>/files/<file_uuid>/_dry_run:
+    delete:
+      description: Delete molecular data from object storage.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: to abort a multipart upload
+        in: query
+        name: uploadId
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: Delete a data file
+      tags:
+      - dry run
+    get:
+      description: Get a data file from object storage
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: to list parts
+        in: query
+        name: uploadId
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: Get a data file
+      tags:
+      - dry run
+    post:
+      description: Upload data by multipart upload
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: to initiate multipart upload
+        in: query
+        name: uploads
+        type: string
+      - description: to complete multipart upload
+        in: query
+        name: uploadId
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: Upload data by multipart upload
+      tags:
+      - dry run
+    put:
+      description: Upload data using single PUT. The request body should contain binary
+        data of the file.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: to upload part (use with uploadId)
+        in: query
+        name: partNumber
+        type: string
+      - description: to upload part (use with partNumber)
+        in: query
+        name: uploadId
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: Upload a data file
+      tags:
+      - dry run
+  /<program>/<project>/manifest:
+    get:
+      description: Create a json manifest of the files.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Get a manifest of data files
+      tags:
+      - file
+  /<program>/<project>/open:
+    post:
+      description: Mark a project ``open``. Opening a project means uploads, deletions,
+        etc. are allowed.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Open a project
+      tags:
+      - project
+    put:
+      description: Mark a project ``open``. Opening a project means uploads, deletions,
+        etc. are allowed.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Open a project
+      tags:
+      - project
+  /<program>/<project>/open/_dry_run:
+    post:
+      description: Mark a project ``open``. Opening a project means uploads, deletions,
+        etc. are allowed.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Open a project
+      tags:
+      - dry run
+    put:
+      description: Mark a project ``open``. Opening a project means uploads, deletions,
+        etc. are allowed.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Open a project
+      tags:
+      - dry run
+  /<program>/<project>/release:
+    post:
+      description: Release a project.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Release a project
+      tags:
+      - project
+    put:
+      description: Release a project.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Release a project
+      tags:
+      - project
+  /<program>/<project>/release/_dry_run:
+    post:
+      description: Release a project.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Release a project
+      tags:
+      - dry run
+    put:
+      description: Release a project.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Release a project
+      tags:
+      - dry run
+  /<program>/<project>/review:
+    post:
+      description: Mark a project project for review. Reviewing a project means uploads
+        are locked. An ``open`` or ``submit`` action must be taken after ``review``.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Review a project
+      tags:
+      - project
+    put:
+      description: Mark a project project for review. Reviewing a project means uploads
+        are locked. An ``open`` or ``submit`` action must be taken after ``review``.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Review a project
+      tags:
+      - project
+  /<program>/<project>/review/_dry_run:
+    post:
+      description: Mark a project project for review. Reviewing a project means uploads
+        are locked. An ``open`` or ``submit`` action must be taken after ``review``.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Review a project
+      tags:
+      - dry run
+    put:
+      description: Mark a project project for review. Reviewing a project means uploads
+        are locked. An ``open`` or ``submit`` action must be taken after ``review``.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Review a project
+      tags:
+      - dry run
+  /<program>/<project>/submit:
+    post:
+      description: Submit a project. Submitting a project means that the GDC can make
+        all metadata that *currently* exists in the project public in every GDC index
+        built after the project is released.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Submit a project
+      tags:
+      - project
+    put:
+      description: Submit a project. Submitting a project means that the GDC can make
+        all metadata that *currently* exists in the project public in every GDC index
+        built after the project is released.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Submit a project
+      tags:
+      - project
+  /<program>/<project>/submit/_dry_run:
+    post:
+      description: Submit a project. Submitting a project means that the GDC can make
+        all metadata that *currently* exists in the project public in every GDC index
+        built after the project is released.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Submit a project
+      tags:
+      - dry run
+    put:
+      description: Submit a project. Submitting a project means that the GDC can make
+        all metadata that *currently* exists in the project public in every GDC index
+        built after the project is released.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Project submitted successfully
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Submit a project
+      tags:
+      - dry run
+  /<program>/<project>/template:
+    get:
+      description: Get templates for all entity types. In the template, Links are
+        represented as {link_type}.{link_unique_key} for one_to_one  and many_to_one
+        relationships. For many_to_many relationships, they are represented as {link_type}.{link_unique_key}#1
+        to infer user the multiplicity
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: list of entities' categories to exclude from the template
+        in: query
+        name: exclude
+        type: string
+      - description: list of entities' categories to include in the template
+        in: query
+        name: categories
+        type: string
+      - description: output format, ``csv`` or ``tsv``, default is tsv
+        in: query
+        name: format
+        type: string
+      responses:
+        '200':
+          description: Success
+        '404':
+          description: Resource not found.
+      summary: Get templates for all entity types of a project
+      tags:
+      - dictionary
+  /<program>/<project>/template/<entity>:
+    get:
+      description: Return TSV template of an entity type. In the template, links are
+        represented as {link_type}.{link_unique_key} for one_to_one and many_to_one
+        relationships. For many_to_many relationships, they are represented as {link_type}.{link_unique_key}#1
+        to infer user the multiplicity.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: type of the entity
+        in: path
+        name: entity
+        required: true
+        type: string
+      - description: output format, ``csv`` or ``tsv``, default is tsv
+        in: query
+        name: format
+        type: string
+      responses:
+        '200':
+          description: Success
+        '404':
+          description: Entity type is not found
+      summary: Get a template for an entity type of a project
+      tags:
+      - dictionary
+  /<program>/<project>/transactions/<int:transaction_id>/close:
+    post:
+      description: Close a transaction. The transaction is prevented from being committed
+        in the future.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: transaction_id
+        in: path
+        name: transaction_id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Close a transaction
+      tags:
+      - dry run
+    put:
+      description: Close a transaction. The transaction is prevented from being committed
+        in the future.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: transaction_id
+        in: path
+        name: transaction_id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Close a transaction
+      tags:
+      - dry run
+  /<program>/<project>/transactions/<int:transaction_id>/commit:
+    post:
+      description: 'Commit a dry run transaction. This call should only succeed if:
+        1. transaction_id points to a dry_run transaction; 2. transaction_id points
+        to a transaction that hasn''t been committed already; 3. transaction_id points
+        to a successful transaction.'
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: transaction_id
+        in: path
+        name: transaction_id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Commit a dry run transaction
+      tags:
+      - dry run
+    put:
+      description: 'Commit a dry run transaction. This call should only succeed if:
+        1. transaction_id points to a dry_run transaction; 2. transaction_id points
+        to a transaction that hasn''t been committed already; 3. transaction_id points
+        to a successful transaction.'
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: transaction_id
+        in: path
+        name: transaction_id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Commit a dry run transaction
+      tags:
+      - dry run
+  /<program>/<project>/upload_manifest:
+    get:
+      description: Create a json manifest of the files.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Get a manifest of data files
+      tags:
+      - file
+  /<program>/<project>/xml/biospecimen/bcr:
+    put:
+      consumes:
+      - multipart/form-data
+      description: The entities stored in BRC XML are converted to JSON before being
+        updated.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: BRC XML file
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Update Biospecimen Supplement entities
+      tags:
+      - entity
+  /<program>/<project>/xml/biospecimen/bcr/_dry_run:
+    put:
+      consumes:
+      - multipart/form-data
+      description: The entities stored in BRC XML are converted to JSON before being
+        updated.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: BRC XML file
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Update Biospecimen Supplement entities
+      tags:
+      - dry run
+  /<program>/<project>/xml/clinical/bcr:
+    put:
+      consumes:
+      - multipart/form-data
+      description: The entities stored in BRC XML are converted to JSON before being
+        updated.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: BRC XML file
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Update Clinical Supplement entities
+      tags:
+      - entity
+  /<program>/<project>/xml/clinical/bcr/_dry_run:
+    put:
+      consumes:
+      - multipart/form-data
+      description: The entities stored in BRC XML are converted to JSON before being
+        updated.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: BRC XML file
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        '200':
+          description: Success.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Update Clinical Supplement entities
+      tags:
+      - dry run
+  /_dictionary:
+    get:
+      description: Return links to the JSON schema definitions.
+      parameters: []
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: '#/definitions/schema_links'
+        '403':
+          description: Unauthorized request.
+      summary: Get the dictionary schema
+      tags:
+      - dictionary
+  /_dictionary/<entry>:
+    get:
+      description: Return the project level JSON schema definition for a given entity
+        type.
+      parameters:
+      - description: entity type to retrieve the schema for (e.g. ``aliquot``)
+        in: path
+        name: entry
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: '#/definitions/schema_entity'
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Resource not found.
+      summary: Get the dictionary schema for an entity
+      tags:
+      - dictionary
+  /_status:
+    get:
+      responses:
+        '200':
+          description: Healthy
+        default:
+          description: Unhealthy
+      summary: Health check endpoint
+      tags:
+      - system
+  /_version:
+    get:
+      responses:
+        '200':
+          description: successful operation
+      summary: Returns the version of Sheepdog
+      tags:
+      - system
+  /admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>:
+    delete:
+      description: Delete existing GDC entities. Using the :http:method:`delete` on
+        a project's endpoint will *completely delete* an entity. The GDC does not
+        allow deletions or creations that would leave nodes without parents, i.e.
+        nodes that do not have an entity from which they were derived. To prevent
+        catastrophic mistakes, the current philosophy is to disallow automatic cascading
+        of deletes. However, to inform a user which entities must be deleted for the
+        target entity to be deleted, the API will respond with at least one entity
+        that must be deleted prior to deleting the target entity.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: A comma separated list of ids specifying the entities to delete.
+          These ids must be official GDC ids.
+        in: path
+        name: ids
+        required: true
+        type: string
+      - description: Set the to_delete sysan as true or false. If none, then don't
+          try to set the sysan, and instead delete the node.
+        in: query
+        name: to_delete
+        type: boolean
+      responses:
+        '200':
+          description: Entities deleted successfully
+        '400':
+          description: User error.
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: Entity not found.
+      summary: Delete entities
+      tags:
+      - entity
+  /admin/<program>/<project>/files/<file_uuid>/reassign:
+    put:
+      description: Manually (re)assign the S3 url for a given node.
+      parameters:
+      - description: The project to which the submitter belongs and in which the entities
+          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+        in: path
+        name: project
+        required: true
+        type: string
+      - description: The program to which the submitter belongs and in which the entities
+          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+        in: path
+        name: program
+        required: true
+        type: string
+      - description: The GDC id of the file to upload.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Bad Request
+        '403':
+          description: Unauthorized request.
+        '404':
+          description: File not found.
+        '405':
+          description: Method Not Allowed.
+      summary: Reassign the S3 URL of a data file
+      tags:
+      - file
+  /template:
+    get:
+      description: Get templates for all entity types.
+      parameters:
+      - description: list of entities' categories to exclude from the template
+        in: query
+        name: exclude
+        type: string
+      - description: list of entities' categories to include in the template
+        in: query
+        name: categories
+        type: string
+      - description: output format, ``csv`` or ``tsv``, default is tsv
+        in: query
+        name: format
+        type: string
+      responses:
+        '200':
+          description: Success.
+      summary: Get templates for all entity types
+      tags:
+      - dictionary
+  /template/<entity>:
+    get:
+      description: Get a template for an entity type.
+      parameters:
+      - description: entity
+        in: path
+        name: entity
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Success.
+      summary: Get a template for an entity type
+      tags:
+      - dictionary
+  /validation/upload_manifest:
+    post:
+      description: Generate a list of errors found in JSON Schema validation.
+      parameters: []
+      responses:
+        '200':
+          description: Success.
+          schema:
+            $ref: '#/definitions/schema_error_list'
+      summary: Validate a manifest of data files
+      tags:
+      - file
+swagger: '2.0'

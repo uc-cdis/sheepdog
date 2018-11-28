@@ -15,7 +15,13 @@ from datamodelutils import models, validators, postgres_admin
 from indexclient.client import IndexClient as SignpostClient
 
 import sheepdog
-from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
+from sheepdog.errors import (
+    APIError,
+    setup_default_handlers,
+    UnhealthyCheck,
+    NotFoundError,
+    InternalError
+)
 from sheepdog.version_data import VERSION, COMMIT
 from sheepdog.globals import (
     dictionary_version,
@@ -86,10 +92,13 @@ def migrate_database(app):
         postgres_admin.create_graph_tables(app.db, timeout=1)
     except Exception:
         if not postgres_admin.check_version(app.db):
-            app.logger.exception("Fail to migrate database, continuing anyway")
-        # if the version is already up to date, that means there is
-        # another migration wins, so silently exit
-        return
+            app.logger.exception("ERROR: Fail to migrate database")
+            sys.exit(1)
+        else:
+            # if the version is already up to date, that means there is
+            # another migration wins, so silently exit
+            app.logger.exception("The database version matches up. No need to do migration")
+            return
     # hardcoded read role
     read_role = 'peregrine'
     # check if such role exists
@@ -138,6 +147,7 @@ def app_init(app):
 
 app = Flask(__name__)
 
+
 # Setup logger
 app.logger.addHandler(get_handler())
 
@@ -146,6 +156,17 @@ setup_default_handlers(app)
 
 @app.route('/_status', methods=['GET'])
 def health_check():
+    """
+    Health check endpoint
+    ---
+    tags:
+      - system
+    responses:
+      200:
+        description: Healthy
+      default:
+        description: Unhealthy
+    """
     with app.db.session_scope() as session:
         try:
             session.execute('SELECT 1')
@@ -156,6 +177,15 @@ def health_check():
 
 @app.route('/_version', methods=['GET'])
 def version():
+    """
+    Returns the version of Sheepdog
+    ---
+    tags:
+      - system
+    responses:
+      200:
+        description: successful operation
+    """
     dictver = {
         'version': dictionary_version(),
         'commit': dictionary_commit(),

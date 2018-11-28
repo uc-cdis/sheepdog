@@ -13,7 +13,7 @@ import flask
 from flask import g
 from moto import mock_s3
 
-from gdcdatamodel import models as md
+from datamodelutils import models as md
 from sheepdog.transactions.upload import UploadTransaction
 from tests.integration.datadict.submission.utils import data_fnames
 
@@ -638,11 +638,11 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
         headers=submitter)
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
+
     path += '&format=json'
     r = client.get(
         path,
         headers=submitter)
-
     data = r.json
     assert len(data) == 1
     assert data[0]['id'] == case_id

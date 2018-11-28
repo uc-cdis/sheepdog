@@ -417,6 +417,69 @@ def test_data_file_update_url_id_provided(
     assert entity['action'] == 'update'
 
 
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._update_acl_uploader_for_file')
+def test_data_file_already_indexed_object_id_provided_hash_match(
+        update_acl_uploader_indexd, create_alias, create_index, get_index_uuid, get_index_hash, client, pg_driver, admin, submitter, submitter_name, cgci_blgsp):
+    """
+    Test submitting when the file is already indexed in the index client,
+    an id is provided in the submission, and the size and hash match those
+    of the indexed file. The empty acl means the file was just uploaded.
+
+    The submission should succeed but no new index should be created. The acl
+    and uploader field should have been updated as part of the data upload
+    flow.
+    """
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    file = copy.deepcopy(DEFAULT_METADATA_FILE)
+    # provide the object_id of an existing indexed file
+    file['object_id'] = '14fd1746-61bb-401a-96d2-342cfaf70000'
+
+    document = MagicMock()
+    document.did = file['object_id']
+    document.size = file['file_size']
+    document.hashes = { 'md5': file['md5sum'], 'other': 'abc123' }
+    document.acl = []
+    document.uploader = submitter_name
+    get_index_uuid.return_value = document
+    get_index_hash.return_value = document
+
+    # only return the correct document by uuid IF the uuid provided is
+    # the one from above
+    def get_index_by_uuid(uuid):
+        if uuid == document.did:
+            return document
+        else:
+            return None
+    get_index_uuid.side_effect = get_index_by_uuid
+
+    resp = submit_metadata_file(
+        client, pg_driver, admin, submitter, cgci_blgsp, data=file)
+
+    # no index or alias creation
+    assert not create_index.called
+    assert not create_alias.called
+
+    # response
+    assert_positive_response(resp)
+    entity = assert_single_entity_from_response(resp)
+    assert entity['action'] == 'create'
+
+    path = '/v0/submission/CGCI/BLGSP/export/?format=json&ids={nid}'.format(nid=entity['id'])
+    r = client.get(path, headers=submitter)
+
+    data = r.json
+    assert len(data) == 1
+    assert data[0]['object_id'] == file['object_id']
+
+    # check that the acl and uploader fields have been updated in indexd
+    assert update_acl_uploader_indexd.called
+
+
 """ ----- TESTS THAT SHOULD RESULT IN SUBMISSION FAILURES ARE BELOW  ----- """
 
 
@@ -677,3 +740,116 @@ def test_create_file_no_required_index(create_alias, create_index, get_index_uui
 
     data = r.json
     assert len(data) == 1
+
+
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+def test_data_file_already_indexed_object_id_provided_hash_no_match(
+        create_alias, create_index, get_index_uuid, get_index_hash,
+        client, pg_driver, admin, submitter, cgci_blgsp):
+    """
+    Test submitting when the file is already indexed in the index client,
+    its object_id is provided in the submission, and the size and hash DO NOT
+    match those of the indexed file. The empty acl means the file was just
+    uploaded.
+
+    The submission should fail. The acl and uploader field should NOT have
+    been updated.
+    """
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    file = copy.deepcopy(DEFAULT_METADATA_FILE)
+    # provide the object_id of an existing indexed file
+    file['object_id'] = '14fd1746-61bb-401a-96d2-342cfaf70000'
+
+    document = MagicMock()
+    document.did = file['object_id']
+    document.size = file['file_size'] + 10 # change hash/size
+    document.hashes = { 'md5': file['md5sum'] }
+    document.acl = []
+    document.uploader = DEFAULT_SUBMITTER_ID
+    get_index_uuid.return_value = document
+    get_index_hash.return_value = document
+
+    # only return the correct document by uuid IF the uuid provided is
+    # the one from above
+    def get_index_by_uuid(uuid):
+        if uuid == document.did:
+            return document
+        else:
+            return None
+    get_index_uuid.side_effect = get_index_by_uuid
+
+    resp = submit_metadata_file(
+        client, pg_driver, admin, submitter, cgci_blgsp, data=file)
+
+    # no index or alias creation
+    assert not create_index.called
+    assert not create_alias.called
+
+    # response
+    assert_negative_response(resp)
+    entity = assert_single_entity_from_response(resp)
+
+    # check that the acl and uploader fields have NOT been updated in indexd
+    assert not document.acl
+    assert document.uploader == DEFAULT_SUBMITTER_ID
+
+
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
+@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+def test_data_file_already_indexed_object_id_provided_no_hash(
+        create_alias, create_index, get_index_uuid, get_index_hash,
+        client, pg_driver, admin, submitter, cgci_blgsp):
+    """
+    Test submitting when the file is already indexed in the index client,
+    its object_id is provided in the submission, and the size and hash DO NOT
+    match those of the indexed file. The empty acl means the file was just
+    uploaded and the empty hash and size mean the file is not ready for
+    metadata submission yet.
+
+    The submission should fail. The acl and uploader field should NOT have
+    been updated.
+    """
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    file = copy.deepcopy(DEFAULT_METADATA_FILE)
+    # provide the object_id of an existing indexed file
+    file['object_id'] = '14fd1746-61bb-401a-96d2-342cfaf70000'
+
+    document = MagicMock()
+    document.did = file['object_id']
+    document.size = None
+    document.hashes = None
+    document.acl = []
+    document.uploader = DEFAULT_SUBMITTER_ID
+    get_index_uuid.return_value = document
+    get_index_hash.return_value = document
+
+    # only return the correct document by uuid IF the uuid provided is
+    # the one from above
+    def get_index_by_uuid(uuid):
+        if uuid == document.did:
+            return document
+        else:
+            return None
+    get_index_uuid.side_effect = get_index_by_uuid
+
+    resp = submit_metadata_file(
+        client, pg_driver, admin, submitter, cgci_blgsp, data=file)
+
+    # no index or alias creation
+    assert not create_index.called
+    assert not create_alias.called
+
+    # response
+    assert_negative_response(resp)
+    entity = assert_single_entity_from_response(resp)
+
+    # check that the acl and uploader fields have NOT been updated in indexd
+    assert not document.acl
+    assert document.uploader == DEFAULT_SUBMITTER_ID

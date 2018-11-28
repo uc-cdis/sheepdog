@@ -157,7 +157,8 @@ def get_tsv_dict_plural_links(entity, link_titles):
 
         link = entity[link_name]
         if len(link) >= link_id and alias_root in link[link_id-1]:
-            tsv_dict[key] = link[int(link_id)-1][alias_root]
+            val = link[int(link_id)-1][alias_root]
+            tsv_dict[key] = list_to_comma_string(val)
 
     return tsv_dict
 
@@ -178,7 +179,7 @@ def get_tsv_dict_singular_links(entity, link_titles):
             log.warning('called on plural links: %s', links)
 
         if links:
-            tsv_dict[key] = links[0][link_alias]
+            tsv_dict[key] = list_to_comma_string(links[0][link_alias])
         else:
             tsv_dict[key] = ''
 
@@ -229,10 +230,26 @@ def get_node_non_link_json(node, props):
     return entity
 
 
+def list_to_comma_string(val):
+    """
+    Handle array fields by converting them to a comma-separated string.
+
+    Example:
+        ['1','2','3'] -> 1,2,3
+    """
+
+    if val is None:
+        return ''
+
+    if isinstance(val, list):
+        val = ','.join(val)
+    return val
+
+
 def get_tsv_dict_non_links(entity, non_link_titles):
     """Return non-link portion of tsv dict for single entity."""
     return {
-        key: (entity[key] if entity[key] is not None else '')
+        key: list_to_comma_string(entity[key])
         for key in non_link_titles
     }
 
@@ -889,10 +906,11 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
             # Write in the properties from just the node.
             node = result[0]
             for prop in props:
-                row.append(node[prop] or '')
-                json_obj[prop] = node[prop] or ''
+                val = list_to_comma_string(node[prop])
+                row.append(val)
+                json_obj[prop] = val
             # Tack on the linked properties.
-            row.extend(map(lambda col: col or '', result[1:]))
+            row.extend(map(lambda col: list_to_comma_string(col), result[1:]))
             for idx, title in enumerate(titles_linked):
                 json_obj["link_fields"][title] = result[idx + 1] or ''
             # Convert row elements to string if they are not

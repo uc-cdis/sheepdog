@@ -3,7 +3,7 @@ import re
 import uuid
 import indexclient
 
-from gdcdatamodel import models
+from datamodelutils import models
 
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')

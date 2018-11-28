@@ -38,9 +38,13 @@ before_script:
   - python bin/setup_test_database.py
   - mkdir -p tests/integration/resources/keys; cd tests/integration/resources/keys; openssl genrsa -out test_private_key.pem 2048; openssl rsa -in test_private_key.pem -pubout -out test_public_key.pem; cd -
 
-# command to run tests
+# commands to run tests
 script:
-- py.test -vv --cov=sheepdog --cov-report xml tests/
+  # datadict and datadictwithobjid tests must run separately to allow
+  # loading different datamodels
+- py.test -vv --cov=sheepdog --cov-report xml tests/integration/datadict
+- py.test -vv --cov=sheepdog --cov-report xml tests/integration/datadictwithobjid
+- py.test -vv --cov=sheepdog --cov-report xml tests/unit
 
 after_script:
 - python-codacy-coverage -r coverage.xml
@@ -48,4 +52,3 @@ after_script:
 env:
   global:
     - GDC_ES_HOST=localhost
-
