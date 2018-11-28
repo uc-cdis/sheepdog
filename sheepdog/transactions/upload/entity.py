@@ -302,43 +302,44 @@ class UploadEntity(EntityBase):
         lookup an existing node or create one if it doesn't exist.
 
         Return:
-            psqlgraph.Node:
+            Optional[psqlgraph.Node]
         """
-        nodes = lookup_node(
-            self.transaction.db_driver,
-            self.entity_type,
-            self.entity_id,
-            self.secondary_keys
-        ).all()
-
-        if len(nodes) > 1:
-            return self.record_error(
-                'Entity is not unique, {} entities found with {}'
-                .format(len(nodes), self.secondary_keys),
+        # Expect one existing node matching the secondary keys.
+        try:
+            node = lookup_node(
+                self.transaction.db_driver,
+                self.entity_type,
+                self.entity_id,
+                self.secondary_keys
+            ).one()
+        except sqlalchemy.orm.exc.NoResultFound:
+            return self.get_node_create()
+        except sqlalchemy.orm.exc.MultipleResultsFound:
+            self.record_error(
+                'Entity is not unique, multiple entities found with {}'
+                .format(self.secondary_keys),
                 type=EntityErrors.NOT_UNIQUE,
             )
-
-        # If no node was found, create a new one
-        if len(nodes) == 0:
-            return self.get_node_create()
+            return None
 
         # Check user permissions for updating nodes
         if 'update' not in self.get_user_roles():
-            return self.record_error(
+            self.record_error(
                 'You do not have update permission for project {}'
                 .format(self.transaction.project_id),
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
+            return None
 
-        node = nodes.pop()
         self.old_props = {k: v for k, v in node.props.iteritems()}
 
         if node.label != self.entity_type:
-            return self.record_error(
+            self.record_error(
                 'Existing {} entity found with type different from {}'
                 .format(node.label, self.entity_type),
                 type=EntityErrors.NOT_UNIQUE,
             )
+            return None
 
         # Verify that the node is in the correct project
         if not self._verify_node_project_id(node):
@@ -350,11 +351,12 @@ class UploadEntity(EntityBase):
         self._merge_doc_links(node)
 
         if self.entity_id and node.node_id != self.entity_id:
-            return self.record_error(
+            self.record_error(
                 'Existing {} entity found with id different from {}'
                 .format(node, self.entity_id),
                 type=EntityErrors.NOT_UNIQUE,
             )
+            return None
 
         # Since we are updating the node, we have to set its state to
         # ``validated``.  This means that this version of the node has
