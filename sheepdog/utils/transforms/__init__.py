@@ -51,16 +51,13 @@ def set_row_type(row):
 
 
 def strip(text):
-    """Strip text as unicode (which includes non-ascii whitespace).
-
-    this will cover a case if the value is NoneType
+    """
+    Strip if the text is a basestring
     """
 
     if not isinstance(text, basestring):
         return text
 
-    elif not isinstance(text, unicode):
-        return unicode(text, "UTF-8").strip()
 
     else:
         return text.strip()
