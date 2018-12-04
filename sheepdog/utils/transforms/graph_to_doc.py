@@ -735,6 +735,9 @@ class ExportFile(object):
                 exclude_id=False,
             )
             self.templates[node.label] = props
+        # TODO: Explain
+        if 'urls' in props:
+            props.remove('urls')
         entity.update(get_node_link_json(node, props))
         entity.update(get_node_non_link_json(node, props))
         return entity
