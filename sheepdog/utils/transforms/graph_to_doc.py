@@ -464,6 +464,10 @@ def entity_to_template_json(links, schema, exclude_id):
             keys[key] = schema['id']
         else:
             keys[key] = None
+    #TODO: Add explanation for below
+    #TODO: Add tests for below
+    if schema['category'] == 'data_file':
+        keys['urls'] = None
     return keys
 
 
@@ -509,6 +513,10 @@ def entity_to_template_delimited(links, schema, exclude_id):
                 keys.append(key + '.' + prop)
         else:
             keys.append(key)
+    #TODO: Add explanation for below
+    #TODO: Add tests for below
+    if schema['category'] == 'data_file':
+        keys.append('urls')
 
     return keys
 
