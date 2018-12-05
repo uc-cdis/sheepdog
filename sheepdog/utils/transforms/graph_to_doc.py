@@ -458,17 +458,21 @@ def entity_to_template_json(links, schema, exclude_id):
         if not is_property_hidden(key, schema, exclude_id)
     }
     for key in properties:
-        if key in links:
-            keys[key] = links[key]
-        elif key == 'type':
-            keys[key] = schema['id']
+        if 'required' in schema and key in schema['required']:
+            marked_key = "*" + key
         else:
-            keys[key] = None
+            marked_key = key
+        if key in links:
+            keys[marked_key] = links[key]
+        elif key == 'type':
+            keys[marked_key] = schema['id']
+        else:
+            keys[marked_key] = None
     # users need to submit the 'urls' field, but 'urls' is not in the schema
     # (since it is a property of records in indexd, and is not in the dict).
     # So we are adding it to the templates here.
     if schema['category'] == 'data_file':
-        keys['urls'] = None
+        keys['*urls'] = None
     return keys
 
 
@@ -509,16 +513,20 @@ def entity_to_template_delimited(links, schema, exclude_id):
         if not is_property_hidden(key, schema, exclude_id)
     ]
     for key in visible_keys:
+        if 'required' in schema and key in schema['required']:
+            marked_key = '*' + key
+        else:
+            marked_key = key
         if key in links:
             for prop in links[key]:
-                keys.append(key + '.' + prop)
+                keys.append(marked_key + '.' + prop)
         else:
-            keys.append(key)
+            keys.append(marked_key)
     # users need to submit the 'urls' field, but 'urls' is not in the schema
     # (since it is a property of records in indexd, and is not in the dict).
     # So we are adding it to the templates here.
     if schema['category'] == 'data_file':
-        keys.append('urls')
+        keys.append('*urls')
 
     return keys
 
