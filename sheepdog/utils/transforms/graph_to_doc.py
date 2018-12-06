@@ -459,7 +459,7 @@ def entity_to_template_json(links, schema, exclude_id):
     }
     for key in properties:
         if 'required' in schema and key in schema['required']:
-            marked_key = "*" + key
+            marked_key = '*' + key
         else:
             marked_key = key
         if key in links:
@@ -747,8 +747,13 @@ class ExportFile(object):
             self.templates[node.label] = props
         # 'urls' is part of the templates but not part of the dicts
         # and not exported, so we remove it here
-        if 'urls' in props:
-            props.remove('urls')
+        if '*urls' in props:
+            props.remove('*urls')
+        for prop in props:
+            if prop[0] == '*':
+                stripped = prop[1:]
+                props.remove(prop)
+                props.append(stripped)
         entity.update(get_node_link_json(node, props))
         entity.update(get_node_non_link_json(node, props))
         return entity
@@ -817,9 +822,16 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
 
         # Get the template for this node, which is basically the column
         # headers in the resulting TSV.
-        template = entity_to_template(
+        unstripped_template = entity_to_template(
             node_label, exclude_id=False, file_format='tsv'
         )
+        # Strip asterisks.
+        template = []
+        for prop in unstripped_template:
+            if prop[0] == '*':
+                template.append(prop[1:])
+            else:
+                template.append(prop)
         # Get the titles so the linked fields are at the end (to match the
         # structure of the query we will run later).
         titles_non_linked = []
