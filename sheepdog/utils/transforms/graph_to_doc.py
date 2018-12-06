@@ -749,13 +749,14 @@ class ExportFile(object):
         # and not exported, so we remove it here
         if '*urls' in props:
             props.remove('*urls')
+        stripped_props = []
         for prop in props:
             if prop[0] == '*':
-                stripped = prop[1:]
-                props.remove(prop)
-                props.append(stripped)
-        entity.update(get_node_link_json(node, props))
-        entity.update(get_node_non_link_json(node, props))
+                stripped_props.append(prop[1:])
+            else:
+                stripped_props.append(prop)
+        entity.update(get_node_link_json(node, stripped_props))
+        entity.update(get_node_non_link_json(node, stripped_props))
         return entity
 
     def get_dictionary(self):
