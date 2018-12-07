@@ -164,13 +164,16 @@ def assert_project_exists(func):
 
 def check_action_allowed_for_file(indexd_doc, node, action, file_state, s3_url):
 
-    # File is released
-    if indexd_doc.version or indexd_doc.metadata.get('release_number'):
-        raise UserError('File is already released')
-
-    # File is submitted but not released
-    if node and node.batch_id:
-        raise UserError('File is already submitted')
+    # Checks if we have a valid graph node
+    if node:
+        # Node is released or submitted
+        if node.state in [u'released', u'submitted']:
+            raise UserError('Node {} is already {}'.format(node, node.state))
+    # Otherwise, we're working off of just the indexd node
+    else:
+        if indexd_doc.version or indexd_doc.metadata.get('release_number'):
+            raise UserError('Doc {} is already released: ver {}, release {}', 
+                indexd_doc.did, indexd_doc.version, indexd_doc.metadata.get('release_number'))
 
     # if record not found, allow action
     if file_state is None:
