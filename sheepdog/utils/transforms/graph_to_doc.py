@@ -464,6 +464,11 @@ def entity_to_template_json(links, schema, exclude_id):
             keys[key] = schema['id']
         else:
             keys[key] = None
+    # users need to submit the 'urls' field, but 'urls' is not in the schema
+    # (since it is a property of records in indexd, and is not in the dict).
+    # So we are adding it to the templates here.
+    if schema['category'] == 'data_file':
+        keys['urls'] = None
     return keys
 
 
@@ -509,6 +514,11 @@ def entity_to_template_delimited(links, schema, exclude_id):
                 keys.append(key + '.' + prop)
         else:
             keys.append(key)
+    # users need to submit the 'urls' field, but 'urls' is not in the schema
+    # (since it is a property of records in indexd, and is not in the dict).
+    # So we are adding it to the templates here.
+    if schema['category'] == 'data_file':
+        keys.append('urls')
 
     return keys
 
@@ -727,6 +737,10 @@ class ExportFile(object):
                 exclude_id=False,
             )
             self.templates[node.label] = props
+        # 'urls' is part of the templates but not part of the dicts
+        # and not exported, so we remove it here
+        if 'urls' in props:
+            props.remove('urls')
         entity.update(get_node_link_json(node, props))
         entity.update(get_node_non_link_json(node, props))
         return entity
