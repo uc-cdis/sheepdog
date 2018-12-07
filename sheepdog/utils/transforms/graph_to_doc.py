@@ -472,7 +472,7 @@ def entity_to_template_json(links, schema, exclude_id):
     # (since it is a property of records in indexd, and is not in the dict).
     # So we are adding it to the templates here.
     if schema['category'] == 'data_file':
-        keys['*urls'] = None
+        keys['urls'] = None
     return keys
 
 
@@ -526,7 +526,7 @@ def entity_to_template_delimited(links, schema, exclude_id):
     # (since it is a property of records in indexd, and is not in the dict).
     # So we are adding it to the templates here.
     if schema['category'] == 'data_file':
-        keys.append('*urls')
+        keys.append('urls')
 
     return keys
 
@@ -747,14 +747,11 @@ class ExportFile(object):
             self.templates[node.label] = props
         # 'urls' is part of the templates but not part of the dicts
         # and not exported, so we remove it here
-        if '*urls' in props:
-            props.remove('*urls')
-        stripped_props = []
-        for prop in props:
-            if prop[0] == '*':
-                stripped_props.append(prop[1:])
-            else:
-                stripped_props.append(prop)
+        if 'urls' in props:
+            props.remove('urls')
+
+        stripped_props = [prop.lstrip('*') for prop in props]
+
         entity.update(get_node_link_json(node, stripped_props))
         entity.update(get_node_non_link_json(node, stripped_props))
         return entity
@@ -827,12 +824,7 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
             node_label, exclude_id=False, file_format='tsv'
         )
         # Strip asterisks.
-        template = []
-        for prop in unstripped_template:
-            if prop[0] == '*':
-                template.append(prop[1:])
-            else:
-                template.append(prop)
+        template = [prop.lstrip('*') for prop in unstripped_template]
         # Get the titles so the linked fields are at the end (to match the
         # structure of the query we will run later).
         titles_non_linked = []

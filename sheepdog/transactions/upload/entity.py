@@ -108,11 +108,7 @@ class UploadEntity(EntityBase):
             )
         # Remove asterisks from doc keys
         for key in doc:
-            if key[0] == '*':
-                new_key = key[1:]
-                saved_val = doc[key]
-                doc.pop(key)
-                doc[new_key] = saved_val
+            doc[key.lstrip('*')] = doc.pop(key)
 
         self.doc = doc
         self._parse_type()
