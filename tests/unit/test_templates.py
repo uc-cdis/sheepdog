@@ -14,7 +14,6 @@ def test_urls_in_templates_json():
         else:
             assert 'urls' not in template
 
-
 def test_urls_in_templates_tsv():
     """Test that urls is in TSV template iff entity is data_file"""
     for label in dictionary.schema:
