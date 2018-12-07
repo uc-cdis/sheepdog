@@ -458,12 +458,16 @@ def entity_to_template_json(links, schema, exclude_id):
         if not is_property_hidden(key, schema, exclude_id)
     }
     for key in properties:
-        if key in links:
-            keys[key] = links[key]
-        elif key == 'type':
-            keys[key] = schema['id']
+        if 'required' in schema and key in schema['required']:
+            marked_key = '*' + key
         else:
-            keys[key] = None
+            marked_key = key
+        if key in links:
+            keys[marked_key] = links[key]
+        elif key == 'type':
+            keys[marked_key] = schema['id']
+        else:
+            keys[marked_key] = None
     # users need to submit the 'urls' field, but 'urls' is not in the schema
     # (since it is a property of records in indexd, and is not in the dict).
     # So we are adding it to the templates here.
@@ -509,11 +513,15 @@ def entity_to_template_delimited(links, schema, exclude_id):
         if not is_property_hidden(key, schema, exclude_id)
     ]
     for key in visible_keys:
+        if 'required' in schema and key in schema['required']:
+            marked_key = '*' + key
+        else:
+            marked_key = key
         if key in links:
             for prop in links[key]:
-                keys.append(key + '.' + prop)
+                keys.append(marked_key + '.' + prop)
         else:
-            keys.append(key)
+            keys.append(marked_key)
     # users need to submit the 'urls' field, but 'urls' is not in the schema
     # (since it is a property of records in indexd, and is not in the dict).
     # So we are adding it to the templates here.
@@ -741,8 +749,11 @@ class ExportFile(object):
         # and not exported, so we remove it here
         if 'urls' in props:
             props.remove('urls')
-        entity.update(get_node_link_json(node, props))
-        entity.update(get_node_non_link_json(node, props))
+
+        stripped_props = [prop.lstrip('*') for prop in props]
+
+        entity.update(get_node_link_json(node, stripped_props))
+        entity.update(get_node_non_link_json(node, stripped_props))
         return entity
 
     def get_dictionary(self):
@@ -809,9 +820,11 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
 
         # Get the template for this node, which is basically the column
         # headers in the resulting TSV.
-        template = entity_to_template(
+        unstripped_template = entity_to_template(
             node_label, exclude_id=False, file_format='tsv'
         )
+        # Strip asterisks.
+        template = [prop.lstrip('*') for prop in unstripped_template]
         # Get the titles so the linked fields are at the end (to match the
         # structure of the query we will run later).
         titles_non_linked = []
