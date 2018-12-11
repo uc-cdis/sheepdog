@@ -6,7 +6,7 @@ from sheepdog import utils
 from sheepdog.errors import UserError
 
 
-def generate_check_action_data(action='delete'):
+def generate_check_action_data(action='delete', node_state='validated'):
     """Generate generic data to use with check_action_allowed_for_file"""
 
     uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
@@ -27,6 +27,7 @@ def generate_check_action_data(action='delete'):
     indexd_doc = Document(None, uuid, indexd_doc)
     node = models.Experiment(uuid)
     node.batch_id = None
+    node.state = node_state
 
     return indexd_doc, node, action, file_state, s3_url
 
@@ -60,7 +61,7 @@ def test_released_check_action_allowed_for_file(release_number, version):
     if a user tries to deleted a released node.
     """
 
-    indexd_doc, node, action, file_state, s3_url = generate_check_action_data()
+    indexd_doc, node, action, file_state, s3_url = generate_check_action_data(node_state=u'released')
     indexd_doc.metadata['release_number'] = release_number
     indexd_doc.version = version
 
@@ -81,7 +82,7 @@ def test_submitted_check_action_allowed_for_file():
     if a user tries to deleted a submitted node.
     """
 
-    indexd_doc, node, action, file_state, s3_url = generate_check_action_data()
+    indexd_doc, node, action, file_state, s3_url = generate_check_action_data(node_state=u'submitted')
     node.batch_id = 1
 
     message = 'Cannot delete a submitted node. Should have thrown a UserError'
