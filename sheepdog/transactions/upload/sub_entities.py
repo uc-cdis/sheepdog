@@ -612,7 +612,7 @@ class FileUploadEntity(UploadEntity):
 
         # update acl and uploader fields in indexd
         data = json.dumps({
-            'acl': ['read', 'write'],
+            'acl': [self.transaction.project],
             'uploader': None
         })
         url = '/index/' + self.object_id
