@@ -170,7 +170,7 @@ def check_action_allowed_for_file(indexd_doc, node, action, file_state, s3_url):
         if node.state in [u'released', u'submitted']:
             raise UserError('Node {} is already {}'.format(node, node.state))
     # Otherwise, we're working off of just the indexd node
-    else:
+    elif indexd_doc:
         if indexd_doc.version or indexd_doc.metadata.get('release_number'):
             raise UserError('Doc {} is already released: ver {}, release {}', 
                 indexd_doc.did, indexd_doc.version, indexd_doc.metadata.get('release_number'))
