@@ -228,7 +228,7 @@ class FileUploadEntity(UploadEntity):
                 # NOTE: The call below populates record errors
                 self._is_index_id_identical_to_node_id()
             else:
-                if self.file_exists:
+                if self.file_exists and not self.object_id:
                     self._is_valid_index_for_file()
 
         return node
