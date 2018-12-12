@@ -97,7 +97,7 @@ def migrate_database(app):
         else:
             # if the version is already up to date, that means there is
             # another migration wins, so silently exit
-            app.logger.exception("The database version matches up. No need to do migration")
+            app.logger.info("The database version matches up. No need to do migration")
             return
     # hardcoded read role
     read_role = 'peregrine'
