@@ -56,6 +56,9 @@ UNVERIFIED_PROJECT_CODES = []
 #: State a file should be put in given an error.
 ERROR_STATE = 'error'
 
+# Url state when deleted
+DELETE_STATE = 'deleted'
+
 def case_cache_enabled():
     """
     Return if the case cache is enabled or not. NOTE that the dictionary must be initialized
