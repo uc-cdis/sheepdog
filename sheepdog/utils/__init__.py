@@ -42,6 +42,7 @@ ALLOWED_STATES_FOR_UPLOAD = [
     submitted_state(),
     UPLOADING_STATE,
     UPLOADED_STATE,
+    DELETE_STATE
 ]
 
 
