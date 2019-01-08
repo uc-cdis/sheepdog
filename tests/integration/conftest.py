@@ -1,6 +1,7 @@
 # pylint: disable=unused-import
 import os
 import json
+import uuid
 
 import pytest
 import requests
@@ -10,9 +11,11 @@ from cdisutilstest.code.conftest import (
     indexd_client,
     indexd_server,
 )
+from cdisutilstest.code.indexd_fixture import create_random_index
+
 from fence.jwt.token import generate_signed_access_token
 from psqlgraph import PsqlGraphDriver
-from gdcdatamodel.models import Edge, Node
+from gdcdatamodel.models import Edge, Node, AlignedReads
 from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
 from userdatamodel.driver import SQLAlchemyDriver
@@ -327,3 +330,19 @@ def dictionary_setup(_app):
             _app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
         except AssertionError:
             _app.logger.info('Blueprint is already registered!!!')
+
+
+@pytest.fixture
+def released_nodes(pg_driver, indexd_client):
+    with pg_driver.session_scope():
+        doc = create_random_index(indexd_client)
+        node = AlignedReads(node_id=doc.did,
+                            state="released",
+                            submitter_id="TEST",
+                            project_id="TEST-TEST",
+                            file_size=doc.size,
+                            md5sum=doc.hashes["md5"])
+        pg_driver.node_insert(node)
+    yield doc.did
+    with pg_driver.session_scope():
+        pg_driver.node_delete(node_id=doc.did)
