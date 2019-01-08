@@ -137,6 +137,7 @@ class DeletionTransaction(TransactionBase):
         if self.success:
             delete_function()
             self.commit()
+            self.mark_indexd_delete(ids)
         else:
             self.session.rollback()
             self.set_transaction_log_state(TX_LOG_STATE_FAILED)
@@ -177,3 +178,12 @@ class DeletionTransaction(TransactionBase):
                 } for c in node._related_cases_from_cache]
                 for node in nodes
             }
+    
+    def mark_indexd_delete(self, ids):
+        # TODO: handle patch failure, no need to handle missing doc
+        # 01/10/19 there's no good way to handle indexd patch failure
+        # meaning there could be nodes that are deleted but indexd failed to flag as deleted
+        docs = self.indexd.bulk_request(ids)
+        for doc in docs:
+            doc.metadata['deleted'] = True
+            doc.patch()
