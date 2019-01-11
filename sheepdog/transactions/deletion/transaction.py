@@ -138,7 +138,14 @@ class DeletionTransaction(TransactionBase):
 
         if self.success:
             delete_function()
+            
+            # wrong data in indexd only if deleting entity and self.commit() failed
+            # still a slight chance of bad data
             self.commit()
+
+
+            # flag entry to delete in indexd before commit
+            # any exception would block delete to commit
             if delete_entity:
                 self.mark_indexd_delete(ids)
         else:
@@ -186,6 +193,7 @@ class DeletionTransaction(TransactionBase):
         # TODO: handle patch failure, no need to handle missing doc
         # 01/10/19 there's no good way to handle indexd patch failure
         # meaning there could be nodes that are deleted but indexd failed to flag as deleted
+        # exception raised here won't be recorded in transaction
         docs = self.indexd.bulk_request(ids)
         for doc in docs:
             doc.metadata['deleted'] = True
