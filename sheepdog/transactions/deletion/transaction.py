@@ -127,8 +127,10 @@ class DeletionTransaction(TransactionBase):
         """Delete nodes or fields from session and commit if successful"""
 
         if self.fields_to_delete:
+            delete_entity = False
             delete_function = self._delete_fields
         else:
+            delete_entity = True
             delete_function = self._delete_entities
 
         self.get_nodes(ids)
@@ -137,7 +139,8 @@ class DeletionTransaction(TransactionBase):
         if self.success:
             delete_function()
             self.commit()
-            self.mark_indexd_delete(ids)
+            if delete_entity:
+                self.mark_indexd_delete(ids)
         else:
             self.session.rollback()
             self.set_transaction_log_state(TX_LOG_STATE_FAILED)
