@@ -138,14 +138,10 @@ class DeletionTransaction(TransactionBase):
 
         if self.success:
             delete_function()
-            
-            # wrong data in indexd only if deleting entity and self.commit() failed
-            # still a slight chance of bad data
             self.commit()
 
-
-            # flag entry to delete in indexd before commit
-            # any exception would block delete to commit
+            # flag entry to delete in indexd after commit
+            # indexd patch failure will cause bad data
             if delete_entity:
                 self.mark_indexd_delete(ids)
         else:
