@@ -1,6 +1,7 @@
 # pylint: disable=unused-import
 import os
 import json
+import uuid
 
 import pytest
 import requests
@@ -10,6 +11,8 @@ from cdisutilstest.code.conftest import (
     indexd_client,
     indexd_server,
 )
+from cdisutilstest.code.indexd_fixture import create_random_index
+
 from fence.jwt.token import generate_signed_access_token
 from psqlgraph import PsqlGraphDriver
 from gdcdatamodel.models import Edge, Node
