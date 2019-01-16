@@ -88,7 +88,7 @@ class UploadEntity(EntityBase):
         self._is_replaceable = self._config.get('CREATE_REPLACEABLE', False)
 
         self.old_uuid = None
-        self.transaction_roles = ["create", "update"]
+        self.create_update_roles = ["create", "update"]
 
     @property
     def secondary_keys(self):
@@ -220,7 +220,7 @@ class UploadEntity(EntityBase):
         """ Validate submitted file UUID if specified and record error if invalid. """
 
         self.entity_id = self.doc.get('id')
-        if self.transaction.role in self.transaction_roles and self.entity_id and not REGEX_UUID.match(self.entity_id):
+        if self.transaction.role in self.create_update_roles and self.entity_id and not REGEX_UUID.match(self.entity_id):
             self.record_error(
                 'Cannot create/update an entity with custom id that is not a UUID.',
                 keys=['id'], type=EntityErrors.INVALID_VALUE

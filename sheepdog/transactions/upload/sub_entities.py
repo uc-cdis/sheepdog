@@ -233,7 +233,7 @@ class FileUploadEntity(UploadEntity):
                 if not self.file_exists:
                     self._register_index()
 
-            # role will only be set to version is node passed is_versionable check
+            # role will only be set to version if node passed the _should_version_node check
             elif role == 'version':
                 self._new_version_index()
 
@@ -698,7 +698,7 @@ class FileUploadEntity(UploadEntity):
 
     def _is_modified_release_node(self, node):
         """ Checks if the current entity"""
-        return node is not None and node.state == "released" and \
+        return node is not None and node.state == RELEASED_NODE_STATES and \
             (self.old_props.get("file_size") != self._get_file_size() or
              self.old_props.get("md5sum") != self.doc.get("md5sum"))
 
