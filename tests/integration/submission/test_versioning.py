@@ -1,3 +1,5 @@
+import random
+
 import pytest
 import os
 from gdcdatamodel import models as md
@@ -204,6 +206,7 @@ def test_creating_new_versioned_file(
                 submitter,
                 method='put',
                 sur_filename=file_name,
+                file_size=random.randint(19, 300)
             )
 
         did = sur_entity['id']

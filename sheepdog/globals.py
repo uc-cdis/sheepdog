@@ -224,6 +224,5 @@ UPDATABLE_FILE_STATES = [
 
 # Below is the list of node states that are treated as "released"
 RELEASED_NODE_STATES = [
-    'released',
-    'live',
+    'released'
 ]

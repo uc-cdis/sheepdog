@@ -253,7 +253,7 @@ class UploadEntity(EntityBase):
         Return:
             psqlgraph.Node: Node you just created
         """
-
+        self._set_entity_id()
         # Check user permissions for updating nodes
         roles = self.get_user_roles()
         if 'create' not in roles:
@@ -287,8 +287,6 @@ class UploadEntity(EntityBase):
                         .format(submitter_id),
                         keys=['submitter_id'],
                         type=EntityErrors.NOT_FOUND)
-
-        self._set_entity_id()
 
         # Assert that the node doesn't already exist
         if not skip_node_lookup:
