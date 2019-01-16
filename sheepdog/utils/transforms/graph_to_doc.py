@@ -833,7 +833,10 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
             if is_link_field(title):
                 titles_linked.append(title)
             else:
-                titles_non_linked.append(title)
+                # 'urls' is part of the templates but not part of the dicts
+                # and not exported, so we remove it here
+                if title != 'urls':
+                    titles_non_linked.append(title)
         titles = titles_non_linked + titles_linked
         # Example ``titles``:
         #
