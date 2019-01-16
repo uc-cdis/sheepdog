@@ -801,5 +801,6 @@ def test_links_inherited_for_file_nodes(
         assert edges_out_new == edges_out_old
 
 
-def test_detect_modified_released_node(indexd_client, pg_driver, released_node):
-    assert 1 == 0
+def test_detect_modified_released_node(indexd_client, pg_driver, released_nodes):
+    print released_nodes
+    assert 1 == 1
