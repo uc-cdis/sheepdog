@@ -107,15 +107,10 @@ class FileUploadEntity(UploadEntity):
         self.edges_in = set()
 
     def instantiate(self):
+        self._populate_file_exist_in_index()
         super(FileUploadEntity, self).instantiate()
 
         if not self.node or not self.entity_id:
-            return
-
-        indexd_doc = get_indexd(
-            self.entity_id, self.transaction.indexd, return_not_found=True)
-
-        if not indexd_doc:
             return
 
         if self.node.state == 'submitted':
@@ -148,8 +143,6 @@ class FileUploadEntity(UploadEntity):
         Return:
             psqlgraph.Node
         """
-        self._populate_file_exist_in_index()
-        self._set_entity_id()
         # call to super must happen after setting node and file ids here
         node = super(FileUploadEntity, self).get_node_create(
             skip_node_lookup=skip_node_lookup,
@@ -170,34 +163,21 @@ class FileUploadEntity(UploadEntity):
         # entity_id is set to the node_id here
         node = super(FileUploadEntity, self).get_node_merge()
 
-        if node.state in RELEASED_NODE_STATES:
-            node = self.get_node_recreate()
-
-        self._populate_file_exist_in_index()
-        self._is_valid_index_id_for_graph()
-
-        # if no indexd record, do not check if file updatable
-        if not self.transaction.indexd.get(node.node_id):
-            self.file_exists = False
-            return node
-
-        file_state = get_indexd_state(
-            node.node_id,
-            self.s3_url,
-            self.transaction.indexd
-        )
-
-        # verify that update is allowed
-        if not self.is_updatable_file_node(node):
-            self.record_error(
-                ("This file is already in file_state '{}' and cannot be "
-                 "updated. The raw data exists in the file storage "
-                 "and modifying the Entity now is unsafe and may cause "
-                 "problems for any processes or users consuming "
-                 "this data.").format(file_state),
-                keys=['file_state'],
-                type=EntityErrors.INVALID_PERMISSIONS,
-            )
+        if self._is_versionable(node):
+            return self.get_node_recreate()
+        else:
+            # verify that update is allowed
+            if self.file_exists and not self.is_updatable_file_node(node):
+                file_state = self.get_indexed_document_state(url=self.s3_url)
+                self.record_error(
+                    ("This file is already in file_state '{}' and cannot be "
+                     "updated. The raw data exists in the file storage "
+                     "and modifying the Entity now is unsafe and may cause "
+                     "problems for any processes or users consuming "
+                     "this data.").format(file_state),
+                    keys=['file_state'],
+                    type=EntityErrors.INVALID_PERMISSIONS,
+                )
 
         return node
 
@@ -226,9 +206,6 @@ class FileUploadEntity(UploadEntity):
         register or update an index. Then call parent class's
         flush_to_session.
         """
-        # Refresh self.file_exists info
-        self._populate_file_exist_in_index()
-
         if not self.node:
             return
 
@@ -241,7 +218,7 @@ class FileUploadEntity(UploadEntity):
         # way to go around is to probably implement a dry_run in indexd or
         # indexclient
         if self.transaction.dry_run:
-           return
+            return
 
         # FIXME: In order to avoid incorrect data inside indexd, we skip
         # further requests to indexd here. However, this won't save us from
@@ -261,9 +238,9 @@ class FileUploadEntity(UploadEntity):
                 if not self.file_exists:
                     self._register_index()
 
+            # role will only be set to version is node passed is_versionable check
             elif role == 'version':
-                if self.file_exists:
-                    self._new_version_index()
+                self._new_version_index()
 
             elif role == 'update':
                 if self.file_exists:
@@ -356,8 +333,8 @@ class FileUploadEntity(UploadEntity):
 
         """
         # If indexd record is not replaceable, update existing document
+        document = self.get_indexed_document()
         if not self._is_replaceable:
-            document = self.file_by_uuid
 
             if self.urls:
                 urls_to_add = [url for url in self.urls
@@ -367,15 +344,8 @@ class FileUploadEntity(UploadEntity):
                     document.patch()
             return
 
-        indexd_doc = get_indexd(self.entity_id, self.transaction.indexd,
-                                return_not_found=True)
-
-        # No indexd record found, nothing to do
-        if not indexd_doc:
-            return
-
-        old_doc = indexd_doc.to_json()
-        indexd_doc.delete()
+        old_doc = document.to_json()
+        document.delete()
 
         # Re-create URL, since the filename might have changed.
         # NOTE: We don't care about other URLs, since the file was not yet
@@ -469,30 +439,21 @@ class FileUploadEntity(UploadEntity):
         if not node._dictionary.get('category') in DATA_FILE_CATEGORIES:
             return False
 
-        file_state = get_indexd_state(
-            node.node_id,
-            self.s3_url,
-            self.transaction.indexd
-        )
+        file_state = self.get_indexed_document_state(url=self.s3_url)
 
         return file_state in UPDATABLE_FILE_STATES
 
     def _populate_file_exist_in_index(self):
-        """
-        Populate self.file_exists (in index service)
-        - Will first check provided uuid
-        - then (if file hash size uniqueness is enforced) check by hash/size
+        """ Checks if file is already indexed and populate self.file_exists (in index service)
+                - Will first check provided uuid
+                - then (if file hash size uniqueness is enforced) check by hash/size
         """
 
-        did = self.old_uuid or self.entity_id
-        self.file_by_hash = self.get_file_from_index_by_hash()
-        self.file_by_uuid = self.get_file_from_index_by_uuid(did)
+        if self.entity_id:
+            self.file_by_uuid = self.get_file_from_index_by_uuid(self.entity_id)
 
-        #######################################################################
-        # need to find out if this causes application working outside
-        # of context error
-        #######################################################################
         if self._config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
+            self.file_by_hash = self.get_file_from_index_by_hash()
             self.file_exists = bool(self.file_by_uuid or self.file_by_hash)
         else:
             self.file_exists = bool(self.file_by_uuid)
@@ -505,8 +466,7 @@ class FileUploadEntity(UploadEntity):
 
         if not self.file_exists:
             # generate entity_id if not provided
-            if not self.entity_id:
-                self.entity_id = str(uuid.uuid4())
+            super(FileUploadEntity, self)._set_entity_id()
         else:
             # If hash and size uniqueness not enforced, do nothing
             if not self._config.get('ENFORCE_FILE_HASH_SIZE_UNIQUENESS', True):
@@ -571,9 +531,9 @@ class FileUploadEntity(UploadEntity):
                 'for the file discovered in the index by hash/size ('
                 'id: {}). Updating a previous index with new file '
                 'is currently NOT SUPPORTED.'
-                .format(self.file_by_uuid.did, self.file_by_hash.did),
+                    .format(self.file_by_uuid.did, self.file_by_hash.did),
                 type=EntityErrors.INVALID_VALUE,
-            )
+                    )
             is_valid = False
 
         if is_valid:
@@ -605,15 +565,14 @@ class FileUploadEntity(UploadEntity):
                 file_by_uuid_index = getattr(self.file_by_uuid, 'did', None)
                 file_by_hash_index = getattr(self.file_by_hash, 'did', None)
 
-                if ((file_by_uuid_index != node.node_id) or
-                        (file_by_hash_index != node.node_id)):
+                if node.node_id not in [file_by_hash_index, file_by_uuid_index]:
                     self.record_error(
                         'Graph ID and index file ID found in index service do not match, '
                         'which is currently not permitted. Graph ID: {}. '
                         'Index ID: {}. Index ID found using hash/size: {}.'
-                        .format(node.node_id, file_by_hash_index, file_by_uuid_index),
+                            .format(node.node_id, file_by_hash_index, file_by_uuid_index),
                         type=EntityErrors.NOT_UNIQUE,
-                    )
+                            )
                     is_valid = False
 
         return is_valid
@@ -624,26 +583,18 @@ class FileUploadEntity(UploadEntity):
         graph node state = 'released'.
         """
 
-        nodes = lookup_node(
-            self.transaction.db_driver,
-            self.entity_type,
-            self.entity_id,
-            self.secondary_keys,
-        )
-
-        self.old_uuid = nodes.one().node_id
-        self.file_by_uuid = self.get_file_from_index_by_uuid(self.entity_id)
+        self.old_uuid = self.node.node_id
 
         # Cache incoming edges and relink the file node later
         self.edges_in = {
             (edge.src.label, edge.src.node_id)
-            for node in nodes for edge in node.edges_in
+            for edge in self.node.edges_in
         }
 
         # Remove old node from the graph
+        # this is a nested session and will automatically reuse the parent
         with self.transaction.db_driver.session_scope() as session:
-            for node in nodes:
-                session.delete(node)
+            session.delete(self.node)
 
         # new node id
         self.entity_id = str(uuid.uuid4())
@@ -683,8 +634,6 @@ class FileUploadEntity(UploadEntity):
         - If there is already a record matching the hash and size for this
           file, then return none.
         """
-        document = None
-
         # Check if there is an existing record with this hash and size, i.e.
         # this node already has an index record.
         params = self._get_file_hashes_and_size()
@@ -735,3 +684,32 @@ class FileUploadEntity(UploadEntity):
 
     def _version_index(self, **kwargs):
         return self.transaction.indexd.add_version(**kwargs)
+
+    def _is_versionable(self, node):
+        """ Decides if the current entity should be versioned"""
+        return self._is_modified_release_node(node)
+
+    def _is_modified_release_node(self, node):
+        """ Checks if the current entity"""
+        return node is not None and node.state == "released" and \
+            (self.old_props.get("file_size") != self._get_file_size() or
+             self.old_props.get("md5sum") != self.doc.get("md5sum"))
+
+    def get_indexed_document(self):
+        if not self.file_exists:
+            return None
+        return self.file_by_uuid or self.file_by_hash
+
+    def get_indexed_document_state(self, url=None):
+        doc = self.get_indexed_document()
+        if doc:
+            # If url is provided return url's 'state' or None
+            if url is not None:
+                return doc.urls_metadata.get(url, {}).get('state')
+
+            # If url is None, lookup primary url
+            for url, url_meta in doc.urls_metadata.items():
+                if url_meta.get('type') == PRIMARY_URL_TYPE:
+                    return url_meta.get('state')
+        return None
+

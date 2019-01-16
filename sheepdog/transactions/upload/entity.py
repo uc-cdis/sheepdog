@@ -88,6 +88,7 @@ class UploadEntity(EntityBase):
         self._is_replaceable = self._config.get('CREATE_REPLACEABLE', False)
 
         self.old_uuid = None
+        self.transaction_roles = ["create", "update"]
 
     @property
     def secondary_keys(self):
@@ -186,6 +187,11 @@ class UploadEntity(EntityBase):
 
         self._set_node_properties()
 
+    def _set_entity_id(self):
+        """ Generates an entity id if not has been set """
+        if not self.entity_id:
+            self.entity_id = str(uuid.uuid4())
+
     def flush_to_session(self):
         """
         Add graph node to session of the current transaction.
@@ -211,21 +217,12 @@ class UploadEntity(EntityBase):
             self.record_error(str(e))
 
     def _parse_id(self):
-        """
-        Generate and record the entity id.
+        """ Validate submitted file UUID if specified and record error if invalid. """
 
-        :returns: None
-
-        """
         self.entity_id = self.doc.get('id')
-        not_uuid = (
-            self.transaction.role == 'create'
-            and self.entity_id
-            and not REGEX_UUID.match(self.entity_id)
-        )
-        if not_uuid:
+        if self.transaction.role in self.transaction_roles and self.entity_id and not REGEX_UUID.match(self.entity_id):
             self.record_error(
-                'Cannot create entity with custom id that is not a UUID.',
+                'Cannot create/update an entity with custom id that is not a UUID.',
                 keys=['id'], type=EntityErrors.INVALID_VALUE
             )
 
@@ -291,8 +288,7 @@ class UploadEntity(EntityBase):
                         keys=['submitter_id'],
                         type=EntityErrors.NOT_FOUND)
 
-        if not self.entity_id:
-            self.entity_id = str(uuid.uuid4())
+        self._set_entity_id()
 
         # Assert that the node doesn't already exist
         if not skip_node_lookup:

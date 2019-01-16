@@ -26,3 +26,4 @@ pyasn1-modules==0.0.11
 urllib3==1.22
 -e git+https://github.com/uc-cdis/cirrus.git@0.0.0#egg=cirrus-0.0.0
 -e git+https://git@github.com/uc-cdis/fence.git@1.1.1#egg=fence
+google-resumable-media==0.3.1

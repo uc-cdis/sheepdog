@@ -15,7 +15,8 @@ from cdisutilstest.code.indexd_fixture import create_random_index
 
 from fence.jwt.token import generate_signed_access_token
 from psqlgraph import PsqlGraphDriver
-from gdcdatamodel.models import Edge, Node, AlignedReads
+from gdcdatamodel import models as md
+from gdcdatamodel.models import Edge, Node
 from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
 from userdatamodel.driver import SQLAlchemyDriver
@@ -336,7 +337,7 @@ def dictionary_setup(_app):
 def released_nodes(pg_driver, indexd_client):
     with pg_driver.session_scope():
         doc = create_random_index(indexd_client)
-        node = AlignedReads(node_id=doc.did,
+        node = md.AlignedReads(node_id=doc.did,
                             state="released",
                             submitter_id="TEST",
                             project_id="TEST-TEST",
