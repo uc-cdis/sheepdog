@@ -496,6 +496,7 @@ class UploadEntity(EntityBase):
 
         # At this point doc has been parsed, remove open_acl to avoid invalid property error
         self.doc.pop("open_acl", None)
+        new_submitter_id = self.doc.pop("new_submitter_id", None)
 
         # Set properties
         for key, val in self.doc.iteritems():
@@ -543,7 +544,10 @@ class UploadEntity(EntityBase):
             # Otherwise, set the value
             else:
                 try:
-                    self.node._props[key] = val
+                    if key == "submitter_id" and new_submitter_id:
+                        self.node._props[key] = new_submitter_id
+                    else:
+                        self.node._props[key] = val
                 except Exception as e:  # pylint: disable=broad-except
                     self.record_error(
                         'Invalid property ({}): {}'.format(key, str(e)),
