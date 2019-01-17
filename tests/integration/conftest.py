@@ -119,8 +119,8 @@ def client_toggled(app, request):
 
 
 @pytest.fixture
-def pg_driver(request, client):
-    pg_driver = PsqlGraphDriver(**pg_config())
+def pg_driver(request, client, pg_config):
+    pg_driver = PsqlGraphDriver(**pg_config)
 
     def tearDown():
         with pg_driver.engine.begin() as conn:
