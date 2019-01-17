@@ -5,7 +5,7 @@ codacy-coverage
 coverage==3.7.1
 pytest==4.1.1
 pytest-cov==2.5.1
-pytest-flask==0.8.1
+pytest-flask==0.14.0
 pytest-threadleak
 mock==1.0.1
 moto==0.4.5
