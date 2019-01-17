@@ -40,7 +40,7 @@ before_script:
 
 # command to run tests
 script:
-- py.test -vv --cov=sheepdog --cov-report xml tests/
+- python -m pytest --cov=sheepdog --cov-report xml tests/
 
 after_script:
 - python-codacy-coverage -r coverage.xml
