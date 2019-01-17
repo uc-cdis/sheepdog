@@ -184,7 +184,7 @@ class DeletionTransaction(TransactionBase):
                 } for c in node._related_cases_from_cache]
                 for node in nodes
             }
-    
+
     def mark_indexd_delete(self, ids):
         # TODO: handle patch failure, no need to handle missing doc
         # 01/10/19 there's no good way to handle indexd patch failure
