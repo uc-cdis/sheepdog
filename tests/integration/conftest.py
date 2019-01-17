@@ -102,7 +102,8 @@ def client_toggled(config, client, request):
     NOTE: App config gets reset each time function-scoped app fixture is executed,
     no need to reset here
     """
-    params = request.node.get_marker('config_toggle')
+    # node.get_marker was deprecated https://github.com/pytest-dev/pytest/issues/4546
+    params = request.node.get_closest_marker('config_toggle')
 
     for parameter, value in params.kwargs['parameters'].items():
         config[parameter] = value
