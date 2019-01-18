@@ -744,12 +744,16 @@ paths:
       - dry run
   /<program>/<project>/export:
     get:
-      description: 'Return a file with the requested entities as an attachment. Omitting
-        the ``ids`` parameter from the query string will return _ALL_ nodes under
-        the given project. Otherwise, if there is only one entity type in the output,
-        it will return a {node_type}.tsv or {node_type}.json file, e.g.: aliquot.tsv.
-        If there are multiple entity types, it returns ``gdc_export_{one_time_sha}.tar.gz``
-        for tsv format, or ``gdc_export_{one_time_sha}.json`` for json format.'
+      description: 'Return a file with the requested entities as an attachment. Either
+        ``ids`` or ``node_label`` must be provided in the parameters. When both are
+        provided, ``node_label`` is ignored and ``ids`` is used. If ``ids`` is provided,
+        all entities matching given ``ids`` will be exported. If there is only one
+        entity type in the output, it will return a ``{node_type}.tsv`` or ``{node_type}.json``
+        file, e.g.: ``aliquot.tsv``. If there are multiple entity types, it returns
+        ``gdc_export_{one_time_sha}.tar.gz`` for TSV format, or ``gdc_export_{one_time_sha}.json``
+        for JSON format. CSV is similar to TSV. If ``node_label`` is provided, it
+        will export all entities of type with name ``node_label`` to a TSV file or
+        JSON file. CSV is not supported yet.'
       parameters:
       - description: The project to which the submitter belongs and in which the entities
           will be created. The `project_id` is the human-readable code, e.g. BRCA.
@@ -767,6 +771,10 @@ paths:
         in: query
         name: category
         type: string
+      - description: type of nodes to look up, for example ``'case'``
+        in: query
+        name: node_label
+        type: string
       - description: whether to recursively find children or not; default is False
         in: query
         name: with_children
@@ -775,7 +783,7 @@ paths:
         in: query
         name: ids
         type: string
-      - description: output format, ``json`` or ``tsv`` or ``csv``; default is tsv
+      - description: output format, ``json`` or ``tsv`` or ``csv``; default is ``tsv``
         in: query
         name: format
         type: string
@@ -794,12 +802,16 @@ paths:
       tags:
       - export
     post:
-      description: 'Return a file with the requested entities as an attachment. Omitting
-        the ``ids`` parameter from the query string will return _ALL_ nodes under
-        the given project. Otherwise, if there is only one entity type in the output,
-        it will return a {node_type}.tsv or {node_type}.json file, e.g.: aliquot.tsv.
-        If there are multiple entity types, it returns ``gdc_export_{one_time_sha}.tar.gz``
-        for tsv format, or ``gdc_export_{one_time_sha}.json`` for json format.'
+      description: 'Return a file with the requested entities as an attachment. Either
+        ``ids`` or ``node_label`` must be provided in the parameters. When both are
+        provided, ``node_label`` is ignored and ``ids`` is used. If ``ids`` is provided,
+        all entities matching given ``ids`` will be exported. If there is only one
+        entity type in the output, it will return a ``{node_type}.tsv`` or ``{node_type}.json``
+        file, e.g.: ``aliquot.tsv``. If there are multiple entity types, it returns
+        ``gdc_export_{one_time_sha}.tar.gz`` for TSV format, or ``gdc_export_{one_time_sha}.json``
+        for JSON format. CSV is similar to TSV. If ``node_label`` is provided, it
+        will export all entities of type with name ``node_label`` to a TSV file or
+        JSON file. CSV is not supported yet.'
       parameters:
       - description: The project to which the submitter belongs and in which the entities
           will be created. The `project_id` is the human-readable code, e.g. BRCA.
@@ -817,6 +829,10 @@ paths:
         in: query
         name: category
         type: string
+      - description: type of nodes to look up, for example ``'case'``
+        in: query
+        name: node_label
+        type: string
       - description: whether to recursively find children or not; default is False
         in: query
         name: with_children
@@ -825,7 +841,7 @@ paths:
         in: query
         name: ids
         type: string
-      - description: output format, ``json`` or ``tsv`` or ``csv``; default is tsv
+      - description: output format, ``json`` or ``tsv`` or ``csv``; default is ``tsv``
         in: query
         name: format
         type: string
