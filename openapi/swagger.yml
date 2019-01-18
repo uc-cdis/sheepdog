@@ -151,7 +151,7 @@ paths:
         raise an appropriate exception
       parameters:
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -173,7 +173,7 @@ paths:
         i.e. registered projects.
       parameters:
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -196,7 +196,7 @@ paths:
         is limited to administrative users.
       parameters:
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -224,7 +224,7 @@ paths:
         is limited to administrative users.
       parameters:
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -252,7 +252,7 @@ paths:
         is limited to administrative users.
       parameters:
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -279,13 +279,13 @@ paths:
       description: Delete project under a specific program
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -308,13 +308,13 @@ paths:
         the `object_id` in the body of the entity.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -340,13 +340,13 @@ paths:
         the `object_id` in the body of the entity.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -371,13 +371,13 @@ paths:
       description: Return links to the project level JSON schema definitions.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -397,7 +397,7 @@ paths:
       description: Get the dictionary entry for a specific project.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
@@ -408,7 +408,7 @@ paths:
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -432,13 +432,13 @@ paths:
         the `object_id` in the body of the entity.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -464,13 +464,13 @@ paths:
         the `object_id` in the body of the entity.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -495,13 +495,13 @@ paths:
       description: Handle bulk transaction instead of single transaction.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -525,13 +525,13 @@ paths:
       description: Handle bulk transaction instead of single transaction.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -556,13 +556,13 @@ paths:
       description: Handle bulk transaction instead of single transaction.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -586,13 +586,13 @@ paths:
       description: Handle bulk transaction instead of single transaction.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -620,7 +620,7 @@ paths:
         the database, a status code of 404 is returned with the missing IDs.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
@@ -631,7 +631,7 @@ paths:
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -662,13 +662,13 @@ paths:
         that must be deleted prior to deleting the target entity.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -708,13 +708,13 @@ paths:
         that must be deleted prior to deleting the target entity.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -753,16 +753,16 @@ paths:
         ``gdc_export_{one_time_sha}.tar.gz`` for TSV format, or ``gdc_export_{one_time_sha}.json``
         for JSON format. CSV is similar to TSV. If ``node_label`` is provided, it
         will export all entities of type with name ``node_label`` to a TSV file or
-        JSON file. CSV is not supported yet.'
+        JSON file. CSV is not supported yet in this case.'
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -811,16 +811,16 @@ paths:
         ``gdc_export_{one_time_sha}.tar.gz`` for TSV format, or ``gdc_export_{one_time_sha}.json``
         for JSON format. CSV is similar to TSV. If ``node_label`` is provided, it
         will export all entities of type with name ``node_label`` to a TSV file or
-        JSON file. CSV is not supported yet.'
+        JSON file. CSV is not supported yet in this case.'
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -864,13 +864,13 @@ paths:
       description: Delete molecular data from object storage.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -902,13 +902,13 @@ paths:
       description: Get a data file from object storage
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -940,13 +940,13 @@ paths:
       description: Upload data by multipart upload
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -983,13 +983,13 @@ paths:
         data of the file.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1026,13 +1026,13 @@ paths:
       description: Delete molecular data from object storage.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1064,13 +1064,13 @@ paths:
       description: Get a data file from object storage
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1102,13 +1102,13 @@ paths:
       description: Upload data by multipart upload
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1145,13 +1145,13 @@ paths:
         data of the file.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1188,13 +1188,13 @@ paths:
       description: Create a json manifest of the files.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1217,13 +1217,13 @@ paths:
         etc. are allowed.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1243,13 +1243,13 @@ paths:
         etc. are allowed.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1270,13 +1270,13 @@ paths:
         etc. are allowed.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1296,13 +1296,13 @@ paths:
         etc. are allowed.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1322,13 +1322,13 @@ paths:
       description: Release a project.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1347,13 +1347,13 @@ paths:
       description: Release a project.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1373,13 +1373,13 @@ paths:
       description: Release a project.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1398,13 +1398,13 @@ paths:
       description: Release a project.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1425,13 +1425,13 @@ paths:
         are locked. An ``open`` or ``submit`` action must be taken after ``review``.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1451,13 +1451,13 @@ paths:
         are locked. An ``open`` or ``submit`` action must be taken after ``review``.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1478,13 +1478,13 @@ paths:
         are locked. An ``open`` or ``submit`` action must be taken after ``review``.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1504,13 +1504,13 @@ paths:
         are locked. An ``open`` or ``submit`` action must be taken after ``review``.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1532,13 +1532,13 @@ paths:
         built after the project is released.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1559,13 +1559,13 @@ paths:
         built after the project is released.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1587,13 +1587,13 @@ paths:
         built after the project is released.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1614,13 +1614,13 @@ paths:
         built after the project is released.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1643,13 +1643,13 @@ paths:
         to infer user the multiplicity
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1682,13 +1682,13 @@ paths:
         to infer user the multiplicity.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1716,13 +1716,13 @@ paths:
         in the future.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1747,13 +1747,13 @@ paths:
         in the future.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1781,13 +1781,13 @@ paths:
         to a successful transaction.'
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1814,13 +1814,13 @@ paths:
         to a successful transaction.'
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1845,13 +1845,13 @@ paths:
       description: Create a json manifest of the files.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1876,13 +1876,13 @@ paths:
         updated.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1910,13 +1910,13 @@ paths:
         updated.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1944,13 +1944,13 @@ paths:
         updated.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -1978,13 +1978,13 @@ paths:
         updated.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -2070,13 +2070,13 @@ paths:
         that must be deleted prior to deleting the target entity.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
@@ -2109,13 +2109,13 @@ paths:
       description: Manually (re)assign the S3 url for a given node.
       parameters:
       - description: The project to which the submitter belongs and in which the entities
-          will be created. The `project_id` is the human-readable code, e.g. BRCA.
+          will be created. The `project` is the human-readable code, e.g. BRCA.
         in: path
         name: project
         required: true
         type: string
       - description: The program to which the submitter belongs and in which the entities
-          will be created. The `program_id` is the human-readable name, e.g. TCGA.
+          will be created. The `program` is the human-readable name, e.g. TCGA.
         in: path
         name: program
         required: true
