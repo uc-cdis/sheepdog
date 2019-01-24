@@ -901,3 +901,47 @@ def test_update_node_submitter_id(
     with pg_driver.session_scope():
         node = pg_driver.nodes().get(DEFAULT_UUID)
         assert node.submitter_id == metadata_file["new_submitter_id"]
+
+
+def test_versioning_with_new_submitter_id(
+        client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
+    """ Test updating an existing node's submitter id """
+    submit_first_experiment(client, submitter)
+
+    # submit metadata file once
+    metadata_file = copy.deepcopy(DEFAULT_METADATA_FILE)
+    metadata_file['id'] = DEFAULT_UUID
+
+    resp = submit_metadata_file(client, admin, submitter, data=metadata_file)
+    entity = assert_single_entity_from_response(resp)
+    assert_positive_response(resp)
+    assert entity['action'] == 'create'
+
+    # release node
+    with pg_driver.session_scope():
+        pg_driver.nodes().get(entity["id"]).state = "released"
+        doc = indexd_client.get(entity["id"])
+        doc.version = "1"
+        doc.metadata["release_number"] = "10.0"
+        doc.patch()
+
+    # submit same metadata file again (with or without id provided)
+    metadata_file = copy.deepcopy(DEFAULT_METADATA_FILE)
+    metadata_file["new_submitter_id"] = "Z"
+    metadata_file['file_size'] = metadata_file['file_size'] + 1
+    resp1 = submit_metadata_file(client, admin, submitter, data=metadata_file)
+    v_entity = assert_single_entity_from_response(resp1)
+    assert_positive_response(resp1)
+
+    # assert new version was created
+    assert v_entity["id"] != entity["id"]
+
+    # assert new indexd version exists and not versioned
+    doc = indexd_client.get(v_entity["id"])
+    assert doc.version is None
+    
+    with pg_driver.session_scope():
+
+        # assert new node has new submitter id
+        node = pg_driver.nodes().get(v_entity["id"])
+        assert node.submitter_id == metadata_file["new_submitter_id"]
