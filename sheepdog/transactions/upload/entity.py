@@ -297,6 +297,12 @@ class UploadEntity(EntityBase):
 
         self.action = 'create'
 
+        return self.record_error(
+            'random error during submission',
+            keys=['id'],
+            type=EntityErrors.UNCATEGORIZED,
+        )
+
         return node
 
     def get_node_merge(self):
