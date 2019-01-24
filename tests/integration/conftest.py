@@ -389,6 +389,25 @@ def released_file(pg_driver, indexd_client, data_release):
         sxn.delete(exp)
 
 
+@pytest.fixture
+def unreleased_file(pg_driver, indexd_client):
+    doc = create_random_index(indexd_client, "10.2")
+
+    # create node
+    with pg_driver.session_scope() as sxn:
+        exp = m.ExperimentalMetadata(node_id=doc.did)
+        exp.submitter_id = "0"
+        exp.state = "released"
+        exp.project_id = 'CGCI-BLGSP'
+        exp.file_state = "validated"
+        pg_driver.node_insert(exp)
+    yield doc
+    doc.delete()
+
+    with pg_driver.session_scope() as sxn:
+        sxn.delete(exp)
+
+
 def create_random_index(index_client, release):
     """
     Shorthand for creating new index entries for test purposes.

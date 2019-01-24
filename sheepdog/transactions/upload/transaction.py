@@ -67,6 +67,7 @@ class UploadTransaction(TransactionBase):
         )
 
         self._config = kwargs['flask_config']
+        self.active_data_release = kwargs.get("active_data_release")
 
     def get_phsids(self):
         """Fetch the phsids for the current project."""
@@ -302,6 +303,7 @@ class BulkUploadTransaction(TransactionBase):
         self.flush_timestamp = None
         self.transactional_errors = []
         self.subtransactions = []
+        self.active_data_release = kwargs.get("active_data_release")
 
     @property
     def success(self):
@@ -344,6 +346,7 @@ class BulkUploadTransaction(TransactionBase):
             indexd=self.indexd,
             flask_config=self._config,
             external_proxies=self.external_proxies,
+            active_data_release=self.active_data_release
         )
         sub_transaction.parse_doc(name, doc_format, doc, data)
         self.subtransactions.append(sub_transaction)

@@ -728,7 +728,7 @@ def test_update_released_non_file_node(
 @pytest.mark.parametrize('released_state', RELEASED_NODE_STATES)
 def test_links_inherited_for_file_nodes(
         client_toggled, pg_driver, submitter, cgci_blgsp, indexd_client,
-        released_state):
+        released_state, data_release):
     resp_json, sar_entity = data_file_creation(
         client_toggled, submitter,
         sur_filename='submitted_aligned_reads.json'
@@ -939,9 +939,64 @@ def test_versioning_with_new_submitter_id(
     # assert new indexd version exists and not versioned
     doc = indexd_client.get(v_entity["id"])
     assert doc.version is None
-    
+
     with pg_driver.session_scope():
 
         # assert new node has new submitter id
         node = pg_driver.nodes().get(v_entity["id"])
         assert node.submitter_id == metadata_file["new_submitter_id"]
+
+
+def test_fail_to_version_with_no_data_release_change(data_release, released_file, client,
+                                                     admin, submitter, cgci_blgsp, indexd_client):
+    submit_first_experiment(client, submitter)
+    file_data = copy.deepcopy(DEFAULT_METADATA_FILE)
+    file_data['id'] = released_file.did
+    file_data["file_size"] = released_file.size + 1
+    file_data["md5sum"] = released_file.hashes["md5"]
+    resp = submit_metadata_file(
+        client, admin, submitter, data=file_data).json
+    assert resp['code'] == 400
+
+    # assert no new version was created on indexd
+    doc = indexd_client.get_latest_version(released_file.did)
+    assert doc.version == "1"
+    assert doc.metadata["release_number"] == data_release
+
+
+def test_version_with_data_release_change(data_release, unreleased_file, client,
+                                          admin, submitter, cgci_blgsp, indexd_client, pg_driver):
+    submit_first_experiment(client, submitter)
+    file_data = copy.deepcopy(DEFAULT_METADATA_FILE)
+    file_data['id'] = unreleased_file.did
+    file_data["file_size"] = unreleased_file.size + 1
+    file_data["md5sum"] = unreleased_file.hashes["md5"]
+    resp = submit_metadata_file(
+        client, admin, submitter, data=file_data).json
+    assert resp['code'] == 200
+    entities = resp["entities"]
+    assert len(entities) == 1
+
+    # assert new version on indexd
+    version_id = entities[0]['id']
+    v_doc = indexd_client.get(version_id)
+    assert v_doc.version is None
+    assert v_doc.size == file_data["file_size"]
+    assert v_doc.hashes["md5"] == file_data["md5sum"]
+    assert v_doc.metadata.get("release_number") is None
+
+    # assert old index did not get updated
+    doc = indexd_client.get(unreleased_file.did)
+    assert doc.version == "1"
+    assert doc.size == file_data["file_size"] - 1
+    assert doc.hashes["md5"] == file_data["md5sum"]
+    assert doc.metadata.get("release_number") != data_release
+
+    # assert new node on graph
+    with pg_driver.session_scope():
+        v_node = pg_driver.nodes().get(version_id)
+        assert v_node
+
+        # assert prev node was deleted
+        node = pg_driver.nodes().get(unreleased_file.did)
+        assert node is None
