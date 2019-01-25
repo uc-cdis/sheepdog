@@ -603,9 +603,14 @@ class FileUploadEntity(UploadEntity):
             )
             return
 
+        file_uploader = self.file_by_uuid.uploader
+        # if indexd uploader is empty, the file already belongs to a project.
+        # do not update acl: other projects will just reference this file
+        if not file_uploader:
+            return
+
         # the current uploader must be the file uploader, and acl must be empty
         current_uploader = current_token["context"]["user"]["name"]
-        file_uploader = self.file_by_uuid.uploader
         file_acl = self.file_by_uuid.acl
         if not current_uploader == file_uploader or file_acl:
             self.record_error(
