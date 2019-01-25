@@ -1000,3 +1000,49 @@ def test_version_with_data_release_change(data_release, unreleased_file, client,
         # assert prev node was deleted
         node = pg_driver.nodes().get(unreleased_file.did)
         assert node is None
+
+
+def test_version_with_no_data_release(released_file, client, admin, submitter, cgci_blgsp, indexd_client, pg_driver):
+    """Tests cases where a an open data release is not available, but versioning nodes should still be allowed"""
+
+    submit_first_experiment(client, submitter)
+    file_data = copy.deepcopy(DEFAULT_METADATA_FILE)
+    file_data['id'] = released_file.did
+    file_data["file_size"] = released_file.size + 1
+    file_data["md5sum"] = released_file.hashes["md5"]
+    resp = submit_metadata_file(
+        client, admin, submitter, data=file_data).json
+    assert resp['code'] == 200
+    entities = resp["entities"]
+    assert len(entities) == 1
+
+    # assert new version on indexd
+    version_id = entities[0]['id']
+
+    # assert old index did not get updated
+    doc = indexd_client.get(released_file.did)
+    assert doc.version == "1"
+    assert doc.size == file_data["file_size"] - 1
+    assert doc.hashes["md5"] == file_data["md5sum"]
+
+    # assert new node on graph
+    with pg_driver.session_scope():
+        v_node = pg_driver.nodes().get(version_id)
+        assert v_node
+
+        # assert prev node was deleted
+        node = pg_driver.nodes().get(released_file.did)
+        assert node is None
+
+
+def test_fail_with_with_multiple_open_data_release(multiple_data_release, released_file, client,
+                                                   admin, submitter, cgci_blgsp):
+    """Tests cases where a an open data release is not available, but versioning nodes should still be allowed"""
+
+    file_data = copy.deepcopy(DEFAULT_METADATA_FILE)
+    file_data['id'] = released_file.did
+    file_data["file_size"] = released_file.size + 1
+    file_data["md5sum"] = released_file.hashes["md5"]
+    resp = submit_metadata_file(
+        client, admin, submitter, data=file_data)
+    assert resp.status_code == 500

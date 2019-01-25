@@ -20,7 +20,7 @@ from sheepdog.errors import (
     SchemaError,
     UnsupportedError,
     UserError,
-)
+    InternalError)
 from sheepdog.globals import (
     FLAG_IS_ASYNC,
     PROJECT_SEED,
@@ -346,5 +346,8 @@ def get_active_data_release(g):
         try:
             release = g.nodes(models.DataRelease).props(released=False).one()
             return "{}.{}".format(release.major_version, release.minor_version)
-        except NoResultFound or MultipleResultsFound:
+        except NoResultFound:
             return None
+        except MultipleResultsFound:
+            # scenario should not really occur, raising an error can help detect this more easily
+            raise InternalError("An Internal Error Occurred: Multiple open Data Release nodes found", code=500)

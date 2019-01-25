@@ -366,6 +366,36 @@ def data_release(pg_driver):
 
 
 @pytest.fixture
+def multiple_data_release(pg_driver):
+    """
+    Args:
+        pg_driver (psqlgraph.PsqlGraphDriver):
+    """
+    releases = []
+    with pg_driver.session_scope() as sxn:
+        release = m.DataRelease(node_id=str(uuid.uuid4()))
+        release.major_version = 10
+        release.minor_version = 2
+        release.released = False
+        release.release_data = '2018-09-27'
+
+        sxn.add(release)
+        releases.append(release)
+        r2 = m.DataRelease(node_id=str(uuid.uuid4()))
+        r2.major_version = 11
+        r2.minor_version = 0
+        r2.released = False
+        sxn.add(r2)
+        releases.append(r2)
+
+    # return current release number same as the data_release with released==False
+    yield "11.0"
+    with pg_driver.session_scope() as sxn:
+        for release in releases:
+            sxn.delete(release)
+
+
+@pytest.fixture
 def released_file(pg_driver, indexd_client, data_release):
     """
     Args:
