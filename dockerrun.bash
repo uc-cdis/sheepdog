@@ -3,6 +3,8 @@
 cd /var/www/sheepdog
 
 export PYTHONUNBUFFERED=TRUE
+PYTHONPATH=`python -c "import sys; print(':'.join(x for x in sys.path if x))"`
+export PYTHONPATH
 #
 # Update certificate authority index -
 # environment may have mounted more authorities
