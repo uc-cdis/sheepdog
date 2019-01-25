@@ -110,6 +110,7 @@ class FileUploadEntity(UploadEntity):
         self.file_by_hash = None
         self.object_id = None
         self.urls = []
+        self.should_update_acl_uploader = False
 
     def parse(self, doc):
         """
@@ -164,8 +165,7 @@ class FileUploadEntity(UploadEntity):
             # file already indexed and object_id provided: data upload flow
             if self.use_object_id(self.entity_type) and self.object_id and self.file_exists:
                 if self._is_valid_hash_size_for_file():
-                    # update acl and uploader fields in indexd
-                    self._update_acl_uploader_for_file()
+                    self.should_update_acl_uploader = True
             else:
                 self._set_node_and_file_ids()
 
@@ -256,10 +256,14 @@ class FileUploadEntity(UploadEntity):
             role = self.action
             try:
                 if role == 'create':
+                    # data upload flow: update the blank record in indexd
+                    if self.should_update_acl_uploader:
+                        self._update_acl_uploader_for_file()
+
                     # Check if the category for the node is data_file or
                     # metadata_file, in which case, register a UUID and alias in
                     # the index service.
-                    if not self.file_exists:
+                    elif not self.file_exists:
                         if (self._config.get('REQUIRE_FILE_INDEX_EXISTS', False)):
                             raise NoIndexForFileError(self.entity_id)
                         else:
