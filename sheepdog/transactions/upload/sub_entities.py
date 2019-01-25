@@ -603,13 +603,11 @@ class FileUploadEntity(UploadEntity):
             )
             return
 
-        # if uploader is empty, the file belongs to a project -> add new
-        # project to acl. if not, the current uploader must be the file
-        # uploader, and acl must be empty
+        # the current uploader must be the file uploader, and acl must be empty
         current_uploader = current_token["context"]["user"]["name"]
         file_uploader = self.file_by_uuid.uploader
         file_acl = self.file_by_uuid.acl
-        if file_uploader and (not current_uploader == file_uploader or file_acl):
+        if not current_uploader == file_uploader or file_acl:
             self.record_error(
                 'Failed to update acl and uploader fields in indexd: current uploader ({}) is not original file uploader ({}) and/or acl ({}) is not empty.'.format(current_uploader, file_uploader, file_acl),
                 type=EntityErrors.INVALID_VALUE
@@ -618,7 +616,7 @@ class FileUploadEntity(UploadEntity):
 
         # update acl and uploader fields in indexd
         data = json.dumps({
-            'acl': list(set(file_acl).union(self.transaction.get_phsids())),
+            'acl': self.transaction.get_phsids(),
             'uploader': None
         })
         url = '/index/' + self.object_id
