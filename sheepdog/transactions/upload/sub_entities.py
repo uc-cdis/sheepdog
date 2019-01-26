@@ -110,6 +110,7 @@ class FileUploadEntity(UploadEntity):
         self.file_by_hash = None
         self.object_id = None
         self.urls = []
+        self.should_update_acl_uploader = False
 
     def parse(self, doc):
         """
@@ -164,8 +165,7 @@ class FileUploadEntity(UploadEntity):
             # file already indexed and object_id provided: data upload flow
             if self.use_object_id(self.entity_type) and self.object_id and self.file_exists:
                 if self._is_valid_hash_size_for_file():
-                    # update acl and uploader fields in indexd
-                    self._update_acl_uploader_for_file()
+                    self.should_update_acl_uploader = True
             else:
                 self._set_node_and_file_ids()
 
@@ -256,10 +256,14 @@ class FileUploadEntity(UploadEntity):
             role = self.action
             try:
                 if role == 'create':
+                    # data upload flow: update the blank record in indexd
+                    if self.should_update_acl_uploader:
+                        self._update_acl_uploader_for_file()
+
                     # Check if the category for the node is data_file or
                     # metadata_file, in which case, register a UUID and alias in
                     # the index service.
-                    if not self.file_exists:
+                    elif not self.file_exists:
                         if (self._config.get('REQUIRE_FILE_INDEX_EXISTS', False)):
                             raise NoIndexForFileError(self.entity_id)
                         else:
@@ -599,9 +603,14 @@ class FileUploadEntity(UploadEntity):
             )
             return
 
+        file_uploader = self.file_by_uuid.uploader
+        # if indexd uploader is empty, the file already belongs to a project.
+        # do not update acl: other projects will just reference this file
+        if not file_uploader:
+            return
+
         # the current uploader must be the file uploader, and acl must be empty
         current_uploader = current_token["context"]["user"]["name"]
-        file_uploader = self.file_by_uuid.uploader
         file_acl = self.file_by_uuid.acl
         if not current_uploader == file_uploader or file_acl:
             self.record_error(
