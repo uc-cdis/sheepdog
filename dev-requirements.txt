@@ -20,16 +20,16 @@ sphinxcontrib-httpdomain==1.3.0
 # force install of sqlalchemy 0.9.9 because indexd installs 1.0.8
 # this new version is not backwards compatible with 0.9.9
 SQLAlchemy==0.9.9
--e git+https://git@github.com/uc-cdis/cdisutils-test.git@0.2.5#egg=cdisutilstest
--e git+https://git@github.com/uc-cdis/indexd.git@1.0.4#egg=indexd
+-e git+https://github.com/uc-cdis/cdisutils-test.git@0.2.5#egg=cdisutilstest
+-e git+https://github.com/uc-cdis/indexd.git@1.0.4#egg=indexd
 
 # indexd dependencies
--e git+https://git@github.com/uc-cdis/doiclient.git@1.0.0#egg=doiclient
--e git+https://git@github.com/uc-cdis/dosclient.git@1.0.0#egg=dosclient
+-e git+https://github.com/uc-cdis/doiclient.git@1.0.0#egg=doiclient
+-e git+https://github.com/uc-cdis/dosclient.git@1.0.0#egg=dosclient
 
 # these two are required by fence -> cirrus -> google_cloud
 pyasn1-modules==0.0.11
 urllib3==1.22
--e git+https://git@github.com/uc-cdis/cirrus.git@0.0.0#egg=cirrus-0.0.0
--e git+https://git@github.com/uc-cdis/fence.git@1.1.1#egg=fence
+-e git+https://github.com/uc-cdis/cirrus.git@0.0.0#egg=cirrus-0.0.0
+-e git+https://github.com/uc-cdis/fence.git@1.1.1#egg=fence
 google-resumable-media==0.3.1
