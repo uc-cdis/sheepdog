@@ -5,7 +5,7 @@ import uuid
 import indexclient
 
 from gdcdatamodel import models
-
+from psqlgraph import Node
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
 
@@ -109,7 +109,7 @@ def assert_single_entity_from_response(resp):
 
 
 def post_example_entities_together(client, submitter, data_fnames=None,
-                                   dry_run=False):
+                                   dry_run=False, file_size=None):
     if not data_fnames:
         data_fnames = DATA_FILES
     path = BLGSP_PATH
@@ -119,12 +119,15 @@ def post_example_entities_together(client, submitter, data_fnames=None,
     data = []
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), 'r') as f:
-            data.append(json.loads(f.read()))
+            node_data = json.loads(f.read())
+            if file_size and is_file_node_label(node_data["type"]):
+                node_data["file_size"] = file_size
+            data.append(node_data)
     return client.post(path, headers=submitter, data=json.dumps(data))
 
 
 def put_example_entities_together(client, headers, data_fnames=None,
-                                  dry_run=False):
+                                  dry_run=False, file_size=None):
     if not data_fnames:
         data_fnames = DATA_FILES
     path = BLGSP_PATH
@@ -134,7 +137,10 @@ def put_example_entities_together(client, headers, data_fnames=None,
     data = []
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), 'r') as f:
-            data.append(json.loads(f.read()))
+            node_data = json.loads(f.read())
+            if file_size and is_file_node_label(node_data["type"]):
+                node_data["file_size"] = file_size
+            data.append(node_data)
     return client.put(path, headers=headers, data=json.dumps(data))
 
 
@@ -144,8 +150,20 @@ def read_json_data(filepath):
     return json_data
 
 
+def is_file_node_label(label):
+    """Checks if the given node is of the file category
+    Args:
+        label (str): node label
+    Returns:
+        bool: True is ;abel represents a file node
+    """
+    label_cls = Node.get_subclass(label)
+    node_category = label_cls._dictionary.get("category")  # type: str
+    return node_category and node_category.endswith("_file")
+
+
 def data_file_creation(client, headers, method='post', sur_filename='',
-                       dry_run=False):
+                       dry_run=False, file_size=None):
     """
     Boilerplate setup code for some tests
 
@@ -157,7 +175,7 @@ def data_file_creation(client, headers, method='post', sur_filename='',
         headers (dict): http header with token
         method (string): HTTP PUT or POST
         sur_filename (str): filename to use for the submitted unaligned reads file
-
+        file_size (int): used to updaye the file size before sending
     Returns:
         tuple (dict, pytest_flask.plugin.JSONResponse): file metadata dict and
             sheepdog response
@@ -172,7 +190,7 @@ def data_file_creation(client, headers, method='post', sur_filename='',
     resp = upload_function(client,
                            headers,
                            data_fnames=test_fnames + [sur_filename],
-                           dry_run=dry_run)
+                           dry_run=dry_run, file_size=file_size)
 
     assert_message = 'Unable to create nodes: {}'.format(
         [entity for entity in resp.json['entities'] if entity['errors']]

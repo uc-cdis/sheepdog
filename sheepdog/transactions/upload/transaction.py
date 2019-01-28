@@ -389,7 +389,8 @@ class BulkUploadTransaction(TransactionBase):
             return self.rollback()
 
         try:
-            self.flush()
+            # flush already called from transaction worker, this leads to duplicate calls to entity.flush_to_session()
+            # self.flush()
             self.session.commit()
             self.set_transaction_log_state(TX_LOG_STATE_SUCCEEDED)
         except Exception as e:  # pylint: disable=broad-except

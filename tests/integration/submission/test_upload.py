@@ -6,6 +6,7 @@ import copy
 import json
 import os
 import re
+import uuid
 
 import pytest
 
@@ -321,7 +322,7 @@ def test_is_updatable_file(client, pg_driver, indexd_client):
 
     # Create dummy file node and corresponding indexd record
     node = SubmittedAlignedReads(did)
-    indexd_client.create(
+    doc = indexd_client.create(
         did=did,
         urls=[url],
         hashes={'md5': '0'*32},
@@ -331,6 +332,8 @@ def test_is_updatable_file(client, pg_driver, indexd_client):
     transaction = MagicMock()
     transaction.indexd = indexd_client
     entity = FileUploadEntity(transaction)
+    entity.doc["md5sum"] = doc.hashes["md5"]
+    entity.doc["file_size"] = doc.size
     entity.s3_url = url
 
     for file_state in UPDATABLE_FILE_STATES:
@@ -339,6 +342,7 @@ def test_is_updatable_file(client, pg_driver, indexd_client):
         set_indexd_state(indexd_doc, url, file_state)
 
         # check if updatable
+        entity._populate_file_exist_in_index()
         assert entity.is_updatable_file_node(node)
 
 
