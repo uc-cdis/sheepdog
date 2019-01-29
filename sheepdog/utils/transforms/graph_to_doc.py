@@ -688,6 +688,7 @@ class ExportFile(object):
 
         for label, entities in json_output.iteritems():
             template = self.templates[label]
+            template = [t.lstrip('*') for t in template]
             titles = []
             titles.extend(get_link_titles(entities, template))
             titles.extend(get_non_link_props(template))
