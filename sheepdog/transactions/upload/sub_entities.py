@@ -334,13 +334,23 @@ class FileUploadEntity(UploadEntity):
         # If indexd record is not replaceable, update existing document
         document = self.get_indexed_document()
         if not self._is_replaceable:
-
             if self.urls:
                 urls_to_add = [url for url in self.urls
                                if url not in document.urls]
                 if urls_to_add:
                     document.urls.extend(urls_to_add)
-                    document.patch()
+            
+            document.hashes['md5'] = self.doc['md5sum']
+            document.file_size = self.doc['file_size']
+            document.file_name = self.doc['file_name']
+            document.metadata = self.doc.get('metadata', {})
+            # document.acl = self.node.acl or self.get_file_acl()
+            document.urls_metadata = {
+                url: {
+                    'state': 'registered', 'type': PRIMARY_URL_TYPE
+                } for url in document.urls
+            }        
+            document.patch()
             return
 
         # indexd changes in released files trigger a new version
