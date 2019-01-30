@@ -224,6 +224,14 @@ UPDATABLE_FILE_STATES = [
     'error',
 ]
 
+# files states that node modification is allowed for when node is released
+MODIFIABLE_FILE_STATES = [
+    'registered',
+    'uploading',
+    'uploaded',
+    'validated'
+]
+
 # Below is the list of node states that are treated as "released"
 RELEASED_NODE_STATES = [
     'released'

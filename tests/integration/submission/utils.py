@@ -204,13 +204,14 @@ def data_file_creation(client, headers, method='post', sur_filename='',
     return resp.json, sur_entity
 
 
-def release_indexd_doc(pg_driver, indexd_client, latest_did):
+def release_indexd_doc(pg_driver, indexd_client, latest_did, release_number=None):
     """Simulate a released node in indexd
 
     Args:
         pg_driver (pytest fixture): client connected to postgres server
         indexd_client (pytest fixture): client connected to indexd server
         latest_did (str): did of a document in indexd
+        release_number (str): current open release number
     """
 
     indexd_doc = indexd_client.get(latest_did)
@@ -229,4 +230,5 @@ def release_indexd_doc(pg_driver, indexd_client, latest_did):
     # create newest version number
     new_version = int(max([d.version for d in docs]) or '0') + 1
     indexd_doc.version = str(new_version)
+    indexd_doc.metadata["release_number"] = release_number if release_number else "10.0"
     indexd_doc.patch()
