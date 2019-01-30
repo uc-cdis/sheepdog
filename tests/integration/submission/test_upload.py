@@ -228,9 +228,13 @@ def test_data_file_already_indexed(
     entity1 = assert_single_entity_from_response(resp1)
     assert_positive_response(resp1)
     assert entity1['action'] == 'update'
-
-    # check that record did not change
-    assert record.to_json() == record1.to_json()
+    
+    # check that record did not change, excluding revison
+    record_dict = record.to_json()
+    record1_dict = record1.to_json()
+    record_dict.pop('rev')
+    record1_dict.pop('rev')
+    assert record_dict == record1_dict
 
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
