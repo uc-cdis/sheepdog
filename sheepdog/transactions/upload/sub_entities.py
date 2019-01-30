@@ -341,7 +341,8 @@ class FileUploadEntity(UploadEntity):
             document.hashes['md5'] = self.doc['md5sum']
             document.file_size = self.doc['file_size']
             document.file_name = self.doc['file_name']
-            document.metadata = self.doc.get('metadata', {})
+            if self.doc.get('metadata'):
+                document.metadata.update(self.doc.get('metadata'))
             # document.acl = self.node.acl or self.get_file_acl()
             document.urls_metadata = {
                 url: {
