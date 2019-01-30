@@ -807,7 +807,7 @@ def test_links_inherited_for_file_nodes(
         'CREATE_REPLACEABLE': True
     }
 )
-def test_silently_update_released_node(data_release, released_file, client, modifiable_state,
+def test_silently_update_released_node(data_release, released_file, client,
                                        admin, submitter, cgci_blgsp, indexd_client, pg_driver):
 
     submit_first_experiment(client, submitter)
