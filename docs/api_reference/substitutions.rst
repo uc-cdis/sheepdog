@@ -1,10 +1,10 @@
 .. |program_id| replace::
     The program to which the submitter belongs and in which the entities will be
-    created. The `program_id` is the human-readable name, e.g. TCGA.
+    created. The `program` is the human-readable name, e.g. TCGA.
 
 .. |project_id| replace::
     The project to which the submitter belongs and in which the entities will be
-    created. The `project_id` is the human-readable code, e.g. BRCA.
+    created. The `project` is the human-readable code, e.g. BRCA.
 
 .. |reqheader_X-Auth-Token| replace::
     The submitter's authorization token as provided by the GDC Authorization
