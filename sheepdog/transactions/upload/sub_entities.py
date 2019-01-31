@@ -5,13 +5,11 @@ uploaded entities.
 import uuid
 
 import psqlgraph
-from indexclient.client import Document, UPDATABLE_ATTRS
+from indexclient.client import Document
 from sheepdog.utils import (
     lookup_project,
     is_project_public,
     generate_s3_url,
-    get_indexd_state,
-    get_indexd,
 )
 
 from sheepdog.transactions.entity_base import EntityErrors

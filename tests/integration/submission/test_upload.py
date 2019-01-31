@@ -6,7 +6,6 @@ import copy
 import json
 import os
 import re
-import uuid
 
 import pytest
 
@@ -23,13 +22,13 @@ except ImportError:
     from mock import patch
 
 from gdcdatamodel.models import SubmittedAlignedReads, Case
-from sheepdog.globals import UPDATABLE_FILE_STATES, RELEASED_NODE_STATES, MODIFIABLE_FILE_STATES
+from sheepdog.globals import UPDATABLE_FILE_STATES, RELEASED_NODE_STATES
 from sheepdog.transactions.upload.sub_entities import FileUploadEntity
 from sheepdog.test_settings import SUBMISSION
 from sheepdog.utils import (
     generate_s3_url,
-    set_indexd_state,
-    get_indexd)
+    set_indexd_state
+)
 from tests.integration.submission.test_versioning import release_indexd_doc
 from tests.integration.submission.utils import (
     data_file_creation, read_json_data, put_entity_from_file
