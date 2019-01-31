@@ -190,7 +190,7 @@ def test_creating_new_versioned_file(
     """
     Create a new version of a file
     """
-    def create_node(version_number=None, file_name=file_name, release="10.0"):
+    def create_node(version_number=None, file_name=file_name, release=None):
         """Create a node and possibly assign it a version
 
         Args:
@@ -201,13 +201,15 @@ def test_creating_new_versioned_file(
             str: UUID of node submitted to the api
         """
         # Patch open file type to test open access file with type SubmittedAlignedReads
+        # random file_size
+        file_size = 55 * int(version_number) if version_number else 11
         with patch.object(FileUploadEntity, "get_open_file_type", lambda x: ["submitted_aligned_reads"]):
             _, sur_entity = data_file_creation(
                 client_toggled,
                 submitter,
                 method='put',
                 sur_filename=file_name,
-                file_size=random.randint(19, 300)
+                file_size=file_size
             )
 
         did = sur_entity['id']
