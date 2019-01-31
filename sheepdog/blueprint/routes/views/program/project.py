@@ -364,13 +364,17 @@ def export_entities(program, project):
     """
     Return a file with the requested entities as an attachment.
 
-    Omitting the ``ids`` parameter from the query string will return _ALL_
-    nodes under the given project.
+    Either ``ids`` or ``node_label`` must be provided in the parameters. When both are
+    provided, ``node_label`` is ignored and ``ids`` is used.
 
-    Otherwise, if there is only one entity type in the output, it will return a
-    {node_type}.tsv or {node_type}.json file, e.g.: aliquot.tsv. If there are
-    multiple entity types, it returns ``gdc_export_{one_time_sha}.tar.gz`` for
-    tsv format, or ``gdc_export_{one_time_sha}.json`` for json format.
+    If ``ids`` is provided, all entities matching given ``ids`` will be exported. If
+    there is only one entity type in the output, it will return a ``{node_type}.tsv`` or
+    ``{node_type}.json`` file, e.g.: ``aliquot.tsv``. If there are multiple entity
+    types, it returns ``gdc_export_{one_time_sha}.tar.gz`` for TSV format, or
+    ``gdc_export_{one_time_sha}.json`` for JSON format. CSV is similar to TSV.
+
+    If ``node_label`` is provided, it will export all entities of type with name
+    ``node_label`` to a TSV file or JSON file. CSV is not supported yet in this case.
 
     Summary:
         Export entities
@@ -384,7 +388,8 @@ def export_entities(program, project):
 
     Query Args:
         ids (str): one or a list of node IDs seperated by commas.
-        format (str): output format, ``json`` or ``tsv`` or ``csv``; default is tsv
+        node_label (str): type of nodes to look up, for example ``'case'``
+        format (str): output format, ``json`` or ``tsv`` or ``csv``; default is ``tsv``
         with_children (str): whether to recursively find children or not; default is False
         category (str): category of node to filter on children. Example: ``clinical``
 
