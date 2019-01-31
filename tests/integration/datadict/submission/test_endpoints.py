@@ -8,6 +8,8 @@ import contextlib
 import json
 import os
 import uuid
+import csv
+from StringIO import StringIO
 
 import boto
 import pytest
@@ -667,6 +669,9 @@ def test_submit_export_encoding(client, pg_driver, cgci_blgsp, submitter):
         headers=submitter)
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
+    tsv_output = csv.DictReader(StringIO(r.data), delimiter="\t")
+    row = next(tsv_output)
+    assert row['submitter_id'] == 'BLGSP-submitter-ü'
 
     # JSON single node export
     path += '&format=json'
@@ -682,6 +687,9 @@ def test_submit_export_encoding(client, pg_driver, cgci_blgsp, submitter):
         headers=submitter)
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
+    tsv_output = csv.DictReader(StringIO(r.data), delimiter="\t")
+    row = next(tsv_output)
+    assert row['submitter_id'] == 'BLGSP-submitter-ü'
 
     # JSON multiple node export
     path += '&format=json'
