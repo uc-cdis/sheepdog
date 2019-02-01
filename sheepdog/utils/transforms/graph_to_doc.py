@@ -38,6 +38,15 @@ UNSUPPORTED_EXPORT_NODE_CATEGORIES = [
     'internal',
 ]
 
+def _encode(val):
+    """Encode keys or values for writing a tsv dict."""
+    if isinstance(val, unicode):
+        return val.encode('utf-8')
+    elif not isinstance(val, str):
+        return str(val)
+    else:
+        return val
+
 
 def get_node_category(node_type):
     """
@@ -677,15 +686,9 @@ class ExportFile(object):
         delimiter = DELIMITERS[self.file_format]
         json_output, self.result = self.result, {}
 
-        def encode(string):
-            """Encode keys or values for writing a tsv dict (see below)."""
-            if isinstance(string, unicode):
-                return string.encode('utf-8')
-            else:
-                return string
-
         for label, entities in json_output.iteritems():
             template = self.templates[label]
+            template = [t.lstrip('*') for t in template]
             titles = []
             titles.extend(get_link_titles(entities, template))
             titles.extend(get_non_link_props(template))
@@ -696,7 +699,7 @@ class ExportFile(object):
 
             for tsv_dict in get_tsv_dicts(entities, titles):
                 writer.writerow(
-                    {encode(k): encode(v) for k, v in tsv_dict.iteritems()}
+                    {_encode(k): _encode(v) for k, v in tsv_dict.iteritems()}
                 )
 
     def get_delimited_response(self):
@@ -945,8 +948,7 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
                 json_obj["link_fields"][title] = result[idx + 1] or ''
             # Convert row elements to string if they are not
             for idx, val in enumerate(row):
-                if not isinstance(val, str):
-                    row[idx] = str(row[idx])
+                row[idx] = _encode(row[idx])
             if file_format == "json":
                 yield js_list_separator + json.dumps(json_obj)
             else:
