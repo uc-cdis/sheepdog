@@ -90,7 +90,7 @@ def app(tmpdir, request):
 
 
 @pytest.fixture(scope='function')
-def client_toggled(app, request):
+def client_toggled(config, client, request):
     """
     Will toggle app config parameters for the test using this and return test client
 
@@ -102,25 +102,25 @@ def client_toggled(app, request):
     NOTE: App config gets reset each time function-scoped app fixture is executed,
     no need to reset here
     """
-    params = request.node.get_marker('config_toggle')
+    # node.get_marker was deprecated https://github.com/pytest-dev/pytest/issues/4546
+    params = request.node.get_closest_marker('config_toggle')
 
     for parameter, value in params.kwargs['parameters'].items():
-        app.config[parameter] = value
+        config[parameter] = value
 
-    with app.test_client() as client:
-        yield client
+    yield client
 
     # reset app config to the original state
-    app.config.from_object('sheepdog.test_settings')
+    config.from_object('sheepdog.test_settings')
 
     for param in params.kwargs['parameters']:
         if not hasattr(test_settings, param):
-            app.config.pop(param)
+            config.pop(param)
 
 
 @pytest.fixture
-def pg_driver(request, client):
-    pg_driver = PsqlGraphDriver(**pg_config())
+def pg_driver(request, client, pg_config):
+    pg_driver = PsqlGraphDriver(**pg_config)
 
     def tearDown():
         with pg_driver.engine.begin() as conn:

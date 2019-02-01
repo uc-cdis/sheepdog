@@ -27,6 +27,7 @@ addons:
     - gfortran
 
 install:
+  - pip uninstall --yes pytest || true # Want a newer version of pytest than travis provides
   - pip install -r requirements.txt
   - python setup.py develop
   - pip install -r dev-requirements.txt
@@ -40,7 +41,7 @@ before_script:
 
 # command to run tests
 script:
-- py.test -vv --cov=sheepdog --cov-report xml tests/
+- python -m pytest --cov=sheepdog --cov-report xml tests/
 
 after_script:
 - python-codacy-coverage -r coverage.xml
