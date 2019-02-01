@@ -813,6 +813,7 @@ def test_silently_update_released_node(data_release, released_file, client,
     file_data = copy.deepcopy(DEFAULT_METADATA_FILE)
     file_data['id'] = released_file.did
     file_data["file_size"] = released_file.size
+    file_data["file_name"] = released_file.file_name
     file_data["md5sum"] = released_file.hashes["md5"]
     resp = submit_metadata_file(
         client, admin, submitter, data=file_data).json
@@ -830,3 +831,47 @@ def test_silently_update_released_node(data_release, released_file, client,
     doc = indexd_client.get_latest_version(version_id)
     assert doc.version == "1"
     assert doc.metadata["release_number"] == data_release
+
+
+@pytest.mark.config_toggle(
+    parameters={
+        'CREATE_REPLACEABLE': True,
+        'IS_GDC': True
+    }
+)
+@pytest.mark.parametrize('trigger', ['file_name', 'file_size', 'md5sum'])  # case to test open acl
+def test_trigger_versioning(trigger, data_release, released_file, client,
+                                       admin, submitter, cgci_blgsp, indexd_client, pg_driver):
+
+    submit_first_experiment(client, submitter)
+    file_data = copy.deepcopy(DEFAULT_METADATA_FILE)
+    file_data['id'] = released_file.did
+
+    if trigger != "file_size":
+        file_data["file_size"] = released_file.size
+
+    if trigger != "file_name":
+        file_data["file_name"] = released_file.file_name
+
+    if trigger != "md5sum":
+        file_data["md5sum"] = released_file.hashes["md5"]
+
+    resp = submit_metadata_file(
+        client, admin, submitter, data=file_data).json
+    assert resp['code'] == 200
+
+    entities = resp["entities"]
+    assert len(entities) == 1
+
+    version_id = entities[0]['id']
+    with pg_driver.session_scope():
+        node = pg_driver.nodes().get(version_id)
+        assert node is not None
+
+        # assert old node was deleted
+        node = pg_driver.nodes().get(released_file.did)
+        assert node is None
+
+    # assert new version was created on indexd
+    doc = indexd_client.get(version_id)
+    assert doc.version is None

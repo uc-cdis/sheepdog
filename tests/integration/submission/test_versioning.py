@@ -1,5 +1,3 @@
-import random
-
 import pytest
 import os
 from gdcdatamodel import models as md

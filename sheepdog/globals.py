@@ -225,10 +225,7 @@ UPDATABLE_FILE_STATES = [
 ]
 
 # files states that node modification is allowed for when node is released
-MODIFIABLE_FILE_STATES = [
-    'registered',
-    'uploading',
-    'uploaded',
+MODIFIABLE_RELEASED_FILE_STATES = [
     'validated'
 ]
 

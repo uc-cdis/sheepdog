@@ -20,7 +20,7 @@ from sheepdog.transactions.upload.entity import (
 from sheepdog.globals import (
     DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE, POSSIBLE_OPEN_FILE_NODES,
     UPDATABLE_FILE_STATES, RELEASED_NODE_STATES,
-    MODIFIABLE_FILE_STATES)
+    MODIFIABLE_RELEASED_FILE_STATES)
 from sheepdog.errors import UserError
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -341,24 +341,23 @@ class FileUploadEntity(UploadEntity):
                     document.patch()
             return
 
-        is_released = document.version is not None and document.metadata.get("release_number") is not None
+        # indexd changes in released files trigger a new version
+        if document.version and document.metadata.get("release_number"):
+            return
 
-        # if document is not released, allow recreation of urls and url_metadata
-        if not is_released:
-            document.urls = []
-            document.urls_metadata = {}
+        document.urls = []
+        document.urls_metadata = {}
 
         # generate new urls if none is specified
-        if not self.urls:
-            url = generate_s3_url(
-                    host=self._config['SUBMISSION']['host'],
-                    bucket=self._config['SUBMISSION']['bucket'],
-                    program=self.transaction.program,
-                    project=self.transaction.project,
-                    uuid=self.entity_id,
-                    file_name=self.doc['file_name']
-                )
-            self.urls = [url]
+        url = generate_s3_url(
+                host=self._config['SUBMISSION']['host'],
+                bucket=self._config['SUBMISSION']['bucket'],
+                program=self.transaction.program,
+                project=self.transaction.project,
+                uuid=self.entity_id,
+                file_name=self.doc['file_name']
+            )
+        self.urls = [url]
 
         self.urls_metadata = {
             url: {
@@ -369,13 +368,11 @@ class FileUploadEntity(UploadEntity):
 
         # update urls and urls_metadata if it does not already exist
         for url in self.urls:
-            if url not in document.urls:
-                document.urls.append(url)
+            document.urls.append(url)
 
         # update urls metadata
         for url, md in self.urls_metadata.items():
-            if url not in document.urls_metadata.keys():
-                document.urls_metadata[url] = md
+            document.urls_metadata[url] = md
 
         old_doc = document.to_json()
         document.delete()
@@ -392,7 +389,7 @@ class FileUploadEntity(UploadEntity):
             'metadata': old_doc.get('metadata', {}),
         }
 
-        # Re-create indexd doc witht he same UUID
+        # Re-create indexd doc with he same UUID
         self.transaction.indexd.create(
             did=old_doc['did'], baseid=old_doc['baseid'], **updated_fields)
 
@@ -717,19 +714,20 @@ class FileUploadEntity(UploadEntity):
         return self._is_modified_release_node(node)
 
     def _is_modified_release_node(self, node):
-        """ Checks if the current entity"""
+        """ Checks if the current entity is a released node that has been modified enough to allow versioning """
         doc = self.get_indexed_document()
         return doc is not None and node is not None and node.state in RELEASED_NODE_STATES and \
-               (doc.size != self._get_file_size() or doc.hashes.get("md5") != self.doc.get("md5sum"))
+               (doc.size != self._get_file_size() or doc.hashes.get("md5") != self.doc.get("md5sum")
+                or doc.file_name != self.doc.get("file_name"))
 
     def _is_modifiable_release(self, node):
-        """ Checks if this is a previously released node that modification is allowed"""
+        """ Checks if this is a previously released node with modifications that is not sufficient for versioning """
         doc = self.get_indexed_document()
         file_state = self.get_indexed_document_state(self.s3_url)
 
         if doc and node and file_state and node.state in RELEASED_NODE_STATES:
             current_release = doc.metadata.get("release_number", None)
-            return current_release is not None and file_state in MODIFIABLE_FILE_STATES
+            return current_release is not None and file_state in MODIFIABLE_RELEASED_FILE_STATES
         return False
 
     def get_indexed_document(self):
