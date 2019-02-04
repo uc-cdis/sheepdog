@@ -39,7 +39,7 @@ class UploadTransaction(TransactionBase):
                 # ... do work ...
     """
 
-    REQUIRED_PROJECT_STATES = ['open']
+    REQUIRED_PROJECT_STATES = ["open"]
 
     def __init__(self, **kwargs):
         """
@@ -50,7 +50,7 @@ class UploadTransaction(TransactionBase):
         """
         #: HTTP[S] proxies used for requests to external services
         # Base class doesn't know about this, so pop first
-        self.external_proxies = kwargs.pop('external_proxies', {})
+        self.external_proxies = kwargs.pop("external_proxies", {})
         super(UploadTransaction, self).__init__(**kwargs)
         self.documents = []
         self.json_validator = validators.GDCJSONValidator()
@@ -58,31 +58,23 @@ class UploadTransaction(TransactionBase):
         # The dbGapXReferencer conditionally requires cases to exist in
         # dbGaP prior to submission to the GDC
         self.dbgap_x_referencer = dbgap.dbGaPXReferencer(
-            self.db_driver,
-            self.logger,
-            proxies=self.external_proxies,
+            self.db_driver, self.logger, proxies=self.external_proxies
         )
 
-        self._config = kwargs['flask_config']
+        self._config = kwargs["flask_config"]
 
     def get_phsids(self):
         """Fetch the phsids for the current project."""
-        project = utils.lookup_project(
-            self.db_driver, self.program, self.project
-        )
+        project = utils.lookup_project(self.db_driver, self.program, self.project)
         program = project.programs[0]
-        numbers = [
-            project.dbgap_accession_number, program.dbgap_accession_number
-        ]
+        numbers = [project.dbgap_accession_number, program.dbgap_accession_number]
         return [n for n in numbers if n is not None]
 
     def parse_doc(self, name, doc_format, doc, data):
         """Add/parse a document to the transaction."""
         self.parse_entities(data)
         tx_document = models.submission.TransactionDocument(
-            name=name,
-            doc_format=doc_format,
-            doc=doc,
+            name=name, doc_format=doc_format, doc=doc
         )
         with self.fetch_transaction_log() as tx_log:
             tx_log.documents.append(tx_document)
@@ -107,7 +99,7 @@ class UploadTransaction(TransactionBase):
             tx_log.canonical_json += docs
             # Mark the column dirty, or else sqlalchemy won't know it was
             # mutated.
-            flag_modified(tx_log, 'canonical_json')
+            flag_modified(tx_log, "canonical_json")
 
         self.json_validator.record_errors(self.entities)
         self.instantiate()
@@ -141,8 +133,8 @@ class UploadTransaction(TransactionBase):
         for secondary_keys in entities_secondary_keys:
             if secondary_keys in checked:
                 self.record_error(
-                    'Entity is not unique, {}'.format(secondary_keys),
-                    type=EntityErrors.NOT_UNIQUE
+                    "Entity is not unique, {}".format(secondary_keys),
+                    type=EntityErrors.NOT_UNIQUE,
                 )
             checked.add(secondary_keys)
 
@@ -187,7 +179,7 @@ class UploadTransaction(TransactionBase):
         """
         Return the current HTTP status code at any point during a transaction.
         """
-        role_is_create = self.role == 'create'
+        role_is_create = self.role == "create"
         if self.dry_run or (self.success and not role_is_create):
             return 200
         elif self.success and role_is_create:
@@ -201,23 +193,30 @@ class UploadTransaction(TransactionBase):
         Return a JSON representation of transaction status, errors, entities,
         etc.
         """
-        doc = dict(self.base_json, **{
-            'created_entity_count': self.created_entity_count,
-            'updated_entity_count': self.updated_entity_count,
-        })
+        doc = dict(
+            self.base_json,
+            **{
+                "created_entity_count": self.created_entity_count,
+                "updated_entity_count": self.updated_entity_count,
+            }
+        )
         if case_cache_enabled():
-            doc['cases_related_to_updated_entities_count'] = len({
-                case['id']
-                for entity in doc['entities']
-                for case in entity['related_cases']
-                if entity['action'] == "update"
-            })
-            doc['cases_related_to_created_entities_count'] = len({
-                case['id']
-                for entity in doc['entities']
-                for case in entity['related_cases']
-                if entity['action'] == "create"
-            })
+            doc["cases_related_to_updated_entities_count"] = len(
+                {
+                    case["id"]
+                    for entity in doc["entities"]
+                    for case in entity["related_cases"]
+                    if entity["action"] == "update"
+                }
+            )
+            doc["cases_related_to_created_entities_count"] = len(
+                {
+                    case["id"]
+                    for entity in doc["entities"]
+                    for case in entity["related_cases"]
+                    if entity["action"] == "create"
+                }
+            )
         return doc
 
     @property
@@ -226,16 +225,18 @@ class UploadTransaction(TransactionBase):
         Return a message describing the transaction at any point in time.
         """
         if not self.success:
-            message = 'Transaction aborted due to '
+            message = "Transaction aborted due to "
             if self.entity_error_count:
                 count = self.entity_error_count
-                message += '{} invalid {}'.format(
-                    count, 'entities' if count > 1 else 'entity')
+                message += "{} invalid {}".format(
+                    count, "entities" if count > 1 else "entity"
+                )
             if self.entity_error_count and self.transactional_errors:
-                message += ' and '
+                message += " and "
             if self.transactional_errors:
-                message += '{} transactional error(s)'.format(
-                    self.transactional_error_count)
+                message += "{} transactional error(s)".format(
+                    self.transactional_error_count
+                )
         else:
             if self.dry_run:
                 return (
@@ -244,22 +245,22 @@ class UploadTransaction(TransactionBase):
                     " database."
                 )
             else:
-                message = 'Transaction successful'
-        return message + '.'
+                message = "Transaction successful"
+        return message + "."
 
     @property
     def created_entity_count(self):
         """Return the count of created entities."""
         if not self.success:
             return 0
-        return len([e for e in self.entities if e.action == 'create'])
+        return len([e for e in self.entities if e.action == "create"])
 
     @property
     def updated_entity_count(self):
         """Return the count of updated entities."""
         if not self.success:
             return 0
-        return len([e for e in self.entities if e.action == 'update'])
+        return len([e for e in self.entities if e.action == "update"])
 
     def add_entity(self, doc):
         """
@@ -279,12 +280,12 @@ class UploadTransaction(TransactionBase):
             self.entities.append(entity)
         except Exception as e:  # pylint: disable=broad-except
             self.logger.exception(e)
-            self.record_error('Unable to parse entity')
+            self.record_error("Unable to parse entity")
 
 
 class BulkUploadTransaction(TransactionBase):
 
-    REQUIRED_PROJECT_STATES = ['open']
+    REQUIRED_PROJECT_STATES = ["open"]
 
     def __init__(self, **kwargs):
         """
@@ -294,7 +295,7 @@ class BulkUploadTransaction(TransactionBase):
         Keyword Args:
             TransactionBase.__init__()
         """
-        self.external_proxies = kwargs.pop('external_proxies', {})
+        self.external_proxies = kwargs.pop("external_proxies", {})
         super(BulkUploadTransaction, self).__init__(**kwargs)
         self.flush_timestamp = None
         self.transactional_errors = []
@@ -319,7 +320,7 @@ class BulkUploadTransaction(TransactionBase):
             return 200
         elif not self.success:
             return 400
-        elif self.role == 'create':
+        elif self.role == "create":
             return 201
         else:
             return 200
@@ -379,7 +380,7 @@ class BulkUploadTransaction(TransactionBase):
         if not self.success:
             self.set_transaction_log_state(TX_LOG_STATE_FAILED)
             self.rollback()
-            raise UserError(message='Bulk Transaction failed', json=self.json)
+            raise UserError(message="Bulk Transaction failed", json=self.json)
 
         if self.dry_run:
             self.set_transaction_log_state(TX_LOG_STATE_SUCCEEDED)
@@ -391,7 +392,7 @@ class BulkUploadTransaction(TransactionBase):
             self.set_transaction_log_state(TX_LOG_STATE_SUCCEEDED)
         except Exception as e:  # pylint: disable=broad-except
             self.logger.exception(e)
-            msg = 'Unable to write to database, please try again'
+            msg = "Unable to write to database, please try again"
             self.transactional_errors.append(msg)
             self.set_transaction_log_state(TX_LOG_STATE_ERRORED)
             self.session.rollback()
@@ -416,8 +417,8 @@ class BulkUploadTransaction(TransactionBase):
             for entity in self.entities:
                 if entity.secondary_keys == sk:
                     entity.record_error(
-                        'Entity is duplicated elsewhere in bulk transaction',
-                        type=EntityErrors.NOT_UNIQUE
+                        "Entity is duplicated elsewhere in bulk transaction",
+                        type=EntityErrors.NOT_UNIQUE,
                     )
 
         # Check GDC ids
@@ -425,8 +426,8 @@ class BulkUploadTransaction(TransactionBase):
             for entity in self.entities:
                 if entity.entity_id == ID:
                     entity.record_error(
-                        'Entity is duplicated elsewhere in bulk transaction',
-                        type=EntityErrors.NOT_UNIQUE
+                        "Entity is duplicated elsewhere in bulk transaction",
+                        type=EntityErrors.NOT_UNIQUE,
                     )
 
     def set_subtransaction_document_response_json(self):
@@ -477,9 +478,9 @@ class BulkUploadTransaction(TransactionBase):
         or failure).
         """
         if self.success:
-            return 'Bulk Transaction succeeded.'
+            return "Bulk Transaction succeeded."
         else:
-            return 'Bulk Transaction failed.'
+            return "Bulk Transaction failed."
 
     @property
     def json(self):
@@ -487,27 +488,27 @@ class BulkUploadTransaction(TransactionBase):
         TODO
         """
         subtransaction_json = self.subtransaction_json
-        entity_error_count = sum(
-            [j['entity_error_count'] for j in subtransaction_json])
+        entity_error_count = sum([j["entity_error_count"] for j in subtransaction_json])
         updated_entity_count = sum(
-            [j['updated_entity_count'] for j in subtransaction_json])
+            [j["updated_entity_count"] for j in subtransaction_json]
+        )
         created_entity_count = sum(
-            [j['created_entity_count'] for j in subtransaction_json])
-        document_error_count = len(
-            [t for t in self.subtransactions if not t.success])
+            [j["created_entity_count"] for j in subtransaction_json]
+        )
+        document_error_count = len([t for t in self.subtransactions if not t.success])
 
         return {
-            'transaction_id': self.transaction_id,
-            'transactional_errors': self.transactional_errors,
-            'success': self.success,
-            'message': self.message,
-            'entity_error_count': entity_error_count,
-            'updated_entity_count': updated_entity_count,
-            'created_entity_count': created_entity_count,
-            'document_error_count': document_error_count,
-            'code': self.status_code,
-            'subtransactions': [{
-                'name': t.document_name,
-                'response_json': t.json,
-            } for t in self.subtransactions],
+            "transaction_id": self.transaction_id,
+            "transactional_errors": self.transactional_errors,
+            "success": self.success,
+            "message": self.message,
+            "entity_error_count": entity_error_count,
+            "updated_entity_count": updated_entity_count,
+            "created_entity_count": created_entity_count,
+            "document_error_count": document_error_count,
+            "code": self.status_code,
+            "subtransactions": [
+                {"name": t.document_name, "response_json": t.json}
+                for t in self.subtransactions
+            ],
         }

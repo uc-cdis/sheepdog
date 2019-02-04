@@ -1,15 +1,9 @@
 import flask
 
 from sheepdog import utils
-from sheepdog.errors import (
-    UserError,
-)
-from sheepdog.globals import (
-    FLAG_IS_ASYNC,
-)
-from sheepdog.transactions.submission.transaction import (
-    SubmissionTransaction,
-)
+from sheepdog.errors import UserError
+from sheepdog.globals import FLAG_IS_ASYNC
+from sheepdog.transactions.submission.transaction import SubmissionTransaction
 
 
 def handle_submission_transaction(program, project, *doc_args, **tx_kwargs):
@@ -19,8 +13,8 @@ def handle_submission_transaction(program, project, *doc_args, **tx_kwargs):
     Return:
         Tuple[flask.Response, int]: (API response json, status code)
     """
-    is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
-    db_driver = tx_kwargs.pop('db_driver', flask.current_app.db)
+    is_async = tx_kwargs.pop("is_async", utils.is_flag_set(FLAG_IS_ASYNC))
+    db_driver = tx_kwargs.pop("db_driver", flask.current_app.db)
 
     smtp_conf = None
     if utils.should_send_email(flask.current_app.config):

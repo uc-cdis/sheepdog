@@ -7,9 +7,7 @@ TODO(jsm|2016-02-01): Add review constraints.
 import flask
 
 from sheepdog import utils
-from sheepdog.globals import (
-    FLAG_IS_ASYNC,
-)
+from sheepdog.globals import FLAG_IS_ASYNC
 from sheepdog.transactions.transaction_base import TransactionBase
 from sheepdog.transactions.release.transaction import ReleaseTransaction
 
@@ -34,8 +32,8 @@ def handle_release_transaction(program, project, **tx_kwargs):
     Return:
         Tuple[flask.Response, int]: (API response json, status code)
     """
-    is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
-    db_driver = tx_kwargs.pop('db_driver', flask.current_app.db)
+    is_async = tx_kwargs.pop("is_async", utils.is_flag_set(FLAG_IS_ASYNC))
+    db_driver = tx_kwargs.pop("db_driver", flask.current_app.db)
 
     transaction = ReleaseTransaction(
         program=program,

@@ -21,31 +21,31 @@ class SubmissionTransaction(TransactionBase):
 
     """Models a transaction to mark all nodes in a project submitted."""
 
-    REQUIRED_PROJECT_STATES = ['review']
+    REQUIRED_PROJECT_STATES = ["review"]
 
     #: Don't mark these classes submitted
-    SKIPPED_CLASSES = [
-        'case',
-        'annotation',
-    ]
+    SKIPPED_CLASSES = ["case", "annotation"]
 
     def __init__(self, smtp_conf=None, **kwargs):
-        super(SubmissionTransaction, self).__init__(role='submit', **kwargs)
+        super(SubmissionTransaction, self).__init__(role="submit", **kwargs)
 
         self.app_config = capp.config
         if utils.should_send_email(self.app_config):
             self.smtp_conf = smtp_conf
 
-        roles = get_program_project_roles(*self.project_id.split('-', 1))
+        roles = get_program_project_roles(*self.project_id.split("-", 1))
         if ROLE_SUBMIT not in roles:
             self.record_error(
-                'You do not have submit permission for project {}'
-                .format(self.project_id),
-                type=EntityErrors.INVALID_PERMISSIONS)
+                "You do not have submit permission for project {}".format(
+                    self.project_id
+                ),
+                type=EntityErrors.INVALID_PERMISSIONS,
+            )
             return
 
         self.project_node = utils.lookup_project(
-            self.db_driver, self.program, self.project)
+            self.db_driver, self.program, self.project
+        )
 
     @property
     def json(self):
@@ -55,9 +55,9 @@ class SubmissionTransaction(TransactionBase):
 
         """
 
-        return dict(self.base_json, **{
-            'submitted_entity_count': self.submitted_entity_count,
-        })
+        return dict(
+            self.base_json, **{"submitted_entity_count": self.submitted_entity_count}
+        )
 
     @property
     def message(self):
@@ -68,13 +68,13 @@ class SubmissionTransaction(TransactionBase):
         """
 
         if self.success and not self.dry_run:
-            return ('Successfully submitted {} entities.'
-                    .format(len(self.entities)))
+            return "Successfully submitted {} entities.".format(len(self.entities))
         elif self.success and self.dry_run:
-            return ('Dry run successful. Would have submitted {} entities.'
-                    .format(len(self.entities)))
+            return "Dry run successful. Would have submitted {} entities.".format(
+                len(self.entities)
+            )
         else:
-            return 'Submit transaction failed.'
+            return "Submit transaction failed."
 
     @property
     def submitted_entity_count(self):
@@ -106,19 +106,18 @@ class SubmissionTransaction(TransactionBase):
         for cls in psqlgraph.Node.get_subclasses():
 
             skip_this_cls = (
-                cls._dictionary['category'] not in ENTITY_STATE_CATEGORIES
+                cls._dictionary["category"] not in ENTITY_STATE_CATEGORIES
                 and cls.label not in self.SKIPPED_CLASSES
             )
             if skip_this_cls:
                 continue
 
-            _project_id = cls._props['project_id']
+            _project_id = cls._props["project_id"]
             _node_state = cls._props[STATE_KEY]
 
             filter_project = _project_id.astext == self.project_id
             filter_state = sqlalchemy.or_(
-                _node_state.astext.in_(SUBMITTABLE_STATES),
-                _node_state is None
+                _node_state.astext.in_(SUBMITTABLE_STATES), _node_state is None
             )
 
             nodes += (
@@ -138,15 +137,12 @@ class SubmissionTransaction(TransactionBase):
         """
         self.assert_project_state()
         nodes = self.lookup_submittable_nodes()
-        self.entities = [
-            SubmissionEntity(self, n)
-            for n in nodes
-        ]
+        self.entities = [SubmissionEntity(self, n) for n in nodes]
         for entity in self.entities:
             entity.submit()
 
         project_node = self.session.merge(self.project_node)
-        project_node.state = 'submitted'
+        project_node.state = "submitted"
         project_node.releasable = True
 
         if self.success and utils.should_send_email(self.app_config):
@@ -161,22 +157,22 @@ class SubmissionTransaction(TransactionBase):
         about submitting a project
         """
 
-        from_addr = self.app_config.get('EMAIL_FROM_ADDRESS')
-        to_addr = self.app_config.get('EMAIL_SUPPORT_ADDRESS')
-        preformatted = self.app_config.get('EMAIL_NOTIFICATION_SUBMISSION')
-        subject = (
-            "[SUBMISSION] Project {project_id} has been submitted by {user}"
-            .format(project_id=self.project_id, user=self.user.username))
+        from_addr = self.app_config.get("EMAIL_FROM_ADDRESS")
+        to_addr = self.app_config.get("EMAIL_SUPPORT_ADDRESS")
+        preformatted = self.app_config.get("EMAIL_NOTIFICATION_SUBMISSION")
+        subject = "[SUBMISSION] Project {project_id} has been submitted by {user}".format(
+            project_id=self.project_id, user=self.user.username
+        )
 
         number_of_cases = 0
         number_of_submitted_files = 0
         experimental_strategies = set()
         for entity in self.entities:
-            if entity.node.label == 'case':
+            if entity.node.label == "case":
                 number_of_cases += 1
 
             if utils.is_node_file(entity.node):
-                ex_strategy = entity.node.props.get('experimental_strategy')
+                ex_strategy = entity.node.props.get("experimental_strategy")
                 if ex_strategy:
                     experimental_strategies.add(ex_strategy)
 
@@ -186,15 +182,12 @@ class SubmissionTransaction(TransactionBase):
             user_id=self.user.username,
             number_of_cases=number_of_cases,
             number_of_submitted_files=number_of_submitted_files,
-            experimental_strategies=','.join(experimental_strategies),
+            experimental_strategies=",".join(experimental_strategies),
         )
 
         # Construct email
         envelope = envelopes.Envelope(
-            from_addr=from_addr,
-            to_addr=to_addr,
-            subject=subject,
-            text_body=text_body,
+            from_addr=from_addr, to_addr=to_addr, subject=subject, text_body=text_body
         )
 
         description = "email '{}' to {}".format(subject, to_addr)

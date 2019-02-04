@@ -12,16 +12,8 @@ import lxml
 
 from sheepdog import auth
 from sheepdog import utils
-from sheepdog.errors import (
-    ParsingError,
-    SchemaError,
-    UnsupportedError,
-    UserError,
-)
-from sheepdog.globals import (
-    FLAG_IS_ASYNC,
-    PROJECT_SEED,
-)
+from sheepdog.errors import ParsingError, SchemaError, UnsupportedError, UserError
+from sheepdog.globals import FLAG_IS_ASYNC, PROJECT_SEED
 from sheepdog.transactions.upload.transaction import (
     BulkUploadTransaction,
     UploadTransaction,
@@ -60,8 +52,8 @@ def _single_transaction(role, program, project, *doc_args, **tx_kwargs):
     Return:
         Tuple[flask.Response, int]: (API response json, status code)
     """
-    is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
-    db_driver = tx_kwargs.pop('db_driver', flask.current_app.db)
+    is_async = tx_kwargs.pop("is_async", utils.is_flag_set(FLAG_IS_ASYNC))
+    db_driver = tx_kwargs.pop("db_driver", flask.current_app.db)
 
     transaction = UploadTransaction(
         program=program,
@@ -100,31 +92,33 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
     transaction handler.
     """
     doc = flask.request.get_data()
-    content_type = flask.request.headers.get('Content-Type', '').lower()
-    if content_type == 'text/csv':
-        doc_format = 'csv'
+    content_type = flask.request.headers.get("Content-Type", "").lower()
+    if content_type == "text/csv":
+        doc_format = "csv"
         data, errors = utils.transforms.CSVToJSONConverter().convert(doc)
-    elif content_type in ['text/tab-separated-values', 'text/tsv']:
-        doc_format = 'tsv'
+    elif content_type in ["text/tab-separated-values", "text/tsv"]:
+        doc_format = "tsv"
         data, errors = utils.transforms.TSVToJSONConverter().convert(doc)
     else:
-        doc_format = 'json'
+        doc_format = "json"
         data = utils.parse.parse_request_json()
         errors = None
     # TODO: use errors value?
-    name = flask.request.headers.get('X-Document-Name', None)
+    name = flask.request.headers.get("X-Document-Name", None)
     doc_args = [name, doc_format, doc, data]
-    is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
-    db_driver = tx_kwargs.pop('db_driver', flask.current_app.db)
-    transaction = UploadTransaction(program=program,
-                                    project=project,
-                                    role=role,
-                                    logger=flask.current_app.logger,
-                                    flask_config=flask.current_app.config,
-                                    signpost=flask.current_app.signpost,
-                                    external_proxies=utils.get_external_proxies(),
-                                    db_driver=db_driver,
-                                    **tx_kwargs)
+    is_async = tx_kwargs.pop("is_async", utils.is_flag_set(FLAG_IS_ASYNC))
+    db_driver = tx_kwargs.pop("db_driver", flask.current_app.db)
+    transaction = UploadTransaction(
+        program=program,
+        project=project,
+        role=role,
+        logger=flask.current_app.logger,
+        flask_config=flask.current_app.config,
+        signpost=flask.current_app.signpost,
+        external_proxies=utils.get_external_proxies(),
+        db_driver=db_driver,
+        **tx_kwargs
+    )
     if is_async:
         session = transaction.db_driver.session_scope(can_inherit=False)
         with session, transaction:
@@ -144,34 +138,31 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
 
 def unpack_bulk_wrapper(wrapper):
     """Return the name, the doc, and the doc_format from the wrapper."""
-    return (
-        wrapper.get('name'),
-        wrapper.get('doc', ''),
-        wrapper.get('doc_format'),
-    )
+    return (wrapper.get("name"), wrapper.get("doc", ""), wrapper.get("doc_format"))
 
 
 def _add_wrapper_to_bulk_transaction(transaction, wrapper, index):
-    required_keys = {'doc_format', 'doc', 'name'}
+    required_keys = {"doc_format", "doc", "name"}
     # Check object keys
     if required_keys - set(wrapper.keys()):
         raise UserError(
-            'Missing required field in document {}: {}'
-            .format(index, list(required_keys - set(wrapper.keys())))
+            "Missing required field in document {}: {}".format(
+                index, list(required_keys - set(wrapper.keys()))
+            )
         )
 
     name, doc, doc_format = unpack_bulk_wrapper(wrapper)
 
     # Parse doc
-    doc_format = wrapper['doc_format'].lower()
-    if doc_format == 'json':
+    doc_format = wrapper["doc_format"].lower()
+    if doc_format == "json":
         try:
             data = utils.parse.parse_json(doc)
         except Exception as e:
-            raise UserError('Unable to parse doc {}: {}'.format(name, e))
-    elif doc_format == 'tsv':
+            raise UserError("Unable to parse doc {}: {}".format(name, e))
+    elif doc_format == "tsv":
         data, errors = utils.transforms.TSVToJSONConverter().convert(doc)
-    elif doc_format == 'csv':
+    elif doc_format == "csv":
         data, errors = utils.transforms.CSVToJSONConverter().convert(doc)
     else:
         raise UnsupportedError(doc_format)
@@ -216,7 +207,7 @@ def bulk_transaction_worker(transaction, wrappers):
         finally:
             response = transaction.json
 
-        return response, response['code']
+        return response, response["code"]
 
 
 def handle_bulk_transaction(role, program, project, **tx_kwargs):
@@ -226,11 +217,11 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
     wrappers = utils.parse.parse_request_json()
     # Assert wrapper is list of JSON objects
     invalid_format_msg = (
-        'Bulk transfers must be an array of JSON objects of format: {\n'
+        "Bulk transfers must be an array of JSON objects of format: {\n"
         '    "name": string,\n'
         '    "doc_format": string,\n'
         '    "doc": string,\n'
-        '}'
+        "}"
     )
     if not isinstance(wrappers, list):
         raise UserError(invalid_format_msg)
@@ -239,7 +230,7 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
         if not isinstance(wrapper, dict):
             raise UserError(invalid_format_msg)
 
-    is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
+    is_async = tx_kwargs.pop("is_async", utils.is_flag_set(FLAG_IS_ASYNC))
 
     transaction = BulkUploadTransaction(
         program=program,
@@ -269,12 +260,11 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
         return flask.jsonify(response), code
 
 
-def handle_biospecimen_bcr_xml_transaction(
-        role, program, project, **tx_kwargs):
+def handle_biospecimen_bcr_xml_transaction(role, program, project, **tx_kwargs):
     """
     Entrypoint from the flask blueprint for BCR Biospecimen XML XSD 2.6
     """
-    project_node_id = str(uuid.uuid5(PROJECT_SEED, project.encode('utf-8')))
+    project_node_id = str(uuid.uuid5(PROJECT_SEED, project.encode("utf-8")))
     parser = utils.transforms.BcrXmlToJsonParser(project_node_id)
     return handle_xml_transaction(role, program, project, parser, **tx_kwargs)
 
@@ -285,7 +275,6 @@ def handle_clinical_bcr_xml_transaction(role, program, project, **tx_kwargs):
     """
     parser = utils.transforms.BcrClinicalXmlToJsonParser(project)
     return handle_xml_transaction(role, program, project, parser, **tx_kwargs)
-
 
 
 def handle_xml_transaction(role, program, project, parser, **tx_kwargs):
@@ -304,15 +293,16 @@ def handle_xml_transaction(role, program, project, parser, **tx_kwargs):
         parser.loads(flask.request.get_data())
     except parsing_errors as e:  # pylint: disable=catching-non-exception
         flask.current_app.logger.error(e)
-        raise UserError('Unable to parse xml: {}'.format(e))
+        raise UserError("Unable to parse xml: {}".format(e))
 
     except Exception as exc:
         flask.current_app.logger.exception(exc)
-        raise UserError('Unable to parse xml')
+        raise UserError("Unable to parse xml")
 
     data = parser.json
     original = flask.request.get_data()
-    name = flask.request.headers.get('X-Document-Name', None)
+    name = flask.request.headers.get("X-Document-Name", None)
 
     return _single_transaction(
-        role, program, project, name, 'XML', original, data, **tx_kwargs)
+        role, program, project, name, "XML", original, data, **tx_kwargs
+    )

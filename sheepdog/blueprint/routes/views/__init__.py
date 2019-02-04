@@ -11,15 +11,8 @@ import requests
 from sheepdog import auth, dictionary, models, utils
 from sheepdog.utils import manifest, parse
 from sheepdog.blueprint.routes.views import program
-from sheepdog.errors import (
-    AuthError,
-    NotFoundError,
-    UserError,
-)
-from sheepdog.globals import (
-    PROGRAM_SEED,
-    ROLES,
-)
+from sheepdog.errors import AuthError, NotFoundError, UserError
+from sheepdog.globals import PROGRAM_SEED, ROLES
 
 
 def get_programs():
@@ -62,12 +55,12 @@ def get_programs():
             ]
         }
     """
-    if flask.current_app.config.get('AUTH_SUBMISSION_LIST', True) is True:
-        auth.validate_request(aud={'openid'}, purpose=None)
+    if flask.current_app.config.get("AUTH_SUBMISSION_LIST", True) is True:
+        auth.validate_request(aud={"openid"}, purpose=None)
     with flask.current_app.db.session_scope():
         programs = current_app.db.nodes(models.Program.name).all()
-    links = [flask.url_for('.get_projects', program=p[0]) for p in programs]
-    return flask.jsonify({'links': links})
+    links = [flask.url_for(".get_projects", program=p[0]) for p in programs]
+    return flask.jsonify({"links": links})
 
 
 def root_create():
@@ -123,40 +116,30 @@ def root_create():
     node_id = None
     doc = parse.parse_request_json()
     if not isinstance(doc, dict):
-        raise UserError('Root endpoint only supports single documents')
-    if doc.get('type') != 'program':
-        raise UserError(
-            "Invalid type in key type='{}'".format(doc.get('type'))
-        )
-    phsid = doc.get('dbgap_accession_number')
-    program = doc.get('name')
+        raise UserError("Root endpoint only supports single documents")
+    if doc.get("type") != "program":
+        raise UserError("Invalid type in key type='{}'".format(doc.get("type")))
+    phsid = doc.get("dbgap_accession_number")
+    program = doc.get("name")
     if not program:
         raise UserError("No program specified in key 'name'")
 
     with current_app.db.session_scope(can_inherit=False) as session:
-        node = (
-            current_app
-            .db
-            .nodes(models.Program)
-            .props(name=program)
-            .scalar()
-        )
+        node = current_app.db.nodes(models.Program).props(name=program).scalar()
         if node:
-            message = 'Program is updated!'
+            message = "Program is updated!"
             node_id = node.node_id
-            node.props['dbgap_accession_number'] = phsid
+            node.props["dbgap_accession_number"] = phsid
         else:
-            node_id = str(uuid.uuid5(PROGRAM_SEED, program.encode('utf-8')))
-            session.add(models.Program(  # pylint: disable=not-callable
-                node_id, name=program, dbgap_accession_number=phsid
-            ))
-            message = 'Program registered.'
+            node_id = str(uuid.uuid5(PROGRAM_SEED, program.encode("utf-8")))
+            session.add(
+                models.Program(  # pylint: disable=not-callable
+                    node_id, name=program, dbgap_accession_number=phsid
+                )
+            )
+            message = "Program registered."
 
-    return flask.jsonify({
-        'id': node_id,
-        'name': program,
-        'message': message,
-    })
+    return flask.jsonify({"id": node_id, "name": program, "message": message})
 
 
 def get_dictionary():
@@ -195,12 +178,9 @@ def get_dictionary():
              ]
            }
     """
-    keys = dictionary.schema.keys() + ['_all']
-    links = [
-        flask.url_for('.get_dictionary_entry', entry=entry)
-        for entry in keys
-    ]
-    return flask.jsonify({'links': links})
+    keys = dictionary.schema.keys() + ["_all"]
+    links = [flask.url_for(".get_dictionary_entry", entry=entry) for entry in keys]
+    return flask.jsonify({"links": links})
 
 
 def get_templates():
@@ -221,16 +201,18 @@ def get_templates():
     Responses:
         200: Success.
     """
-    file_format = flask.request.args.get('format', 'tsv')
-    response = flask.make_response(utils.get_all_template(
-        file_format,
-        categories=flask.request.args.get('categories'),
-        exclude=flask.request.args.get('exclude')
-    ))
-    suffix = 'json' if file_format == 'json' else 'tar.gz'
-    response.headers['Content-Disposition'] = (
-        'attachment; filename=submission_templates.{}'.format(suffix)
+    file_format = flask.request.args.get("format", "tsv")
+    response = flask.make_response(
+        utils.get_all_template(
+            file_format,
+            categories=flask.request.args.get("categories"),
+            exclude=flask.request.args.get("exclude"),
+        )
     )
+    suffix = "json" if file_format == "json" else "tar.gz"
+    response.headers[
+        "Content-Disposition"
+    ] = "attachment; filename=submission_templates.{}".format(suffix)
     return response
 
 
@@ -250,7 +232,7 @@ def get_template(entity):
     Responses:
         200: Success.
     """
-    file_format = flask.request.args.get('format', 'tsv')
+    file_format = flask.request.args.get("format", "tsv")
     filename = "submission_{}_template.{}".format(entity, file_format)
     template = utils.entity_to_template_str(entity, file_format)
     response = flask.make_response(template)
@@ -273,8 +255,8 @@ def validate_upload_manifest():
     Responses:
         200 (schema_error_list): Success.
     """
-    content_type = flask.request.headers.get('Content-Type', '').lower()
-    if content_type == 'application/json':
+    content_type = flask.request.headers.get("Content-Type", "").lower()
+    if content_type == "application/json":
         manifest_doc = parse.parse_request_json()
     else:
         manifest_doc = parse.parse_request_yaml()

@@ -9,11 +9,12 @@ from sheepdog.transactions.upload.sub_entities import FileUploadEntity
 from sheepdog.utils import get_node_category
 
 
-class UploadEntityFactory():
+class UploadEntityFactory:
     """
     Class factory for creating new upload entities based on the
     attributes specified in the given doc.
     """
+
     @staticmethod
     def create(transaction, doc, config=None):
         """
@@ -30,7 +31,7 @@ class UploadEntityFactory():
             #       more helpful debugging
             return UploadEntity(transaction, config)
 
-        node_type = doc.get('type')
+        node_type = doc.get("type")
         node_category = get_node_category(node_type)
 
         if node_category in UploadEntity.DATA_FILE_CATEGORIES:
