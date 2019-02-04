@@ -8,9 +8,7 @@ import yaml
 
 import flask
 
-from sheepdog.errors import (
-    UserError,
-)
+from sheepdog.errors import UserError
 
 
 def oph_raise_for_duplicates(object_pairs):
@@ -23,8 +21,9 @@ def oph_raise_for_duplicates(object_pairs):
     duplicates = [p for p in counter.iteritems() if p[1] > 1]
     if duplicates:
         raise ValueError(
-            'The document contains duplicate keys: {}'
-            .format(','.join(d[0] for d in duplicates))
+            "The document contains duplicate keys: {}".format(
+                ",".join(d[0] for d in duplicates)
+            )
         )
     return {pair[0]: pair[1] for pair in object_pairs}
 
@@ -42,11 +41,9 @@ def parse_json(raw):
     .. note:: Uses :func:`oph_raise_for_duplicates` in parser.
     """
     try:
-        return simplejson.loads(
-            raw, object_pairs_hook=oph_raise_for_duplicates
-        )
+        return simplejson.loads(raw, object_pairs_hook=oph_raise_for_duplicates)
     except Exception as e:
-        raise UserError('Unable to parse json: {}'.format(e))
+        raise UserError("Unable to parse json: {}".format(e))
 
 
 def parse_request_json(expected_types=(dict, list)):
@@ -67,8 +64,11 @@ def parse_request_json(expected_types=(dict, list)):
     """
     parsed = parse_json(flask.request.get_data())
     if not isinstance(parsed, expected_types):
-        raise UserError('JSON parsed from request is an invalid type: {}'
-                        .format(parsed.__class__.__name__))
+        raise UserError(
+            "JSON parsed from request is an invalid type: {}".format(
+                parsed.__class__.__name__
+            )
+        )
     return parsed
 
 
@@ -80,4 +80,4 @@ def parse_request_yaml():
     try:
         return yaml.safe_load(flask.request.get_data())
     except Exception as e:
-        raise UserError('Unable to parse yaml: {}'.format(e))
+        raise UserError("Unable to parse yaml: {}".format(e))

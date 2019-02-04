@@ -18,14 +18,14 @@ class SubmissionEntity(EntityBase):
 
     def __init__(self, transaction, node):
         super(SubmissionEntity, self).__init__(transaction, node)
-        self.action = 'submit'
+        self.action = "submit"
 
     def version_node(self):
         """
         Clone the current state of ``entity.node`` to the ``versioned_nodes``
         table in the database.
         """
-        self.logger.info('Versioning {}.'.format(self.node))
+        self.logger.info("Versioning {}.".format(self.node))
         with self.transaction.db_driver.session_scope() as session:
             session.add(models.VersionedNode.clone(self.node))
 
@@ -43,15 +43,15 @@ class SubmissionEntity(EntityBase):
     def pg_secondary_keys(self):
         """Return the list of unique tuples for the node type"""
 
-        return getattr(self.node, '__pg_secondary_keys', [])
+        return getattr(self.node, "__pg_secondary_keys", [])
 
     def submit(self):
         """
         Check whether this is a valid transition and transition the entity's
         state to `submitted` (and file_state if valid).
         """
-        self.logger.info('Submitting {}.'.format(self.node))
-        to_state = 'submitted'
+        self.logger.info("Submitting {}.".format(self.node))
+        to_state = "submitted"
         current_state = self.node._props.get(STATE_KEY, None)
         current_file_state = self.node._props.get(FILE_STATE_KEY, None)
         has_file_state = hasattr(self.node.__class__, FILE_STATE_KEY)
@@ -60,7 +60,7 @@ class SubmissionEntity(EntityBase):
         if current_state not in SUBMITTABLE_STATES:
             return self.record_error(
                 "Unable to submit node with state: '{}'".format(current_state),
-                type=EntityErrors.INVALID_PROPERTY
+                type=EntityErrors.INVALID_PROPERTY,
             )
 
         # Conditionally update node.file_state

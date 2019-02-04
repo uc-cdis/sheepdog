@@ -11,15 +11,15 @@ class Argument(object):
     re_arg = re.compile(r"([\w_]+)(?: \(([\w_]+)\))?: ([\w\s_.,;:'\"`()|]+)")
     #                     ^ name        ^ type        ^ description
 
-    def __init__(self, name = None, arg_type = None, description = None):
+    def __init__(self, name=None, arg_type=None, description=None):
         self.name = name
         self.type = arg_type
         self.description = description
 
     def __str__(self):
         if not self.type:
-            return '{name}: {description}'.format(**self.__dict__)
-        return '{name} ({type}): {description}'.format(**self.__dict__)
+            return "{name}: {description}".format(**self.__dict__)
+        return "{name} ({type}): {description}".format(**self.__dict__)
 
     @classmethod
     def from_string(cls, raw):
@@ -31,7 +31,7 @@ class Argument(object):
             [match] = cls.re_arg.findall(raw)
             name, arg_type, description = match
         except ValueError:
-            return cls(description = raw) # argument without name or type
+            return cls(description=raw)  # argument without name or type
         return cls(name, arg_type, description)
 
 
@@ -50,11 +50,13 @@ class Docstring(object):
     def parse_description(cls, raw):
         lines = raw.split("\n")
         i = 0
-        while i < len(lines) \
-            and not lines[i].startswith(tuple(cls.section_names)) \
-            and not lines[i].startswith(':'):
+        while (
+            i < len(lines)
+            and not lines[i].startswith(tuple(cls.section_names))
+            and not lines[i].startswith(":")
+        ):
             i += 1
-        description = ' '.join(filter(None, lines[:i]))
+        description = " ".join(filter(None, lines[:i]))
         return description.strip()
 
     @classmethod
@@ -63,7 +65,9 @@ class Docstring(object):
         Read an individual section of the docstring (like `Args:`) into a dictionary
         mapping argument names to the Argument objects.
         """
-        regex = re.compile(r"^\s*{}:([\s\S]*?)(?:^$|$)\n\n".format(section), re.MULTILINE)
+        regex = re.compile(
+            r"^\s*{}:([\s\S]*?)(?:^$|$)\n\n".format(section), re.MULTILINE
+        )
         section_args = ""
         try:
             [section_args] = regex.findall(docstring)
@@ -74,10 +78,7 @@ class Docstring(object):
         if section in cls.single_arg_section_names:
             return args
         else:
-            return {
-                arg.name: arg
-                for arg in args
-            }
+            return {arg.name: arg for arg in args}
 
     @classmethod
     def from_string(cls, raw):
@@ -86,15 +87,14 @@ class Docstring(object):
         """
         raw = "\n".join(line.strip() for line in raw.strip().split("\n")) + "\n\n"
         doc = cls()
-        doc.sections['Description'] = cls.parse_description(raw)
+        doc.sections["Description"] = cls.parse_description(raw)
         for section_name in cls.section_names:
             doc.sections[section_name] = cls.parse_section(section_name, raw)
         return doc
 
 
-if __name__ == '__main__':
-    example = (
-        """
+if __name__ == "__main__":
+    example = """
         Some explanation.
 
         Args:
@@ -109,7 +109,6 @@ if __name__ == '__main__':
             200: OK
             400: bad
         """
-    )
 
     doc = Docstring.from_string(example)
     print(doc.sections["Args"]["a"])

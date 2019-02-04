@@ -124,13 +124,13 @@ class FileUploadEntity(UploadEntity):
         """
         # If a url is included, get it here and remove it from doc so it
         # doesn't get validated
-        entity_urls = doc.get('urls')
+        entity_urls = doc.get("urls")
         if entity_urls:
-            self.urls = entity_urls.strip().split(',')
+            self.urls = entity_urls.strip().split(",")
             # remove from the doc since we don't want to validate it
-            doc.pop('urls')
+            doc.pop("urls")
 
-        self.object_id = doc.get('object_id')
+        self.object_id = doc.get("object_id")
 
         super(FileUploadEntity, self).parse(doc)
 
@@ -148,11 +148,11 @@ class FileUploadEntity(UploadEntity):
         #
         # Temporary workaround until gdcapi uses indexd
         # ################################################################
-        if self._config.get('USE_SIGNPOST', False):
+        if self._config.get("USE_SIGNPOST", False):
             if self.entity_id:
                 self.record_error(
-                    'Cannot assign ID to file, these are system generated. ',
-                    keys=['id'],
+                    "Cannot assign ID to file, these are system generated. ",
+                    keys=["id"],
                     type=EntityErrors.INVALID_VALUE,
                 )
             else:
@@ -163,7 +163,11 @@ class FileUploadEntity(UploadEntity):
             self._populate_files_from_index()
 
             # file already indexed and object_id provided: data upload flow
-            if self.use_object_id(self.entity_type) and self.object_id and self.file_exists:
+            if (
+                self.use_object_id(self.entity_type)
+                and self.object_id
+                and self.file_exists
+            ):
                 if self._is_valid_hash_size_for_file():
                     self.should_update_acl_uploader = True
             else:
@@ -171,11 +175,12 @@ class FileUploadEntity(UploadEntity):
 
         # call to super must happen after setting node and file ids here
         node = super(FileUploadEntity, self).get_node_create(
-            skip_node_lookup=skip_node_lookup)
+            skip_node_lookup=skip_node_lookup
+        )
         node.acl = self.transaction.get_phsids()
 
         if self.use_object_id(self.entity_type):
-            node._props['object_id'] = self.object_id
+            node._props["object_id"] = self.object_id
 
         return node
 
@@ -197,12 +202,14 @@ class FileUploadEntity(UploadEntity):
         # verify that update is allowed
         if not self.is_updatable_file_node(node):
             self.record_error(
-                ("This file is already in file_state '{}' and cannot be "
-                 "updated. The raw data exists in the file storage "
-                 "and modifying the Entity now is unsafe and may cause "
-                 "problems for any processes or users consuming "
-                 "this data.").format(node._props.get('file_state')),
-                keys=['file_state'],
+                (
+                    "This file is already in file_state '{}' and cannot be "
+                    "updated. The raw data exists in the file storage "
+                    "and modifying the Entity now is unsafe and may cause "
+                    "problems for any processes or users consuming "
+                    "this data."
+                ).format(node._props.get("file_state")),
+                keys=["file_state"],
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
 
@@ -213,12 +220,15 @@ class FileUploadEntity(UploadEntity):
         #
         # Temporary workaround until gdcapi uses indexd
         # ################################################################
-        if self._config.get('USE_SIGNPOST', False):
+        if self._config.get("USE_SIGNPOST", False):
             pass
         else:
-            if (self.use_object_id(self.entity_type)
-                and not self.object_id and 'object_id' in node._props):
-                    self.object_id = node._props['object_id']
+            if (
+                self.use_object_id(self.entity_type)
+                and not self.object_id
+                and "object_id" in node._props
+            ):
+                self.object_id = node._props["object_id"]
 
             self._populate_files_from_index()
 
@@ -247,7 +257,7 @@ class FileUploadEntity(UploadEntity):
         #
         # Temporary workaround until gdcapi uses indexd
         # ################################################################
-        if self._config.get('USE_SIGNPOST', False):
+        if self._config.get("USE_SIGNPOST", False):
             pass
         else:
             if not self.node:
@@ -255,7 +265,7 @@ class FileUploadEntity(UploadEntity):
 
             role = self.action
             try:
-                if role == 'create':
+                if role == "create":
                     # data upload flow: update the blank record in indexd
                     if self.should_update_acl_uploader:
                         self._update_acl_uploader_for_file()
@@ -264,12 +274,12 @@ class FileUploadEntity(UploadEntity):
                     # metadata_file, in which case, register a UUID and alias in
                     # the index service.
                     elif not self.file_exists:
-                        if (self._config.get('REQUIRE_FILE_INDEX_EXISTS', False)):
+                        if self._config.get("REQUIRE_FILE_INDEX_EXISTS", False):
                             raise NoIndexForFileError(self.entity_id)
                         else:
                             self._register_index()
 
-                elif role == 'update':
+                elif role == "update":
                     # Check if the category for the node is data_file or
                     # metadata_file, in which case, register a UUID and alias in
                     # the index service.
@@ -277,11 +287,9 @@ class FileUploadEntity(UploadEntity):
                         self._update_index()
 
                 else:
-                    message = 'Unknown role {}'.format(role)
+                    message = "Unknown role {}".format(role)
                     self.logger.error(message)
-                    self.record_error(
-                        message, type=EntityErrors.INVALID_PERMISSIONS
-                    )
+                    self.record_error(message, type=EntityErrors.INVALID_PERMISSIONS)
             except Exception as e:
                 self.logger.exception(e)
                 self.record_error(str(e))
@@ -295,17 +303,17 @@ class FileUploadEntity(UploadEntity):
         new index record for this entity.
         """
         project_id = self.transaction.project_id
-        submitter_id = self.node._props.get('submitter_id')
-        hashes = {'md5': self.node._props.get('md5sum')}
-        size = self.node._props.get('file_size')
+        submitter_id = self.node._props.get("submitter_id")
+        hashes = {"md5": self.node._props.get("md5sum")}
+        size = self.node._props.get("file_size")
         alias = "{}/{}".format(project_id, submitter_id)
         project = utils.lookup_project(
             self.transaction.db_driver,
             self.transaction.program,
-            self.transaction.project
+            self.transaction.project,
         )
         if utils.is_project_public(project):
-            acl = ['*']
+            acl = ["*"]
         else:
             acl = self.transaction.get_phsids()
 
@@ -315,20 +323,14 @@ class FileUploadEntity(UploadEntity):
 
         # IndexClient
         doc = self._create_index(
-            did=self.file_index,
-            hashes=hashes,
-            size=size,
-            urls=urls,
-            acl=acl
+            did=self.file_index, hashes=hashes, size=size, urls=urls, acl=acl
         )
 
         if self.use_object_id(self.entity_type):
             self.object_id = str(doc.did)
-            self.node._props['object_id'] = self.object_id
+            self.node._props["object_id"] = self.object_id
 
-        self._create_alias(
-            record=alias, hashes=hashes, size=size, release='private'
-        )
+        self._create_alias(record=alias, hashes=hashes, size=size, release="private")
 
     def _update_index(self):
         """
@@ -341,7 +343,8 @@ class FileUploadEntity(UploadEntity):
             document.urls = self.urls
             # remove url metadata for deleted urls if that happens
             document.urls_metadata = {
-                k: v for (k, v) in document.urls_metadata.iteritems()
+                k: v
+                for (k, v) in document.urls_metadata.iteritems()
                 if k in document.urls
             }
             document.patch()
@@ -352,7 +355,11 @@ class FileUploadEntity(UploadEntity):
         Check if the dictionary contains object_id for
         storing the GUID of the index record
         """
-        ret = dictionary.schema.get(entity_type, {}).get('properties', {}).get('object_id')
+        ret = (
+            dictionary.schema.get(entity_type, {})
+            .get("properties", {})
+            .get("object_id")
+        )
         return ret
 
     @staticmethod
@@ -371,14 +378,9 @@ class FileUploadEntity(UploadEntity):
         """
         if not node:
             return False
-        if 'file_state' in node.__pg_properties__:
-            allowed_states = [
-                'registered',
-                'uploading',
-                'uploaded',
-                'validating',
-            ]
-            file_state = node._props.get('file_state')
+        if "file_state" in node.__pg_properties__:
+            allowed_states = ["registered", "uploading", "uploaded", "validating"]
+            file_state = node._props.get("file_state")
             if file_state and file_state not in allowed_states:
                 return False
         return True
@@ -414,7 +416,7 @@ class FileUploadEntity(UploadEntity):
 
             if self.file_exists:
                 if not self.object_id:
-                    self.object_id = getattr(self.file_by_hash, 'did', None)
+                    self.object_id = getattr(self.file_by_hash, "did", None)
             else:
                 self.file_index = self.object_id
 
@@ -436,13 +438,12 @@ class FileUploadEntity(UploadEntity):
                 else:
                     # the file exists in indexd and
                     # no node id is provided, so attempt to use indexed id
-                    file_by_hash_index = getattr(self.file_by_hash, 'did', None)
+                    file_by_hash_index = getattr(self.file_by_hash, "did", None)
 
                     # ensure that the index we found matches the graph (this will
                     # populate record errors if there are any issues)
                     if self._is_index_id_identical_to_node_id():
                         self.entity_id = file_by_hash_index
-
 
     def _is_valid_index_for_file(self):
         """
@@ -458,41 +459,40 @@ class FileUploadEntity(UploadEntity):
         if self.use_object_id(self.entity_type):
             entity_id = self.object_id
 
-        if (not self.file_by_hash or not self.file_by_uuid):
+        if not self.file_by_hash or not self.file_by_uuid:
             error_message = (
-                'Could not find exact file match in index for id: {} '
-                'AND `hashes - size`: `{} - {}`. '
+                "Could not find exact file match in index for id: {} "
+                "AND `hashes - size`: `{} - {}`. "
             ).format(
-                entity_id,
-                str(self._get_file_hashes()),
-                str(self._get_file_size())
+                entity_id, str(self._get_file_hashes()), str(self._get_file_size())
             )
 
             if self.file_by_hash:
-                error_message += 'A file was found matching `hash / size` but NOT id.'
+                error_message += "A file was found matching `hash / size` but NOT id."
             elif self.file_by_uuid:
-                error_message += 'A file was found matching id but NOT `hash / size`.'
+                error_message += "A file was found matching id but NOT `hash / size`."
             else:
                 # keep generic error message since both didn't result in a match
                 pass
 
-            self.record_error(
-                error_message,
-                type=EntityErrors.INVALID_VALUE
-            )
+            self.record_error(error_message, type=EntityErrors.INVALID_VALUE)
             is_valid = False
 
-        if (self.file_by_hash and self.file_by_uuid and
-                self.file_by_hash.did != self.file_by_uuid.did):
+        if (
+            self.file_by_hash
+            and self.file_by_uuid
+            and self.file_by_hash.did != self.file_by_uuid.did
+        ):
             # both exist but dids are different
             # FIXME: error should be handled different/removed
             #        when we support updating indexed files
             self.record_error(
-                'Provided id for indexed file {} does not match the id '
-                'for the file discovered in the index by hash/size ('
-                'id: {}). Updating a previous index with new file '
-                'is currently NOT SUPPORTED.'
-                .format(self.file_by_uuid.did, self.file_by_hash.did),
+                "Provided id for indexed file {} does not match the id "
+                "for the file discovered in the index by hash/size ("
+                "id: {}). Updating a previous index with new file "
+                "is currently NOT SUPPORTED.".format(
+                    self.file_by_uuid.did, self.file_by_hash.did
+                ),
                 type=EntityErrors.INVALID_VALUE,
             )
             is_valid = False
@@ -510,25 +510,26 @@ class FileUploadEntity(UploadEntity):
             self.transaction.db_driver,
             self.entity_type,
             self.entity_id,
-            self.secondary_keys
+            self.secondary_keys,
         ).all()
         if len(nodes) == 1:
             if self.file_exists:
-                file_by_uuid_index = getattr(self.file_by_uuid, 'did', None)
-                file_by_hash_index = getattr(self.file_by_hash, 'did', None)
-                if ((file_by_uuid_index != nodes[0].node_id) or
-                        (file_by_hash_index != nodes[0].node_id)):
+                file_by_uuid_index = getattr(self.file_by_uuid, "did", None)
+                file_by_hash_index = getattr(self.file_by_hash, "did", None)
+                if (file_by_uuid_index != nodes[0].node_id) or (
+                    file_by_hash_index != nodes[0].node_id
+                ):
                     self.record_error(
-                        'Graph ID and index file ID found in index service do not match, '
-                        'which is currently not permitted. Graph ID: {}. '
-                        'Index ID: {}. Index ID found using hash/size: {}.'
-                        .format(nodes[0].node_id, file_by_hash_index, file_by_uuid_index),
+                        "Graph ID and index file ID found in index service do not match, "
+                        "which is currently not permitted. Graph ID: {}. "
+                        "Index ID: {}. Index ID found using hash/size: {}.".format(
+                            nodes[0].node_id, file_by_hash_index, file_by_uuid_index
+                        ),
                         type=EntityErrors.NOT_UNIQUE,
                     )
                     is_valid = False
 
         return is_valid
-
 
     def _is_valid_hash_size_for_file(self):
         """
@@ -536,10 +537,14 @@ class FileUploadEntity(UploadEntity):
 
         Should only be called when the file already exists in indexd and the object_id is provided (data upload flow).
         """
-        if not self.use_object_id(self.entity_type) or not self.object_id or not self.file_exists:
+        if (
+            not self.use_object_id(self.entity_type)
+            or not self.object_id
+            or not self.file_exists
+        ):
             self.record_error(
-                'The object_id of an indexed file must be provided.',
-                type=EntityErrors.INVALID_VALUE
+                "The object_id of an indexed file must be provided.",
+                type=EntityErrors.INVALID_VALUE,
             )
             return False
 
@@ -548,8 +553,10 @@ class FileUploadEntity(UploadEntity):
         # check that the file exists in indexd
         if not self.file_by_uuid:
             self.record_error(
-                'Provided object_id {} does not match any indexed file.'.format(entity_id),
-                type=EntityErrors.INVALID_VALUE
+                "Provided object_id {} does not match any indexed file.".format(
+                    entity_id
+                ),
+                type=EntityErrors.INVALID_VALUE,
             )
             return False
 
@@ -558,37 +565,27 @@ class FileUploadEntity(UploadEntity):
 
         # empty hash and size mean the file is not ready for metadata submission yet
         if not file_hashes or not file_size:
-            error_message = 'Indexed file of id {} is not ready for metadata submission yet (no hashes and size).'.format(
+            error_message = "Indexed file of id {} is not ready for metadata submission yet (no hashes and size).".format(
                 entity_id
             )
-            self.record_error(
-                error_message,
-                type=EntityErrors.INVALID_VALUE
-            )
+            self.record_error(error_message, type=EntityErrors.INVALID_VALUE)
             return False
 
         # check that the provided hash/size match those of the file in indexd
         # submitted hashes have to be a subset of the indexd ones
         hashes_match = all(
-            item in file_hashes.items()
-            for item in self._get_file_hashes().items()
+            item in file_hashes.items() for item in self._get_file_hashes().items()
         )
         sizes_match = self._get_file_size() == file_size
 
         if not (hashes_match and sizes_match):
-            error_message = 'Provided hash ({}) and size ({}) do not match those of indexed file of id {}.'.format(
-                self._get_file_hashes(),
-                self._get_file_size(),
-                entity_id
+            error_message = "Provided hash ({}) and size ({}) do not match those of indexed file of id {}.".format(
+                self._get_file_hashes(), self._get_file_size(), entity_id
             )
-            self.record_error(
-                error_message,
-                type=EntityErrors.INVALID_VALUE
-            )
+            self.record_error(error_message, type=EntityErrors.INVALID_VALUE)
             return False
 
         return True
-
 
     def _update_acl_uploader_for_file(self):
         """
@@ -596,10 +593,14 @@ class FileUploadEntity(UploadEntity):
 
         Should only be called when the file already exists in indexd and the object_id is provided (data upload flow).
         """
-        if not self.use_object_id(self.entity_type) or not self.object_id or not self.file_exists:
+        if (
+            not self.use_object_id(self.entity_type)
+            or not self.object_id
+            or not self.file_exists
+        ):
             self.record_error(
-                'The object_id of an indexed file must be provided.',
-                type=EntityErrors.INVALID_VALUE
+                "The object_id of an indexed file must be provided.",
+                type=EntityErrors.INVALID_VALUE,
             )
             return
 
@@ -614,30 +615,30 @@ class FileUploadEntity(UploadEntity):
         file_acl = self.file_by_uuid.acl
         if not current_uploader == file_uploader or file_acl:
             self.record_error(
-                'Failed to update acl and uploader fields in indexd: current uploader ({}) is not original file uploader ({}) and/or acl ({}) is not empty.'.format(current_uploader, file_uploader, file_acl),
-                type=EntityErrors.INVALID_VALUE
+                "Failed to update acl and uploader fields in indexd: current uploader ({}) is not original file uploader ({}) and/or acl ({}) is not empty.".format(
+                    current_uploader, file_uploader, file_acl
+                ),
+                type=EntityErrors.INVALID_VALUE,
             )
             return
 
         # update acl and uploader fields in indexd
-        data = json.dumps({
-            'acl': self.transaction.get_phsids(),
-            'uploader': None
-        })
-        url = '/index/' + self.object_id
+        data = json.dumps({"acl": self.transaction.get_phsids(), "uploader": None})
+        url = "/index/" + self.object_id
         try:
             self.transaction.signpost._put(
                 url,
-                headers={'content-type': 'application/json'},
+                headers={"content-type": "application/json"},
                 data=data,
-                params={'rev': self.file_by_uuid.rev},
-                auth=self.transaction.signpost.auth
+                params={"rev": self.file_by_uuid.rev},
+                auth=self.transaction.signpost.auth,
             )
         except requests.HTTPError as e:
             self.record_error(
-                "Failed to update acl and uploader fields in indexd: {}".format(e.message)
+                "Failed to update acl and uploader fields in indexd: {}".format(
+                    e.message
+                )
             )
-
 
     def get_file_from_index_by_hash(self):
         """
@@ -654,7 +655,7 @@ class FileUploadEntity(UploadEntity):
         #
         # Temporary workaround until gdcapi uses indexd
         # ################################################################
-        if not self._config.get('USE_SIGNPOST', False):
+        if not self._config.get("USE_SIGNPOST", False):
             # Check if there is an existing record with this hash and size, i.e.
             # this node already has an index record.
             params = self._get_file_hashes_and_size()
@@ -667,7 +668,9 @@ class FileUploadEntity(UploadEntity):
                 except requests.HTTPError as e:
                     raise UserError(
                         code=e.response.status_code,
-                        message="Fail to register the data node in indexd. Detail {}".format(e.message)
+                        message="Fail to register the data node in indexd. Detail {}".format(
+                            e.message
+                        ),
                     )
 
         return document
@@ -689,21 +692,21 @@ class FileUploadEntity(UploadEntity):
         hashes = self._get_file_hashes()
         size = self._get_file_size()
         if hashes and size:
-            return {'hashes': hashes, 'size': size}
+            return {"hashes": hashes, "size": size}
         elif hashes:
-            return {'hashes': hashes}
+            return {"hashes": hashes}
         elif size:
-            return {'size': size}
+            return {"size": size}
         return None
 
     def _get_file_hashes(self):
-        if self.doc.get('md5sum'):
-            return {'md5': self.doc.get('md5sum')}
+        if self.doc.get("md5sum"):
+            return {"md5": self.doc.get("md5sum")}
         return None
 
     def _get_file_size(self):
-        if self.doc.get('file_size'):
-            return self.doc.get('file_size')
+        if self.doc.get("file_size"):
+            return self.doc.get("file_size")
         return None
 
     def _create_alias(self, **kwargs):

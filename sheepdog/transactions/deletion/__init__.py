@@ -55,8 +55,8 @@ def handle_deletion_request(program, project, ids, to_delete=None, **tx_kwargs):
         int: status code
     """
 
-    is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
-    db_driver = tx_kwargs.pop('db_driver', flask.current_app.db)
+    is_async = tx_kwargs.pop("is_async", utils.is_flag_set(FLAG_IS_ASYNC))
+    db_driver = tx_kwargs.pop("db_driver", flask.current_app.db)
     transaction = DeletionTransaction(
         program=program,
         project=project,
@@ -71,14 +71,12 @@ def handle_deletion_request(program, project, ids, to_delete=None, **tx_kwargs):
         session = transaction.db_driver.session_scope()
         with session, transaction:
             response = {
-                'code': 200,
-                'message': 'Transaction submitted.',
-                'transaction_id': transaction.transaction_id,
+                "code": 200,
+                "message": "Transaction submitted.",
+                "transaction_id": transaction.transaction_id,
             }
 
-        flask.current_app.async_pool.schedule(
-            transaction_worker, transaction, ids
-        )
+        flask.current_app.async_pool.schedule(transaction_worker, transaction, ids)
         return flask.jsonify(response), 200
 
     else:
