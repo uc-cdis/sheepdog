@@ -1,6 +1,9 @@
 # pylint: disable=unused-import
+import hashlib
 import os
 import json
+import random
+
 import uuid
 
 import pytest
@@ -11,11 +14,10 @@ from cdisutilstest.code.conftest import (
     indexd_client,
     indexd_server,
 )
-from cdisutilstest.code.indexd_fixture import create_random_index
 
 from fence.jwt.token import generate_signed_access_token
 from psqlgraph import PsqlGraphDriver
-from gdcdatamodel.models import Edge, Node
+from gdcdatamodel import models as m
 from userdatamodel import models as usermd
 from userdatamodel import Base as usermd_base
 from userdatamodel.driver import SQLAlchemyDriver
@@ -33,6 +35,7 @@ from sheepdog.test_settings import (
 )
 from sheepdog import test_settings
 from tests.integration.api import app as _app, app_init
+from tests.integration.submission.test_upload import DEFAULT_URL
 
 try:
     reload  # Python 2.7
@@ -124,11 +127,11 @@ def pg_driver(request, client, pg_config):
 
     def tearDown():
         with pg_driver.engine.begin() as conn:
-            for table in Node().get_subclass_table_names():
-                if table != Node.__tablename__:
+            for table in m.Node().get_subclass_table_names():
+                if table != m.Node.__tablename__:
                     conn.execute('delete from {}'.format(table))
-            for table in Edge().get_subclass_table_names():
-                if table != Edge.__tablename__:
+            for table in m.Edge().get_subclass_table_names():
+                if table != m.Edge.__tablename__:
                     conn.execute('delete from {}'.format(table))
             conn.execute('delete from versioned_nodes')
             conn.execute('delete from _voided_nodes')
@@ -330,3 +333,92 @@ def dictionary_setup(_app):
             _app.register_blueprint(sheepdog_blueprint, url_prefix='/v0/submission')
         except AssertionError:
             _app.logger.info('Blueprint is already registered!!!')
+
+
+@pytest.fixture
+def data_release(pg_driver):
+    """
+    Args:
+        pg_driver (psqlgraph.PsqlGraphDriver):
+    """
+    releases = []
+    with pg_driver.session_scope() as sxn:
+        release = m.DataRelease(node_id=str(uuid.uuid4()))
+        release.major_version = 10
+        release.minor_version = 2
+        release.released = True
+        release.release_data = '2018-09-27'
+
+        sxn.add(release)
+        releases.append(release)
+        r2 = m.DataRelease(node_id=str(uuid.uuid4()))
+        r2.major_version = 11
+        r2.minor_version = 0
+        r2.released = False
+        sxn.add(r2)
+        releases.append(r2)
+
+    # return current release number same as the data_release with released==False
+    yield "11.0"
+    with pg_driver.session_scope() as sxn:
+        for release in releases:
+            sxn.delete(release)
+
+
+@pytest.fixture
+def released_file(pg_driver, indexd_client, data_release):
+    """
+    Args:
+        pg_driver (psqlgraph.PsqlGraphDriver):
+    """
+    doc = create_random_index(indexd_client, release=data_release)
+
+    # create node
+    with pg_driver.session_scope() as sxn:
+        exp = m.ExperimentalMetadata(node_id=doc.did)
+        exp.submitter_id = "0"
+        exp.state = "released"
+        exp.project_id = 'CGCI-BLGSP'
+        exp.file_state = "validated"
+        pg_driver.node_insert(exp)
+    yield doc
+    doc = indexd_client.get(doc.did)
+    doc.delete()
+
+    with pg_driver.session_scope() as sxn:
+        sxn.delete(exp)
+
+
+def create_random_index(index_client, release):
+    """
+    Shorthand for creating new index entries for test purposes.
+    Note:
+        Expects index client v1.5.2 and above
+    Args:
+        index_client (indexclient.client.IndexClient): pytest fixture for index_client
+        passed from actual test functions
+        release (str): release number
+    Returns:
+        indexclient.client.Document: the document just created
+    """
+
+    did = str(uuid.uuid4())
+
+    md5_hasher = hashlib.md5()
+    md5_hasher.update(did.encode("utf-8"))
+    hashes = {'md5': md5_hasher.hexdigest()}
+
+    metadata = {"release_number": release} if release else {}
+    doc = index_client.create(
+        did=did,
+        hashes=hashes,
+        size=random.randint(10, 1000),
+        acl=["a", "b"],
+        version="1",
+        metadata=metadata,
+        file_name="{}_warning_huge_file.svs".format(did),
+        urls=[DEFAULT_URL],
+        urls_metadata={DEFAULT_URL: {"state": "validated", "type": "cleversafe"}}
+    )
+
+    return doc

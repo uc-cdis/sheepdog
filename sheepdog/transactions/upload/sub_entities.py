@@ -10,8 +10,6 @@ from sheepdog.utils import (
     lookup_project,
     is_project_public,
     generate_s3_url,
-    get_indexd_state,
-    get_indexd,
 )
 
 from sheepdog.transactions.entity_base import EntityErrors
@@ -21,8 +19,8 @@ from sheepdog.transactions.upload.entity import (
 )
 from sheepdog.globals import (
     DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE, POSSIBLE_OPEN_FILE_NODES,
-    UPDATABLE_FILE_STATES, RELEASED_NODE_STATES
-)
+    UPDATABLE_FILE_STATES, RELEASED_NODE_STATES,
+    MODIFIABLE_RELEASED_FILE_STATES)
 from sheepdog.errors import UserError
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -163,6 +161,8 @@ class FileUploadEntity(UploadEntity):
         """
         # entity_id is set to the node_id here
         node = super(FileUploadEntity, self).get_node_merge()
+        self._populate_file_exist_in_index()
+
         if self._should_version_node(node):
             node = self.get_node_recreate(node)
 
@@ -170,9 +170,11 @@ class FileUploadEntity(UploadEntity):
             self._is_valid_index_id_for_graph()
             return node
 
-        self._populate_file_exist_in_index()
         self._is_valid_index_id_for_graph()
-        self.is_updatable_file_node(node)
+
+        # only check if file state is updatable if it is not a previously released file
+        if not self._is_modifiable_release(node):
+            self.is_updatable_file_node(node)
 
         return node
 
@@ -339,14 +341,15 @@ class FileUploadEntity(UploadEntity):
                     document.patch()
             return
 
-        old_doc = document.to_json()
-        document.delete()
+        # indexd changes in released files trigger a new version
+        if document.version and document.metadata.get("release_number"):
+            return
 
-        # Re-create URL, since the filename might have changed.
-        # NOTE: We don't care about other URLs, since the file was not yet
-        # released, so it won't have any urls other than primary url
-        urls = [
-            generate_s3_url(
+        document.urls = []
+        document.urls_metadata = {}
+
+        # generate new urls if none is specified
+        url = generate_s3_url(
                 host=self._config['SUBMISSION']['host'],
                 bucket=self._config['SUBMISSION']['bucket'],
                 program=self.transaction.program,
@@ -354,25 +357,39 @@ class FileUploadEntity(UploadEntity):
                 uuid=self.entity_id,
                 file_name=self.doc['file_name']
             )
-        ]
-        urls_metadata = {
+        self.urls = [url]
+
+        self.urls_metadata = {
             url: {
-                'state': 'registered', 'type': PRIMARY_URL_TYPE
-            } for url in urls
+                'state': 'registered',
+                'type': PRIMARY_URL_TYPE
+            } for url in self.urls
         }
+
+        # update urls and urls_metadata if it does not already exist
+        for url in self.urls:
+            document.urls.append(url)
+
+        # update urls metadata
+        for url, md in self.urls_metadata.items():
+            document.urls_metadata[url] = md
+
+        old_doc = document.to_json()
+        document.delete()
 
         # Populate file metadata fields
         updated_fields = {
             'hashes': {'md5': self.doc['md5sum']},
             'size': self.doc['file_size'],
             'file_name': self.doc['file_name'],
-            'urls': urls,
-            'urls_metadata': urls_metadata,
-            'metadata': self.doc.get('metadata', {}),
-            'acl': self.node.acl or self.get_file_acl()
+            'urls': old_doc.get("urls"),
+            'urls_metadata': old_doc.get("urls_metadata"),
+            'acl': self.node.acl or self.get_file_acl(),
+            'version': old_doc.get("version"),
+            'metadata': old_doc.get('metadata', {}),
         }
 
-        # Re-create indexd doc witht he same UUID
+        # Re-create indexd doc with he same UUID
         self.transaction.indexd.create(
             did=old_doc['did'], baseid=old_doc['baseid'], **updated_fields)
 
@@ -697,10 +714,21 @@ class FileUploadEntity(UploadEntity):
         return self._is_modified_release_node(node)
 
     def _is_modified_release_node(self, node):
-        """ Checks if the current entity"""
-        return node is not None and node.state in RELEASED_NODE_STATES and \
-            (self.old_props.get("file_size") != self._get_file_size() or
-             self.old_props.get("md5sum") != self.doc.get("md5sum"))
+        """ Checks if the current entity is a released node that has been modified enough to allow versioning """
+        doc = self.get_indexed_document()
+        return doc is not None and node is not None and node.state in RELEASED_NODE_STATES and \
+               (doc.size != self._get_file_size() or doc.hashes.get("md5") != self.doc.get("md5sum")
+                or doc.file_name != self.doc.get("file_name"))
+
+    def _is_modifiable_release(self, node):
+        """ Checks if this is a previously released node with modifications that is not sufficient for versioning """
+        doc = self.get_indexed_document()
+        file_state = self.get_indexed_document_state(self.s3_url)
+
+        if doc and node and file_state and node.state in RELEASED_NODE_STATES:
+            current_release = doc.metadata.get("release_number", None)
+            return current_release is not None and file_state in MODIFIABLE_RELEASED_FILE_STATES
+        return False
 
     def get_indexed_document(self):
         if not self.file_exists:

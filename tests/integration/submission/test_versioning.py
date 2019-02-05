@@ -1,5 +1,3 @@
-import random
-
 import pytest
 import os
 from gdcdatamodel import models as md
@@ -190,23 +188,26 @@ def test_creating_new_versioned_file(
     """
     Create a new version of a file
     """
-    def create_node(version_number=None, file_name=file_name):
+    def create_node(version_number=None, file_name=file_name, release=None):
         """Create a node and possibly assign it a version
 
         Args:
-            version_number (int): whole number to indicate a version
-
+            version_number (str): whole number to indicate a version
+            file_name (str):
+            release (str):
         Returns:
             str: UUID of node submitted to the api
         """
         # Patch open file type to test open access file with type SubmittedAlignedReads
+        # random file_size
+        file_size = 55 * int(version_number) if version_number else 11
         with patch.object(FileUploadEntity, "get_open_file_type", lambda x: ["submitted_aligned_reads"]):
             _, sur_entity = data_file_creation(
                 client_toggled,
                 submitter,
                 method='put',
                 sur_filename=file_name,
-                file_size=random.randint(19, 300)
+                file_size=file_size
             )
 
         did = sur_entity['id']
@@ -228,7 +229,7 @@ def test_creating_new_versioned_file(
         # only give a version number if one is supplied
         if version_number:
             # simulate release by incrementing all versions for similar docs
-            release_indexd_doc(pg_driver, indexd_client, did)
+            release_indexd_doc(pg_driver, indexd_client, did, release)
 
             indexd_doc = indexd_client.get(did)
             message = 'Should have been assigned version {}'.format(
@@ -240,7 +241,7 @@ def test_creating_new_versioned_file(
     # create nodes and release a few times, just to be sure
     # create versions 1, 2, 3, None (no version on the last one)
     accepted_versions = ['1', '2', '3', None]
-    uuids = [create_node(version_number=v) for v in accepted_versions]
+    uuids = [create_node(version_number=v, release="10.{}".format(v)) for v in accepted_versions]
     created_versions = [indexd_client.get(uuid) for uuid in uuids]
     # this order is guaranteed
     for created, accepted in zip(created_versions, accepted_versions):

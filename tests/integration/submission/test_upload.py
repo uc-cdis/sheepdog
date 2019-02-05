@@ -6,7 +6,6 @@ import copy
 import json
 import os
 import re
-import uuid
 
 import pytest
 
@@ -28,7 +27,7 @@ from sheepdog.transactions.upload.sub_entities import FileUploadEntity
 from sheepdog.test_settings import SUBMISSION
 from sheepdog.utils import (
     generate_s3_url,
-    set_indexd_state,
+    set_indexd_state
 )
 from tests.integration.submission.test_versioning import release_indexd_doc
 from tests.integration.submission.utils import (
@@ -670,7 +669,7 @@ def test_update_multiple_one_fails(
 @pytest.mark.parametrize('released_state', RELEASED_NODE_STATES)
 def test_update_released_non_file_node(
         client_toggled, pg_driver, submitter, cgci_blgsp, indexd_client,
-        released_state):
+        released_state, data_release):
     resp_json, sur_entity = data_file_creation(
         client_toggled, submitter,
         sur_filename='submitted_unaligned_reads.json')
@@ -757,6 +756,7 @@ def test_links_inherited_for_file_nodes(
             pg_driver.nodes().get(entity['id']).state = released_state
 
         pg_driver.nodes().get(sar_entity['id']).state = released_state
+    release_indexd_doc(pg_driver, indexd_client, sar_entity['id'], "10.2")
 
     # Save children edges for Submitted Aligned Reads file node
     with pg_driver.session_scope():
@@ -799,3 +799,79 @@ def test_links_inherited_for_file_nodes(
         # Edges were relinked properly
         assert edges_in_new == edges_in_old
         assert edges_out_new == edges_out_old
+
+
+@pytest.mark.config_toggle(
+    parameters={
+        'CREATE_REPLACEABLE': True
+    }
+)
+def test_silently_update_released_node(data_release, released_file, client,
+                                       admin, submitter, cgci_blgsp, indexd_client, pg_driver):
+
+    submit_first_experiment(client, submitter)
+    file_data = copy.deepcopy(DEFAULT_METADATA_FILE)
+    file_data['id'] = released_file.did
+    file_data["file_size"] = released_file.size
+    file_data["file_name"] = released_file.file_name
+    file_data["md5sum"] = released_file.hashes["md5"]
+    resp = submit_metadata_file(
+        client, admin, submitter, data=file_data).json
+    assert resp['code'] == 200
+
+    entities = resp["entities"]
+    assert len(entities) == 1
+
+    version_id = entities[0]['id']
+    with pg_driver.session_scope():
+        node = pg_driver.nodes().get(version_id)
+        assert node.data_format == file_data["data_format"]
+
+    # assert no new version was created on indexd
+    doc = indexd_client.get_latest_version(version_id)
+    assert doc.version == "1"
+    assert doc.metadata["release_number"] == data_release
+
+
+@pytest.mark.config_toggle(
+    parameters={
+        'CREATE_REPLACEABLE': True,
+        'IS_GDC': True
+    }
+)
+@pytest.mark.parametrize('trigger', ['file_name', 'file_size', 'md5sum'])  # case to test open acl
+def test_trigger_versioning(trigger, data_release, released_file, client,
+                                       admin, submitter, cgci_blgsp, indexd_client, pg_driver):
+
+    submit_first_experiment(client, submitter)
+    file_data = copy.deepcopy(DEFAULT_METADATA_FILE)
+    file_data['id'] = released_file.did
+
+    if trigger != "file_size":
+        file_data["file_size"] = released_file.size
+
+    if trigger != "file_name":
+        file_data["file_name"] = released_file.file_name
+
+    if trigger != "md5sum":
+        file_data["md5sum"] = released_file.hashes["md5"]
+
+    resp = submit_metadata_file(
+        client, admin, submitter, data=file_data).json
+    assert resp['code'] == 200
+
+    entities = resp["entities"]
+    assert len(entities) == 1
+
+    version_id = entities[0]['id']
+    with pg_driver.session_scope():
+        node = pg_driver.nodes().get(version_id)
+        assert node is not None
+
+        # assert old node was deleted
+        node = pg_driver.nodes().get(released_file.did)
+        assert node is None
+
+    # assert new version was created on indexd
+    doc = indexd_client.get(version_id)
+    assert doc.version is None
