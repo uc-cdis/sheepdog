@@ -85,8 +85,9 @@ def db_init(app):
 
 
 def migrate_database(app):
-    if postgres_admin.check_version(app.db):
-        return
+    # TODO: uncomment
+    #if postgres_admin.check_version(app.db):
+    #    return
     try:
         postgres_admin.create_graph_tables(app.db, timeout=1)
     except Exception:
