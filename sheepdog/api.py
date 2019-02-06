@@ -121,14 +121,16 @@ def migrate_database(app):
     # old id column -> entity_id column, not unique
     md = MetaData(bind=app.db.engine)
     tablename = models.submission.TransactionSnapshot.__tablename__
-    with app.db.session_scope() as session:
-        session.execute(
-            "ALTER TABLE {name} DROP CONSTRAINT {name}_pkey".format(name=tablename)
-        )
-        session.execute("ALTER TABLE {} RENAME id TO entity_id".format(tablename))
-        session.execute(
-            "ALTER TABLE {} ADD COLUMN id SERIAL PRIMARY KEY;".format(tablename)
-        )
+    snapshots_table = Table(tablename, md, autoload=True)
+    if "entity_id" not in snapshots_table.c:
+        with app.db.session_scope() as session:
+            session.execute(
+                "ALTER TABLE {name} DROP CONSTRAINT {name}_pkey".format(name=tablename)
+            )
+            session.execute("ALTER TABLE {} RENAME id TO entity_id".format(tablename))
+            session.execute(
+                "ALTER TABLE {} ADD COLUMN id SERIAL PRIMARY KEY;".format(tablename)
+            )
 
 
 def app_init(app):
