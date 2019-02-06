@@ -3,6 +3,7 @@ import sys
 
 from flask import Flask, jsonify
 from psqlgraph import PsqlGraphDriver
+from sqlalchemy import MetaData, Table
 
 from authutils.oauth2 import client as oauth2_client
 from authutils.oauth2.client import blueprint as oauth2_blueprint
@@ -115,6 +116,19 @@ def migrate_database(app):
         except Exception:
             app.logger.warn("Fail to grant read permission, continuing anyway")
             return
+
+    # migrate transaction snapshots
+    # old id column -> entity_id column, not unique
+    md = MetaData(bind=app.db.engine)
+    tablename = models.submission.TransactionSnapshot.__tablename__
+    with app.db.session_scope() as session:
+        session.execute(
+            "ALTER TABLE {name} DROP CONSTRAINT {name}_pkey".format(name=tablename)
+        )
+        session.execute("ALTER TABLE {} RENAME id TO entity_id".format(tablename))
+        session.execute(
+            "ALTER TABLE {} ADD COLUMN id SERIAL PRIMARY KEY;".format(tablename)
+        )
 
 
 def app_init(app):
