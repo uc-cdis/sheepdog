@@ -3,6 +3,7 @@ import sys
 
 from flask import Flask, jsonify
 from psqlgraph import PsqlGraphDriver
+from sqlalchemy import MetaData, Table
 
 from authutils.oauth2 import client as oauth2_client
 from authutils.oauth2.client import blueprint as oauth2_blueprint
@@ -85,6 +86,7 @@ def db_init(app):
 
 
 def migrate_database(app):
+    postgres_admin.migrate_transaction_snapshots(app.db, read_role)
     if postgres_admin.check_version(app.db):
         return
     try:
