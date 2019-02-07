@@ -450,7 +450,7 @@ class TransactionBase(object):
                 if not entity.node or isinstance(entity.node, MissingNode):
                     continue
                 snapshot = models.submission.TransactionSnapshot()
-                snapshot.entity_id = entity.node.node_id
+                snapshot.id = entity.node.node_id
                 snapshot.old_props = entity.old_props
                 snapshot.new_props = entity.node.props
                 snapshot.action = entity.action

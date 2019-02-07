@@ -448,7 +448,7 @@ class BulkUploadTransaction(TransactionBase):
             if self.success:
                 for entity in self.entities:
                     snapshot = models.submission.TransactionSnapshot()
-                    snapshot.entity_id = entity.node.node_id
+                    snapshot.id = entity.node.node_id
                     snapshot.old_props = entity.old_props
                     snapshot.new_props = entity.node.props
                     snapshot.action = entity.action
