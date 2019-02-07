@@ -393,9 +393,10 @@ class TransactionBase(object):
         self.logger.exception(exception)
         if str(exception):
             self.transactional_errors.append(str(exception))
+        self.rollback()
         self.set_transaction_log_state(TX_LOG_STATE_FAILED)
         self.write_transaction_log()
-        self.rollback()
+        self.session.commit()
 
     def record_internal_error(self, exception):
         """
@@ -406,7 +407,6 @@ class TransactionBase(object):
 
         Log the exception message but do not return it to the user.
         """
-
         self.logger.exception(exception)
         self.transactional_errors.append(MESSAGE_500)
         self.rollback()
