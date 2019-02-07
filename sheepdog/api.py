@@ -86,6 +86,7 @@ def db_init(app):
 
 
 def migrate_database(app):
+    postgres_admin.migrate_transaction_snapshots(app.db, read_role)
     if postgres_admin.check_version(app.db):
         return
     try:
