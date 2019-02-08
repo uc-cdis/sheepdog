@@ -88,7 +88,7 @@ def db_init(app):
 def migrate_database(app):
     # hardcoded read role
     read_role = "peregrine"
-    postgres_admin.migrate_transaction_snapshots(app.db, read_role)
+    postgres_admin.migrate_transaction_snapshots(app.db)
     if postgres_admin.check_version(app.db):
         return
     try:
