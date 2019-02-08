@@ -14,7 +14,6 @@ def setup(host, user, password, database):
             user=user, host=host, password=password, database=database
         )
     )
-    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
 
 
