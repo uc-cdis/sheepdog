@@ -127,7 +127,7 @@ def app_init(app):
     app.config["IS_GDC"] = False
 
     # Turn off for performance
-    app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+    app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
 
     # default settings
     app.config["AUTO_MIGRATE_DATABASE"] = app.config.get("AUTO_MIGRATE_DATABASE", True)
