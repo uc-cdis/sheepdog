@@ -342,15 +342,6 @@ class TransactionBase(object):
         self.logger.info("{}: rolling back transaction".format(self))
         return self.session.rollback()
 
-    def rollback_with_tx_log_state(self, state):
-        """
-        Erase all changes in the current session and set the
-        transaction_log.state in a separate session.
-        """
-        msg = "{}: rolling back transaction, state: {}".format(self, state)
-        self.logger.info(msg)
-        return self.session.rollback_with_transaction_state(state)
-
     def commit(self, assert_has_entities=True):
         """
         Conditionally write to the database.
@@ -399,13 +390,13 @@ class TransactionBase(object):
 
         Log the exception message and return it to the user.
         """
-
         self.logger.exception(exception)
         if str(exception):
             self.transactional_errors.append(str(exception))
+        self.rollback()
         self.set_transaction_log_state(TX_LOG_STATE_FAILED)
         self.write_transaction_log()
-        self.rollback()
+        self.session.commit()
 
     def record_internal_error(self, exception):
         """
@@ -416,12 +407,12 @@ class TransactionBase(object):
 
         Log the exception message but do not return it to the user.
         """
-
         self.logger.exception(exception)
         self.transactional_errors.append(MESSAGE_500)
+        self.rollback()
         self.set_transaction_log_state(TX_LOG_STATE_ERRORED)
         self.write_transaction_log()
-        self.rollback()
+        self.session.commit()
 
     def get_transaction_timestamp(self):
         """
