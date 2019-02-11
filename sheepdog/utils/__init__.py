@@ -28,7 +28,6 @@ from sheepdog.globals import (
     UPLOADING_PARTS,
     UPLOADING_STATE,
     submitted_state,
-    DELETE_STATE
 )
 from sheepdog.utils.transforms.graph_to_doc import (
     entity_to_template,
@@ -42,7 +41,6 @@ ALLOWED_STATES_FOR_UPLOAD = [
     submitted_state(),
     UPLOADING_STATE,
     UPLOADED_STATE,
-    DELETE_STATE
 ]
 
 
@@ -579,7 +577,7 @@ def proxy_request(project_id, uuid, data, args, headers, method, action,
         set_indexd_state(indexd_doc, s3_url, UPLOADED_STATE)
 
     elif action == 'delete' and resp.status == 204:
-        set_indexd_state(indexd_doc, s3_url, DELETE_STATE)
+        set_indexd_state(indexd_doc, s3_url, submitted_state())
 
     return resp
 

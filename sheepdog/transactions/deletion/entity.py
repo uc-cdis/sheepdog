@@ -1,6 +1,5 @@
 from sheepdog.globals import (
     submitted_state,
-    DELETE_STATE,
     ALLOWED_DELETION_STATES,
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
@@ -11,7 +10,7 @@ from sheepdog.utils import (
 )
 
 
-ALLOWED_DELETION_FILE_STATES = [submitted_state(), DELETE_STATE]
+ALLOWED_DELETION_FILE_STATES = [submitted_state()]
 
 
 class DeletionEntity(EntityBase):
