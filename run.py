@@ -7,7 +7,6 @@ import os
 import requests
 
 from flask import current_app
-from gdcdatamodel import models as md
 from psqlgraph import PolyNode as Node
 
 from sheepdog.api import run_for_development
@@ -87,6 +86,8 @@ def set_user(*args, **kwargs):
 
 def run_with_fake_auth():
     def get_project_ids(role="_member_", project_ids=None):
+        from gdcdatamodel import models as md
+
         if project_ids is None:
             project_ids = []
         if not project_ids:
