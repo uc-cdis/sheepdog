@@ -3,6 +3,7 @@ import sys
 
 from flask import Flask, jsonify
 from psqlgraph import PsqlGraphDriver
+from sqlalchemy import MetaData, Table
 
 from authutils.oauth2 import client as oauth2_client
 from authutils.oauth2.client import blueprint as oauth2_blueprint
@@ -85,6 +86,9 @@ def db_init(app):
 
 
 def migrate_database(app):
+    # hardcoded read role
+    read_role = "peregrine"
+    postgres_admin.migrate_transaction_snapshots(app.db)
     if postgres_admin.check_version(app.db):
         return
     try:
@@ -98,8 +102,6 @@ def migrate_database(app):
             # another migration wins, so silently exit
             app.logger.info("The database version matches up. No need to do migration")
             return
-    # hardcoded read role
-    read_role = "peregrine"
     # check if such role exists
     with app.db.session_scope() as session:
         r = [
