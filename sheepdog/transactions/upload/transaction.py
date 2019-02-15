@@ -206,14 +206,14 @@ class UploadTransaction(TransactionBase):
                     # https://github.com/PyCQA/pylint/pull/2760
                     for entity in entities:
                         entity.record_error(
-                            "{} with {} already exists in the GDC".format(
+                            "{} with {} already exists".format(
                                 entity.node.label, values
                             ),
                             keys=keys,
                         )
                     if entities:
                         raise HandledIntegrityError()
-            self.record_error("{} already exists in the GDC".format(values))
+            self.record_error("{} already exists".format(values))
             raise HandledIntegrityError()
 
     @property
