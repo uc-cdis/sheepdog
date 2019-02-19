@@ -13,6 +13,7 @@ import lxml
 from sheepdog import auth
 from sheepdog import utils
 from sheepdog.errors import ParsingError, SchemaError, UnsupportedError, UserError
+from sheepdog.errors import HandledIntegrityError
 from sheepdog.globals import FLAG_IS_ASYNC, PROJECT_SEED
 from sheepdog.transactions.upload.transaction import (
     BulkUploadTransaction,
@@ -31,6 +32,8 @@ def single_transaction_worker(transaction, *doc_args):
             transaction.flush()
             transaction.post_validate()
             transaction.commit()
+        except HandledIntegrityError:
+            pass
         except UserError as e:
             transaction.record_user_error(e)
             raise
