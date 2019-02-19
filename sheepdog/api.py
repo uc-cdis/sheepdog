@@ -9,6 +9,7 @@ from authutils.oauth2 import client as oauth2_client
 from authutils.oauth2.client import blueprint as oauth2_blueprint
 from authutils import AuthError
 from cdispyutils.log import get_handler
+from cdispyutils.uwsgi import setup_user_harakiri
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators, postgres_admin
 
@@ -134,6 +135,9 @@ def app_init(app):
         # If True, enforce indexd record exists before file node registration
         app.config.get("REQUIRE_FILE_INDEX_EXISTS", False)
     )
+
+    if app.config.get("USE_USER_HARAKIRI", True):
+        setup_user_harakiri(app)
 
     app_register_blueprints(app)
     db_init(app)
