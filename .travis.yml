@@ -4,7 +4,9 @@ group: deprecated-2017Q2
 
 language: python
 
-python: "2.7"
+python:
+  - "2.7"
+  - "3.6"
 
 sudo: false
 
@@ -26,29 +28,32 @@ addons:
     - liblapack-dev
     - gfortran
 
+env:
+  global:
+    - REPOSITORY="uc-cdis/sheepdog" PR_NUMBER="$TRAVIS_PULL_REQUEST"
+    - GDC_ES_HOST=localhost
+
 install:
   - pip install -r requirements.txt
   - python setup.py develop
   - pip install -r dev-requirements.txt
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then pip install -e git+https://git@github.com/uc-cdis/wool.git#egg=wool; fi
 
 before_script:
-  - psql -c "create database test_userapi" -U postgres
-  - userdatamodel-init --db test_userapi
-  - pip freeze
-  - python bin/setup_test_database.py
-  - mkdir -p tests/integration/resources/keys; cd tests/integration/resources/keys; openssl genrsa -out test_private_key.pem 2048; openssl rsa -in test_private_key.pem -pubout -out test_public_key.pem; cd -
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then psql -c "create database test_userapi" -U postgres; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then userdatamodel-init --db test_userapi; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then pip freeze; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then python bin/setup_test_database.py; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then mkdir -p tests/integration/resources/keys; cd tests/integration/resources/keys; openssl genrsa -out test_private_key.pem 2048; openssl rsa -in test_private_key.pem -pubout -out test_public_key.pem; cd -; fi
 
 # commands to run tests
 script:
   # datadict and datadictwithobjid tests must run separately to allow
   # loading different datamodels
-- py.test -vv --cov=sheepdog --cov-report xml tests/integration/datadict
-- py.test -vv --cov=sheepdog --cov-report xml tests/integration/datadictwithobjid
-- py.test -vv --cov=sheepdog --cov-report xml tests/unit
+- if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then py.test -vv --cov=sheepdog --cov-report xml tests/integration/datadict; fi
+- if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then py.test -vv --cov=sheepdog --cov-report xml tests/integration/datadictwithobjid; fi
+- if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then py.test -vv --cov=sheepdog --cov-report xml tests/unit; fi
 
 after_script:
 - python-codacy-coverage -r coverage.xml
-
-env:
-  global:
-    - GDC_ES_HOST=localhost
+- if [[ $TRAVIS_PYTHON_VERSION == 3.6 && $PR_NUMBER != false ]]; then wool; fi

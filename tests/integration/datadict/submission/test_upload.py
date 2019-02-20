@@ -20,29 +20,27 @@ except ImportError:
     from mock import MagicMock
     from mock import patch
 
-BLGSP_PATH = '/v0/submission/CGCI/BLGSP/'
+BLGSP_PATH = "/v0/submission/CGCI/BLGSP/"
 
 # some default values for data file submissions
-DEFAULT_FILE_HASH = '00000000000000000000000000000001'
+DEFAULT_FILE_HASH = "00000000000000000000000000000001"
 DEFAULT_FILE_SIZE = 1
-DEFAULT_URL = 'test/url/test/0'
-DEFAULT_SUBMITTER_ID = '0'
-DEFAULT_UUID = 'bef870b0-1d2a-4873-b0db-14994b2f89bd'
+DEFAULT_URL = "test/url/test/0"
+DEFAULT_SUBMITTER_ID = "0"
+DEFAULT_UUID = "bef870b0-1d2a-4873-b0db-14994b2f89bd"
 
 DEFAULT_METADATA_FILE = {
-    'type': 'experimental_metadata',
-    'data_type': 'Experimental Metadata',
-    'file_name': 'test-file',
-    'md5sum': DEFAULT_FILE_HASH,
-    'data_format': 'some_format',
-    'submitter_id': DEFAULT_SUBMITTER_ID,
-    'experiments': {
-        'submitter_id': 'BLGSP-71-06-00019'
-    },
-    'data_category': 'data_file',
-    'file_size': DEFAULT_FILE_SIZE,
-    'state_comment': '',
-    'urls': DEFAULT_URL
+    "type": "experimental_metadata",
+    "data_type": "Experimental Metadata",
+    "file_name": "test-file",
+    "md5sum": DEFAULT_FILE_HASH,
+    "data_format": "some_format",
+    "submitter_id": DEFAULT_SUBMITTER_ID,
+    "experiments": {"submitter_id": "BLGSP-71-06-00019"},
+    "data_category": "data_file",
+    "file_size": DEFAULT_FILE_SIZE,
+    "state_comment": "",
+    "urls": DEFAULT_URL,
 }
 
 
@@ -50,19 +48,18 @@ def submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp):
     put_cgci_blgsp(client, admin)
 
     # first submit experiment
-    data = json.dumps({
-        'type': 'experiment',
-        'submitter_id': 'BLGSP-71-06-00019',
-        'projects': {
-            'id': 'daa208a7-f57a-562c-a04a-7a7c77542c98'
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
         }
-    })
+    )
     resp = client.put(BLGSP_PATH, headers=submitter, data=data)
     assert resp.status_code == 200, resp.data
 
 
-def submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=None):
+def submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp, data=None):
     data = data or DEFAULT_METADATA_FILE
     put_cgci_blgsp(client, admin)
     data = json.dumps(data)
@@ -70,14 +67,26 @@ def submit_metadata_file(
     return resp
 
 
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
 def test_data_file_not_indexed(
-        create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp,
-        require_index_exists_off):
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+    require_index_exists_off,
+):
     """
     Test node and data file creation when neither exist and no ID is provided.
     """
@@ -91,12 +100,12 @@ def test_data_file_not_indexed(
     # index creation
     assert create_index.call_count == 1
     _, kwargs = create_index.call_args_list[0]
-    assert 'did' in kwargs
-    did = kwargs['did']
-    assert 'hashes' in kwargs
-    assert kwargs['hashes'].get('md5') == DEFAULT_FILE_HASH
-    assert 'urls' in kwargs
-    assert DEFAULT_URL in kwargs['urls']
+    assert "did" in kwargs
+    did = kwargs["did"]
+    assert "hashes" in kwargs
+    assert kwargs["hashes"].get("md5") == DEFAULT_FILE_HASH
+    assert "urls" in kwargs
+    assert DEFAULT_URL in kwargs["urls"]
 
     # alias creation
     assert create_alias.called
@@ -104,12 +113,12 @@ def test_data_file_not_indexed(
     # response
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity['action'] == 'create'
+    assert entity["action"] == "create"
 
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
     #       need to change in the future
-    assert entity['id'] == did
+    assert entity["id"] == did
 
 
 def test_tsv_submission_handle_array_type(client):
@@ -118,42 +127,58 @@ def test_tsv_submission_handle_array_type(client):
     """
 
     file_data = copy.deepcopy(DEFAULT_METADATA_FILE)
-    file_data['array_field'] = ' code a, codeb '
+    file_data["array_field"] = " code a, codeb "
 
     # convert the file to TSV
-    file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/experimental_metadata.tsv')
-    with open(file_path, 'w') as f:
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/experimental_metadata.tsv"
+    )
+    with open(file_path, "w") as f:
         import csv
-        dw = csv.DictWriter(f, sorted(file_data.keys()), delimiter='\t')
+
+        dw = csv.DictWriter(f, sorted(file_data.keys()), delimiter="\t")
         dw.writeheader()
         dw.writerow(file_data)
 
     # read the TSV data
     doc = None
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         doc = f.read()
     assert doc
 
     from sheepdog.utils.transforms import TSVToJSONConverter
+
     data, errors = TSVToJSONConverter().convert(doc)
     assert data
     assert len(data) == 1
     assert not errors
 
     # make sure the array is handled properly
-    array = data[0]['array_field']
+    array = data[0]["array_field"]
     assert isinstance(array, list)
-    assert array == ['code a', 'codeb']
+    assert array == ["code a", "codeb"]
 
 
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
 def test_data_file_not_indexed_id_provided(
-        create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp,
-        require_index_exists_off):
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+    require_index_exists_off,
+):
     """
     Test node and data file creation when neither exist and an ID is provided.
     That ID should be used for the node and file index creation
@@ -164,19 +189,20 @@ def test_data_file_not_indexed_id_provided(
     get_index_hash.return_value = None
 
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    file['id'] = DEFAULT_UUID
+    file["id"] = DEFAULT_UUID
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=file)
+        client, pg_driver, admin, submitter, cgci_blgsp, data=file
+    )
 
     # index creation
     assert create_index.call_count == 1
     args, kwargs = create_index.call_args_list[0]
-    assert 'did' in kwargs
-    did = kwargs['did']
-    assert 'hashes' in kwargs
-    assert kwargs['hashes'].get('md5') == DEFAULT_FILE_HASH
-    assert 'urls' in kwargs
-    assert DEFAULT_URL in kwargs['urls']
+    assert "did" in kwargs
+    did = kwargs["did"]
+    assert "hashes" in kwargs
+    assert kwargs["hashes"].get("md5") == DEFAULT_FILE_HASH
+    assert "urls" in kwargs
+    assert DEFAULT_URL in kwargs["urls"]
 
     # alias creation
     assert create_alias.called
@@ -184,22 +210,34 @@ def test_data_file_not_indexed_id_provided(
     # response
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity['action'] == 'create'
+    assert entity["action"] == "create"
 
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
     #       need to change in the future
     assert did == DEFAULT_UUID
-    assert entity['id'] == DEFAULT_UUID
+    assert entity["id"] == DEFAULT_UUID
 
 
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
 def test_data_file_already_indexed(
-        create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+):
     """
     Test submitting when the file is already indexed in the index client and
     no ID is provided. sheepdog should fall back on the hash/size of the file
@@ -208,7 +246,7 @@ def test_data_file_already_indexed(
     submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
 
     document = MagicMock()
-    document.did = '14fd1746-61bb-401a-96d2-342cfaf70000'
+    document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
     get_index_hash.return_value = document
 
     # only return the correct document by uuid IF the uuid provided is
@@ -218,6 +256,7 @@ def test_data_file_already_indexed(
             return document
         else:
             return None
+
     get_index_uuid.side_effect = get_index_by_uuid
 
     resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
@@ -229,21 +268,33 @@ def test_data_file_already_indexed(
     # response
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity['action'] == 'create'
+    assert entity["action"] == "create"
 
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
     #       need to change in the future
-    assert entity['id'] == document.did
+    assert entity["id"] == document.did
 
 
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
 def test_data_file_already_indexed_id_provided(
-        create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+):
     """
     Test submitting when the file is already indexed in the index client and
     an id is provided in the submission.
@@ -251,7 +302,7 @@ def test_data_file_already_indexed_id_provided(
     submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
 
     document = MagicMock()
-    document.did = '14fd1746-61bb-401a-96d2-342cfaf70000'
+    document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
     get_index_uuid.return_value = document
     get_index_hash.return_value = document
 
@@ -262,12 +313,14 @@ def test_data_file_already_indexed_id_provided(
             return document
         else:
             return None
+
     get_index_uuid.side_effect = get_index_by_uuid
 
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    file['id'] = document.did
+    file["id"] = document.did
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=file)
+        client, pg_driver, admin, submitter, cgci_blgsp, data=file
+    )
 
     # no index or alias creation
     assert not create_index.called
@@ -276,21 +329,33 @@ def test_data_file_already_indexed_id_provided(
     # response
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity['action'] == 'create'
+    assert entity["action"] == "create"
 
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
     #       need to change in the future
-    assert entity['id'] == document.did
+    assert entity["id"] == document.did
 
 
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
 def test_data_file_update_url(
-        create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+):
     """
     Test submitting the same data again but updating the URL field (should
     get added to the indexed file in index service).
@@ -298,7 +363,7 @@ def test_data_file_update_url(
     submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
 
     document = MagicMock()
-    document.did = '14fd1746-61bb-401a-96d2-342cfaf70000'
+    document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
     document.urls = [DEFAULT_URL]
     get_index_hash.return_value = document
 
@@ -309,16 +374,18 @@ def test_data_file_update_url(
             return document
         else:
             return None
+
     get_index_uuid.side_effect = get_index_by_uuid
 
     submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
 
     # now submit again but change url
-    new_url = 'some/new/url/location/to/add'
+    new_url = "some/new/url/location/to/add"
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    updated_file['urls'] = new_url
+    updated_file["urls"] = new_url
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+    )
 
     # no index or alias creation
     assert not create_index.called
@@ -331,21 +398,33 @@ def test_data_file_update_url(
     # response
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity['action'] == 'update'
+    assert entity["action"] == "update"
 
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
     #       need to change in the future
-    assert entity['id'] == document.did
+    assert entity["id"] == document.did
 
 
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
 def test_data_file_update_multiple_urls(
-        create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+):
     """
     Test submitting the same data again but updating the URL field (should
     get added to the indexed file in index service).
@@ -353,7 +432,7 @@ def test_data_file_update_multiple_urls(
     submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
 
     document = MagicMock()
-    document.did = '14fd1746-61bb-401a-96d2-342cfaf70000'
+    document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
     document.urls = [DEFAULT_URL]
     get_index_hash.return_value = document
 
@@ -364,19 +443,21 @@ def test_data_file_update_multiple_urls(
             return document
         else:
             return None
+
     get_index_uuid.side_effect = get_index_by_uuid
 
     submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
 
     # now submit again but change url
-    new_url = 'some/new/url/location/to/add'
-    another_new_url = 'some/other/url'
+    new_url = "some/new/url/location/to/add"
+    another_new_url = "some/other/url"
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
 
     # comma separated list of urls INCLUDING the url that's already there
-    updated_file['urls'] = DEFAULT_URL + ',' + new_url + ',' + another_new_url
+    updated_file["urls"] = DEFAULT_URL + "," + new_url + "," + another_new_url
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+    )
 
     # no index or alias creation
     assert not create_index.called
@@ -394,21 +475,33 @@ def test_data_file_update_multiple_urls(
     # response
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity['action'] == 'update'
+    assert entity["action"] == "update"
 
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
     #       need to change in the future
-    assert entity['id'] == document.did
+    assert entity["id"] == document.did
 
 
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
 def test_data_file_update_url_id_provided(
-        create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+):
     """
     Test submitting the same data again (with the id provided) and updating the
     URL field (should get added to the indexed file in index service).
@@ -416,7 +509,7 @@ def test_data_file_update_url_id_provided(
     submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
 
     document = MagicMock()
-    document.did = '14fd1746-61bb-401a-96d2-342cfaf70000'
+    document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
     document.urls = [DEFAULT_URL]
     get_index_hash.return_value = document
 
@@ -427,17 +520,19 @@ def test_data_file_update_url_id_provided(
             return document
         else:
             return None
+
     get_index_uuid.side_effect = get_index_by_uuid
 
     submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
 
     # now submit again but change url
-    new_url = 'some/new/url/location/to/add'
+    new_url = "some/new/url/location/to/add"
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    updated_file['urls'] = new_url
-    updated_file['id'] = document.did
+    updated_file["urls"] = new_url
+    updated_file["id"] = document.did
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+    )
 
     # no index or alias creation
     assert not create_index.called
@@ -450,24 +545,36 @@ def test_data_file_update_url_id_provided(
     # response
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity['action'] == 'update'
+    assert entity["action"] == "update"
 
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
     #       need to change in the future
-    assert entity['id'] == document.did
+    assert entity["id"] == document.did
 
 
 """ ----- TESTS THAT SHOULD RESULT IN SUBMISSION FAILURES ARE BELOW  ----- """
 
 
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
 def test_data_file_update_url_invalid_id(
-        create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+):
     """
     Test submitting the same data again (with the WRONG id provided).
     i.e. ID provided doesn't match the id from the index service for the file
@@ -479,7 +586,7 @@ def test_data_file_update_url_invalid_id(
     submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
 
     document = MagicMock()
-    document.did = '14fd1746-61bb-401a-96d2-342cfaf70000'
+    document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
     document.urls = [DEFAULT_URL]
     get_index_hash.return_value = document
 
@@ -489,12 +596,13 @@ def test_data_file_update_url_invalid_id(
     submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
 
     # now submit again but change url
-    new_url = 'some/new/url/location/to/add'
+    new_url = "some/new/url/location/to/add"
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    updated_file['urls'] = new_url
-    updated_file['id'] = DEFAULT_UUID
+    updated_file["urls"] = new_url
+    updated_file["id"] = DEFAULT_UUID
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+    )
 
     # no index or alias creation
     assert not create_index.called
@@ -508,13 +616,26 @@ def test_data_file_update_url_invalid_id(
     assert_negative_response(resp)
     assert_single_entity_from_response(resp)
 
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
 def test_data_file_update_url_id_provided_different_file_not_indexed(
-        create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+):
     """
     Test submitting the same data again (with the id provided) and updating the
     URL field.
@@ -541,14 +662,15 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
 
     # now submit again but change url
-    new_url = 'some/new/url/location/to/add'
+    new_url = "some/new/url/location/to/add"
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    updated_file['urls'] = new_url
-    updated_file['id'] = DEFAULT_UUID
-    updated_file['md5sum'] = DEFAULT_FILE_HASH.replace('0', '2')
-    updated_file['file_size'] = DEFAULT_FILE_SIZE + 1
+    updated_file["urls"] = new_url
+    updated_file["id"] = DEFAULT_UUID
+    updated_file["md5sum"] = DEFAULT_FILE_HASH.replace("0", "2")
+    updated_file["file_size"] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+    )
 
     # no index or alias creation
     assert not create_index.called
@@ -563,13 +685,25 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     assert_single_entity_from_response(resp)
 
 
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
 def test_data_file_update_url_different_file_not_indexed(
-        create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+):
     """
     Test submitting the different data (with NO id provided) and updating the
     URL field.
@@ -599,13 +733,14 @@ def test_data_file_update_url_different_file_not_indexed(
     submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
 
     # now submit again but change url
-    new_url = 'some/new/url/location/to/add'
+    new_url = "some/new/url/location/to/add"
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    updated_file['urls'] = new_url
-    updated_file['md5sum'] = DEFAULT_FILE_HASH.replace('0', '2')
-    updated_file['file_size'] = DEFAULT_FILE_SIZE + 1
+    updated_file["urls"] = new_url
+    updated_file["md5sum"] = DEFAULT_FILE_HASH.replace("0", "2")
+    updated_file["file_size"] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+    )
 
     # no index or alias creation
     assert not create_index.called
@@ -620,13 +755,25 @@ def test_data_file_update_url_different_file_not_indexed(
     assert_single_entity_from_response(resp)
 
 
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
 def test_data_file_update_url_id_provided_different_file_already_indexed(
-        create_alias, create_index, get_index_uuid, get_index_hash,
-        client, pg_driver, admin, submitter, cgci_blgsp):
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+):
     """
     Test submitting the same data again (with the id provided) and updating the
     URL field (should get added to the indexed file in index service).
@@ -646,7 +793,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     document_with_id.urls = [DEFAULT_URL]
 
     different_file_matching_hash_and_size = MagicMock()
-    different_file_matching_hash_and_size.did = '14fd1746-61bb-401a-96d2-342cfaf70000'
+    different_file_matching_hash_and_size.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
     different_file_matching_hash_and_size.urls = [DEFAULT_URL]
 
     get_index_uuid.return_value = document_with_id
@@ -655,14 +802,15 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
 
     # now submit again but change url
-    new_url = 'some/new/url/location/to/add'
+    new_url = "some/new/url/location/to/add"
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    updated_file['urls'] = new_url
-    updated_file['id'] = DEFAULT_UUID
-    updated_file['md5sum'] = DEFAULT_FILE_HASH.replace('0', '2')
-    updated_file['file_size'] = DEFAULT_FILE_SIZE + 1
+    updated_file["urls"] = new_url
+    updated_file["id"] = DEFAULT_UUID
+    updated_file["md5sum"] = DEFAULT_FILE_HASH.replace("0", "2")
+    updated_file["file_size"] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file)
+        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+    )
 
     # no index or alias creation
     assert not create_index.called
@@ -679,11 +827,26 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     assert_single_entity_from_response(resp)
 
 
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index')
-@patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias')
-def test_create_file_no_required_index(create_alias, create_index, get_index_uuid, get_index_hash, client, pg_driver, admin, submitter, cgci_blgsp, require_index_exists_on):
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+def test_create_file_no_required_index(
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+    require_index_exists_on,
+):
     """
     With REQUIRE_FILE_INDEX_EXISTS = True.
     Test submitting a data file that does not exist in indexd (should raise an error and should not create an index or an alias).
@@ -705,4 +868,4 @@ def test_create_file_no_required_index(create_alias, create_index, get_index_uui
     # response
     assert_negative_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity['action'] == 'create'
+    assert entity["action"] == "create"

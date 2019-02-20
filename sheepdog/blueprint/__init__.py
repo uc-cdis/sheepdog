@@ -7,6 +7,7 @@ import flask
 
 from sheepdog import sanity_checks
 
+
 def create_blueprint(name):
     """
     Create the blueprint.
@@ -24,10 +25,13 @@ def create_blueprint(name):
     # Add all the routes defined in sheepdog.blueprint.routes to the new
     # blueprint.
     from sheepdog.blueprint.routes import routes
+
     for route in routes:
         blueprint.add_url_rule(
-            route['rule'], endpoint=route['endpoint'],
-            view_func=route['view_func'], **route['options']
+            route["rule"],
+            endpoint=route["endpoint"],
+            view_func=route["view_func"],
+            **route["options"]
         )
 
     return blueprint

@@ -12,9 +12,7 @@ from datamodelutils import validators
 from sheepdog import auth
 from sheepdog import models
 from sheepdog import utils
-from sheepdog.errors import (
-    UserError,
-)
+from sheepdog.errors import UserError
 from sheepdog.globals import (
     MESSAGE_500,
     TX_LOG_STATE_ERRORED,
@@ -67,25 +65,28 @@ class TransactionBase(object):
         self.program = program
         self.project = project
         # Optional
-        self.document_name = kwargs.pop('document_name', None)
-        self.dry_run = kwargs.pop('dry_run', False)
-        self.role = kwargs.pop('role', None)
+        self.document_name = kwargs.pop("document_name", None)
+        self.dry_run = kwargs.pop("dry_run", False)
+        self.role = kwargs.pop("role", None)
         # To be pulled from flask request context if not provided
-        self.logger = kwargs.pop('logger', None) or current_app.logger
-        self.signpost = kwargs.pop('signpost', None) or current_app.signpost
-        self.db_driver = kwargs.pop('db_driver', None) or current_app.db
-        self.config =  kwargs.pop('flask_config', None) or current_app.config
+        self.logger = kwargs.pop("logger", None) or current_app.logger
+        self.signpost = kwargs.pop("signpost", None) or current_app.signpost
+        self.db_driver = kwargs.pop("db_driver", None) or current_app.db
+        self.config = kwargs.pop("flask_config", None) or current_app.config
         #: Create a transaction log, this will be created and committed to the
         #: database during claim_transaction_log()
-        self.transaction_id = kwargs.pop('transaction_id', None)
+        self.transaction_id = kwargs.pop("transaction_id", None)
         if kwargs:
-            self.logger.warn('Unused arguments: %s', kwargs.keys())
+            self.logger.warn("Unused arguments: %s", kwargs.keys())
 
         self.graph_validator = validators.GDCGraphValidator()
         self.transactional_errors = []
 
-        self.logger.info("User %s: new transaction for project %s",
-                         auth.current_user.id, self.project_id)
+        self.logger.info(
+            "User %s: new transaction for project %s",
+            auth.current_user.id,
+            self.project_id,
+        )
 
         #: Verify that this transaction is allowed
         self.assert_project_state()
@@ -103,7 +104,7 @@ class TransactionBase(object):
     @property
     def project_id(self):
         """Return the project id."""
-        return '{}-{}'.format(self.program, self.project)
+        return "{}-{}".format(self.program, self.project)
 
     @property
     def json(self):
@@ -116,14 +117,14 @@ class TransactionBase(object):
         Return attributes in dictionary form.
         """
         return {
-            'transaction_id': self.transaction_id,
-            'success': self.success,
-            'entity_error_count': self.entity_error_count,
-            'transactional_error_count': self.transactional_error_count,
-            'entities': self.entity_responses,
-            'code': self.status_code,
-            'message': self.message,
-            'transactional_errors': self.transactional_errors,
+            "transaction_id": self.transaction_id,
+            "success": self.success,
+            "entity_error_count": self.entity_error_count,
+            "transactional_error_count": self.transactional_error_count,
+            "entities": self.entity_responses,
+            "code": self.status_code,
+            "message": self.message,
+            "transactional_errors": self.transactional_errors,
         }
 
     @property
@@ -189,18 +190,12 @@ class TransactionBase(object):
     def message(self):
         """Return a string describing the current state of the transaction."""
         if self.success and not self.dry_run:
-            return (
-                'Transaction successful with {} entities'
-                .format(len(self.entities))
-            )
+            return "Transaction successful with {} entities".format(len(self.entities))
 
         elif self.success and self.dry_run:
-            return (
-                'Dry run successful with {} entities'
-                .format(len(self.entities))
-            )
+            return "Dry run successful with {} entities".format(len(self.entities))
         else:
-            return 'Transaction failed.'
+            return "Transaction failed."
 
     @property
     def entity_responses(self):
@@ -220,7 +215,7 @@ class TransactionBase(object):
         project = utils.lookup_project(self.db_driver, self.program, self.project)
         state = project.state
         if state not in self.REQUIRED_PROJECT_STATES:
-            states = ' or '.join(self.REQUIRED_PROJECT_STATES)
+            states = " or ".join(self.REQUIRED_PROJECT_STATES)
             msg = (
                 "Project is in state '{}', which prevents {}. In order to"
                 " perform this action, the project must be in state <{}>."
@@ -279,9 +274,9 @@ class TransactionBase(object):
         """Look up external state of transaction log."""
         with self.clean_session():
             yield (
-                self.db_driver
-                .nodes(models.submission.TransactionLog)
-                .get(self.transaction_id)
+                self.db_driver.nodes(models.submission.TransactionLog).get(
+                    self.transaction_id
+                )
             )
 
     def set_transaction_log_state(self, state):
@@ -311,9 +306,7 @@ class TransactionBase(object):
         simply creating a response per document in the bulk transaction.
         """
         return models.submission.TransactionDocument(
-            name=None,
-            doc_format='N/A',
-            doc='',
+            name=None, doc_format="N/A", doc=""
         )
 
     def new_transaction_log(self):
@@ -349,15 +342,6 @@ class TransactionBase(object):
         self.logger.info("{}: rolling back transaction".format(self))
         return self.session.rollback()
 
-    def rollback_with_tx_log_state(self, state):
-        """
-        Erase all changes in the current session and set the
-        transaction_log.state in a separate session.
-        """
-        msg = "{}: rolling back transaction, state: {}".format(self, state)
-        self.logger.info(msg)
-        return self.session.rollback_with_transaction_state(state)
-
     def commit(self, assert_has_entities=True):
         """
         Conditionally write to the database.
@@ -371,7 +355,7 @@ class TransactionBase(object):
         If successful, attempt to flush changes, transaction log and commit.
         """
 
-        self.logger.info('{}: committing'.format(self))
+        self.logger.info("{}: committing".format(self))
 
         if assert_has_entities:
             self.record_errors_for_empty_transaction()
@@ -389,10 +373,10 @@ class TransactionBase(object):
         try:
             self.session.commit()
             self.set_transaction_log_state(TX_LOG_STATE_SUCCEEDED)
-            self.logger.info('{}: committed'.format(self))
+            self.logger.info("{}: committed".format(self))
         except Exception as e:  # pylint: disable=broad-except
             self.logger.exception(e)
-            msg = 'Unable to write to database, please try again'
+            msg = "Unable to write to database, please try again"
             self.transactional_errors.append(msg)
             self.set_transaction_log_state(TX_LOG_STATE_ERRORED)
             self.session.rollback()
@@ -406,13 +390,13 @@ class TransactionBase(object):
 
         Log the exception message and return it to the user.
         """
-
         self.logger.exception(exception)
         if str(exception):
             self.transactional_errors.append(str(exception))
+        self.rollback()
         self.set_transaction_log_state(TX_LOG_STATE_FAILED)
         self.write_transaction_log()
-        self.rollback()
+        self.session.commit()
 
     def record_internal_error(self, exception):
         """
@@ -423,12 +407,12 @@ class TransactionBase(object):
 
         Log the exception message but do not return it to the user.
         """
-
         self.logger.exception(exception)
         self.transactional_errors.append(MESSAGE_500)
+        self.rollback()
         self.set_transaction_log_state(TX_LOG_STATE_ERRORED)
         self.write_transaction_log()
-        self.rollback()
+        self.session.commit()
 
     def get_transaction_timestamp(self):
         """
@@ -457,7 +441,7 @@ class TransactionBase(object):
                 if not entity.node or isinstance(entity.node, MissingNode):
                     continue
                 snapshot = models.submission.TransactionSnapshot()
-                snapshot.id = entity.node.node_id
+                snapshot.entity_id = entity.node.node_id
                 snapshot.old_props = entity.old_props
                 snapshot.new_props = entity.node.props
                 snapshot.action = entity.action

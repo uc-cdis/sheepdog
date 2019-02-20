@@ -4,15 +4,10 @@ from sheepdog.transactions.transaction_base import TransactionBase
 
 class ReleaseTransaction(TransactionBase):
 
-    REQUIRED_PROJECT_STATES = [
-        'open',
-        'review',
-        'submitted',
-        'processing',
-    ]
+    REQUIRED_PROJECT_STATES = ["open", "review", "submitted", "processing"]
 
     def __init__(self, **kwargs):
-        super(ReleaseTransaction, self).__init__(role='release', **kwargs)
+        super(ReleaseTransaction, self).__init__(role="release", **kwargs)
 
     def write_transaction_log(self):
         """Save a log noting this project was opened."""
@@ -24,21 +19,20 @@ class ReleaseTransaction(TransactionBase):
     def message(self):
         """Return human-readable message to put in the response JSON."""
         if self.success and not self.dry_run:
-            return 'Successfully released project'
+            return "Successfully released project"
         elif self.success and self.dry_run:
-            return 'Dry run successful. Would have released project.'
+            return "Dry run successful. Would have released project."
         else:
-            return 'Release transaction failed.'
+            return "Release transaction failed."
 
     def take_action(self):
         """Attempt to transition the current project state to ``release``."""
         project = utils.lookup_project(self.db_driver, self.program, self.project)
         if project.released:
-            return self.record_error('Project is already released.')
+            return self.record_error("Project is already released.")
 
         if project.releasable is not True:
-            message = 'Project is not releasable. '\
-                      'Project must be submitted at least once first.'
+            message = "Project is not releasable. " "Project must be submitted at least once first."
             return self.record_error(message)
 
         project.released = True

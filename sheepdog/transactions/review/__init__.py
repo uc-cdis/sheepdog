@@ -7,13 +7,8 @@ TODO(jsm|2016-02-01): Add review constraints.
 import flask
 
 from sheepdog import utils
-from sheepdog.globals import (
-    FLAG_IS_ASYNC,
-)
-from sheepdog.transactions.review.transaction import (
-    OpenTransaction,
-    ReviewTransaction,
-)
+from sheepdog.globals import FLAG_IS_ASYNC
+from sheepdog.transactions.review.transaction import OpenTransaction, ReviewTransaction
 
 
 def transaction_worker(transaction):
@@ -39,8 +34,8 @@ def _single_transaction(tx_cls, program, project, **tx_kwargs):
     Return:
         Tuple[flask.Response, int]: (API response json, status code)
     """
-    is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
-    db_driver = tx_kwargs.pop('db_driver', flask.current_app.db)
+    is_async = tx_kwargs.pop("is_async", utils.is_flag_set(FLAG_IS_ASYNC))
+    db_driver = tx_kwargs.pop("db_driver", flask.current_app.db)
 
     transaction = tx_cls(
         program=program,
@@ -55,9 +50,9 @@ def _single_transaction(tx_cls, program, project, **tx_kwargs):
         session = transaction.db_driver.session_scope()
         with session, transaction:
             response = {
-                'code': 200,
-                'message': 'Transaction submitted.',
-                'transaction_id': transaction.transaction_id,
+                "code": 200,
+                "message": "Transaction submitted.",
+                "transaction_id": transaction.transaction_id,
             }
         flask.current_app.async_pool.schedule(transaction_worker, transaction)
         return flask.jsonify(response), 200
@@ -68,19 +63,9 @@ def _single_transaction(tx_cls, program, project, **tx_kwargs):
 
 def handle_review_transaction(program, project, **tx_kwargs):
     """Attempt to take review action."""
-    return _single_transaction(
-        ReviewTransaction,
-        program,
-        project,
-        **tx_kwargs
-    )
+    return _single_transaction(ReviewTransaction, program, project, **tx_kwargs)
 
 
 def handle_open_transaction(program, project, **tx_kwargs):
     """Attempt to take review action."""
-    return _single_transaction(
-        OpenTransaction,
-        program,
-        project,
-        **tx_kwargs
-    )
+    return _single_transaction(OpenTransaction, program, project, **tx_kwargs)

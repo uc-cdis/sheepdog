@@ -8,9 +8,7 @@ import StringIO
 from flask import current_app
 from psqlgraph import Node
 
-from sheepdog.errors import (
-    UserError,
-)
+from sheepdog.errors import UserError
 from sheepdog.utils.transforms.bcr_xml_to_json import (
     BcrXmlToJsonParser,
     BcrClinicalXmlToJsonParser,
@@ -27,7 +25,7 @@ def parse_bool_from_string(value):
         ``bool('maybe') is True``, this is undesirable, but
         ``parse_bool_from_string('maybe') == 'maybe'``
     """
-    mapping = {'true': True, 'false': False}
+    mapping = {"true": True, "false": False}
     return mapping.get(strip(value).lower(), value)
 
 
@@ -38,16 +36,16 @@ def parse_list_from_string(value):
     Example:
         1,2,3 -> ['1','2','3']
     """
-    return [x.strip() for x in value.split(',')]
+    return [x.strip() for x in value.split(",")]
 
 
 def set_row_type(row):
     """Get the class for a row dict, setting 'type'. Coerce '' -> None."""
-    row['type'] = row.get('type', None)
-    if not row['type']:
-        row.pop('type')
+    row["type"] = row.get("type", None)
+    if not row["type"]:
+        row.pop("type")
         return None
-    return Node.get_subclass(row['type'])
+    return Node.get_subclass(row["type"])
 
 
 def strip(text):
@@ -57,7 +55,6 @@ def strip(text):
 
     if not isinstance(text, basestring):
         return text
-
 
     else:
         return text.strip()
@@ -73,12 +70,12 @@ def strip_whitespace_from_str_dict(dictionary):
 
 def get_links_from_row(row):
     """Return a dict of key/value pairs that are links."""
-    return {k: v for k, v in row.iteritems() if '.' in k}
+    return {k: v for k, v in row.iteritems() if "." in k}
 
 
 def get_props_from_row(row):
     """Return a dict of key/value pairs that are props, not links."""
-    return {k: v for k, v in row.iteritems() if '.' not in k and v != ''}
+    return {k: v for k, v in row.iteritems() if "." not in k and v != ""}
 
 
 class DelimitedConverter(object):
@@ -87,7 +84,7 @@ class DelimitedConverter(object):
     """
 
     def __init__(self):
-        self.reader = csv.reader(StringIO.StringIO(''))
+        self.reader = csv.reader(StringIO.StringIO(""))
         self.errors = []
         self.docs = []
 
@@ -96,7 +93,7 @@ class DelimitedConverter(object):
         Implement this in a subclass to self.reader to be an iterable of rows
         given a doc.
         """
-        msg = 'set_reader generator not implemented for {}'.format(type(self))
+        msg = "set_reader generator not implemented for {}".format(type(self))
         raise NotImplementedError(msg)
 
     def convert(self, doc):
@@ -109,7 +106,7 @@ class DelimitedConverter(object):
             map(self.add_row, self.reader)
         except Exception as e:
             current_app.logger.exception(e)
-            raise UserError('Unable to parse document')
+            raise UserError("Unable to parse document")
         return self.docs, self.errors
 
     @staticmethod
@@ -144,7 +141,7 @@ class DelimitedConverter(object):
         # Add properties
         props_dict = get_props_from_row(row)
         for key, value in props_dict.iteritems():
-            if value == 'null':
+            if value == "null":
                 doc[key] = None
             else:
                 converted = self.convert_type(cls, key, value)
@@ -166,24 +163,24 @@ class DelimitedConverter(object):
         converted_value = self.convert_type(cls, key, value)
         if converted_value is None:
             return
-        if value == 'null':
+        if value == "null":
             converted_value = None
 
-        parsed = key.split('.')
+        parsed = key.split(".")
         link = parsed[0]
         if not link:
-            error = 'Invalid link name: {}'.format(key)
+            error = "Invalid link name: {}".format(key)
             return self.record_error(error, columns=[key])
-        prop = '.'.join(parsed[1:])
+        prop = ".".join(parsed[1:])
         if not prop:
-            error = 'Invalid link property name: {}'.format(key)
+            error = "Invalid link property name: {}".format(key)
             return self.record_error(error, columns=[key])
 
         # Add to doc
-        if '#' in prop:
-            items = prop.split('#')
+        if "#" in prop:
+            items = prop.split("#")
             if len(items) > 2:
-                error = '# is not allowed in link identitifer'
+                error = "# is not allowed in link identitifer"
                 return self.record_error(error, columns=[key])
             prop = items[0]
             link_id = items[1]
@@ -196,16 +193,13 @@ class DelimitedConverter(object):
                     links[link][link_id][prop] = converted_value
                 else:
                     # this block should never be reached
-                    error = 'name collision: name {} specified twice'
-                    return self.record_error(
-                        error.format(link), columns=[key, link]
-                    )
+                    error = "name collision: name {} specified twice"
+                    return self.record_error(error.format(link), columns=[key, link])
             else:
                 links[link][link_id] = {prop: converted_value}
 
         else:
             links[link] = {link_id: {prop: converted_value}}
-
 
     @staticmethod
     def convert_type(to_cls, key, value):
@@ -225,7 +219,7 @@ class DelimitedConverter(object):
                 return parse_bool_from_string(value)
             elif value_type == list:
                 return parse_list_from_string(value)
-            elif strip(value) == '':
+            elif strip(value) == "":
                 return None
             else:
                 return value_type(value)
@@ -251,25 +245,22 @@ class DelimitedConverter(object):
         """
         if columns is None:
             columns = []
-        self.errors.append(dict(
-            message=message, columns=columns, line=self.reader.line_num,
-            **kwargs
-        ))
+        self.errors.append(
+            dict(message=message, columns=columns, line=self.reader.line_num, **kwargs)
+        )
 
 
 class TSVToJSONConverter(DelimitedConverter):
-
     def set_reader(self, doc):
         # Standardize the new line format
-        doc = '\n'.join(strip(doc).splitlines())
+        doc = "\n".join(strip(doc).splitlines())
         f = StringIO.StringIO(doc)
-        self.reader = csv.DictReader(f, delimiter='\t')
+        self.reader = csv.DictReader(f, delimiter="\t")
 
 
 class CSVToJSONConverter(DelimitedConverter):
-
     def set_reader(self, doc):
         # Standardize the new line format
-        doc = '\n'.join(strip(doc).splitlines())
+        doc = "\n".join(strip(doc).splitlines())
         f = StringIO.StringIO(doc)
-        self.reader = csv.DictReader(f, delimiter=',')
+        self.reader = csv.DictReader(f, delimiter=",")

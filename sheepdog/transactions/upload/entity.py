@@ -50,7 +50,8 @@ class UploadEntity(EntityBase):
     create a node. After this, it should be flushed into a UploadTransaction's
     session.
     """
-    DATA_FILE_CATEGORIES = ['data_file', 'metadata_file', 'index_file']
+
+    DATA_FILE_CATEGORIES = ["data_file", "metadata_file", "index_file"]
 
     def __init__(self, transaction, config=None):
         """
@@ -67,10 +68,7 @@ class UploadEntity(EntityBase):
     def secondary_keys(self):
         """Return the tuple of unique dicts for the node."""
         if self._secondary_keys is None:
-            node = (
-                self.node
-                or self.get_skeleton_node(self.entity_type, self.doc)
-            )
+            node = self.node or self.get_skeleton_node(self.entity_type, self.doc)
             if node:
                 self._secondary_keys = node._secondary_keys
             else:
@@ -102,13 +100,14 @@ class UploadEntity(EntityBase):
         """
         if not isinstance(doc, dict):
             return self.record_error(
-                'Entity document must be an object, not a {}'
-                .format(doc.__class__.__name__),
+                "Entity document must be an object, not a {}".format(
+                    doc.__class__.__name__
+                ),
                 type=EntityErrors.INVALID_VALUE,
             )
         # Remove asterisks from doc keys
         for key in doc:
-            doc[key.lstrip('*')] = doc.pop(key)
+            doc[key.lstrip("*")] = doc.pop(key)
 
         self.doc = doc
         self._parse_type()
@@ -128,16 +127,19 @@ class UploadEntity(EntityBase):
             keys = [a for b in self.pg_secondary_keys for a in b]
             if not keys:
                 return self.record_error(
-                    ('There are no unique keys defined on type {} except'
-                     ' for the official GDC id.  To upload this entity you'
-                     ' must add a UUID').format(self.entity_type),
-                    keys=['id'],
+                    (
+                        "There are no unique keys defined on type {} except"
+                        " for the official GDC id.  To upload this entity you"
+                        " must add a UUID"
+                    ).format(self.entity_type),
+                    keys=["id"],
                     type=EntityErrors.MISSING_PROPERTY,
                 )
             else:
                 return self.record_error(
-                    'Either an id or required unique fields ({}) required'
-                    .format(', '.join(list(keys))),
+                    "Either an id or required unique fields ({}) required".format(
+                        ", ".join(list(keys))
+                    ),
                     keys=keys,
                     type=EntityErrors.MISSING_PROPERTY,
                 )
@@ -146,9 +148,9 @@ class UploadEntity(EntityBase):
         if not self.entity_type:
             return
 
-        if self.transaction.role == 'create':
+        if self.transaction.role == "create":
             self.node = self.get_node_create()
-        elif self.transaction.role == 'update':
+        elif self.transaction.role == "update":
             self.node = self.get_node_merge()
         else:
             self.record_error(
@@ -172,16 +174,14 @@ class UploadEntity(EntityBase):
 
         role = self.action
         try:
-            if role == 'create':
+            if role == "create":
                 self.transaction.session.add(self.node)
-            elif role == 'update':
+            elif role == "update":
                 self.node = self.transaction.session.merge(self.node)
             else:
-                message = 'Unknown role {}'.format(role)
+                message = "Unknown role {}".format(role)
                 self.logger.error(message)
-                self.record_error(
-                    message, type=EntityErrors.INVALID_PERMISSIONS
-                )
+                self.record_error(message, type=EntityErrors.INVALID_PERMISSIONS)
         except Exception as e:  # pylint: disable=broad-except
             self.logger.exception(e)
             self.record_error(str(e))
@@ -193,16 +193,17 @@ class UploadEntity(EntityBase):
         :returns: None
 
         """
-        self.entity_id = self.doc.get('id')
+        self.entity_id = self.doc.get("id")
         not_uuid = (
-            self.transaction.role == 'create'
+            self.transaction.role == "create"
             and self.entity_id
             and not REGEX_UUID.match(self.entity_id)
         )
         if not_uuid:
             self.record_error(
-                'Cannot create entity with custom id that is not a UUID.',
-                keys=['id'], type=EntityErrors.INVALID_VALUE
+                "Cannot create entity with custom id that is not a UUID.",
+                keys=["id"],
+                type=EntityErrors.INVALID_VALUE,
             )
 
     def _parse_type(self):
@@ -213,7 +214,7 @@ class UploadEntity(EntityBase):
         Return:
             None
         """
-        self.entity_type = self.doc.get('type')
+        self.entity_type = self.doc.get("type")
         if self.entity_type is None:
             return self.record_error(
                 "missing 'type'", keys=["type"], type=EntityErrors.INVALID_TYPE
@@ -234,37 +235,40 @@ class UploadEntity(EntityBase):
         """
         # Check user permissions for updating nodes
         roles = self.get_user_roles()
-        if 'create' not in roles:
+        if "create" not in roles:
             return self.record_error(
-                'You do not have create permission for project {} only {}'
-                .format(self.transaction.project_id, roles),
+                "You do not have create permission for project {} only {}".format(
+                    self.transaction.project_id, roles
+                ),
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
 
         # Check to see if it's registered in dbGaP is is an exception
         # to the rule
-        if self.entity_type == 'case':
+        if self.entity_type == "case":
             submitter_id = self.doc.get("submitter_id")
 
             allowed = True
             try:
-                if self._config.get('USE_DBGAP', False):
+                if self._config.get("USE_DBGAP", False):
                     allowed = self.is_case_creation_allowed(submitter_id)
 
             except InternalError as e:
                 return self.record_error(
-                    "Unable to validate case against dbGaP. {}"
-                    .format(str(e)),
-                    keys=['submitter_id'],
-                    type=EntityErrors.NOT_FOUND)
+                    "Unable to validate case against dbGaP. {}".format(str(e)),
+                    keys=["submitter_id"],
+                    type=EntityErrors.NOT_FOUND,
+                )
 
             else:
                 if not allowed:
                     return self.record_error(
-                        "Case submitter_id '{}' not found in dbGaP."
-                        .format(submitter_id),
-                        keys=['submitter_id'],
-                        type=EntityErrors.NOT_FOUND)
+                        "Case submitter_id '{}' not found in dbGaP.".format(
+                            submitter_id
+                        ),
+                        keys=["submitter_id"],
+                        type=EntityErrors.NOT_FOUND,
+                    )
 
         if not self.entity_id:
             self.entity_id = str(uuid.uuid4())
@@ -279,9 +283,9 @@ class UploadEntity(EntityBase):
             )
             if nodes.count():
                 return self.record_error(
-                    'Cannot create entity that already exists. '
-                    'Try updating entity (PUT instead of POST)',
-                    keys=['id'],
+                    "Cannot create entity that already exists. "
+                    "Try updating entity (PUT instead of POST)",
+                    keys=["id"],
                     type=EntityErrors.NOT_UNIQUE,
                 )
 
@@ -292,10 +296,10 @@ class UploadEntity(EntityBase):
 
         # Create the node and populate its properties
         cls = psqlgraph.Node.get_subclass(self.entity_type)
-        self.logger.debug('Creating new {}'.format(cls.__name__))
+        self.logger.debug("Creating new {}".format(cls.__name__))
         node = cls(self.entity_id)
 
-        self.action = 'create'
+        self.action = "create"
 
         return node
 
@@ -313,23 +317,25 @@ class UploadEntity(EntityBase):
                 self.transaction.db_driver,
                 self.entity_type,
                 self.entity_id,
-                self.secondary_keys
+                self.secondary_keys,
             ).one()
         except sqlalchemy.orm.exc.NoResultFound:
             return self.get_node_create()
         except sqlalchemy.orm.exc.MultipleResultsFound:
             self.record_error(
-                'Entity is not unique, multiple entities found with {}'
-                .format(self.secondary_keys),
+                "Entity is not unique, multiple entities found with {}".format(
+                    self.secondary_keys
+                ),
                 type=EntityErrors.NOT_UNIQUE,
             )
             return None
 
         # Check user permissions for updating nodes
-        if 'update' not in self.get_user_roles():
+        if "update" not in self.get_user_roles():
             self.record_error(
-                'You do not have update permission for project {}'
-                .format(self.transaction.project_id),
+                "You do not have update permission for project {}".format(
+                    self.transaction.project_id
+                ),
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
             return None
@@ -338,8 +344,9 @@ class UploadEntity(EntityBase):
 
         if node.label != self.entity_type:
             self.record_error(
-                'Existing {} entity found with type different from {}'
-                .format(node.label, self.entity_type),
+                "Existing {} entity found with type different from {}".format(
+                    node.label, self.entity_type
+                ),
                 type=EntityErrors.NOT_UNIQUE,
             )
             return None
@@ -347,16 +354,18 @@ class UploadEntity(EntityBase):
         # Verify that the node is in the correct project
         if not self._verify_node_project_id(node):
             self.record_error(
-                "Entity is owned by project {}, not {}"
-                .format(node.project_id, self.transaction.project_id),
+                "Entity is owned by project {}, not {}".format(
+                    node.project_id, self.transaction.project_id
+                ),
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
         self._merge_doc_links(node)
 
         if self.entity_id and node.node_id != self.entity_id:
             self.record_error(
-                'Existing {} entity found with id different from {}'
-                .format(node, self.entity_id),
+                "Existing {} entity found with id different from {}".format(
+                    node, self.entity_id
+                ),
                 type=EntityErrors.NOT_UNIQUE,
             )
             return None
@@ -366,25 +375,23 @@ class UploadEntity(EntityBase):
         # not been submitted and will not be displayed on the portal.
         # The node is now essential a draft.
         if node.state is None:
-            node.state = 'validated'
+            node.state = "validated"
 
         # Fill in default system property values
         for key in self.get_system_property_defaults():
             self.logger.debug(
-                "{}: setting system prop self.doc['{}'] to '{}'"
-                .format(node, key, node._props.get(key))
+                "{}: setting system prop self.doc['{}'] to '{}'".format(
+                    node, key, node._props.get(key)
+                )
             )
             if self.doc.get(key) and self.doc.get(key) != node._props.get(key):
                 msg = (
-                    "Property '{}' ({}) is a system property and will be"
-                    " ignored."
+                    "Property '{}' ({}) is a system property and will be" " ignored."
                 ).format(key, self.doc.get(key))
-                self.record_warning(
-                    msg, keys=[key], type=EntityErrors.INVALID_PROPERTY
-                )
+                self.record_warning(msg, keys=[key], type=EntityErrors.INVALID_PROPERTY)
             self.doc[key] = node._props.get(key)
 
-        self.action = 'update'
+        self.action = "update"
         self.entity_id = node.node_id
 
         return node
@@ -405,25 +412,20 @@ class UploadEntity(EntityBase):
             self.doc[name] = doc_links
 
             # Get set of node ids in the link document
-            map(doc_ids.add, [
-                l.get('id') for l in doc_links if l.get('id')
-            ])
+            map(doc_ids.add, [l.get("id") for l in doc_links if l.get("id")])
 
             # Get set of secondary_keys in the link document
             for link in doc_links:
-                target_label = node._pg_links.get(name, {})\
-                                             .get('dst_type', None)\
-                                             .label
+                target_label = node._pg_links.get(name, {}).get("dst_type", None).label
                 target = self.get_skeleton_node(target_label, link)
                 if target:
                     doc_sk.add(target._secondary_keys)
 
             # Add links that are in the database, but not the JSON doc
             for n in getattr(node, name):
-                node_in_doc = (n._secondary_keys in doc_sk
-                               or n.node_id in doc_ids)
+                node_in_doc = n._secondary_keys in doc_sk or n.node_id in doc_ids
                 if not node_in_doc:
-                    self.doc[name].append({'id': n.node_id})
+                    self.doc[name].append({"id": n.node_id})
 
             # Remove empty link list
             if not self.doc[name]:
@@ -435,7 +437,7 @@ class UploadEntity(EntityBase):
 
             if isinstance(value, dict):
                 self._remove_empty_values(value)
-            elif hasattr(value, '__iter__'):
+            elif hasattr(value, "__iter__"):
                 value = [
                     sub_doc
                     for sub_doc in map(self._remove_empty_values, value)
@@ -453,13 +455,13 @@ class UploadEntity(EntityBase):
         Take the key, values from the dictionary (minus system keys) and set
         the value on the instances node, recording any errors.
         """
-        self.logger.debug('Setting properties on {}'.format(self.node))
+        self.logger.debug("Setting properties on {}".format(self.node))
         entry = dictionary.schema.get(self.node.label, {})
-        systemProperties = set(entry.get('systemProperties', []))
+        systemProperties = set(entry.get("systemProperties", []))
 
-        special_keys = ['type', 'id', 'created_datetime', 'updated_datetime']
+        special_keys = ["type", "id", "created_datetime", "updated_datetime"]
         pg_props = self.node.get_pg_properties()
-        prop_keys = (pg_props.keys() + self.node._pg_links.keys()+special_keys)
+        prop_keys = pg_props.keys() + self.node._pg_links.keys() + special_keys
         self.node.project_id = self.transaction.project_id
         default_props = self.get_system_property_defaults()
 
@@ -469,14 +471,11 @@ class UploadEntity(EntityBase):
             # Does this key exist?
             if key not in prop_keys:
                 msg = (
-                    "Key '{}' is not a valid property for type '{}'.{}"
-                    .format(
+                    "Key '{}' is not a valid property for type '{}'.{}".format(
                         key, self.entity_type, get_suggestion(key, prop_keys)
                     ),
                 )
-                self.record_error(
-                    msg, keys=[key], type=EntityErrors.INVALID_PROPERTY
-                )
+                self.record_error(msg, keys=[key], type=EntityErrors.INVALID_PROPERTY)
 
             # Skip type and id
             elif key in special_keys:
@@ -493,15 +492,18 @@ class UploadEntity(EntityBase):
                 if self.node._props.get(key, None) is None:
                     default = default_props.get(key, None)
                     self.logger.debug(
-                        "{}: setting null system property '{}' to {}"
-                        .format(self.node, key, default))
+                        "{}: setting null system property '{}' to {}".format(
+                            self.node, key, default
+                        )
+                    )
                     self.node._props[key] = default
 
                 elif self.node._props.get(key) != val:
                     self.record_error(
-                        ("Key '{}' is a system property and cannot be updated "
-                         "from '{}' to '{}'")
-                        .format(key, self.node._props.get(key), val),
+                        (
+                            "Key '{}' is a system property and cannot be updated "
+                            "from '{}' to '{}'"
+                        ).format(key, self.node._props.get(key), val),
                         keys=[key],
                         type=EntityErrors.INVALID_PERMISSIONS,
                     )
@@ -512,7 +514,7 @@ class UploadEntity(EntityBase):
                     self.node._props[key] = val
                 except Exception as e:  # pylint: disable=broad-except
                     self.record_error(
-                        'Invalid property ({}): {}'.format(key, str(e)),
+                        "Invalid property ({}): {}".format(key, str(e)),
                         keys=[key],
                         type=EntityErrors.INVALID_PROPERTY,
                     )
@@ -526,21 +528,21 @@ class UploadEntity(EntityBase):
 
         if not cls:
             return self.record_error(
-                'Invalid entity type: {}.{}'.format(
-                    self.entity_type, get_suggestion(self.entity_type, [
-                        n.label for n in psqlgraph.Node.get_subclasses()])),
-                keys=['type'],
+                "Invalid entity type: {}.{}".format(
+                    self.entity_type,
+                    get_suggestion(
+                        self.entity_type,
+                        [n.label for n in psqlgraph.Node.get_subclasses()],
+                    ),
+                ),
+                keys=["type"],
                 type=EntityErrors.INVALID_TYPE,
             )
 
-        if 'project_id' not in cls.get_pg_properties():
-            msg = (
-                '{} is not an entity that can be upload via the project'
-                ' endpoint.'
-            )
+        if "project_id" not in cls.get_pg_properties():
+            msg = "{} is not an entity that can be upload via the project" " endpoint."
             self.record_error(
-                msg.format(cls.label), keys=['id'],
-                type=EntityErrors.INVALID_TYPE
+                msg.format(cls.label), keys=["id"], type=EntityErrors.INVALID_TYPE
             )
 
     def _verify_node_project_id(self, node):
@@ -567,12 +569,11 @@ class UploadEntity(EntityBase):
 
         # Set project_id.
         project_id_is_unset = (
-            'project_id' in node.__pg_properties__
-            and 'project_id' not in properties
+            "project_id" in node.__pg_properties__ and "project_id" not in properties
         )
         if project_id_is_unset:
             project_id = project_id or self.transaction.project_id
-            node['project_id'] = project_id
+            node["project_id"] = project_id
 
         # Set given properties.
         for key, val in properties.iteritems():
@@ -590,37 +591,36 @@ class UploadEntity(EntityBase):
         Return a dictionary with systemProperty values populated by defaults.
         """
         entry = dictionary.schema.get(self.entity_type, {})
-        system_properties = entry.get('systemProperties', {})
+        system_properties = entry.get("systemProperties", {})
         doc = {}
         ignored_system_property_keys = {
-            'id', 'type', 'created_datetime', 'updated_datetime', 'project_id'
+            "id",
+            "type",
+            "created_datetime",
+            "updated_datetime",
+            "project_id",
         }
 
         for key in system_properties:
             if key in ignored_system_property_keys:
                 continue
-            node_props = (
-                psqlgraph.Node
-                .get_subclass(self.entity_type)
-                .__pg_properties__
-            )
+            node_props = psqlgraph.Node.get_subclass(self.entity_type).__pg_properties__
             if key not in node_props:
                 self.logger.error(
-                    "'{}' has systemProperty '{}' that is not a property"
-                    .format(type(self.node), key)
+                    "'{}' has systemProperty '{}' that is not a property".format(
+                        type(self.node), key
+                    )
                 )
                 continue
             # If the property doesn't have a value, and a default value
             # is provided in dictionary, set the default to the key
-            prop = entry.get('properties', {}).get(key, {})
-            if 'default' in prop:
-                doc[key] = prop['default']
+            prop = entry.get("properties", {}).get(key, {})
+            if "default" in prop:
+                doc[key] = prop["default"]
         return doc
 
     def get_user_roles(self):
-        return get_program_project_roles(
-            *self.transaction.project_id.split('-', 1)
-        )
+        return get_program_project_roles(*self.transaction.project_id.split("-", 1))
 
     def is_case_creation_allowed(self, case_id):
         """
@@ -630,16 +630,14 @@ class UploadEntity(EntityBase):
         #. Is the case in a predefined list of cases to allow?
         #. Is the owning project in a predefined list of projects?
         """
-        program, project = self.transaction.project_id.split('-', 1)
+        program, project = self.transaction.project_id.split("-", 1)
         if program in UNVERIFIED_PROGRAM_NAMES:
             return True
         elif project in UNVERIFIED_PROJECT_CODES:
             return True
         else:
             return self.transaction.dbgap_x_referencer.case_exists(
-                program,
-                project,
-                self.doc.get('submitter_id')
+                program, project, self.doc.get("submitter_id")
             )
 
     def set_association_proxies(self):
@@ -662,72 +660,67 @@ class UploadEntity(EntityBase):
 
             for link in links:
                 # Get target information
-                target_id = link.get('id')
+                target_id = link.get("id")
                 target_label = (
-                    self.node
-                    ._pg_links
-                    .get(name, {})
-                    .get('dst_type', None)
-                    .label
+                    self.node._pg_links.get(name, {}).get("dst_type", None).label
                 )
                 target = self.get_skeleton_node(target_label, link)
 
                 # Query for targets
                 nodes = lookup_node(
                     self.transaction.db_driver,
-                    self.node._pg_links[name]['dst_type'].label,
+                    self.node._pg_links[name]["dst_type"].label,
                     node_id=target_id,
-                    secondary_keys=target._secondary_keys
+                    secondary_keys=target._secondary_keys,
                 ).all()
 
                 # Verify any link to projects is in the correct project
-                if self.node._pg_links[name]['dst_type'] == models.Project:
+                if self.node._pg_links[name]["dst_type"] == models.Project:
                     for node in nodes:
                         if node.code != self.transaction.project:
                             self.record_error(
-                                'Cannot link entity to project'
-                                ' {} under {} endpoint'
-                                .format(node.code, self.transaction.project),
+                                "Cannot link entity to project"
+                                " {} under {} endpoint".format(
+                                    node.code, self.transaction.project
+                                ),
                                 type=EntityErrors.INVALID_PERMISSIONS,
                             )
 
                 # Check for duplicates
                 if len(nodes) > 1:
                     self.record_error(
-                        'More than one link destination found for {}'
-                        .format(name), keys=[name],
+                        "More than one link destination found for {}".format(name),
+                        keys=[name],
                         type=EntityErrors.INVALID_LINK,
                     )
                     continue
 
                 # Check for missing links
                 elif len(nodes) == 0:
-                    msg = 'No link destination found for {}'.format(name)
+                    msg = "No link destination found for {}".format(name)
                     if target_id:
                         msg += ", id='{}'".format(target_id)
 
-                    msg += ", unique_keys='{}'".format(
-                        target._secondary_keys_dicts
-                    )
+                    msg += ", unique_keys='{}'".format(target._secondary_keys_dicts)
                     # NOTE: this file is not using "coding: utf-8"; it it were,
                     # this would have to use a json.loads(json.dumps(...))
                     # cycle to remove the unicode articact 'u' in front of all
                     # the keys.
 
-                    self.record_error(
-                        msg, keys=[name], type=EntityErrors.INVALID_LINK)
+                    self.record_error(msg, keys=[name], type=EntityErrors.INVALID_LINK)
                     continue
 
                 # Finally, add the target to the association proxy list
                 for n in nodes:
                     disallowed = (
-                        'project_id' in n.props
+                        "project_id" in n.props
                         and n.project_id != self.transaction.project_id
                     )
                     if disallowed:
                         self.record_error(
-                            'Relationship to {} {} in project {} not allowed'
-                            .format(n.label, n.node_id, n.project_id),
+                            "Relationship to {} {} in project {} not allowed".format(
+                                n.label, n.node_id, n.project_id
+                            ),
                             type=EntityErrors.INVALID_LINK,
                         )
                     if n not in getattr(self.node, name):
@@ -738,13 +731,13 @@ class UploadEntity(EntityBase):
         TODO
         """
         for error in self.errors:
-            if error['type'] == EntityErrors.UNCATEGORIZED:
-                message = error['message']
-                if 'is not of type' in message:
-                    error['type'] = EntityErrors.INVALID_VALUE
-                elif 'is a required property' in message:
-                    error['type'] = EntityErrors.MISSING_PROPERTY
-                elif self.entity_type and error.get('keys'):
+            if error["type"] == EntityErrors.UNCATEGORIZED:
+                message = error["message"]
+                if "is not of type" in message:
+                    error["type"] = EntityErrors.INVALID_VALUE
+                elif "is a required property" in message:
+                    error["type"] = EntityErrors.MISSING_PROPERTY
+                elif self.entity_type and error.get("keys"):
                     cls = psqlgraph.Node.get_subclass(self.entity_type)
-                    if cls and error['keys'][0] in cls._pg_edges:
-                        error['type'] = EntityErrors.INVALID_LINK
+                    if cls and error["keys"][0] in cls._pg_edges:
+                        error["type"] = EntityErrors.INVALID_LINK
