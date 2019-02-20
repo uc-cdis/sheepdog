@@ -1,6 +1,6 @@
 #!groovy
 
-@Library('cdis-jenkins-lib@feat/perf') _
+@Library('cdis-jenkins-lib@master') _
 
 performancePipeline { 
 }
