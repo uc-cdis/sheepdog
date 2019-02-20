@@ -20,4 +20,4 @@ EXPOSE 80
 
 WORKDIR /var/www/sheepdog
 
-CMD /dockerrun.bash
+CMD /dockerrun.sh
