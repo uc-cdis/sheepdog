@@ -182,12 +182,12 @@ class UploadTransaction(TransactionBase):
             self.session.flush()
         except IntegrityError as e:
             # don't handle non-unique constraint errors
-            if 'duplicate key value violates unique constraint' not in e.message:
+            if "duplicate key value violates unique constraint" not in e.message:
                 raise
             values = VALUES_REGEXP.findall(e.message)
             if not values:
                 raise
-            values = [v.strip() for v in values[0].split(',')]
+            values = [v.strip() for v in values[0].split(",")]
             keys = KEYS_REGEXP.findall(e.message)
             if len(keys) == len(values):
                 values = dict(zip(keys, values))
@@ -205,13 +205,14 @@ class UploadTransaction(TransactionBase):
                 else:
                     for entity in entities:
                         entity.record_error(
-                            '{} with {} already exists in the GDC'
-                            .format(entity.node.label, values),
+                            "{} with {} already exists in the GDC".format(
+                                entity.node.label, values
+                            ),
                             keys=keys,
                         )
                     if entities:
                         raise HandledIntegrityError()
-            self.record_error('{} already exists in the GDC'.format(values))
+            self.record_error("{} already exists in the GDC".format(values))
             raise HandledIntegrityError()
 
     @property
