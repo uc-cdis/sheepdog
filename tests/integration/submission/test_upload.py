@@ -41,6 +41,7 @@ BLGSP_PATH = '/v0/submission/{}/{}/'.format(PROGRAM, PROJECT)
 
 # some default values for data file submissions
 DEFAULT_FILE_HASH = '00000000000000000000000000000001'
+UPDATED_FILE_HASH = '00000000000000000000000000000002'
 DEFAULT_FILE_SIZE = 1
 FILE_NAME = 'test-file'
 DEFAULT_SUBMITTER_ID = '0'
@@ -264,6 +265,7 @@ def test_data_file_update_urls(
     # now submit again but change url
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
     updated_file['urls'] = ','.join(new_urls)
+    updated_file['md5sum'] = UPDATED_FILE_HASH
     if id_provided:
         updated_file['id'] = record.did
 
@@ -281,6 +283,9 @@ def test_data_file_update_urls(
 
     # make sure original url and new url are in the resulting document
     assert set(record1.urls) == set(record.urls) or set(new_urls)
+
+    # make sure hash is updated
+    assert record1.hashes['md5sum'] == UPDATED_FILE_HASH
 
 
 @pytest.mark.config_toggle(
