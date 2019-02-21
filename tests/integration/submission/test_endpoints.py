@@ -452,21 +452,23 @@ def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, tcga_b
     assert resp.status_code == 400, resp.data
 
 
-def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
-    resp = client.put(
-        BLGSP_PATH,
-        headers=submitter,
-        data=json.dumps({
-            "type": "experiment",
-            "submitter_id": "BLGSP-71-06-00019",
-            "projects": {
-                "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
-            }}))
-    assert resp.status_code == 200, resp.data
-    did = resp.json['entities'][0]['id']
+def test_delete_entity(client, pg_driver, cgci_blgsp, submitter, indexd_client):
+    resp_json, sur_entity_dr = data_file_creation(
+        client, submitter, sur_filename='submitted_unaligned_reads.json'
+    )
+    did = sur_entity_dr['id']
     path = BLGSP_PATH + 'entities/' + did
     resp = client.delete(path, headers=submitter)
+
     assert resp.status_code == 200, resp.data
+
+    with pg_driver.session_scope():
+        # get sur node and indexd doc
+        sur_node = pg_driver.nodes().get(did)
+        assert sur_node is None, "node should be deleted"
+
+    sur_doc = indexd_client.get(did)
+    assert sur_doc.metadata.get('deleted') == 'True', "doc shuold have deleted metadata flag"
 
 
 def test_fields_deletion(app, client, put_program, put_cgci_blgsp, pg_driver, submitter):

@@ -189,5 +189,5 @@ class DeletionTransaction(TransactionBase):
         # meaning there could be nodes that are deleted but indexd failed to flag as deleted
         docs = self.indexd.bulk_request(ids)
         for doc in docs:
-            doc.metadata['deleted'] = True
+            doc.metadata['deleted'] = 'True'
             doc.patch()
