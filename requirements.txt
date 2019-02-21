@@ -24,7 +24,7 @@ more-itertools==5.0.0
 -e git+https://git@github.com/uc-cdis/cdis_oauth2client.git@0.1.3#egg=cdis_oauth2client
 cdispyutils==0.2.12
 -e git+https://git@github.com/uc-cdis/datamodelutils.git@0.4.1#egg=datamodelutils
--e git+https://git@github.com/NCI-GDC/psqlgraph.git@1.2.0#egg=psqlgraph
+psqlgraph==1.2.3
 -e git+https://git@github.com/NCI-GDC/signpost.git@v1.1#egg=signpost
 # required for gdcdatamodel, not required for sheepdog
 -e git+https://git@github.com/uc-cdis/cdiserrors.git@0.1.1#egg=cdiserrors
