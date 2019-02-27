@@ -16,7 +16,7 @@ RUN python -m pip install -r requirements.txt \
     && COMMIT=`git rev-parse HEAD` && echo "COMMIT=\"${COMMIT}\"" >sheepdog/version_data.py \
     && VERSION=`git describe --always --tags` && echo "VERSION=\"${VERSION}\"" >>sheepdog/version_data.py 
 
-EXPOSE 80
+EXPOSE 80 
 
 WORKDIR /var/www/sheepdog
 
