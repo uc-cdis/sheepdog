@@ -7,10 +7,12 @@ with a given project_code) which consumes BCR Clinical XML and produces JSON.
 Pylint ``no-member`` error is disabled because for some reason there are a lot
 of false positives with ``lxml.etree``.
 """
+from abc import abstractmethod, ABCMeta
 
 import datetime
 import json
 import math
+from psqlgraph import PsqlGraphDriver
 from uuid import uuid5, UUID
 
 import flask
@@ -341,7 +343,7 @@ class BcrBiospecimenXmlToJsonParser(object):
         Return:
             str: the entity id
         """
-        assert  not ('id' in params and 'generated_id' in params),\
+        assert  not ('id' in params and 'generated_id' in params), \
             'Specification of an id xpath and parameters for generating an id'
 
         # Lookup ID
@@ -388,7 +390,7 @@ class BcrBiospecimenXmlToJsonParser(object):
                     expected=(not self.ignore_missing_properties),
                     label='{}: {}'.format(entity_type, entity_id)) or default
                 # optional null fields are removed
-                if result is None and prop not in\
+                if result is None and prop not in \
                         dictionary.schema[entity_type].get('required', []):
                     continue
                 props[prop] = munge_property(result, _type)
@@ -591,7 +593,7 @@ class BcrBiospecimenXmlToJsonParser(object):
 
     def get_entity_edge_properties(self, root, edge_type, params, entity_id=''):
         if 'edge_properties' not in params or \
-           edge_type not in params.edge_properties:
+                edge_type not in params.edge_properties:
             return {}
 
         props = {}
@@ -613,8 +615,8 @@ class BcrBiospecimenXmlToJsonParser(object):
         if 'edge_datetime_properties' in params:
             if edge_type in params['edge_datetime_properties']:
                 # Loop over all given datetime properties
-                for name, timespans in params['edge_datetime_properties'][edge_type]\
-                                             .items():
+                for name, timespans in params['edge_datetime_properties'][edge_type] \
+                        .items():
                     times = {'year': 0, 'month': 0, 'day': 0}
 
                     # Parse the year, month, day
@@ -686,7 +688,7 @@ class BcrClinicalXmlToJsonParser(object):
         if 'clin_shared' not in namespaces:
             namespaces['clin_shared'] = "NA"
 
-        for data_type, params in self.xpath_ref.iteritems():
+        for data_type, params in self.xpath_ref.items():
             # Base properties
             schema = dictionary.schema[data_type]
             clinical = {
@@ -710,28 +712,20 @@ class BcrClinicalXmlToJsonParser(object):
                             clinical, root, values['edges_by_property'],
                             namespaces)
 
-                    props_roots = [root]
-                    for path in values.get('additional_property_roots', []):
-                        roots = self.get_xml_roots(
-                            doc_root, path, namespaces, nullable=True)
-                        if roots:
-                            props_roots += roots
-
-
                     self.insert_properties(
-                        clinical, props_roots, values['properties'], namespaces, schema)
+                        clinical, root, values['properties'], namespaces, schema)
             self.docs.append(clinical)
 
         return self
 
     def insert_edges(self, doc, root, edges, namespaces):
-        for edge_label, edge in edges.iteritems():
-            for dst_label, props in edge.iteritems():
-                edge_cls = flask.current_app.db.get_edge_by_labels(
-                    doc['type'], edge_label, dst_label
-                )
+        for edge_label, edge in edges.items():
+            for dst_label, props in edge.items():
                 xpath = self.xpath(
                     root=root, namespaces=namespaces, nullable=False, **props
+                )
+                edge_cls = flask.current_app.db.get_edge_by_labels(
+                    doc['type'], edge_label, dst_label
                 )
                 xpath = xpath.lower()
                 # TODO(pyt): the edge dst's id is cast to lowercase as
@@ -740,8 +734,8 @@ class BcrClinicalXmlToJsonParser(object):
                 doc[edge_cls.__src_dst_assoc__] = {'id': xpath}
 
     def insert_edges_by_property(self, doc, root, edges, namespaces):
-        for edge_label, edge in edges.iteritems():
-            for dst_label, dst_property in edge.iteritems():
+        for edge_label, edge in edges.items():
+            for dst_label, dst_property in edge.items():
                 edge_cls = flask.current_app.db.get_edge_by_labels(
                     doc['type'], edge_label, dst_label)
                 xpath = lambda props: self.xpath(
@@ -751,23 +745,26 @@ class BcrClinicalXmlToJsonParser(object):
                     key: xpath(props) for key, props in dst_property.items()
                 }
 
-    def insert_properties(self, doc, roots, properties, namespaces, schema):
-        for root in roots:
-            for key, props in properties.iteritems():
+    def insert_properties(self, doc, root, properties, namespaces, schema):
+        for key, props in properties.items():
+
+            if "evaluator" in props:
+                value = value_by_constraint(root, namespaces, props)
+            else:
                 value = self.xpath(
                     root=root, path=props['path'], namespaces=namespaces,
                     suffix=props.get('suffix', ''))
-                _type = props['type']
-                is_nan = isinstance(value, float) and math.isnan(value)
-                if value is None or is_nan:
-                    if key not in doc:
-                        key_type = schema['properties'][key].get('type', [])
-                        if 'default' in props:
-                            doc[key] = props['default']
-                        elif 'null' in key_type:
-                            doc[key] = None
-                    continue
-                doc[key] = munge_property(value, _type)
+            _type = props['type']
+            is_nan = isinstance(value, float) and math.isnan(value)
+            if value is None or is_nan:
+                if key not in doc:
+                    key_type = schema['properties'][key].get('type', [])
+                    if 'default' in props:
+                        doc[key] = props['default']
+                    elif 'null' in key_type:
+                        doc[key] = None
+                continue
+            doc[key] = munge_property(value, _type)
 
 
 def munge_property(prop, _type):
@@ -778,6 +775,7 @@ def munge_property(prop, _type):
         'float': float,
         'str': str,
         'str.lower': lambda x: str(x).lower(),
+        'str.title': lambda x: str(x).title(),
     }
 
     if _type == 'bool':
@@ -785,3 +783,114 @@ def munge_property(prop, _type):
     else:
         prop = types[_type](prop) if prop else prop
     return prop
+
+
+def value_by_constraint(root, namespaces, props):
+    """
+    Args:
+        root (lxml.etree._Element):
+        namespaces (dict):
+        props (dict):
+    Returns:
+        Any
+    """
+
+    constraint = XmlValueEvaluator.get_instance(root, namespaces, props)
+    return constraint.evaluate()
+
+
+class XmlValueEvaluator(object):
+    __metaclass__ = ABCMeta
+
+    def __init__(self, root, namespaces, mappings):
+        self.xml_root = root
+        self.mappings = mappings
+        self.namespaces = namespaces
+
+        self.path = self.mappings.get("path")
+
+    @abstractmethod
+    def evaluate(self):
+        pass
+
+    @staticmethod
+    def get_instance(root, namespaces, props):
+        evaluator = props.get("evaluator").get("name")
+        if evaluator == "follow_up":
+            return LastFollowUpEvaluator(root, namespaces, props)
+
+        if evaluator == "vital_status":
+            return VitalStatusEvaluator(root, namespaces, props)
+
+        if evaluator == "filter":
+            return FilterEvaluator(root, namespaces, props)
+
+        if evaluator == "treatment_therapy":
+            return TreatmentTherapyEvaluator(root, namespaces, props)
+
+
+class LastFollowUpEvaluator(XmlValueEvaluator):
+
+    def evaluate(self):
+
+        max_element = self.get_max_element(self.path)
+        if max_element is not None:
+            return max_element.text
+        return None
+
+    def get_max_element(self, path):
+        tie_breaker = "sequence"
+        elements = self.xml_root.xpath(path, namespaces=self.namespaces)
+        _max, _max_element = None, None
+        for element in elements:
+            if element.text > _max:
+                _max = element.text
+                _max_element = element
+            elif element.text == _max:
+                # break tie
+                parent = element.getparent()
+                b1 = parent.get(tie_breaker)
+
+                b2 = _max_element.getparent().get(tie_breaker)
+
+                if b1 > b2:
+                    _max_element = element
+
+        print(_max, _max_element.text)
+        return _max_element
+
+
+class VitalStatusEvaluator(LastFollowUpEvaluator):
+
+    def evaluate(self):
+        elements = self.get_elements()
+        if elements:
+            return elements[0].text
+        return None
+
+    def get_elements(self):
+        # locate max days_to_last_follow_up
+        path = self.mappings.get("evaluator").get("follow_up_path")
+        max_element = self.get_max_element(path)
+
+        max_element = max_element.getparent() if max_element is not None else self.xml_root
+        return max_element.xpath(self.path, namespaces=self.namespaces)
+
+
+class FilterEvaluator(XmlValueEvaluator):
+
+    def evaluate(self):
+        elements = self.xml_root.xpath(self.path, namespaces=self.namespaces)
+        if elements:
+            return elements[0].text
+        return None
+
+
+class TreatmentTherapyEvaluator(VitalStatusEvaluator):
+
+    def evaluate(self):
+        elements = self.get_elements()
+
+        if [e for e in elements if e.text.lower() == "yes"]:
+            return "yes"
+        return "no"
