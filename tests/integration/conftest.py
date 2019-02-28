@@ -396,12 +396,12 @@ def multiple_data_release(pg_driver):
 
 
 @pytest.fixture
-def released_file(pg_driver, indexd_client, data_release):
+def released_file(pg_driver, indexd_client):
     """
     Args:
         pg_driver (psqlgraph.PsqlGraphDriver):
     """
-    doc = create_random_index(indexd_client, release=data_release)
+    doc = create_random_index(indexd_client, release="11.0")
 
     # create node
     with pg_driver.session_scope() as sxn:

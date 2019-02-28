@@ -840,7 +840,7 @@ def test_silently_update_released_node(data_release, released_file, client,
     }
 )
 @pytest.mark.parametrize('trigger', ['file_name', 'file_size', 'md5sum'])  # case to test open acl
-def test_trigger_versioning(trigger, data_release, released_file, client,
+def test_trigger_versioning(trigger, released_file, client,
                                        admin, submitter, cgci_blgsp, indexd_client, pg_driver):
 
     submit_first_experiment(client, submitter)
