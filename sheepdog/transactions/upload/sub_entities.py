@@ -332,17 +332,32 @@ class FileUploadEntity(UploadEntity):
         # If indexd record is not replaceable, update existing document
         document = self.get_indexed_document()
         if not self._is_replaceable:
-            if self.urls:
-                urls_to_add = [url for url in self.urls
-                               if url not in document.urls]
-                if urls_to_add:
-                    document.urls.extend(urls_to_add)
+            # NOTE: Preserving the recreate URL logic we had since versioning
+            # Re-create URL, since the filename might have changed.
+            # We don't care about other URLs, since the file was not yet
+            # released, so it won't have any urls other than primary url
+
+            urls = [
+                generate_s3_url(
+                    host=self._config['SUBMISSION']['host'],
+                    bucket=self._config['SUBMISSION']['bucket'],
+                    program=self.transaction.program,
+                    project=self.transaction.project,
+                    uuid=self.entity_id,
+                    file_name=self.doc['file_name']
+                )
+            ]
+            urls_metadata = {
+                url: {
+                    'state': 'registered', 'type': PRIMARY_URL_TYPE
+                } for url in urls
+            }
             
             document.hashes['md5'] = self.doc['md5sum']
             document.file_size = self.doc['file_size']
             document.file_name = self.doc['file_name']
-            if self.doc.get('metadata'):
-                document.metadata.update(self.doc.get('metadata'))
+            document.urls = urls
+            document.urls_metadata = urls_metadata
             # document.acl = self.node.acl or self.get_file_acl()
             document.urls_metadata = {
                 url: {
