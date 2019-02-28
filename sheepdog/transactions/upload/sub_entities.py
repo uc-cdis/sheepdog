@@ -164,7 +164,6 @@ class FileUploadEntity(UploadEntity):
         # entity_id is set to the node_id here
         node = super(FileUploadEntity, self).get_node_merge()
         self._populate_file_exist_in_index()
-
         if self._should_version_node(node):
             node = self.get_node_recreate(node)
 
@@ -356,16 +355,10 @@ class FileUploadEntity(UploadEntity):
             }
             
             document.hashes['md5'] = self.doc['md5sum']
-            document.file_size = self.doc['file_size']
+            document.size = self.doc['file_size']
             document.file_name = self.doc['file_name']
             document.urls = urls
             document.urls_metadata = urls_metadata
-            # document.acl = self.node.acl or self.get_file_acl()
-            document.urls_metadata = {
-                url: {
-                    'state': 'registered', 'type': PRIMARY_URL_TYPE
-                } for url in document.urls
-            }        
             document.patch()
             return
 
@@ -615,9 +608,8 @@ class FileUploadEntity(UploadEntity):
                 node = query.one()
                 file_by_uuid_index = getattr(self.file_by_uuid, 'did', None)
                 file_by_hash_index = getattr(self.file_by_hash, 'did', None)
-
                 if ((file_by_uuid_index != node.node_id) or
-                        (file_by_hash_index != node.node_id)):
+                   (file_by_hash_index is not None and file_by_hash_index != node.node_id)):
                     self.record_error(
                         'Graph ID and index file ID found in index service do not match, '
                         'which is currently not permitted. Graph ID: {}. '
