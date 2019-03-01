@@ -722,8 +722,9 @@ class FileUploadEntity(UploadEntity):
         doc = self.get_indexed_document()
         if doc and node and node.state in RELEASED_NODE_STATES:
             current_release = doc.metadata.get("release_number", None)
-            return current_release is not None and (self.transaction.active_data_release is None or StrictVersion(
-                self.transaction.active_data_release) > StrictVersion(current_release))
+            return current_release is not None and \
+                   ((self.transaction.active_data_release is None) or (
+                           StrictVersion(self.transaction.active_data_release) > StrictVersion(current_release)))
         return False
 
     def _is_modified_release_node(self, node):
