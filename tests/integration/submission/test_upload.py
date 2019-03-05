@@ -421,18 +421,18 @@ def test_data_file_update_url_different_file_not_indexed(
     record = assert_single_record(indexd_client)
 
     # submit another metadata file with another md5
-    file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    file['submitter_id'] = '1'
-    file['md5sum'] = UPDATED_FILE_HASH
-    file['file_size'] = UPDATED_FILE_SIZE
+    metadata_file1 = copy.deepcopy(DEFAULT_METADATA_FILE)
+    metadata_file1['submitter_id'] = '1'
+    metadata_file1['md5sum'] = UPDATED_FILE_HASH
+    metadata_file1['file_size'] = UPDATED_FILE_SIZE
     resp1 = submit_metadata_file(
-        client, admin, submitter, data=file)
+        client, admin, submitter, data=metadata_file1)
 
     assert_positive_response(resp1)
     entity = assert_single_entity_from_response(resp1)
     assert entity['action'] == 'create'
 
-    # now submit first metadata again but change hash and file size
+    # now submit first metadata again but with same hash and file size as the second file
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
     updated_file['md5sum'] = UPDATED_FILE_HASH
     updated_file['file_size'] = UPDATED_FILE_SIZE

@@ -338,21 +338,7 @@ class FileUploadEntity(UploadEntity):
             # We don't care about other URLs, since the file was not yet
             # released, so it won't have any urls other than primary url
 
-            urls = [
-                generate_s3_url(
-                    host=self._config['SUBMISSION']['host'],
-                    bucket=self._config['SUBMISSION']['bucket'],
-                    program=self.transaction.program,
-                    project=self.transaction.project,
-                    uuid=self.entity_id,
-                    file_name=self.doc['file_name']
-                )
-            ]
-            urls_metadata = {
-                url: {
-                    'state': 'registered', 'type': PRIMARY_URL_TYPE
-                } for url in urls
-            }
+            urls, urls_metadata = self.generate_url_fields()
             
             document.hashes['md5'] = self.doc['md5sum']
             document.size = self.doc['file_size']
@@ -366,35 +352,10 @@ class FileUploadEntity(UploadEntity):
         if document.version and document.metadata.get("release_number"):
             return
 
-        document.urls = []
-        document.urls_metadata = {}
-
-        # generate new urls if none is specified
-        url = generate_s3_url(
-                host=self._config['SUBMISSION']['host'],
-                bucket=self._config['SUBMISSION']['bucket'],
-                program=self.transaction.program,
-                project=self.transaction.project,
-                uuid=self.entity_id,
-                file_name=self.doc['file_name']
-            )
-        self.urls = [url]
-
-        self.urls_metadata = {
-            url: {
-                'state': 'registered',
-                'type': PRIMARY_URL_TYPE
-            } for url in self.urls
-        }
-
-        # update urls and urls_metadata if it does not already exist
-        for url in self.urls:
-            document.urls.append(url)
-
-        # update urls metadata
-        for url, md in self.urls_metadata.items():
-            document.urls_metadata[url] = md
-
+        # generate new urls
+        urls, urls_metadata = self.generate_url_fields()
+        self.urls = urls
+        self.urls_metadata = urls_metadata
         old_doc = document.to_json()
         document.delete()
 
@@ -403,8 +364,8 @@ class FileUploadEntity(UploadEntity):
             'hashes': {'md5': self.doc['md5sum']},
             'size': self.doc['file_size'],
             'file_name': self.doc['file_name'],
-            'urls': old_doc.get("urls"),
-            'urls_metadata': old_doc.get("urls_metadata"),
+            'urls': self.urls,
+            'urls_metadata': self.urls_metadata,
             'acl': self.node.acl or self.get_file_acl(),
             'version': old_doc.get("version"),
             'metadata': old_doc.get('metadata', {}),
@@ -413,6 +374,24 @@ class FileUploadEntity(UploadEntity):
         # Re-create indexd doc with he same UUID
         self.transaction.indexd.create(
             did=old_doc['did'], baseid=old_doc['baseid'], **updated_fields)
+
+    def generate_url_fields(self):
+        urls = [
+            generate_s3_url(
+                host=self._config['SUBMISSION']['host'],
+                bucket=self._config['SUBMISSION']['bucket'],
+                program=self.transaction.program,
+                project=self.transaction.project,
+                uuid=self.entity_id,
+                file_name=self.doc['file_name']
+            )
+        ]
+        urls_metadata = {
+            url: {
+                'state': 'registered', 'type': PRIMARY_URL_TYPE
+            } for url in urls
+        }
+        return urls, urls_metadata
 
     def _new_version_index(self):
         """
