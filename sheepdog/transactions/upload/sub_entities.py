@@ -332,6 +332,11 @@ class FileUploadEntity(UploadEntity):
         """
         # If indexd record is not replaceable, update existing document
         document = self.get_indexed_document()
+
+        # indexd changes in released files trigger a new version
+        if document.version and document.metadata.get("release_number"):
+            return
+
         if not self._is_replaceable:
             # NOTE: Preserving the recreate URL logic we had since versioning
             # Re-create URL, since the filename might have changed.
@@ -339,17 +344,13 @@ class FileUploadEntity(UploadEntity):
             # released, so it won't have any urls other than primary url
 
             urls, urls_metadata = self.generate_url_fields()
-            
+
             document.hashes['md5'] = self.doc['md5sum']
             document.size = self.doc['file_size']
             document.file_name = self.doc['file_name']
             document.urls = urls
             document.urls_metadata = urls_metadata
             document.patch()
-            return
-
-        # indexd changes in released files trigger a new version
-        if document.version and document.metadata.get("release_number"):
             return
 
         # generate new urls
