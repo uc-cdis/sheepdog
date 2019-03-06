@@ -9,53 +9,54 @@ import uuid
 
 #: Regex to match a Program or Project uuid.
 REGEX_UUID = re.compile(
-    r'^[a-fA-F0-9]{8}'
-    r'-[a-fA-F0-9]{4}'
-    r'-[a-fA-F0-9]{4}'
-    r'-[a-fA-F0-9]{4}'
-    r'-[a-fA-F0-9]{12}$'
+    r"^[a-fA-F0-9]{8}"
+    r"-[a-fA-F0-9]{4}"
+    r"-[a-fA-F0-9]{4}"
+    r"-[a-fA-F0-9]{4}"
+    r"-[a-fA-F0-9]{12}$"
 )
 
-FLAG_IS_ASYNC = 'async'
+FLAG_IS_ASYNC = "async"
 
-DELIMITERS = {'csv': ',', 'tsv': '\t'}
-SUPPORTED_FORMATS = ['csv', 'tsv', 'json']
+DELIMITERS = {"csv": ",", "tsv": "\t"}
+SUPPORTED_FORMATS = ["csv", "tsv", "json"]
 
 ROLES = {
-    'ADMIN': 'admin',
-    'CREATE': 'create',
-    'DELETE': 'delete',
-    'DOWNLOAD': 'download',
-    'GENERAL': '_member_',
-    'READ': 'read',
-    'RELEASE': 'release',
-    'UPDATE': 'update',
+    "ADMIN": "admin",
+    "CREATE": "create",
+    "DELETE": "delete",
+    "DOWNLOAD": "download",
+    "GENERAL": "_member_",
+    "READ": "read",
+    "RELEASE": "release",
+    "UPDATE": "update",
 }
 
 PERMISSIONS = {
-    'list_parts': 'read',
-    'abort_multipart': 'create',
-    'get_file': 'download',
-    'complete_multipart': 'create',
-    'initiate_multipart': 'create',
-    'reassign': 'admin',
-    'upload': 'create',
-    'upload_part': 'create',
-    'delete': 'delete',
+    "list_parts": "read",
+    "abort_multipart": "create",
+    "get_file": "download",
+    "complete_multipart": "create",
+    "initiate_multipart": "create",
+    "reassign": "admin",
+    "upload": "create",
+    "upload_part": "create",
+    "delete": "delete",
 }
 
 
-TEMPLATE_NAME = 'submission_templates.tar.gz'
+TEMPLATE_NAME = "submission_templates.tar.gz"
 
-PROGRAM_SEED = uuid.UUID('85b08c6a-56a6-4474-9c30-b65abfd214a8')
-PROJECT_SEED = uuid.UUID('249b4405-2c69-45d9-96bc-7410333d5d80')
+PROGRAM_SEED = uuid.UUID("85b08c6a-56a6-4474-9c30-b65abfd214a8")
+PROJECT_SEED = uuid.UUID("249b4405-2c69-45d9-96bc-7410333d5d80")
 
-UNVERIFIED_PROGRAM_NAMES = ['TCGA']
+UNVERIFIED_PROGRAM_NAMES = ["TCGA"]
 UNVERIFIED_PROJECT_CODES = []
 
 # File upload states
 #: State a file should be put in given an error.
-ERROR_STATE = 'error'
+ERROR_STATE = "error"
+
 
 def case_cache_enabled():
     """
@@ -69,13 +70,16 @@ def case_cache_enabled():
         still import/run individual modules without raising errors.
     """
     from sheepdog import dictionary
+
     try:
         return (
-            True if dictionary.settings == None
-            else dictionary.settings.get('enable_case_cache', True)
+            True
+            if dictionary.settings == None
+            else dictionary.settings.get("enable_case_cache", True)
         )
     except (AttributeError, KeyError, TypeError):
         return True
+
 
 def dictionary_version():
     """
@@ -89,13 +93,16 @@ def dictionary_version():
         still import/run individual modules without raising errors.
     """
     from sheepdog import dictionary
+
     try:
         return (
-            'Unknown' if dictionary.settings == None
-            else dictionary.settings.get('_dict_version', 'Unknown')
+            "Unknown"
+            if dictionary.settings == None
+            else dictionary.settings.get("_dict_version", "Unknown")
         )
     except (AttributeError, KeyError, TypeError):
-        return 'Unknown'
+        return "Unknown"
+
 
 def dictionary_commit():
     """
@@ -109,13 +116,16 @@ def dictionary_commit():
         still import/run individual modules without raising errors.
     """
     from sheepdog import dictionary
+
     try:
         return (
-            'Unknown' if dictionary.settings == None
-            else dictionary.settings.get('_dict_commit', 'Unknown')
+            "Unknown"
+            if dictionary.settings == None
+            else dictionary.settings.get("_dict_commit", "Unknown")
         )
     except (AttributeError, KeyError, TypeError):
-        return 'Unknown'
+        return "Unknown"
+
 
 def submitted_state():
     """
@@ -140,60 +150,59 @@ def submitted_state():
         still import/run individual modules without raising errors.
     """
     from sheepdog import dictionary
+
     try:
-        return (
-            dictionary.resolvers['_definitions.yaml']
-            .source['file_state']['default']
-        )
+        return dictionary.resolvers["_definitions.yaml"].source["file_state"]["default"]
     except (AttributeError, KeyError, TypeError):
         return None
 
 
 #: State file enters when user begins upload.
-UPLOADING_STATE = 'uploading'
+UPLOADING_STATE = "uploading"
 #: State file enters when user completes upload.
-SUCCESS_STATE = 'uploaded'
+SUCCESS_STATE = "uploaded"
 
 #: This is a list of states that an entity must be in to allow deletion.
-ALLOWED_DELETION_STATES = [
-    'validated',
-]
+ALLOWED_DELETION_STATES = ["validated"]
 
 #: Allow dry_run transactions to be committed (in a new transaction)
 #: if the TransactionLog.state is in the following
-STATES_COMITTABLE_DRY_RUN = {'SUCCEEDED'}
+STATES_COMITTABLE_DRY_RUN = {"SUCCEEDED"}
 
-MEMBER_DOWNLOADABLE_STATES = ['submitted', 'processing', 'processed']
+MEMBER_DOWNLOADABLE_STATES = ["submitted", "processing", "processed"]
 SUBMITTER_DOWNLOADABLE_STATES = [
-    'uploaded', 'validating', 'validated', 'error', 'submitted', 'processing',
-    'processed'
+    "uploaded",
+    "validating",
+    "validated",
+    "error",
+    "submitted",
+    "processing",
+    "processed",
 ]
 
-UPLOADING_PARTS = [
-    'upload_part', 'complete_multipart', 'list_parts', 'abort_multipart'
-]
+UPLOADING_PARTS = ["upload_part", "complete_multipart", "list_parts", "abort_multipart"]
 
 # Transaction Logs
 #: The transaction succeeded without user or system error.  If the
 #: transaction was a non-dry_run mutation, then the result should be
 #: represented in the database
-TX_LOG_STATE_SUCCEEDED = 'SUCCEEDED'
+TX_LOG_STATE_SUCCEEDED = "SUCCEEDED"
 #: The transaction failed due to user error
-TX_LOG_STATE_FAILED = 'FAILED'
+TX_LOG_STATE_FAILED = "FAILED"
 #: The transaction failed due to system error
-TX_LOG_STATE_ERRORED = 'ERRORED'
+TX_LOG_STATE_ERRORED = "ERRORED"
 #: The transaction is sill pending or a fatal event ended the job
 #: before it could report an ERROR status
-TX_LOG_STATE_PENDING = 'PENDING'
+TX_LOG_STATE_PENDING = "PENDING"
 
 #: Message to provide for internal server errors.
-MESSAGE_500 = 'Internal server error. Sorry, something unexpected went wrong!'
+MESSAGE_500 = "Internal server error. Sorry, something unexpected went wrong!"
 
 #: These categories should all have a ``state`` associated with each type
 ENTITY_STATE_CATEGORIES = [
-    'biospecimen',
-    'clinical',
-    'data_file',
+    "biospecimen",
+    "clinical",
+    "data_file",
     # 'cases' => cases are currently `admin` but are manually included
     #      in submission
     # 'annotations' => cases are currently `TBD` but are manually
@@ -201,34 +210,30 @@ ENTITY_STATE_CATEGORIES = [
 ]
 #: Possible entity.state transitions
 #: { to_state: from_state }
-ENTITY_STATE_TRANSITIONS = {
-    'submitted': ['validated', None],
-}
+ENTITY_STATE_TRANSITIONS = {"submitted": ["validated", None]}
 #: The key that specifies the high level state that a file is in the
 #: pipeline
-FILE_STATE_KEY = 'file_state'
+FILE_STATE_KEY = "file_state"
 #: Possible data_file.file_state transitions
 #: { to_state: from_state }
-FILE_STATE_TRANSITIONS = {
-    'submitted': ['validated'],
-}
+FILE_STATE_TRANSITIONS = {"submitted": ["validated"]}
 #: The key that specifies the high level state that an entity is in the
 #: release process.
-STATE_KEY = 'state'
+STATE_KEY = "state"
 
 # The auth roles required to take actions
-ROLE_SUBMIT = 'release'
-ROLE_REVIEW = 'release'
-ROLE_OPEN = 'release'
+ROLE_SUBMIT = "release"
+ROLE_REVIEW = "release"
+ROLE_OPEN = "release"
 
-SUBMITTABLE_FILE_STATES = FILE_STATE_TRANSITIONS['submitted']
-SUBMITTABLE_STATES = ENTITY_STATE_TRANSITIONS['submitted']
+SUBMITTABLE_FILE_STATES = FILE_STATE_TRANSITIONS["submitted"]
+SUBMITTABLE_STATES = ENTITY_STATE_TRANSITIONS["submitted"]
 
 # Async scheduling configuration
 ASYNC_MAX_Q_LEN = 128
 ERR_ASYNC_SCHEDULING = (
-    'The API is currently under heavy load and currently has too many'
-    ' asynchronous tasks. Please try again later.'
+    "The API is currently under heavy load and currently has too many"
+    " asynchronous tasks. Please try again later."
 )
 
 BCR_MAPPING = """

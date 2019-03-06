@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # this is for interpreting fixtures as parameters that don't do anything
 # pylint: disable=unused-argument
 # pylint: disable=superfluous-parens
@@ -6,6 +8,8 @@ import contextlib
 import json
 import os
 import uuid
+import csv
+from StringIO import StringIO
 
 import boto
 import pytest
@@ -640,3 +644,56 @@ def test_export_all_node_types_json(client, pg_driver, cgci_blgsp, submitter):
     assert r.headers['Content-Disposition'].endswith('json')
     js_data = json.loads(r.data)
     assert len(js_data["data"]) == case_count
+
+
+# test that we can submit and export non-ascii characters without errors
+def test_submit_export_encoding(client, pg_driver, cgci_blgsp, submitter):
+    # submit metadata containing non-ascii characters
+    headers = submitter
+    data = json.dumps({
+        "type": "experiment",
+        "submitter_id": "BLGSP-submitter-ü",
+        "projects": {
+            "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
+        }
+    })
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+
+    node_id = resp.json['entities'][0]['id']
+
+    # TSV single node export
+    path = '/v0/submission/CGCI/BLGSP/export/?ids={}'.format(node_id)
+    r = client.get(
+        path,
+        headers=submitter)
+    assert r.status_code == 200, r.data
+    assert r.headers['Content-Disposition'].endswith('tsv')
+    tsv_output = csv.DictReader(StringIO(r.data), delimiter="\t")
+    row = next(tsv_output)
+    assert row['submitter_id'] == 'BLGSP-submitter-ü'
+
+    # JSON single node export
+    path += '&format=json'
+    r = client.get(
+        path,
+        headers=submitter)
+    assert len(r.json) == 1
+
+    # TSV multiple node export
+    path = '/v0/submission/CGCI/BLGSP/export/?node_label=experiment'
+    r = client.get(
+        path,
+        headers=submitter)
+    assert r.status_code == 200, r.data
+    assert r.headers['Content-Disposition'].endswith('tsv')
+    tsv_output = csv.DictReader(StringIO(r.data), delimiter="\t")
+    row = next(tsv_output)
+    assert row['submitter_id'] == 'BLGSP-submitter-ü'
+
+    # JSON multiple node export
+    path += '&format=json'
+    r = client.get(
+        path,
+        headers=submitter)
+    assert len(r.json) == 1

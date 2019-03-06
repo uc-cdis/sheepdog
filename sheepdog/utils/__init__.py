@@ -22,12 +22,7 @@ import psqlgraph
 
 from sheepdog import dictionary
 from sheepdog import models
-from sheepdog.errors import (
-    InternalError,
-    NotFoundError,
-    UnsupportedError,
-    UserError,
-)
+from sheepdog.errors import InternalError, NotFoundError, UnsupportedError, UserError
 from sheepdog.globals import (
     submitted_state,
     DELIMITERS,
@@ -62,15 +57,15 @@ def _get_links(file_format, schema, exclude_id):
     TODO
     """
     links = dict()
-    subgroups = [link for link in schema if 'subgroup' in link]
-    non_subgroups = [link for link in schema if 'name' in link]
+    subgroups = [link for link in schema if "subgroup" in link]
+    non_subgroups = [link for link in schema if "name" in link]
     for link in non_subgroups:
-        if file_format == 'json':
-            links[link['name']] = _get_links_json(link, exclude_id)
+        if file_format == "json":
+            links[link["name"]] = _get_links_json(link, exclude_id)
         else:
-            links[link['name']] = _get_links_delimited(link, exclude_id)
+            links[link["name"]] = _get_links_delimited(link, exclude_id)
     for subgroup in subgroups:
-        links.update(_get_links(file_format, subgroup['subgroup'], exclude_id))
+        links.update(_get_links(file_format, subgroup["subgroup"], exclude_id))
     return links
 
 
@@ -78,16 +73,14 @@ def _get_links_json(link, exclude_id):
     """
     Return parsed link template from link schema in json form.
     """
-    target_schema = dictionary.schema[link['target_type']]
-    link_template = dict({
-        k: None
-        for subkeys in target_schema.get('uniqueKeys', [])
-        for k in subkeys
-    })
-    if 'project_id' in link_template:
-        del link_template['project_id']
+    target_schema = dictionary.schema[link["target_type"]]
+    link_template = dict(
+        {k: None for subkeys in target_schema.get("uniqueKeys", []) for k in subkeys}
+    )
+    if "project_id" in link_template:
+        del link_template["project_id"]
     if exclude_id:
-        del link_template['id']
+        del link_template["id"]
     return link_template
 
 
@@ -96,18 +89,18 @@ def _get_links_delimited(link, exclude_id):
     Return parsed link template from link schema in delimited form.
     """
     link_template = []
-    target_schema = dictionary.schema[link['target_type']]
+    target_schema = dictionary.schema[link["target_type"]]
     # Add a #1 to the link to indicate it's a many relationship.
-    to_many = link['multiplicity'] in ['many_to_many', 'one_to_many']
+    to_many = link["multiplicity"] in ["many_to_many", "one_to_many"]
     postfix = "#1" if to_many else ""
     # default key for link is the GDC ID
     if not exclude_id:
-        link_template.append('id' + postfix)
-    unique_keys = (key for key in target_schema['uniqueKeys'] if key != ['id'])
+        link_template.append("id" + postfix)
+    unique_keys = (key for key in target_schema["uniqueKeys"] if key != ["id"])
     for unique_key in unique_keys:
         keys = copy.copy(unique_key)
-        if 'project_id' in keys:
-            keys.remove('project_id')
+        if "project_id" in keys:
+            keys.remove("project_id")
         link_template += [prop + postfix for prop in keys]
 
         # right now we only have one alias for each entity,
@@ -120,18 +113,15 @@ def assert_program_exists(func):
     """
     Wrap a function to check that a Program node with a matching name exists.
     """
+
     @functools.wraps(func)
     def check(program, *args, **kwargs):
         with flask.current_app.db.session_scope():
-            programs = (
-                flask.current_app
-                .db
-                .nodes(models.Program)
-                .props(name=program)
-            )
+            programs = flask.current_app.db.nodes(models.Program).props(name=program)
             if not programs.count():
-                raise NotFoundError('program {} not found'.format(program))
+                raise NotFoundError("program {} not found".format(program))
         return func(program, *args, **kwargs)
+
     return check
 
 
@@ -141,76 +131,67 @@ def assert_project_exists(func):
 
     TODO
     """
+
     @functools.wraps(func)
     def check_and_call(program, project, *args, **kwargs):
         with flask.current_app.db.session_scope():
             # Check that the program exists
             program_node = (
-                flask.current_app
-                .db
-                .nodes(models.Program)
-                .props(name=program)
-                .first()
+                flask.current_app.db.nodes(models.Program).props(name=program).first()
             )
             if not program_node:
-                raise NotFoundError('Program {} not found'.format(program))
+                raise NotFoundError("Program {} not found".format(program))
             # Check that the project exists
             project_node = (
-                flask.current_app
-                .db
-                .nodes(models.Project)
+                flask.current_app.db.nodes(models.Project)
                 .props(code=project)
-                .path('programs')
+                .path("programs")
                 .ids(program_node.node_id)
                 .first()
             )
             if not project_node:
-                raise NotFoundError('Project {} not found'.format(project))
-            phsids = [program_node.dbgap_accession_number, project_node.dbgap_accession_number]
+                raise NotFoundError("Project {} not found".format(project))
+            phsids = [
+                program_node.dbgap_accession_number,
+                project_node.dbgap_accession_number,
+            ]
         return func(program, project, *args, **kwargs)
+
     return check_and_call
 
 
 def check_action_allowed_in_state(action, file_state):
     not_allowed_state = (
-        action in ['upload', 'initiate_multipart']
-        and file_state not in ALLOWED_STATES
+        action in ["upload", "initiate_multipart"] and file_state not in ALLOWED_STATES
     )
-    not_uploading_state = (
-        action in UPLOADING_PARTS and file_state != UPLOADING_STATE
-    )
-    not_success_state = (
-        action == 'get_file' and file_state != SUCCESS_STATE
-    )
+    not_uploading_state = action in UPLOADING_PARTS and file_state != UPLOADING_STATE
+    not_success_state = action == "get_file" and file_state != SUCCESS_STATE
     if not_allowed_state or not_uploading_state or not_success_state:
-        raise UserError(
-            'File in {} state, {} not allowed'.format(file_state, action)
-        )
+        raise UserError("File in {} state, {} not allowed".format(file_state, action))
 
 
 def create_entity_list(nodes):
     docs = []
     for node in nodes:
         props = {k: v for k, v in node.props.iteritems()}
-        props['id'] = node.node_id
-        props['type'] = node.label
-        if hasattr(node, 'project_id'):
-            program = node.project_id.split('-')[0]
-            project = '-'.join(node.project_id.split('-')[1:])
+        props["id"] = node.node_id
+        props["type"] = node.label
+        if hasattr(node, "project_id"):
+            program = node.project_id.split("-")[0]
+            project = "-".join(node.project_id.split("-")[1:])
         else:
             program, project = None, None
         for link_name in node._pg_links:  # pylint: disable=W0212
             neighbors = getattr(node, link_name)
             if neighbors:
-                props[link_name] = [{
-                    'id': neighbor.node_id,
-                    'submitter_id': neighbor.props.get('submitter_id', None)
-                } for neighbor in neighbors]
-        docs.append({
-            'program': program,
-            'project': project,
-            'properties': props,
-        })
+                props[link_name] = [
+                    {
+                        "id": neighbor.node_id,
+                        "submitter_id": neighbor.props.get("submitter_id", None),
+                    }
+                    for neighbor in neighbors
+                ]
+        docs.append({"program": program, "project": project, "properties": props})
     return docs
 
 
@@ -220,16 +201,16 @@ def get_all_template(file_format, categories=None, exclude=None, **kwargs):
 
     ..note: kwargs absorbs `project`, `program` intended for future use
     """
-    categories = categories.split(',') if categories else []
-    exclude = exclude.split(',') if exclude else []
+    categories = categories.split(",") if categories else []
+    exclude = exclude.split(",") if exclude else []
     entity_types = [
         entity_type
         for entity_type, schema in dictionary.schema.iteritems()
-        if 'project_id' in schema.get('properties', {})
-        and (not categories or schema['category'] in categories)
+        if "project_id" in schema.get("properties", {})
+        and (not categories or schema["category"] in categories)
         and (not exclude or entity_type not in exclude)
     ]
-    if file_format == 'json':
+    if file_format == "json":
         return get_json_template(entity_types)
     else:
         return get_delimited_template(entity_types, file_format)
@@ -248,11 +229,11 @@ def get_delimited_template(entity_types, file_format, filename=TEMPLATE_NAME):
         ``file_format`` (TSV or CSV) template for entity types.
     """
     tar_obj = StringIO.StringIO()
-    tar = tarfile.open(filename, mode='w|gz', fileobj=tar_obj)
+    tar = tarfile.open(filename, mode="w|gz", fileobj=tar_obj)
 
     for entity_type in entity_types:
         content = entity_to_template_str(entity_type, file_format=file_format)
-        partname = '{}.{}'.format(entity_type, file_format)
+        partname = "{}.{}".format(entity_type, file_format)
         tarinfo = tarfile.TarInfo(name=partname)
         tarinfo.size = len(content)
         tar.addfile(tarinfo, StringIO.StringIO(content))
@@ -283,15 +264,17 @@ def get_external_proxies():
         A Dictionary ``{'http': ..., 'https': ...}`` with proxies. If a certain
         proxy is not specified, it should be absent from the dictionary.
     """
-    return flask.current_app.config.get('EXTERNAL_PROXIES', {})
+    return flask.current_app.config.get("EXTERNAL_PROXIES", {})
 
 
 def get_json_template(entity_types):
     """Return json template for entity types."""
-    return json_dumps_formatted([
-        entity_to_template(entity_type, file_format='json')
-        for entity_type in entity_types
-    ])
+    return json_dumps_formatted(
+        [
+            entity_to_template(entity_type, file_format="json")
+            for entity_type in entity_types
+        ]
+    )
 
 
 def get_node(project_id, uuid, db=None):
@@ -302,9 +285,7 @@ def get_node(project_id, uuid, db=None):
     if node:
         return node
     else:
-        raise UserError(
-            "File {} doesn't exist in {}".format(uuid, project_id)
-        )
+        raise UserError("File {} doesn't exist in {}".format(uuid, project_id))
 
 
 def get_signpost(uuid):
@@ -319,9 +300,7 @@ def get_signpost(uuid):
 
     signpost_obj = flask.current_app.signpost.get(uuid)
     if signpost_obj is None:
-        raise InternalError(
-            "Signpost entry for {} doesn't exist".format(uuid)
-        )
+        raise InternalError("Signpost entry for {} doesn't exist".format(uuid))
     return signpost_obj
 
 
@@ -345,14 +324,14 @@ def get_variables(payload):
     """
     variables = None
     errors = None
-    var_payload = payload.get('variables')
+    var_payload = payload.get("variables")
     if isinstance(var_payload, dict):
         variables = var_payload
     else:
         try:
             variables = json.loads(var_payload) if var_payload else {}
         except Exception as e:  # pylint: disable=broad-except
-            errors = ['Unable to parse variables', str(e)]
+            errors = ["Unable to parse variables", str(e)]
     return variables, errors
 
 
@@ -360,8 +339,8 @@ def is_property_hidden(key, schema, exclude_id):
     """
     Indicate whether key should be hidden.
     """
-    is_system_prop = key in schema['systemProperties'] and key not in ['id']
-    is_excluded_id = exclude_id and key == 'id'
+    is_system_prop = key in schema["systemProperties"] and key not in ["id"]
+    is_excluded_id = exclude_id and key == "id"
     return is_system_prop or is_excluded_id
 
 
@@ -373,20 +352,18 @@ def is_flag_set(flag, default=False):
     value = flask.request.args.get(flag, default)
     if isinstance(value, bool):
         return value
-    elif value.lower() == 'true':
+    elif value.lower() == "true":
         return True
-    elif value.lower() == 'false':
+    elif value.lower() == "false":
         return False
     else:
-        raise UserError('Boolean value not one of [true, false]')
+        raise UserError("Boolean value not one of [true, false]")
 
 
 def json_dumps_formatted(data):
     """Return json string with standard format."""
-    dump = json.dumps(
-        data, indent=2, separators=(', ', ': '), ensure_ascii=False
-    )
-    return dump.encode('utf-8')
+    dump = json.dumps(data, indent=2, separators=(", ", ": "), ensure_ascii=False)
+    return dump.encode("utf-8")
 
 
 def jsonify_check_errors(data_and_errors, error_code=400):
@@ -395,8 +372,8 @@ def jsonify_check_errors(data_and_errors, error_code=400):
     """
     data, errors = data_and_errors
     if errors:
-        return flask.jsonify({'data': data, 'errors': errors}), error_code
-    return flask.jsonify({'data': data}), 200
+        return flask.jsonify({"data": data, "errors": errors}), error_code
+    return flask.jsonify({"data": data}), 200
 
 
 @contextmanager
@@ -407,7 +384,7 @@ def log_duration(name="Unnamed action"):
     start_t = time.time()
     yield
     end_t = time.time()
-    msg = "Executed [{}] in {:.2f} ms".format(name, (end_t-start_t)*1000)
+    msg = "Executed [{}] in {:.2f} ms".format(name, (end_t - start_t) * 1000)
     flask.current_app.logger.info(msg)
 
 
@@ -427,7 +404,7 @@ def lookup_project(db_driver, program_name, project_code):
         return (
             db_driver.nodes(models.Project)
             .props(code=project_code)
-            .path('programs')
+            .path("programs")
             .props(name=program_name)
             .scalar()
         )
@@ -445,20 +422,20 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
 
     if dry_run:
         message = (
-            'Transaction would have been successful. User selected dry run'
-            ' option; transaction aborted, no data written to object storage.'
+            "Transaction would have been successful. User selected dry run"
+            " option; transaction aborted, no data written to object storage."
         )
-        return flask.Response(json.dumps({'message': message}), status=200)
+        return flask.Response(json.dumps({"message": message}), status=200)
 
-    if action in ['upload', 'initiate_multipart']:
+    if action in ["upload", "initiate_multipart"]:
         update_state(node, UPLOADING_STATE)
-    elif action == 'abort_multipart':
+    elif action == "abort_multipart":
         update_state(node, submitted_state())
 
-    if action not in ['upload', 'upload_part', 'complete_multipart', 'reassign']:
-        data = ''
+    if action not in ["upload", "upload_part", "complete_multipart", "reassign"]:
+        data = ""
 
-    if action == 'reassign':
+    if action == "reassign":
         try:
             # data.read() works like a file pointer.
             # When you .read() again it will be pointing at the end of the stream
@@ -468,25 +445,23 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
             if not isinstance(json_data, dict):
                 json_data = json.loads(json_data)
 
-            new_url = json_data['s3_url']
+            new_url = json_data["s3_url"]
 
         except Exception:
-            message = 'Unable to parse json. Use the format {\'s3_url\':\'s3/://...\'}'
-            return flask.Response(json.dumps({'message': message}), status=400)
+            message = "Unable to parse json. Use the format {'s3_url':'s3/://...'}"
+            return flask.Response(json.dumps({"message": message}), status=400)
 
         update_signpost_url(signpost_obj, s3_url=new_url)
         update_state(node, SUCCESS_STATE)
-        message = ('URL successfully reassigned. New url: {}'.format(new_url))
-        return flask.Response(json.dumps({'message': message}), status=200)
+        message = "URL successfully reassigned. New url: {}".format(new_url)
+        return flask.Response(json.dumps({"message": message}), status=200)
 
-    resp = s3.make_s3_request(
-        project_id, uuid, data, args, headers, method, action
-    )
-    if action in ['upload', 'complete_multipart']:
+    resp = s3.make_s3_request(project_id, uuid, data, args, headers, method, action)
+    if action in ["upload", "complete_multipart"]:
         if resp.status == 200:
-            update_signpost_url(signpost_obj, project_id + '/' + uuid)
+            update_signpost_url(signpost_obj, project_id + "/" + uuid)
             update_state(node, SUCCESS_STATE)
-    if action == 'delete':
+    if action == "delete":
         if resp.status == 204:
             update_state(node, submitted_state())
             update_signpost_url(signpost_obj, None)
@@ -511,9 +486,9 @@ def update_signpost_url(signpost_obj, key_name=None, s3_url=None):
 
     if key_name:
         url = "s3://{host}/{bucket}/{name}".format(
-            host=flask.current_app.config['SUBMISSION']['host'],
-            bucket=flask.current_app.config['SUBMISSION']['bucket'],
-            name=key_name
+            host=flask.current_app.config["SUBMISSION"]["host"],
+            bucket=flask.current_app.config["SUBMISSION"]["bucket"],
+            name=key_name,
         )
         signpost_obj.urls = [url]
     elif s3_url:
@@ -528,13 +503,13 @@ def is_node_file(node):
     corresponding data in the object store)
     """
 
-    return node._dictionary['category'].endswith("_file")
+    return node._dictionary["category"].endswith("_file")
 
 
 def is_project_public(project):
-    if not hasattr(models.Project, 'availability_type'):
+    if not hasattr(models.Project, "availability_type"):
         return False
-    return project.availability_type == 'Open'
+    return project.availability_type == "Open"
 
 
 def should_send_email(config):
@@ -544,9 +519,9 @@ def should_send_email(config):
     """
 
     required_email_fields = [
-        'EMAIL_FROM_ADDRESS',               # from
-        'EMAIL_SUPPORT_ADDRESS',            # to
-        'EMAIL_NOTIFICATION_SUBMISSION',    # email body
+        "EMAIL_FROM_ADDRESS",  # from
+        "EMAIL_SUPPORT_ADDRESS",  # to
+        "EMAIL_NOTIFICATION_SUBMISSION",  # email body
     ]
 
     for field in required_email_fields:

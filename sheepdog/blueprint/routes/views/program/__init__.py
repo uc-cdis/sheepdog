@@ -14,18 +14,8 @@ from sheepdog import dictionary
 from sheepdog import models
 from sheepdog import utils
 from sheepdog.blueprint.routes.views.program import project
-from sheepdog.errors import (
-    APINotImplemented,
-    AuthError,
-    NotFoundError,
-    UserError,
-)
-from sheepdog.globals import (
-    PERMISSIONS,
-    PROJECT_SEED,
-    ROLES,
-    STATES_COMITTABLE_DRY_RUN,
-)
+from sheepdog.errors import APINotImplemented, AuthError, NotFoundError, UserError
+from sheepdog.globals import PERMISSIONS, PROJECT_SEED, ROLES, STATES_COMITTABLE_DRY_RUN
 from sheepdog.transactions import upload
 from sheepdog.transactions.upload.entity_factory import UploadEntityFactory
 from sheepdog.transactions.upload.transaction import UploadTransaction
@@ -74,30 +64,25 @@ def get_projects(program):
             ]
         }
     """
-    if flask.current_app.config.get('AUTH_SUBMISSION_LIST', True) is True:
-        auth.validate_request(aud={'openid'}, purpose=None)
+    if flask.current_app.config.get("AUTH_SUBMISSION_LIST", True) is True:
+        auth.validate_request(aud={"openid"}, purpose=None)
     with flask.current_app.db.session_scope():
-        matching_programs = (
-            flask.current_app
-            .db
-            .nodes(models.Program)
-            .props(name=program)
+        matching_programs = flask.current_app.db.nodes(models.Program).props(
+            name=program
         )
         if not matching_programs.count():
-            raise NotFoundError('program {} is not registered'.format(program))
+            raise NotFoundError("program {} is not registered".format(program))
         projects = (
-            flask.current_app
-            .db
-            .nodes(models.Project.code)
-            .path('programs')
+            flask.current_app.db.nodes(models.Project.code)
+            .path("programs")
             .props(name=program)
             .all()
         )
     links = [
-        flask.url_for('.create_entities', program=program, project=p[0])
+        flask.url_for(".create_entities", program=program, project=p[0])
         for p in projects
     ]
-    return flask.jsonify({'links': links})
+    return flask.jsonify({"links": links})
 
 
 @utils.assert_program_exists
@@ -155,17 +140,18 @@ def create_project(program):
     auth.current_user.require_admin()
     doc = utils.parse.parse_request_json()
     if not isinstance(doc, dict):
-        raise UserError('Program endpoint only supports single documents')
-    if doc.get('type') and doc.get('type') not in ['project']:
-        raise UserError("Invalid post to program endpoint with type='{}'"
-                        .format(doc.get('type')))
+        raise UserError("Program endpoint only supports single documents")
+    if doc.get("type") and doc.get("type") not in ["project"]:
+        raise UserError(
+            "Invalid post to program endpoint with type='{}'".format(doc.get("type"))
+        )
     # Parse project.code
-    project = doc.get('code')
+    project = doc.get("code")
     if not project:
         raise UserError("No project specified in key 'code'")
-    project = project.encode('utf-8')
+    project = project.encode("utf-8")
     # Parse dbgap accession number.
-    phsid = doc.get('dbgap_accession_number')
+    phsid = doc.get("dbgap_accession_number")
     if not phsid:
         raise UserError("No dbGaP accesion number specified.")
 
@@ -174,55 +160,51 @@ def create_project(program):
     with flask.current_app.db.session_scope() as session:
         program_node = utils.lookup_program(flask.current_app.db, program)
         if not program_node:
-            raise NotFoundError('Program {} is not registered'.format(program))
+            raise NotFoundError("Program {} is not registered".format(program))
         # Look up project node.
         node = utils.lookup_project(flask.current_app.db, program, project)
         if not node:
             # Create a new project node
-            node_uuid = str(uuid.uuid5(PROJECT_SEED, project.encode('utf-8')))
-            if (
-                flask.current_app
-                .db.nodes(models.Project)
-                .ids(node_uuid)
-                .first()
-            ):
-                raise UserError('ERROR: Project {} already exists in DB'
-                                .format(project))
+            node_uuid = str(uuid.uuid5(PROJECT_SEED, project.encode("utf-8")))
+            if flask.current_app.db.nodes(models.Project).ids(node_uuid).first():
+                raise UserError(
+                    "ERROR: Project {} already exists in DB".format(project)
+                )
 
             node = models.Project(node_uuid)  # pylint: disable=not-callable
             node.programs = [program_node]
-            action = 'create'
-            node.props['state'] = 'open'
+            action = "create"
+            node.props["state"] = "open"
         else:
-            action = 'update'
+            action = "update"
 
         # silently drop system_properties
-        base_doc.pop('type', None)
-        base_doc.pop('state', None)
-        base_doc.pop('released', None)
+        base_doc.pop("type", None)
+        base_doc.pop("state", None)
+        base_doc.pop("released", None)
 
         node.props.update(base_doc)
 
-        doc = dict({
-            'type': 'project',
-            'programs': {'id': program_node.node_id},
-        }, **base_doc)
+        doc = dict(
+            {"type": "project", "programs": {"id": program_node.node_id}}, **base_doc
+        )
 
         # Create transaction
         transaction_args = dict(
             program=program,
             project=project,
-            role=ROLES['UPDATE'],
-            flask_config=flask.current_app.config
+            role=ROLES["UPDATE"],
+            flask_config=flask.current_app.config,
         )
         with UploadTransaction(**transaction_args) as trans:
             node = session.merge(node)
             session.commit()
             entity = UploadEntityFactory.create(
-                trans, doc=None, config=flask.current_app.config)
+                trans, doc=None, config=flask.current_app.config
+            )
             entity.action = action
             entity.doc = doc
-            entity.entity_type = 'project'
+            entity.entity_type = "project"
             entity.unique_keys = node._secondary_keys_dicts
             entity.node = node
             entity.entity_id = entity.node.node_id
@@ -255,8 +237,12 @@ def delete_program(program):
     with flask.current_app.db.session_scope() as session:
         node = utils.lookup_program(flask.current_app.db, program)
         if node.edges_in:
-            raise UserError('ERROR: Can not delete the program.\
-                             Program {} is not empty'.format(program))
+            raise UserError(
+                "ERROR: Can not delete the program.\
+                             Program {} is not empty".format(
+                    program
+                )
+            )
         session.delete(node)
         session.commit()
 
@@ -267,7 +253,7 @@ def create_transactions_viewer(operation, dry_run=False):
 
     # TODO TODO !!
 
-    if operation == 'close':
+    if operation == "close":
         pass
-    elif operation == 'commit':
+    elif operation == "commit":
         pass

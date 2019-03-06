@@ -6,13 +6,12 @@ import abc
 
 import psqlgraph
 
-from sheepdog.globals import (
-    case_cache_enabled,
-)
+from sheepdog.globals import case_cache_enabled
 
 
 class EntityErrors(object):
     """Enum of possible entity error classifications."""
+
     INVALID_LINK = "INVALID_LINK"
     INVALID_NUMERIC = "INVALID_NUMERIC"
     INVALID_PERMISSIONS = "INVALID_PERMISSIONS"
@@ -45,7 +44,7 @@ class EntityBase(object):
             self.entity_type = None
 
     def __repr__(self):
-        return '<{}{}>'.format(self.__class__.__name__, self.node or '<None>')
+        return "<{}{}>".format(self.__class__.__name__, self.node or "<None>")
 
     @abc.abstractproperty
     def pg_secondary_keys(self):
@@ -69,14 +68,14 @@ class EntityBase(object):
         """
 
         return {
-            'valid': self.is_valid,
-            'action': self.action,
-            'type': self.entity_type,
-            'id': self.entity_id,
-            'related_cases': self.related_cases,
-            'errors': self.errors,
-            'warnings': self.warnings,
-            'unique_keys': self.secondary_keys_dicts,
+            "valid": self.is_valid,
+            "action": self.action,
+            "type": self.entity_type,
+            "id": self.entity_id,
+            "related_cases": self.related_cases,
+            "errors": self.errors,
+            "warnings": self.warnings,
+            "unique_keys": self.secondary_keys_dicts,
         }
 
     @property
@@ -108,12 +107,17 @@ class EntityBase(object):
         """Gets related cases from shortcut edge
 
         """
-        if not case_cache_enabled() or not self.node or not self.entity_type or not self.node.label:
+        if (
+            not case_cache_enabled()
+            or not self.node
+            or not self.entity_type
+            or not self.node.label
+        ):
             return []
         self.transaction.session.flush()
 
         def make_id(case):
-            return {'id': case.node_id, 'submitter_id': case.submitter_id}
+            return {"id": case.node_id, "submitter_id": case.submitter_id}
 
         return map(make_id, self.node._related_cases_from_cache)
 
@@ -127,17 +131,19 @@ class EntityBase(object):
         cls = node.__class__
 
         return [
-            (e.__src_dst_assoc__,
-                psqlgraph.Node.get_subclass_named(e.__dst_class__).label)
+            (
+                e.__src_dst_assoc__,
+                psqlgraph.Node.get_subclass_named(e.__dst_class__).label,
+            )
             for e in psqlgraph.Edge._get_edges_with_src(cls.__name__)
-            if hasattr(psqlgraph.Node.get_subclass_named(e.__dst_class__),
-                        'project_id')
+            if hasattr(psqlgraph.Node.get_subclass_named(e.__dst_class__), "project_id")
         ] + [
-            (e.__dst_src_assoc__,
-                psqlgraph.Node.get_subclass_named(e.__src_class__).label)
+            (
+                e.__dst_src_assoc__,
+                psqlgraph.Node.get_subclass_named(e.__src_class__).label,
+            )
             for e in psqlgraph.Edge._get_edges_with_dst(cls.__name__)
-            if hasattr(psqlgraph.Node.get_subclass_named(e.__src_class__),
-                        'project_id')
+            if hasattr(psqlgraph.Node.get_subclass_named(e.__src_class__), "project_id")
         ]
 
     def set_old_props(self):
@@ -158,12 +164,14 @@ class EntityBase(object):
             None
         """
         keys = list(keys) if keys is not None else []
-        self.errors.append(dict(
-            message=message,
-            keys=keys,
-            type=type or EntityErrors.UNCATEGORIZED,
-            **kwargs
-        ))
+        self.errors.append(
+            dict(
+                message=message,
+                keys=keys,
+                type=type or EntityErrors.UNCATEGORIZED,
+                **kwargs
+            )
+        )
 
     def record_warning(self, message, keys=None, **kwargs):
         """

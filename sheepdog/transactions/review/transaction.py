@@ -31,15 +31,18 @@ class ReviewTransactionBase(TransactionBase):
         """
 
         if self.success and not self.dry_run:
-            return ("Successfully transitioned project state to '{}'"
-                    .format(self.to_state))
+            return "Successfully transitioned project state to '{}'".format(
+                self.to_state
+            )
 
         elif self.success and self.dry_run:
-            return ("Dry run successful. Would have successfully "
-                    "transitioned project state to '{}'".format(self.to_state))
+            return (
+                "Dry run successful. Would have successfully "
+                "transitioned project state to '{}'".format(self.to_state)
+            )
 
         else:
-            return 'Transaction failed.'
+            return "Transaction failed."
 
     def take_action(self):
         """For the current project, attempt to transition all nodes from their
@@ -57,20 +60,20 @@ class ReviewTransactionBase(TransactionBase):
 class ReviewTransaction(ReviewTransactionBase):
     """Mark a Project `review` to prevent mutation"""
 
-    REQUIRED_PROJECT_STATES = ['open']
-    role = 'review'
+    REQUIRED_PROJECT_STATES = ["open"]
+    role = "review"
 
     @property
     def to_state(self):
-        return 'review'
+        return "review"
 
 
 class OpenTransaction(ReviewTransactionBase):
     """Mark a Project `open` to allow mutation"""
 
-    REQUIRED_PROJECT_STATES = ['review']
-    role = 'open'
+    REQUIRED_PROJECT_STATES = ["review"]
+    role = "open"
 
     @property
     def to_state(self):
-        return 'open'
+        return "open"

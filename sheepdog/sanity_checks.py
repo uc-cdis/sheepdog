@@ -12,22 +12,12 @@ example:
 from sheepdog import dictionary, models, validators
 
 #: The data dictionary must implement these attributes.
-DICTIONARY_REQUIRED_ATTRS = [
-    'resolvers',
-    'schema',
-]
+DICTIONARY_REQUIRED_ATTRS = ["resolvers", "schema"]
 
-MODELS_REQUIRED_ATTRS = [
-    'Program',
-    'Project',
-    'submission',
-    'VersionedNode',
-]
+MODELS_REQUIRED_ATTRS = ["Program", "Project", "submission", "VersionedNode"]
 
-VALIDATORS_REQUIRED_ATTRS = [
-    'GDCGraphValidator',
-    'GDCJSONValidator',
-]
+VALIDATORS_REQUIRED_ATTRS = ["GDCGraphValidator", "GDCJSONValidator"]
+
 
 def validate():
     """
@@ -50,5 +40,4 @@ def check_attributes(module, required_attrs):
     """
     for required_attr in required_attrs:
         if not hasattr(module, required_attr):
-            raise ValueError(
-                'given dictionary does not define ' + required_attr)
+            raise ValueError("given dictionary does not define " + required_attr)
