@@ -10,6 +10,9 @@ import uuid
 import flask
 import lxml
 
+from gdcdatamodel import models
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+
 from sheepdog import auth
 from sheepdog import utils
 from sheepdog.errors import (
@@ -17,7 +20,7 @@ from sheepdog.errors import (
     SchemaError,
     UnsupportedError,
     UserError,
-)
+    InternalError)
 from sheepdog.globals import (
     FLAG_IS_ASYNC,
     PROJECT_SEED,
@@ -62,7 +65,7 @@ def _single_transaction(role, program, project, *doc_args, **tx_kwargs):
     """
     is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
     db_driver = tx_kwargs.pop('db_driver', flask.current_app.db)
-
+    data_release = get_active_data_release(db_driver)
     transaction = UploadTransaction(
         program=program,
         project=project,
@@ -73,6 +76,7 @@ def _single_transaction(role, program, project, *doc_args, **tx_kwargs):
         flask_config=flask.current_app.config,
         db_driver=db_driver,
         external_proxies=utils.get_external_proxies(),
+        active_data_release=data_release,
         **tx_kwargs
     )
 
@@ -122,6 +126,8 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
     doc_args = [name, doc_format, doc, data]
     is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
     db_driver = tx_kwargs.pop('db_driver', flask.current_app.db)
+    data_release = get_active_data_release(db_driver)
+
     transaction = UploadTransaction(program=program,
                                     project=project,
                                     role=role,
@@ -131,6 +137,7 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
                                     indexd=flask.current_app.indexd,
                                     external_proxies=utils.get_external_proxies(),
                                     db_driver=db_driver,
+                                    active_data_release=data_release,
                                     **tx_kwargs)
     if is_async:
         session = transaction.db_driver.session_scope(can_inherit=False)
@@ -247,6 +254,8 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
         if not isinstance(wrapper, dict):
             raise UserError(invalid_format_msg)
 
+    # get current open release number
+    data_release = get_active_data_release(flask.current_app.db)
     is_async = tx_kwargs.pop('is_async', utils.is_flag_set(FLAG_IS_ASYNC))
 
     transaction = BulkUploadTransaction(
@@ -258,6 +267,7 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
         indexd=flask.current_app.indexd,
         db_driver=flask.current_app.db,
         external_proxies=utils.get_external_proxies(),
+        active_data_release=data_release,
         **tx_kwargs
     )
 
@@ -323,3 +333,21 @@ def handle_xml_transaction(role, program, project, parser, **tx_kwargs):
 
     return _single_transaction(
         role, program, project, name, 'XML', original, data, **tx_kwargs)
+
+
+def get_active_data_release(g):
+    """
+    Args:
+        g (psqlgraph.PsqlGraphDriver):
+    Returns:
+        str: data release string
+    """
+    with g.session_scope():
+        try:
+            release = g.nodes(models.DataRelease).props(released=False).one()
+            return "{}.{}".format(release.major_version, release.minor_version)
+        except NoResultFound:
+            return None
+        except MultipleResultsFound:
+            # scenario should not really occur, raising an error can help detect this more easily
+            raise InternalError("An Internal Error Occurred: Multiple open Data Release nodes found", code=500)
