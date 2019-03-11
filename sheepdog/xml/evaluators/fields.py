@@ -98,7 +98,7 @@ class VitalStatusEvaluator(LastFollowUpEvaluator):
 
 
 class TreatmentTherapyEvaluator(Evaluator):
-    """ Computes tratment of therapy value set in the API, also sets the treatment_type"""
+    """ Computes treatment of therapy value set in the API, also sets the treatment_type"""
 
     def evaluate(self):
         return self._evaluate()

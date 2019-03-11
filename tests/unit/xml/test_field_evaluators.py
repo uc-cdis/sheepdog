@@ -1,3 +1,4 @@
+from lxml import etree
 import pytest
 
 from sheepdog.xml.evaluators.fields import BasicEvaluator, FilterElementEvaluator, LastFollowUpEvaluator, \
@@ -10,7 +11,7 @@ from sheepdog.xml.evaluators.fields import BasicEvaluator, FilterElementEvaluato
                           (dict(path="//admin:day_of_dcc_upload", nullable="false", type="int"), 22)])
 def test_basic_evaluator(xml_fixture, props, expected):
 
-    xml = xml_fixture
+    xml = etree.fromstring(xml_fixture)
     nspace = xml.nsmap
     evaluator = BasicEvaluator(xml, nspace, props)
     assert expected == evaluator.evaluate()
@@ -24,7 +25,7 @@ def test_basic_evaluator(xml_fixture, props, expected):
                                 nullable="false", type="int"), 100)])
 def test_filter_evaluator(xml_fixture, props, expected):
 
-    xml = xml_fixture
+    xml = etree.fromstring(xml_fixture)
     nspace = xml.nsmap
     evaluator = FilterElementEvaluator(xml, nspace, props)
     assert expected == evaluator.evaluate()
@@ -35,7 +36,7 @@ def test_filter_evaluator(xml_fixture, props, expected):
                                 type="int"), 4549)])
 def test_last_follow_up_evaluator(xml_fixture, props, expected):
 
-    xml = xml_fixture.xpath("//*[local-name()='patient']")[0]
+    xml = etree.fromstring(xml_fixture).xpath("//*[local-name()='patient']")[0]
     nspace = xml.nsmap
     evaluator = LastFollowUpEvaluator(xml, nspace, props)
     assert expected == evaluator.evaluate()
@@ -49,7 +50,31 @@ def test_last_follow_up_evaluator(xml_fixture, props, expected):
                                 type="str.title"), "Dead")])
 def test_vital_status_evaluator(xml_fixture, props, expected):
 
-    xml = xml_fixture.xpath("//*[local-name()='patient']")[0]
+    xml = etree.fromstring(xml_fixture).xpath("//*[local-name()='patient']")[0]
     nspace = xml.nsmap
     evaluator = VitalStatusEvaluator(xml, nspace, props)
+    assert expected == evaluator.evaluate()
+
+
+@pytest.mark.parametrize("props, expected",
+                         [(dict(
+                             path=["//clin_shared:radiation_therapy", "//clin_shared:postoperative_rx_tx"],
+                             evaluator=dict(
+                                 name="treatment_therapy",
+                                 new_tumor_event_path="//nte:*[@preferred_name='new_tumor_event_type']",
+                                 additional_radiation_path="./nte:additional_radiation_therapy",
+                                 additional_pharmaceutical_path="./nte:additional_pharmaceutical_therapy",
+                                 allowed_tumor_events=[
+                                     "Biochemical evidence of disease",
+                                     "Distant Metastasis"
+                                ])
+                         ), [
+                             dict(treatment_type="Radiation, NOS", treatment_or_therapy="yes"),
+                             dict(treatment_type="Pharmaceutical Therapy, NOS", treatment_or_therapy="yes")
+                            ])])
+def test_treatment_or_therapy_evaluator(xml_radiation_fixture, props, expected):
+
+    xml = etree.fromstring(xml_radiation_fixture).xpath("//*[local-name()='patient']")[0]
+    nspace = xml.nsmap
+    evaluator = TreatmentTherapyEvaluator(xml, nspace, props)
     assert expected == evaluator.evaluate()
