@@ -973,7 +973,7 @@ def test_fail_to_version_with_no_data_release_change(data_release, released_file
     file_data["md5sum"] = released_file.hashes["md5"]
     resp = submit_metadata_file(
         client, admin, submitter, data=file_data).json
-    assert resp['code'] == 400
+    assert resp['code'] == 200
 
     # assert no new version was created on indexd
     doc = indexd_client.get_latest_version(released_file.did)
