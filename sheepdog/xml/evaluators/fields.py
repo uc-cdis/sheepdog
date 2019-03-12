@@ -123,7 +123,7 @@ class TreatmentTherapyEvaluator(Evaluator):
 
             if self.is_radiation(xpath):
                 val = self.search_additional_paths(val, self.get_evaluator_property("additional_radiation_path"))
-                treatments[0] = dict(treatment_type="Radiation, NOS", treatment_or_therapy=val)
+                treatments[0] = dict(treatment_type="Radiation Therapy, NOS", treatment_or_therapy=val)
             else:
                 val = self.search_additional_paths(val, self.get_evaluator_property("additional_pharmaceutical_path"))
                 treatments[1] = dict(treatment_type="Pharmaceutical Therapy, NOS", treatment_or_therapy=val)

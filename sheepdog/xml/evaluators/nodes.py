@@ -1,6 +1,7 @@
 import copy
 from uuid import uuid5, UUID
 
+from dictionaryutils import dictionary
 from gdcdatamodel import models
 
 from sheepdog.xml.evaluators import Evaluator
@@ -21,9 +22,15 @@ class NodeEvaluator(Evaluator):
         """
 
         super(NodeEvaluator, self).__init__(root, namespaces, mappings)
+        self.schema = dictionary.schema[node_type]
         self.data = dict(type=node_type)
 
     def set_property(self, key, value):
+
+        if not self._is_null_allowed(key) and value is None:
+            # only set value if None is allowed in the dictionary
+            return
+
         self.data[key] = value
 
     def set_edge(self, edge_label, dst_label, value, property_name="id"):
@@ -67,6 +74,7 @@ class NodeEvaluator(Evaluator):
 
         self.evaluate_uuid()
         self.evaluate_edges()
+        self.evaluate_edge_by_properties()
         self.evaluate_properties()
 
         return self.get_data()
@@ -77,12 +85,27 @@ class NodeEvaluator(Evaluator):
     def get_data(self):
         return [self.data]
 
+    def _is_null_allowed(self, key):
+        """Checks if None values are allowed in the gdcdictionary for this property"""
+        key_section = self.schema['properties'].get(key, {})
+        if "type" in key_section:
+            return "null" in key_section.get("type")
+
+        # specification can be nested under oneOf/anyOf
+        sub_key_section = key_section.get("oneOf") or key_section.get("anyOf")
+        if sub_key_section:
+            for section in sub_key_section:
+                if section.get("type") == "null":
+                    return True
+        return False
+
 
 class TreatmentNodeEvaluator(NodeEvaluator):
 
     def _evaluate(self):
 
         self.evaluate_edges()
+        self.evaluate_edge_by_properties()
         self.evaluate_properties()
 
         return self.get_data()
@@ -100,6 +123,9 @@ class TreatmentNodeEvaluator(NodeEvaluator):
                 treatment_data.pop(key)
                 treatment_data.update(entry)
                 treatment_data["id"] = self.generate_id(i)
+
+                # update submitter id so its a bit  for each treatment node
+                treatment_data["submitter_id"] = "{}_{}".format(treatment_data["submitter_id"], i)
                 new_data.append(treatment_data)
 
         return new_data
@@ -145,11 +171,11 @@ class EvaluatorFactory(object):
 
 def get_psqlgraph_edge_by_label(src_label, edge_label, dst_label):
     src_class = models.Node.get_subclass(src_label)
-    if src_label is None:
+    if src_class is None:
         raise ValueError('No classes found with src_label {}'.format(src_label))
 
     dst_class = models.Node.get_subclass(dst_label)
-    if dst_label is None:
+    if dst_class is None:
         raise ValueError('No classes found with dst_label {}'.format(dst_label))
 
     edges = [edge for edge in models.Edge.get_subclasses()

@@ -78,7 +78,7 @@ class Evaluator(object):
 
         # check nullable
         if val is None and not self.is_nullable:
-            raise Exception("Can't find element {}".format(self.path))
+            raise ValueError("Can't find element {}".format(self.path))
 
         # check if suffix can be appended
         if self.suffix and self.data_type == "str":
@@ -107,8 +107,8 @@ class Evaluator(object):
 
     @staticmethod
     def _to_bool(val):
-        possible_true_values = ['true', 'yes']
-        possible_false_values = ['false', 'no']
+        possible_true_values = ['true', 'yes', 't']
+        possible_false_values = ['false', 'no', 'f']
 
         if val is None:
             return None
