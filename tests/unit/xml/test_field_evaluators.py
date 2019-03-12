@@ -69,7 +69,7 @@ def test_vital_status_evaluator(xml_fixture, props, expected):
                                      "Distant Metastasis"
                                 ])
                          ), [
-                             dict(treatment_type="Radiation, NOS", treatment_or_therapy="yes"),
+                             dict(treatment_type="Radiation Therapy, NOS", treatment_or_therapy="yes"),
                              dict(treatment_type="Pharmaceutical Therapy, NOS", treatment_or_therapy="yes")
                             ])])
 def test_treatment_or_therapy_evaluator(xml_radiation_fixture, props, expected):
