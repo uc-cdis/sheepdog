@@ -20,7 +20,7 @@ class BasicEvaluator(Evaluator):
 
         if isinstance(value_or_elements, list):
             if len(value_or_elements) > 1:
-                raise Exception("More than one {} is found".format(self.path))
+                raise ValueError("More than one {} is found".format(self.path))
 
             return value_or_elements[0].text if value_or_elements else None
         return value_or_elements
@@ -40,7 +40,7 @@ class LastFollowUpEvaluator(Evaluator):
     """
         Evaluates the last follow up value using the following criteria
         The desired value is the value of the xml element with the maximum value, if two or more elements share
-        this maximum value, use the `sequence` attribute on the parent to break the tieL meaning the the
+        this maximum value, use the `sequence` attribute on the parent to break the tie meaning the
         parent element with highest sequence will be used
     """
 
@@ -56,21 +56,22 @@ class LastFollowUpEvaluator(Evaluator):
         elements = self.search_path(path)
 
         if not isinstance(elements, list):
-            raise ValueError("path expression must produce a list and not a single value")
+            raise ValueError("path expression {} must produce a list and not a single value".format(path))
 
         _max, _max_element = None, None
         for element in elements:
-            if element.text > _max:
-                _max = element.text
+            _val = int(element.text)
+            if _val > _max:
+                _max = _val
                 _max_element = element
-            elif element.text == _max:
+            elif _val == _max:
                 # break tie
                 parent = element.getparent()
-                b1 = parent.get(tie_breaker)
+                b1 = parent.get(tie_breaker) or 0  # set to 0 for possibly null
 
-                b2 = _max_element.getparent().get(tie_breaker)
+                b2 = _max_element.getparent().get(tie_breaker) or 0  # set to 0 for possibly null
 
-                if b1 > b2:
+                if int(b1) > int(b2):
                     _max_element = element
 
         return _max_element
@@ -142,11 +143,11 @@ class TreatmentTherapyEvaluator(Evaluator):
             for evt in tumor_events:
                 if evt.text in allowed_events:
                     # search parent for yes
-                    evt.getparent()
                     val = self.search(evt.getparent(), additional_path)
                     if val == "yes":
                         break
         return val
 
-    def is_radiation(self, path):
+    @staticmethod
+    def is_radiation(path):
         return "radiation_therapy" in path

@@ -27,6 +27,7 @@ class NodeEvaluator(Evaluator):
         self.data[key] = value
 
     def set_edge(self, edge_label, dst_label, value, property_name="id"):
+        value = value.lower() if property_name == "id" else value
         edge_cls = get_psqlgraph_edge_by_label(self.node_type, edge_label, dst_label)
         self.data[edge_cls.__src_dst_assoc__] = {property_name: value}
 
@@ -89,14 +90,17 @@ class TreatmentNodeEvaluator(NodeEvaluator):
     def get_data(self):
         new_data = []
         for key, data in self.data.items():
-            if isinstance(data, list):
+            if not isinstance(data, list):
+                continue
 
-                for i, entry in enumerate(data):
-                    d1 = copy.deepcopy(self.data)
-                    d1.pop(key)
-                    d1.update(entry)
-                    d1["id"] = self.generate_id(i)
-                    new_data.append(d1)
+            for i, entry in enumerate(data):
+                treatment_data = copy.deepcopy(self.data)
+
+                # remove key, since its currently a list and not required for the final clinical json data
+                treatment_data.pop(key)
+                treatment_data.update(entry)
+                treatment_data["id"] = self.generate_id(i)
+                new_data.append(treatment_data)
 
         return new_data
 

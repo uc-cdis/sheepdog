@@ -612,8 +612,7 @@ class BcrBiospecimenXmlToJsonParser(object):
         if 'edge_datetime_properties' in params:
             if edge_type in params['edge_datetime_properties']:
                 # Loop over all given datetime properties
-                for name, timespans in params['edge_datetime_properties'][edge_type] \
-                        .items():
+                for name, timespans in params['edge_datetime_properties'][edge_type].items():
                     times = {'year': 0, 'month': 0, 'day': 0}
 
                     # Parse the year, month, day
