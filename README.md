@@ -60,4 +60,6 @@ which by default will output the `index.html` page to
 
 [OpenAPI documentation available here.](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/uc-cdis/sheepdog/master/openapi/swagger.yml)
 
-The YAML file comtaining the OpenAPI documentation can be found in the `openapi` folder; see the README in that folder for more details.
+The YAML file comtaining the OpenAPI documentation is in the `openapi` folder;
+see the README in that folder for more details.
+
