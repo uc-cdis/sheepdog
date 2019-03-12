@@ -60,6 +60,10 @@ class LastFollowUpEvaluator(Evaluator):
 
         _max, _max_element = None, None
         for element in elements:
+
+            if not element.text:
+                continue
+
             _val = int(element.text)
             if _val > _max:
                 _max = _val
