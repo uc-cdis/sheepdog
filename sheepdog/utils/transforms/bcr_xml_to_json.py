@@ -664,7 +664,11 @@ class BcrClinicalXmlToJsonParser(object):
         # XSD version 2.6 does not have clin_shared namespace, which will raise
         # exception when using xpath
         if 'clin_shared' not in namespaces:
-            namespaces['clin_shared'] = "NA"
+            namespaces['clin_shared'] = "http://tcga.nci/bcr/xml/clinical/shared/2.7"
+        if "nte" not in namespaces:
+            namespaces["nte"] = "http://tcga.nci/bcr/xml/clinical/shared/new_tumor_event/2.7"
+        if "shared_stage" not in namespaces:
+            namespaces["shared_stage"] = "http://tcga.nci/bcr/xml/clinical/shared/stage/2.7"
 
         for data_type, params in self.xpath_ref.items():
 
