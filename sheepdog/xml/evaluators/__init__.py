@@ -80,6 +80,9 @@ class Evaluator(object):
         if val is None and not self.is_nullable:
             raise ValueError("Can't find element {}".format(self.path))
 
+        # check if value mapping is required and map to appropriate value
+        val = self.map_values(val)
+
         # check if suffix can be appended
         if self.suffix and self.data_type == "str":
             return str(val) + self.suffix
@@ -118,3 +121,18 @@ class Evaluator(object):
             return False
         else:
             raise ValueError("Cannot convert {} to boolean".format(val))
+
+    def map_values(self, value):
+        """ Checks if field has list of possible values that map to a specific value """
+        value_mappings = self.property_mappings.get("values")  # {value: [possible value list]}
+        if not value_mappings:
+            return value
+
+        if isinstance(value, str):
+            # enforce lower case comparison, mapping values are lower case
+            value = value.lower()
+
+        for val, possible_values in value_mappings.items():
+            if value in possible_values:
+                return val
+        raise ValueError("XML value {} not in the mapping: {}".format(value, value_mappings))
