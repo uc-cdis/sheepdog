@@ -128,6 +128,10 @@ class Evaluator(object):
         if not value_mappings:
             return value
 
+        # check if value is the default
+        if value == self.default:
+            return value
+
         if isinstance(value, str):
             # enforce lower case comparison, mapping values are lower case
             value = value.lower()
