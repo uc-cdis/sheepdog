@@ -2,27 +2,29 @@
 Subclasses for UploadEntity that handle different types of
 uploaded entities.
 """
-import uuid
+from distutils.version import StrictVersion
 
 import psqlgraph
+import uuid
 from indexclient.client import Document
-from sheepdog.utils import (
-    lookup_project,
-    is_project_public,
-    generate_s3_url,
-)
+from sqlalchemy.orm.exc import NoResultFound
 
+from sheepdog.errors import UserError
+from sheepdog.globals import (
+    DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE, POSSIBLE_OPEN_FILE_NODES,
+    UPDATABLE_FILE_STATES, RELEASED_NODE_STATES,
+    MODIFIABLE_RELEASED_FILE_STATES
+)
 from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.upload.entity import (
     UploadEntity,
     lookup_node
 )
-from sheepdog.globals import (
-    DATA_FILE_CATEGORIES, PRIMARY_URL_TYPE, POSSIBLE_OPEN_FILE_NODES,
-    UPDATABLE_FILE_STATES, RELEASED_NODE_STATES,
-    MODIFIABLE_RELEASED_FILE_STATES)
-from sheepdog.errors import UserError
-from sqlalchemy.orm.exc import NoResultFound
+from sheepdog.utils import (
+    lookup_project,
+    is_project_public,
+    generate_s3_url,
+)
 
 
 class NonFileUploadEntity(UploadEntity):
@@ -711,7 +713,19 @@ class FileUploadEntity(UploadEntity):
 
     def _should_version_node(self, node):
         """ Performs checks to determine if the current entity should be versioned"""
-        return self._is_modified_release_node(node)
+        return self._is_new_release(node) and self._is_modified_release_node(node)
+
+    def _is_new_release(self, node):
+        """ Checks if this node should be treated as part of a new release. If the current release number on this node
+            is not less than the active release number, then it is not a new release
+         """
+        doc = self.get_indexed_document()
+        if doc and node and node.state in RELEASED_NODE_STATES:
+            current_release = doc.metadata.get("release_number", None)
+            return current_release is not None and \
+                   ((self.transaction.active_data_release is None) or (
+                           StrictVersion(self.transaction.active_data_release) > StrictVersion(current_release)))
+        return False
 
     def _is_modified_release_node(self, node):
         """ Checks if the current entity is a released node that has been modified enough to allow versioning """
@@ -747,4 +761,3 @@ class FileUploadEntity(UploadEntity):
                 if url_meta.get('type') == PRIMARY_URL_TYPE:
                     return url_meta.get('state')
         return None
-

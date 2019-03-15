@@ -366,12 +366,42 @@ def data_release(pg_driver):
 
 
 @pytest.fixture
-def released_file(pg_driver, indexd_client, data_release):
+def multiple_data_release(pg_driver):
     """
     Args:
         pg_driver (psqlgraph.PsqlGraphDriver):
     """
-    doc = create_random_index(indexd_client, release=data_release)
+    releases = []
+    with pg_driver.session_scope() as sxn:
+        release = m.DataRelease(node_id=str(uuid.uuid4()))
+        release.major_version = 10
+        release.minor_version = 2
+        release.released = False
+        release.release_data = '2018-09-27'
+
+        sxn.add(release)
+        releases.append(release)
+        r2 = m.DataRelease(node_id=str(uuid.uuid4()))
+        r2.major_version = 11
+        r2.minor_version = 0
+        r2.released = False
+        sxn.add(r2)
+        releases.append(r2)
+
+    # return current release number same as the data_release with released==False
+    yield "11.0"
+    with pg_driver.session_scope() as sxn:
+        for release in releases:
+            sxn.delete(release)
+
+
+@pytest.fixture
+def released_file(pg_driver, indexd_client):
+    """
+    Args:
+        pg_driver (psqlgraph.PsqlGraphDriver):
+    """
+    doc = create_random_index(indexd_client, release="11.0")
 
     # create node
     with pg_driver.session_scope() as sxn:
@@ -383,6 +413,25 @@ def released_file(pg_driver, indexd_client, data_release):
         pg_driver.node_insert(exp)
     yield doc
     doc = indexd_client.get(doc.did)
+    doc.delete()
+
+    with pg_driver.session_scope() as sxn:
+        sxn.delete(exp)
+
+
+@pytest.fixture
+def unreleased_file(pg_driver, indexd_client):
+    doc = create_random_index(indexd_client, "10.2")
+
+    # create node
+    with pg_driver.session_scope() as sxn:
+        exp = m.ExperimentalMetadata(node_id=doc.did)
+        exp.submitter_id = "0"
+        exp.state = "released"
+        exp.project_id = 'CGCI-BLGSP'
+        exp.file_state = "validated"
+        pg_driver.node_insert(exp)
+    yield doc
     doc.delete()
 
     with pg_driver.session_scope() as sxn:

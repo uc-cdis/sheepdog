@@ -184,11 +184,11 @@ def test_update_data_file_entity(
 def test_creating_new_versioned_file(
         file_name, entity_type, expected_acl,
         client_toggled, indexd_server, indexd_client, pg_driver, cgci_blgsp,
-        submitter):
+        submitter, data_release):
     """
     Create a new version of a file
     """
-    def create_node(version_number=None, file_name=file_name, release=None):
+    def create_node(version_number=None, file_name=file_name, release="10.0"):
         """Create a node and possibly assign it a version
 
         Args:
