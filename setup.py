@@ -7,4 +7,7 @@ setup(
     url='https://github.com/uc-cdis/sheepdog',
     license='Apache',
     packages=find_packages(),
+    scripts=[
+        "bin/bcrparser"
+    ]
 )
