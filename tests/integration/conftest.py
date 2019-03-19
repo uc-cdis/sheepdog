@@ -10,9 +10,14 @@ import pytest
 import requests
 import requests_mock
 from mock import patch
-from cdisutilstest.code.conftest import (
+from indexd_test_utils import (
     indexd_client,
     indexd_server,
+    create_indexd_tables,
+    index_driver,
+    alias_driver,
+    auth_driver,
+    setup_indexd_test_database,
 )
 
 from fence.jwt.token import generate_signed_access_token

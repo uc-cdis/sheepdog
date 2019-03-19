@@ -326,6 +326,7 @@ def test_is_updatable_file(client, pg_driver, indexd_client):
         urls=[url],
         hashes={'md5': '0'*32},
         size=1,
+        urls_metadata={url:{}},
     )
 
     transaction = MagicMock()
