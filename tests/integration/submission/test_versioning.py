@@ -246,4 +246,4 @@ def test_creating_new_versioned_file(
     # this order is guaranteed
     for created, accepted in zip(created_versions, accepted_versions):
         assert created.version == accepted
-        assert created.acl == expected_acl
+        assert set(created.acl) == set(expected_acl)
