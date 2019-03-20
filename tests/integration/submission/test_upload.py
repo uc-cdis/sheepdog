@@ -447,7 +447,12 @@ def test_data_file_update_url_different_file_not_indexed(
     assert_negative_response(resp1)
     assert_single_entity_from_response(resp1)
     # make sure that indexd record did not change
-    assert record.to_json() == record1.to_json()
+    record_dict = record.to_json()
+    record1_dict = record1.to_json()
+    acl = record_dict.pop('acl')
+    acl1 = record1_dict.pop('acl')
+    assert record_dict == record1_dict
+    assert set(acl) == set(acl1)
 
 
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash') # noqa
