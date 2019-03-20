@@ -7,7 +7,6 @@ import uuid
 
 import flask
 import sqlalchemy
-import yaml
 
 from sheepdog import auth
 from sheepdog import dictionary
