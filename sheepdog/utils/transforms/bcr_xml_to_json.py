@@ -10,8 +10,6 @@ of false positives with ``lxml.etree``.
 
 import datetime
 import json
-import math
-from uuid import uuid5, UUID
 
 import flask
 import pkg_resources
@@ -25,6 +23,7 @@ from sheepdog.errors import (
     ParsingError,
     SchemaError,
 )
+from sheepdog.xml import EvaluatorFactory
 
 log = get_logger(__name__)
 SCHEMA_LOCATION_WHITELIST = ["https://github.com/nchbcr/xsd", "http://tcga-data.nci.nih.gov"]
@@ -341,7 +340,7 @@ class BcrBiospecimenXmlToJsonParser(object):
         Return:
             str: the entity id
         """
-        assert  not ('id' in params and 'generated_id' in params),\
+        assert  not ('id' in params and 'generated_id' in params), \
             'Specification of an id xpath and parameters for generating an id'
 
         # Lookup ID
@@ -388,7 +387,7 @@ class BcrBiospecimenXmlToJsonParser(object):
                     expected=(not self.ignore_missing_properties),
                     label='{}: {}'.format(entity_type, entity_id)) or default
                 # optional null fields are removed
-                if result is None and prop not in\
+                if result is None and prop not in \
                         dictionary.schema[entity_type].get('required', []):
                     continue
                 props[prop] = munge_property(result, _type)
@@ -591,7 +590,7 @@ class BcrBiospecimenXmlToJsonParser(object):
 
     def get_entity_edge_properties(self, root, edge_type, params, entity_id=''):
         if 'edge_properties' not in params or \
-           edge_type not in params.edge_properties:
+                edge_type not in params.edge_properties:
             return {}
 
         props = {}
@@ -613,8 +612,7 @@ class BcrBiospecimenXmlToJsonParser(object):
         if 'edge_datetime_properties' in params:
             if edge_type in params['edge_datetime_properties']:
                 # Loop over all given datetime properties
-                for name, timespans in params['edge_datetime_properties'][edge_type]\
-                                             .items():
+                for name, timespans in params['edge_datetime_properties'][edge_type].items():
                     times = {'year': 0, 'month': 0, 'day': 0}
 
                     # Parse the year, month, day
@@ -641,6 +639,11 @@ class BcrClinicalXmlToJsonParser(object):
             mapping = pkg_resources.resource_string(
                 'gdcdatamodel', 'xml_mappings/tcga_clinical.yaml'
             )
+        else:
+            # read in mappings from file
+            with open(mapping, "r+") as m:
+                mapping = m.read()
+
         self.xpath_ref = yaml.safe_load(mapping)
         self.docs = []
 
@@ -654,29 +657,6 @@ class BcrClinicalXmlToJsonParser(object):
             raise Exception("Can't find xml root {}".format(path))
         return roots
 
-    def xpath(self, root, path, namespaces,
-              nullable=True, suffix=''):
-        result = root.xpath(path, namespaces=namespaces)
-
-        if hasattr(result, '__iter__'):
-            rlen = len(result)
-            if rlen == 0:
-                if nullable:
-                    return None
-                else:
-                    raise Exception("Can't fine element {}".format(path))
-            elif rlen > 1:
-                raise Exception("More than one {} is found".format(path))
-            else:
-                result = result[0].text
-
-        if result is None and not nullable:
-            raise Exception("Can't find element {}".format(path))
-
-        if suffix:
-            result = str(result) + suffix
-        return result
-
     def loads(self, doc):
         doc_root = validated_parse(str(doc))
         namespaces = doc_root.nsmap
@@ -684,90 +664,20 @@ class BcrClinicalXmlToJsonParser(object):
         # XSD version 2.6 does not have clin_shared namespace, which will raise
         # exception when using xpath
         if 'clin_shared' not in namespaces:
-            namespaces['clin_shared'] = "NA"
+            namespaces['clin_shared'] = "http://tcga.nci/bcr/xml/clinical/shared/2.7"
+        if "nte" not in namespaces:
+            namespaces["nte"] = "http://tcga.nci/bcr/xml/clinical/shared/new_tumor_event/2.7"
+        if "shared_stage" not in namespaces:
+            namespaces["shared_stage"] = "http://tcga.nci/bcr/xml/clinical/shared/stage/2.7"
 
-        for data_type, params in self.xpath_ref.iteritems():
-            # Base properties
-            schema = dictionary.schema[data_type]
-            clinical = {
-                'type': data_type
-            }
+        for data_type, params in self.xpath_ref.items():
+
             for values in params:
                 for root in self.get_xml_roots(doc_root, values['root'], namespaces):
-                    if 'generated_id' in values:
-                        clinical['id'] = str(uuid5(
-                            UUID(values['generated_id']['namespace']),
-                            self.xpath(root, values['generated_id']['name'],
-                                       namespaces,
-                                       nullable=False)))
 
-                    if 'edges' in values:
-                        self.insert_edges(
-                            clinical, root, values['edges'], namespaces)
-
-                    if 'edges_by_property' in values:
-                        self.insert_edges_by_property(
-                            clinical, root, values['edges_by_property'],
-                            namespaces)
-
-                    props_roots = [root]
-                    for path in values.get('additional_property_roots', []):
-                        roots = self.get_xml_roots(
-                            doc_root, path, namespaces, nullable=True)
-                        if roots:
-                            props_roots += roots
-
-
-                    self.insert_properties(
-                        clinical, props_roots, values['properties'], namespaces, schema)
-            self.docs.append(clinical)
-
+                    doc = EvaluatorFactory.evaluate_node(data_type, root, values, namespaces)
+                    self.docs += doc
         return self
-
-    def insert_edges(self, doc, root, edges, namespaces):
-        for edge_label, edge in edges.iteritems():
-            for dst_label, props in edge.iteritems():
-                edge_cls = flask.current_app.db.get_edge_by_labels(
-                    doc['type'], edge_label, dst_label
-                )
-                xpath = self.xpath(
-                    root=root, namespaces=namespaces, nullable=False, **props
-                )
-                xpath = xpath.lower()
-                # TODO(pyt): the edge dst's id is cast to lowercase as
-                # in bcr_xml2json, need to unify the xml2json conversion
-                # for clinical and biospec xmls
-                doc[edge_cls.__src_dst_assoc__] = {'id': xpath}
-
-    def insert_edges_by_property(self, doc, root, edges, namespaces):
-        for edge_label, edge in edges.iteritems():
-            for dst_label, dst_property in edge.iteritems():
-                edge_cls = flask.current_app.db.get_edge_by_labels(
-                    doc['type'], edge_label, dst_label)
-                xpath = lambda props: self.xpath(
-                    root=root, namespaces=namespaces, nullable=False, **props
-                )
-                doc[edge_cls.__src_dst_assoc__] = {
-                    key: xpath(props) for key, props in dst_property.items()
-                }
-
-    def insert_properties(self, doc, roots, properties, namespaces, schema):
-        for root in roots:
-            for key, props in properties.iteritems():
-                value = self.xpath(
-                    root=root, path=props['path'], namespaces=namespaces,
-                    suffix=props.get('suffix', ''))
-                _type = props['type']
-                is_nan = isinstance(value, float) and math.isnan(value)
-                if value is None or is_nan:
-                    if key not in doc:
-                        key_type = schema['properties'][key].get('type', [])
-                        if 'default' in props:
-                            doc[key] = props['default']
-                        elif 'null' in key_type:
-                            doc[key] = None
-                    continue
-                doc[key] = munge_property(value, _type)
 
 
 def munge_property(prop, _type):
@@ -778,6 +688,7 @@ def munge_property(prop, _type):
         'float': float,
         'str': str,
         'str.lower': lambda x: str(x).lower(),
+        'str.title': lambda x: str(x).title(),
     }
 
     if _type == 'bool':
