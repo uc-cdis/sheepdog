@@ -136,7 +136,7 @@ class BcrXmlToJsonParser(object):
         self.export_count = 0
         self.ignore_missing_properties = True
         self.xml_mapping = json.loads(
-            json.dumps(yaml.load(BCR_MAPPING)), object_hook=AttrDict
+            json.dumps(yaml.safe_load(BCR_MAPPING)), object_hook=AttrDict
         )
         self.entities = {}
 
@@ -594,7 +594,7 @@ class BcrClinicalXmlToJsonParser(object):
             mapping = pkg_resources.resource_string(
                 "gdcdatamodel", "xml_mappings/tcga_clinical.yaml"
             )
-        self.xpath_ref = yaml.load(mapping)
+        self.xpath_ref = yaml.safe_load(mapping)
         self.docs = []
 
     @property
