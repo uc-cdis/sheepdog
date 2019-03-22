@@ -41,8 +41,11 @@ BLGSP_PATH = '/v0/submission/{}/{}/'.format(PROGRAM, PROJECT)
 
 # some default values for data file submissions
 DEFAULT_FILE_HASH = '00000000000000000000000000000001'
+UPDATED_FILE_HASH = '00000000000000000000000000000002'
 DEFAULT_FILE_SIZE = 1
+UPDATED_FILE_SIZE = 2
 FILE_NAME = 'test-file'
+UPDATED_FILE_NAME = 'test-file-1'
 DEFAULT_SUBMITTER_ID = '0'
 DEFAULT_UUID = 'bef870b0-1d2a-4873-b0db-14994b2f89bd'
 DEFAULT_URL = generate_s3_url(
@@ -228,9 +231,13 @@ def test_data_file_already_indexed(
     entity1 = assert_single_entity_from_response(resp1)
     assert_positive_response(resp1)
     assert entity1['action'] == 'update'
-
-    # check that record did not change
-    assert record.to_json() == record1.to_json()
+    
+    # check that record did not change, excluding revison
+    record_dict = record.to_json()
+    record1_dict = record1.to_json()
+    record_dict.pop('rev')
+    record1_dict.pop('rev')
+    assert record_dict == record1_dict
 
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
@@ -238,17 +245,12 @@ def test_data_file_already_indexed(
     assert entity['id'] == record1.did
 
 
-@pytest.mark.parametrize('new_urls,id_provided', [
-    (['some/new/url/location/to/add'], False),
-    (['some/new/url/location/to/add'], True),
-    ([DEFAULT_URL, 'some/new/url/location/to/add', 'some/other/url'], False),
-    ([DEFAULT_URL, 'some/new/url/location/to/add', 'some/other/url'], True),
-])
-def test_data_file_update_urls(
-        new_urls, id_provided,
+@pytest.mark.parametrize('id_provided', [False, True])
+def test_data_file_update_patch(
+        id_provided,
         client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
-    Test submitting the same data again but updating the URL field (should
+    Test submitting the same data again with updated fields (should
     get added to the indexed file in index service).
     """
     submit_first_experiment(client, submitter)
@@ -257,9 +259,12 @@ def test_data_file_update_urls(
     submit_metadata_file(client, admin, submitter)
     record = assert_single_record(indexd_client)
 
-    # now submit again but change url
+    # now submit again but change file hash, file name and size
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    updated_file['urls'] = ','.join(new_urls)
+    updated_file['md5sum'] = UPDATED_FILE_HASH
+    updated_file['file_size'] = UPDATED_FILE_SIZE
+    updated_file['file_name'] = UPDATED_FILE_NAME
+
     if id_provided:
         updated_file['id'] = record.did
 
@@ -275,8 +280,10 @@ def test_data_file_update_urls(
     #       need to change in the future
     assert entity['id'] == record.did
 
-    # make sure original url and new url are in the resulting document
-    assert set(record1.urls) == set(record.urls) or set(new_urls)
+    # make sure hash is updated
+    assert record1.hashes['md5'] == UPDATED_FILE_HASH
+    assert record1.size == UPDATED_FILE_SIZE
+    assert record1.file_name == UPDATED_FILE_NAME
 
 
 @pytest.mark.config_toggle(
@@ -391,19 +398,19 @@ def test_data_file_update_url_different_file_not_indexed(
         client, pg_driver, admin, submitter, cgci_blgsp, indexd_client):
     """
     Test submitting the different data (with NO id provided) and updating the
-    URL field.
-
-    HOWEVER the file hash and size in the new data do NOT match the previously
-    submitted data. The file hash/size provided does NOT
-    match an already indexed file. e.g. The file is not yet indexed.
+    hash/size field. Hash/size should be unique
 
     The assumption is that the user is attempting to UPDATE the index
     with a new file but didn't provide a full id, just the same submitter_id
     as before.
 
     Without an ID provided, sheepdog falls back on secondary keys (being
-    the submitter_id/project). There is already a match for that, BUT
-    the provided file hash/size is different than the previously submitted one.
+    the submitter_id/project).
+
+    if the provided file hash/size is different than the previously submitted one and
+    it already exist in indexd, block update.
+
+    if hash/size does not exist yet, then update hash/size
     """
     submit_first_experiment(client, submitter)
 
@@ -413,25 +420,39 @@ def test_data_file_update_url_different_file_not_indexed(
     submit_metadata_file(client, admin, submitter, data=metadata_file)
     record = assert_single_record(indexd_client)
 
-    # now submit again but change url, hash and file size
-    new_url = 'some/new/url/location/to/add'
+    # submit another metadata file with another md5
+    metadata_file1 = copy.deepcopy(DEFAULT_METADATA_FILE)
+    metadata_file1['submitter_id'] = '1'
+    metadata_file1['md5sum'] = UPDATED_FILE_HASH
+    metadata_file1['file_size'] = UPDATED_FILE_SIZE
+    resp1 = submit_metadata_file(
+        client, admin, submitter, data=metadata_file1)
+
+    assert_positive_response(resp1)
+    entity = assert_single_entity_from_response(resp1)
+    assert entity['action'] == 'create'
+
+    # now submit first metadata again but with same hash and file size as the second file
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    updated_file['urls'] = new_url
-    updated_file['md5sum'] = DEFAULT_FILE_HASH.replace('0', '2')
-    updated_file['file_size'] = DEFAULT_FILE_SIZE + 1
+    updated_file['md5sum'] = UPDATED_FILE_HASH
+    updated_file['file_size'] = UPDATED_FILE_SIZE
     if id_provided:
         updated_file['id'] = DEFAULT_UUID
 
     resp1 = submit_metadata_file(
         client, admin, submitter, data=updated_file)
-    record1 = assert_single_record(indexd_client)
+    record1 = indexd_client.get(DEFAULT_UUID)
 
     # make sure it fails
     assert_negative_response(resp1)
     assert_single_entity_from_response(resp1)
-
     # make sure that indexd record did not change
-    assert record.to_json() == record1.to_json()
+    record_dict = record.to_json()
+    record1_dict = record1.to_json()
+    acl = record_dict.pop('acl')
+    acl1 = record1_dict.pop('acl')
+    assert record_dict == record1_dict
+    assert set(acl) == set(acl1)
 
 
 @patch('sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash') # noqa
@@ -957,7 +978,7 @@ def test_fail_to_version_with_no_data_release_change(data_release, released_file
     file_data["md5sum"] = released_file.hashes["md5"]
     resp = submit_metadata_file(
         client, admin, submitter, data=file_data).json
-    assert resp['code'] == 400
+    assert resp['code'] == 200
 
     # assert no new version was created on indexd
     doc = indexd_client.get_latest_version(released_file.did)
