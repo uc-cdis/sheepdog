@@ -338,18 +338,16 @@ class FileUploadEntity(UploadEntity):
             return
 
         if not self._is_replaceable:
-            # NOTE: Preserving the recreate URL logic we had since versioning
-            # Re-create URL, since the filename might have changed.
-            # We don't care about other URLs, since the file was not yet
-            # released, so it won't have any urls other than primary url
-
-            urls, urls_metadata = self.generate_url_fields()
 
             document.hashes['md5'] = self.doc['md5sum']
             document.size = self.doc['file_size']
             document.file_name = self.doc['file_name']
-            document.urls = urls
-            document.urls_metadata = urls_metadata
+
+            # not updating cleversafe url even if file name changed,
+            # flipping url state back to registered
+            main_url = self.get_main_url_metadata(document)
+            document.urls_metadata[main_url]['state'] = 'registered'
+
             document.patch()
             return
 
@@ -376,7 +374,21 @@ class FileUploadEntity(UploadEntity):
         self.transaction.indexd.create(
             did=old_doc['did'], baseid=old_doc['baseid'], **updated_fields)
 
+    def get_main_url_metadata(self, doc):
+        """
+        Get the main url metadata of the given document.
+        """
+        for key, data in iter(doc.urls_metadata.items()):
+            if data.get("type", None) == "cleversafe":
+                return key
+
+        return None
+
     def generate_url_fields(self):
+        """
+        generate new url and url metadata from filename
+
+        """
         urls = [
             generate_s3_url(
                 host=self._config['SUBMISSION']['host'],
