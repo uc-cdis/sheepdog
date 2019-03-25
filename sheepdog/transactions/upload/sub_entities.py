@@ -344,7 +344,7 @@ class FileUploadEntity(UploadEntity):
             document.size = self.doc['file_size']
             document.file_name = self.doc['file_name']
 
-            # not updating cleversafe url even if file name changed,yes
+            # not updating cleversafe url even if file name changed
             # flipping url state back to registered
             main_url = self.get_main_url_metadata(document)
             if main_url:

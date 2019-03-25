@@ -235,6 +235,9 @@ def test_data_file_already_indexed(
     # check that record did not change, excluding revison
     record_dict = record.to_json()
     record1_dict = record1.to_json()
+
+    # The record should not changed. However, a patch update still happened, so revision changed
+    # Remove revision and check if records are the same
     record_dict.pop('rev')
     record1_dict.pop('rev')
     assert record_dict == record1_dict
