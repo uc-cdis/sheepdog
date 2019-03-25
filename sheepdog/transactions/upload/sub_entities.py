@@ -8,6 +8,7 @@ import psqlgraph
 import uuid
 from indexclient.client import Document
 from sqlalchemy.orm.exc import NoResultFound
+from sheepdog.globals import PRIMARY_URL_TYPE
 
 from sheepdog.errors import UserError
 from sheepdog.globals import (
@@ -343,10 +344,11 @@ class FileUploadEntity(UploadEntity):
             document.size = self.doc['file_size']
             document.file_name = self.doc['file_name']
 
-            # not updating cleversafe url even if file name changed,
+            # not updating cleversafe url even if file name changed,yes
             # flipping url state back to registered
             main_url = self.get_main_url_metadata(document)
-            document.urls_metadata[main_url]['state'] = 'registered'
+            if main_url:
+                document.urls_metadata[main_url]['state'] = 'registered'
 
             document.patch()
             return
@@ -379,7 +381,7 @@ class FileUploadEntity(UploadEntity):
         Get the main url metadata of the given document.
         """
         for key, data in iter(doc.urls_metadata.items()):
-            if data.get("type", None) == "cleversafe":
+            if data.get("type", None) == PRIMARY_URL_TYPE:
                 return key
 
         return None
