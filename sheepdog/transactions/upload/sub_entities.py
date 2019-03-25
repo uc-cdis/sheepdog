@@ -353,6 +353,7 @@ class FileUploadEntity(UploadEntity):
             document.patch()
             return
 
+        # Note: Below recreate flow is deprecated (self._is_replaceable is set to False)
         # generate new urls
         urls, urls_metadata = self.generate_url_fields()
         self.urls = urls
