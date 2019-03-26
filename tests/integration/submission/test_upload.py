@@ -983,10 +983,13 @@ def test_fail_to_version_with_no_data_release_change(data_release, released_file
         client, admin, submitter, data=file_data).json
     assert resp['code'] == 200
 
-    # assert no new version was created on indexd
+    # assert no new version was created on indexd,
+    # and doc did not get updated
     doc = indexd_client.get_latest_version(released_file.did)
     assert doc.version == "1"
     assert doc.metadata["release_number"] == data_release
+    assert doc.size == released_file.size
+    assert doc.hashes["md5"] == released_file.hashes["md5"]
 
 
 def test_version_with_data_release_change(data_release, unreleased_file, client,
