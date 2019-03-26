@@ -8,6 +8,7 @@ import psqlgraph
 import uuid
 from indexclient.client import Document
 from sqlalchemy.orm.exc import NoResultFound
+from sheepdog.globals import PRIMARY_URL_TYPE
 
 from sheepdog.errors import UserError
 from sheepdog.globals import (
@@ -164,7 +165,6 @@ class FileUploadEntity(UploadEntity):
         # entity_id is set to the node_id here
         node = super(FileUploadEntity, self).get_node_merge()
         self._populate_file_exist_in_index()
-
         if self._should_version_node(node):
             node = self.get_node_recreate(node)
 
@@ -333,49 +333,31 @@ class FileUploadEntity(UploadEntity):
         """
         # If indexd record is not replaceable, update existing document
         document = self.get_indexed_document()
-        if not self._is_replaceable:
-
-            if self.urls:
-                urls_to_add = [url for url in self.urls
-                               if url not in document.urls]
-                if urls_to_add:
-                    document.urls.extend(urls_to_add)
-                    document.patch()
-            return
 
         # indexd changes in released files trigger a new version
         if document.version and document.metadata.get("release_number"):
             return
 
-        document.urls = []
-        document.urls_metadata = {}
+        if not self._is_replaceable:
 
-        # generate new urls if none is specified
-        url = generate_s3_url(
-                host=self._config['SUBMISSION']['host'],
-                bucket=self._config['SUBMISSION']['bucket'],
-                program=self.transaction.program,
-                project=self.transaction.project,
-                uuid=self.entity_id,
-                file_name=self.doc['file_name']
-            )
-        self.urls = [url]
+            document.hashes['md5'] = self.doc['md5sum']
+            document.size = self.doc['file_size']
+            document.file_name = self.doc['file_name']
 
-        self.urls_metadata = {
-            url: {
-                'state': 'registered',
-                'type': PRIMARY_URL_TYPE
-            } for url in self.urls
-        }
+            # not updating cleversafe url even if file name changed
+            # flipping url state back to registered
+            main_url = self.get_main_url_metadata(document)
+            if main_url:
+                document.urls_metadata[main_url]['state'] = 'registered'
 
-        # update urls and urls_metadata if it does not already exist
-        for url in self.urls:
-            document.urls.append(url)
+            document.patch()
+            return
 
-        # update urls metadata
-        for url, md in self.urls_metadata.items():
-            document.urls_metadata[url] = md
-
+        # Note: Below recreate flow is deprecated (self._is_replaceable is set to False)
+        # generate new urls
+        urls, urls_metadata = self.generate_url_fields()
+        self.urls = urls
+        self.urls_metadata = urls_metadata
         old_doc = document.to_json()
         document.delete()
 
@@ -384,8 +366,8 @@ class FileUploadEntity(UploadEntity):
             'hashes': {'md5': self.doc['md5sum']},
             'size': self.doc['file_size'],
             'file_name': self.doc['file_name'],
-            'urls': old_doc.get("urls"),
-            'urls_metadata': old_doc.get("urls_metadata"),
+            'urls': self.urls,
+            'urls_metadata': self.urls_metadata,
             'acl': self.node.acl or self.get_file_acl(),
             'version': old_doc.get("version"),
             'metadata': old_doc.get('metadata', {}),
@@ -394,6 +376,38 @@ class FileUploadEntity(UploadEntity):
         # Re-create indexd doc with he same UUID
         self.transaction.indexd.create(
             did=old_doc['did'], baseid=old_doc['baseid'], **updated_fields)
+
+    def get_main_url_metadata(self, doc):
+        """
+        Get the main url metadata of the given document.
+        """
+        for key, data in iter(doc.urls_metadata.items()):
+            if data.get("type", None) == PRIMARY_URL_TYPE:
+                return key
+
+        return None
+
+    def generate_url_fields(self):
+        """
+        generate new url and url metadata from filename
+
+        """
+        urls = [
+            generate_s3_url(
+                host=self._config['SUBMISSION']['host'],
+                bucket=self._config['SUBMISSION']['bucket'],
+                program=self.transaction.program,
+                project=self.transaction.project,
+                uuid=self.entity_id,
+                file_name=self.doc['file_name']
+            )
+        ]
+        urls_metadata = {
+            url: {
+                'state': 'registered', 'type': PRIMARY_URL_TYPE
+            } for url in urls
+        }
+        return urls, urls_metadata
 
     def _new_version_index(self):
         """
@@ -589,9 +603,8 @@ class FileUploadEntity(UploadEntity):
                 node = query.one()
                 file_by_uuid_index = getattr(self.file_by_uuid, 'did', None)
                 file_by_hash_index = getattr(self.file_by_hash, 'did', None)
-
                 if ((file_by_uuid_index != node.node_id) or
-                        (file_by_hash_index != node.node_id)):
+                   (file_by_hash_index is not None and file_by_hash_index != node.node_id)):
                     self.record_error(
                         'Graph ID and index file ID found in index service do not match, '
                         'which is currently not permitted. Graph ID: {}. '
