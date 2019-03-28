@@ -5,6 +5,7 @@ index service).
 import json
 import copy
 import os
+import random
 
 from test_endpoints import put_cgci_blgsp
 
@@ -1021,3 +1022,64 @@ def test_submit_valid_csv_data_file(
 
     # response
     assert resp.status_code == 200, resp.data
+
+
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+def test_link_case_insensitivity(
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+):
+    """
+    Test submitting the same data again but updating the URL field (should
+    get added to the indexed file in index service).
+    """
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    for i in range(16):
+        document = MagicMock()
+        document.did = "14fd1746-61bb-401a-96d2-342cfaf7000" + str(i)
+        document.urls = [DEFAULT_URL]
+        get_index_hash.return_value = document
+
+        # only return the correct document by uuid IF the uuid provided is
+        # the one from above
+        def get_index_by_uuid(uuid):
+            if uuid == document.did:
+                return document
+            else:
+                return None
+
+        get_index_uuid.side_effect = get_index_by_uuid
+
+        updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
+        updated_file["submitter_id"] = str(i)
+        updated_file["experiments"]["submitter_id"] = "".join(
+            random.choice([k.upper(), k.lower()])
+            for k in updated_file["experiments"]["submitter_id"]
+        )
+        resp = submit_metadata_file(
+            client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+        )
+
+        # no index or alias creation
+        assert not create_index.called
+        assert not create_alias.called
+
+        # response
+        assert_positive_response(resp)
+        entity = assert_single_entity_from_response(resp)
+        assert entity["action"] == "create"
