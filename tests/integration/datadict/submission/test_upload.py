@@ -59,11 +59,17 @@ def submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp):
     assert resp.status_code == 200, resp.data
 
 
-def submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp, data=None):
+def submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp, data=None, format="json"):
     data = data or DEFAULT_METADATA_FILE
+    headers = submitter
     put_cgci_blgsp(client, admin)
-    data = json.dumps(data)
-    resp = client.put(BLGSP_PATH, headers=submitter, data=data)
+    if format == "tsv":
+        headers["Content-Type"] = "text/tsv"
+    elif format == "csv":
+        headers["Content-Type"] = "text/csv"
+    else: # json
+        data = json.dumps(data)
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
     return resp
 
 
@@ -869,3 +875,149 @@ def test_create_file_no_required_index(
     assert_negative_response(resp)
     entity = assert_single_entity_from_response(resp)
     assert entity["action"] == "create"
+
+
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+def test_submit_valid_tsv_data_file(
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+):
+    """
+    Test that we can submit a valid TSV data file
+    """
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    document = MagicMock()
+    document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
+    get_index_uuid.return_value = document
+    get_index_hash.return_value = document
+
+    # only return the correct document by uuid IF the uuid provided is
+    # the one from above
+    def get_index_by_uuid(uuid):
+        if uuid == document.did:
+            return document
+        else:
+            return None
+
+    get_index_uuid.side_effect = get_index_by_uuid
+
+    file = copy.deepcopy(DEFAULT_METADATA_FILE)
+    file["id"] = document.did
+    file["experiments.submitter_id"] = file.pop("experiments")["submitter_id"]
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "data/file_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        import csv
+        dw = csv.DictWriter(f, sorted(file.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(file)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path) # clean up (delete file)
+    assert data
+
+    resp = submit_metadata_file(
+        client, pg_driver, admin, submitter, cgci_blgsp, data, format="tsv"
+    )
+
+    # no index or alias creation
+    assert not create_index.called
+    assert not create_alias.called
+
+    # response
+    assert resp.status_code == 200, resp.data
+
+
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+def test_submit_valid_csv_data_file(
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    admin,
+    submitter,
+    cgci_blgsp,
+):
+    """
+    Test that we can submit a valid CSV data file
+    """
+    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+
+    document = MagicMock()
+    document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
+    get_index_uuid.return_value = document
+    get_index_hash.return_value = document
+
+    # only return the correct document by uuid IF the uuid provided is
+    # the one from above
+    def get_index_by_uuid(uuid):
+        if uuid == document.did:
+            return document
+        else:
+            return None
+
+    get_index_uuid.side_effect = get_index_by_uuid
+
+    file = copy.deepcopy(DEFAULT_METADATA_FILE)
+    file["id"] = document.did
+    file["experiments.submitter_id"] = file.pop("experiments")["submitter_id"]
+
+    # convert to CSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "data/file_tmp.csv"
+    )
+    with open(file_path, "w") as f:
+        import csv
+        dw = csv.DictWriter(f, sorted(file.keys()), delimiter=",")
+        dw.writeheader()
+        dw.writerow(file)
+
+    # read the CSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path) # clean up (delete file)
+    assert data
+
+    resp = submit_metadata_file(
+        client, pg_driver, admin, submitter, cgci_blgsp, data, format="csv"
+    )
+
+    # no index or alias creation
+    assert not create_index.called
+    assert not create_alias.called
+
+    # response
+    assert resp.status_code == 200, resp.data
