@@ -22,6 +22,7 @@
         <clin_shared:vital_status preferred_name="vital_status" display_order="30" cde="5" cde_ver="5.000" xsd_ver="2.6" tier="2" owner="TSS" procurement_status="Completed" restricted="false" source_system_identifier="3663353">dead</clin_shared:vital_status>
         <clin_shared:days_to_birth precision="day" xsd_ver="1.12" tier="1" cde="3008233" owner="TSS" procurement_status="Completed" preferred_name="birth_days_to" display_order="16" cde_ver="1.000">-25469</clin_shared:days_to_birth>
         <clin_shared:days_to_last_known_alive precision="day" xsd_ver="2.1" tier="2" cde="" owner="TSS" procurement_status="Not Available" preferred_name="" display_order="9999" cde_ver=""/>
+        <clin_shared:missing_computation_tag precision="day" xsd_ver="2.1" tier="2" cde="" owner="TSS" procurement_status="Not Available" preferred_name="" display_order="9999" cde_ver=""/>
         <clin_shared:days_to_death precision="day" xsd_ver="1.12" tier="1" cde="3165475" owner="TSS" procurement_status="Not Applicable" preferred_name="death_days_to" display_order="38" cde_ver="1.000"/>
         <clin_shared:days_to_last_followup precision="day" xsd_ver="1.12" tier="1" cde="3008273" owner="TSS" procurement_status="Completed" preferred_name="last_contact_days_to" display_order="34" cde_ver="1.000">4549</clin_shared:days_to_last_followup>
         <clin_shared:race_list>

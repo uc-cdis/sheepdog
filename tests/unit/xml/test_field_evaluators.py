@@ -8,7 +8,12 @@ from sheepdog.xml.evaluators.fields import BasicEvaluator, FilterElementEvaluato
 @pytest.mark.parametrize("props, expected",
                          [(dict(path="//admin:file_uuid", nullable="false"), "2940CCCF-533D-4834-A321-2814898DE639"),
                           (dict(path="//admin:file_uuidx", nullable="true"), None),
-                          (dict(path="//admin:day_of_dcc_upload", nullable="false", type="int"), 22)])
+                          (dict(path="//missing_computation_tag * -1", nullable="true", type="int"), None),
+                          (dict(path="//admin:day_of_dcc_upload", nullable="false", type="int"), 22)],
+                         ids=["Basic get from XML not nullable string type",
+                              "Get Missing Element and nullable",
+                              "Handle NaN for int computation",
+                              "Basic get from XML not nullable int type"])
 def test_basic_evaluator(xml_fixture, props, expected):
 
     xml = etree.fromstring(xml_fixture)

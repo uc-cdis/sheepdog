@@ -94,10 +94,9 @@ class Evaluator(object):
         if value is None:
             return None
 
-        # handle NaN
-        if self.data_type == "float" and math.isnan(float(value)):
+        # handle NaN, possibly occurs in types (float, int)
+        if self.data_type in ["float", "int"] and math.isnan(float(value)):
             return None
-
         prop = self._to_bool(value) if self.data_type == "bool" else PROPERTY_TYPES[self.data_type](value)
         return prop
 
