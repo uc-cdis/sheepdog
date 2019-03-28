@@ -606,7 +606,6 @@ def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
         "data/experiment_tmp.tsv"
     )
     with open(file_path, "w") as f:
-        import csv
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
         dw.writerow(data)
@@ -641,7 +640,6 @@ def test_submit_valid_csv(client, pg_driver, cgci_blgsp, submitter):
         "data/experiment_tmp.csv"
     )
     with open(file_path, "w") as f:
-        import csv
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter=",")
         dw.writeheader()
         dw.writerow(data)
@@ -655,6 +653,56 @@ def test_submit_valid_csv(client, pg_driver, cgci_blgsp, submitter):
 
     headers = submitter
     headers["Content-Type"] = "text/csv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+
+
+def test_can_submit_with_asterisk_json(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that we can submit when some fields have asterisks prepended
+    """
+
+    headers = submitter
+    data = json.dumps({
+        "*type": "experiment",
+        "*submitter_id": "BLGSP-71-06-00019",
+        "*projects": {
+            "id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
+        }
+    })
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+
+
+def test_can_submit_with_asterisk_tsv(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that we can submit when some fields have asterisks prepended
+    """
+
+    data = {
+        "*type": "experiment",
+        "*submitter_id": "BLGSP-71-06-00019",
+        "*projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
+    }
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path) # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 200, resp.data
 
