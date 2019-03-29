@@ -133,6 +133,11 @@ class DelimitedConverter(object):
         """
         doc, links = {}, {}
         row = strip_whitespace_from_str_dict(row)
+
+        # Remove asterisks from dict keys
+        for key in list(row):
+            row[key.lstrip("*")] = row.pop(key)
+
         # Parse type
         cls = set_row_type(row)
         if cls is None:
