@@ -32,7 +32,7 @@ class UploadEntityFactory:
             return UploadEntity(transaction, config)
 
         # Remove asterisks from dict keys
-        for key in doc:
+        for key in list(doc):
             doc[key.lstrip("*")] = doc.pop(key)
 
         node_type = doc.get("type")

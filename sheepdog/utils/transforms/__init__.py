@@ -135,7 +135,7 @@ class DelimitedConverter(object):
         row = strip_whitespace_from_str_dict(row)
 
         # Remove asterisks from dict keys
-        for key in row:
+        for key in list(row):
             row[key.lstrip("*")] = row.pop(key)
 
         # Parse type
