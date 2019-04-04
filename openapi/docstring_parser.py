@@ -8,7 +8,7 @@ class Argument(object):
         name (type): description
     """
 
-    re_arg = re.compile(r"([\w_]+)(?: \(([\w_]+)\))?: ([\w\s_.,;:'\"`()|]+)")
+    re_arg = re.compile(r"([\w_-]+)(?: \(([\w_]+)\))?: ([\w\s_.,;:'\"`()|/-]+)")
     #                     ^ name        ^ type        ^ description
 
     def __init__(self, name=None, arg_type=None, description=None):
@@ -40,7 +40,7 @@ class Docstring(object):
     Store docstring arguments by section.
     """
 
-    section_names = ["Args", "Query Args", "Responses", "Summary", "Tags"]
+    section_names = ["Args", "Query Args", "Headers", "Responses", "Summary", "Tags"]
     single_arg_section_names = ["Summary", "Tags"]
 
     def __init__(self):
@@ -75,6 +75,7 @@ class Docstring(object):
             pass
 
         args = map(Argument.from_string, filter(bool, section_args.split("\n")))
+
         if section in cls.single_arg_section_names:
             return args
         else:

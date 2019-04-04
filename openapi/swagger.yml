@@ -324,6 +324,11 @@ paths:
         name: body
         schema:
           $ref: '#/definitions/schema_entity'
+      - description: application/json (default), text/tab-separated-values, text/tsv
+          or text/csv
+        in: header
+        name: Content-Type
+        type: string
       responses:
         '201':
           description: Entities created successfully
@@ -356,6 +361,11 @@ paths:
         name: body
         schema:
           $ref: '#/definitions/schema_entity'
+      - description: application/json (default), text/tab-separated-values, text/tsv
+          or text/csv
+        in: header
+        name: Content-Type
+        type: string
       responses:
         '201':
           description: Entities created successfully
@@ -448,6 +458,11 @@ paths:
         name: body
         schema:
           $ref: '#/definitions/schema_entity'
+      - description: application/json (default), text/tab-separated-values, text/tsv
+          or text/csv
+        in: header
+        name: Content-Type
+        type: string
       responses:
         '201':
           description: Entities created successfully
@@ -480,6 +495,11 @@ paths:
         name: body
         schema:
           $ref: '#/definitions/schema_entity'
+      - description: application/json (default), text/tab-separated-values, text/tsv
+          or text/csv
+        in: header
+        name: Content-Type
+        type: string
       responses:
         '201':
           description: Entities created successfully
@@ -625,7 +645,7 @@ paths:
         name: project
         required: true
         type: string
-      - description: A comma
+      - description: A comma-separated list of ids specifying the entities to retrieve.
         in: path
         name: entity_id_string
         required: true
