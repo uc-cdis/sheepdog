@@ -95,6 +95,20 @@ def translate_to_swag(doc, subs):
         ]
     )
 
+    # Headers
+    args = doc.get("Headers")
+    spec["parameters"].extend(
+        [
+            {
+                "in": "header",
+                "name": name,
+                "type": swagger_types.get(props.type, props.type),
+                "description": props.description,
+            }
+            for name, props in args.iteritems()
+        ]
+    )
+
     # handle substitutions
     for p in spec["parameters"]:
         for k, v in subs.iteritems():

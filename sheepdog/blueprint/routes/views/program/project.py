@@ -63,6 +63,9 @@ def create_viewer(method, bulk=False, dry_run=False):
             project (str): |project_id|
             body (schema_entity): input body
 
+        Headers:
+            Content-Type (str): application/json (default), text/tab-separated-values, text/tsv or text/csv
+
         Responses:
             201: Entities created successfully
             404: Resource not found.
