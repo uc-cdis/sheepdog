@@ -1,8 +1,7 @@
 from lxml import etree
 import pytest
 
-from sheepdog.xml.evaluators.fields import BasicEvaluator, FilterElementEvaluator, LastFollowUpEvaluator, \
-    TreatmentTherapyEvaluator, VitalStatusEvaluator
+from sheepdog.xml.evaluators import fields
 
 
 @pytest.mark.parametrize("props, expected",
@@ -18,7 +17,7 @@ def test_basic_evaluator(xml_fixture, props, expected):
 
     xml = etree.fromstring(xml_fixture)
     nspace = xml.nsmap
-    evaluator = BasicEvaluator(xml, nspace, props)
+    evaluator = fields.BasicEvaluator(xml, nspace, props)
     assert expected == evaluator.evaluate()
 
 
@@ -32,7 +31,7 @@ def test_filter_evaluator(xml_fixture, props, expected):
 
     xml = etree.fromstring(xml_fixture)
     nspace = xml.nsmap
-    evaluator = FilterElementEvaluator(xml, nspace, props)
+    evaluator = fields.FilterElementEvaluator(xml, nspace, props)
     assert expected == evaluator.evaluate()
 
 
@@ -43,7 +42,7 @@ def test_last_follow_up_evaluator(xml_fixture, props, expected):
 
     xml = etree.fromstring(xml_fixture).xpath("//*[local-name()='patient']")[0]
     nspace = xml.nsmap
-    evaluator = LastFollowUpEvaluator(xml, nspace, props)
+    evaluator = fields.LastFollowUpEvaluator(xml, nspace, props)
     assert expected == evaluator.evaluate()
 
 
@@ -57,7 +56,7 @@ def test_vital_status_evaluator(xml_fixture, props, expected):
 
     xml = etree.fromstring(xml_fixture).xpath("//*[local-name()='patient']")[0]
     nspace = xml.nsmap
-    evaluator = VitalStatusEvaluator(xml, nspace, props)
+    evaluator = fields.VitalStatusEvaluator(xml, nspace, props)
     assert expected == evaluator.evaluate()
 
 
@@ -81,5 +80,26 @@ def test_treatment_or_therapy_evaluator(xml_radiation_fixture, props, expected):
 
     xml = etree.fromstring(xml_radiation_fixture).xpath("//*[local-name()='patient']")[0]
     nspace = xml.nsmap
-    evaluator = TreatmentTherapyEvaluator(xml, nspace, props)
+    evaluator = fields.TreatmentTherapyEvaluator(xml, nspace, props)
+    assert expected == evaluator.evaluate()
+
+
+@pytest.mark.parametrize("props, expected",
+                         [(dict(path="//admin:file_uuid/text()", nullable="false",
+                                evaluator=dict(
+                                    name="unique_value"
+                                )), "2940CCCF-533D-4834-A321-2814898DE639"),
+                          (dict(path="//clin_shared:days_to_initial_pathologic_diagnosis/text()",
+                                evaluator=dict(
+                                    name="unique_value"
+                                ), type="int"), 0),
+                          (dict(path="//clin_shared:unique_value_test/text()",
+                                evaluator=dict(
+                                    name="unique_value"
+                                ), type="str.title", default="not reported"), "Not Reported")])
+def test_unique_value_evaluator(xml_fixture, props, expected):
+
+    xml = etree.fromstring(xml_fixture)
+    nspace = xml.nsmap
+    evaluator = fields.UniqueValueEvaluator(xml, nspace, props)
     assert expected == evaluator.evaluate()

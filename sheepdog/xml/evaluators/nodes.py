@@ -5,8 +5,7 @@ from dictionaryutils import dictionary
 from gdcdatamodel import models
 
 from sheepdog.xml.evaluators import Evaluator
-from sheepdog.xml.evaluators.fields import BasicEvaluator, FilterElementEvaluator, LastFollowUpEvaluator, \
-    TreatmentTherapyEvaluator, VitalStatusEvaluator
+from sheepdog.xml.evaluators import fields
 
 
 class NodeEvaluator(Evaluator):
@@ -124,8 +123,9 @@ class TreatmentNodeEvaluator(NodeEvaluator):
                 treatment_data.update(entry)
                 treatment_data["id"] = self.generate_id(i)
 
-                # update submitter id so its a bit  for each treatment node
-                treatment_data["submitter_id"] = "{}_{}".format(treatment_data["submitter_id"], i)
+                # update submitter id so its different for each treatment node
+                if i > 0:
+                    treatment_data["submitter_id"] = "{}_{}".format(treatment_data["submitter_id"], i)
                 new_data.append(treatment_data)
 
         return new_data
@@ -134,7 +134,9 @@ class TreatmentNodeEvaluator(NodeEvaluator):
         id_params = self.property_mappings.get("generated_id")
         _id = self.search_path(id_params["name"], nullable=False)
         _id = _id[0].text if _id else _id
-        return str(uuid5(UUID(id_params['namespace']), _id + str(index)))
+        if index > 0:
+            _id += str(index)
+        return str(uuid5(UUID(id_params['namespace']), _id))
 
 
 class EvaluatorFactory(object):
@@ -145,19 +147,22 @@ class EvaluatorFactory(object):
 
         if not evaluator:
             # generic evaluator
-            return BasicEvaluator(root, namespaces, props)
+            return fields.BasicEvaluator(root, namespaces, props)
 
         if evaluator == "last_follow_up":
-            return LastFollowUpEvaluator(root, namespaces, props)
+            return fields.LastFollowUpEvaluator(root, namespaces, props)
 
         if evaluator == "vital_status":
-            return VitalStatusEvaluator(root, namespaces, props)
+            return fields.VitalStatusEvaluator(root, namespaces, props)
 
         if evaluator == "filter":
-            return FilterElementEvaluator(root, namespaces, props)
+            return fields.FilterElementEvaluator(root, namespaces, props)
 
         if evaluator == "treatment_therapy":
-            return TreatmentTherapyEvaluator(root, namespaces, props)
+            return fields.TreatmentTherapyEvaluator(root, namespaces, props)
+
+        if evaluator == "unique_value":
+            return fields.UniqueValueEvaluator(root, namespaces, props)
 
     @staticmethod
     def evaluate_node(data_type, root, values, namespaces):
