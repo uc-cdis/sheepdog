@@ -49,6 +49,8 @@ def test_last_follow_up_evaluator(xml_fixture, props, expected):
 @pytest.mark.parametrize("props, expected",
                          [(dict(path="./shared:vital_status|./clin_shared:vital_status",
                                 evaluator=dict(name="vital_status",
+                                                dead_vital_status_search="(//clin_shared:vital_status|//shared:vital_status)"
+                                                                         "[translate(text(), 'DEAD', 'dead') = 'dead']",
                                                follow_up_path="//shared:days_to_last_followup|"
                                                               "//clin_shared:days_to_last_followup"),
                                 type="str.title"), "Dead")])

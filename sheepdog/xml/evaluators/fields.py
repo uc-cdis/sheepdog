@@ -94,6 +94,12 @@ class VitalStatusEvaluator(LastFollowUpEvaluator):
         return None
 
     def get_elements(self):
+        # query for vital_status == DEAD
+        d_path = self.get_evaluator_property("dead_vital_status_search")
+        is_dead = self.search_path(d_path, nullable=True)  # type: list[lxml.etree.Element]
+        if is_dead:
+            return is_dead
+
         # locate max days_to_last_follow_up
         path = self.get_evaluator_property("follow_up_path")
         max_element = self.get_max_element(path)
