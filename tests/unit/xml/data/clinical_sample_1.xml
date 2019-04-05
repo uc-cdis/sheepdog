@@ -34,6 +34,7 @@
         <shared:bcr_patient_uuid preferred_name="" display_order="9999" cde="" cde_ver="" xsd_ver="2.3" owner="TSS" procurement_status="Completed" restricted="false">5813997A-D7DC-4F7C-8D4B-E979832168A9</shared:bcr_patient_uuid>
         <shared:history_of_neoadjuvant_treatment preferred_name="history_neoadjuvant_treatment" display_order="20" cde="3382737" cde_ver="1.000" xsd_ver="2.4" tier="1" owner="TSS" procurement_status="Completed" restricted="false" source_system_identifier="3663343">No</shared:history_of_neoadjuvant_treatment>
         <clin_shared:informed_consent_verified preferred_name="patient_consent_status" display_order="73" cde="3288361" cde_ver="1.000" xsd_ver="2.4" tier="1" owner="TSS" procurement_status="Completed" restricted="false">YES</clin_shared:informed_consent_verified>
+        <clin_shared:unique_value_test preferred_name="" display_order="9999" cde="3226281" cde_ver="" xsd_ver="2.4" tier="2" owner="TSS" procurement_status="Completed" restricted="false">C34.1</clin_shared:unique_value_test>
         <clin_shared:icd_o_3_site preferred_name="" display_order="9999" cde="3226281" cde_ver="" xsd_ver="2.4" tier="2" owner="TSS" procurement_status="Completed" restricted="false">C34.1</clin_shared:icd_o_3_site>
         <clin_shared:icd_o_3_histology preferred_name="" display_order="9999" cde="3226275" cde_ver="" xsd_ver="2.4" tier="2" owner="TSS" procurement_status="Completed" restricted="false">8140/3</clin_shared:icd_o_3_histology>
         <clin_shared:icd_10 preferred_name="" display_order="9999" cde="3226287" cde_ver="" xsd_ver="2.4" tier="2" owner="TSS" procurement_status="Completed" restricted="false">C34.1</clin_shared:icd_10>
@@ -49,6 +50,7 @@
         <clin_shared:month_of_form_completion preferred_name="form_completion_month" display_order="999" cde="2975718" cde_ver="1.000" xsd_ver="2.2" tier="2" owner="TSS" procurement_status="Completed" restricted="false">6</clin_shared:month_of_form_completion>
         <clin_shared:year_of_form_completion preferred_name="form_completion_year" display_order="999" cde="2975720" cde_ver="1.000" xsd_ver="2.2" tier="2" owner="TSS" procurement_status="Completed" restricted="false">2014</clin_shared:year_of_form_completion>
         <shared_stage:stage_event system="AJCC">
+            <clin_shared:unique_value_test preferred_name="" display_order="9999" cde="3226281" cde_ver="" xsd_ver="2.4" tier="2" owner="TSS" procurement_status="Completed" restricted="false">C34.12</clin_shared:unique_value_test>
             <shared_stage:system_version preferred_name="ajcc_staging_edition" display_order="25" cde="2722309" cde_ver="1.000" xsd_ver="2.6" tier="1" owner="TSS" procurement_status="Completed" restricted="false" source_system_identifier="3663348">6th</shared_stage:system_version>
             <shared_stage:clinical_stage preferred_name="ajcc_clinical_tumor_stage" display_order="38" cde="3440332" cde_ver="1.000" xsd_ver="2.6" tier="2" owner="TSS" procurement_status="Not Applicable" restricted="false"/>
             <shared_stage:pathologic_stage preferred_name="ajcc_pathologic_tumor_stage" display_order="29" cde="3203222" cde_ver="1.000" xsd_ver="2.6" tier="2" owner="TSS" procurement_status="Completed" restricted="false" source_system_identifier="3663352">Stage IIB</shared_stage:pathologic_stage>
@@ -115,6 +117,7 @@
         <luad_nte:new_tumor_events>
             <nte:new_tumor_event_after_initial_treatment preferred_name="new_tumor_event_dx_indicator" display_order="64" cde="3121376" cde_ver="1.000" xsd_ver="2.5" tier="1" owner="TSS" procurement_status="Completed" restricted="false" source_system_identifier="3663421">YES</nte:new_tumor_event_after_initial_treatment>
             <luad_nte:new_tumor_event>
+                <clin_shared:days_to_initial_pathologic_diagnosis precision="day" xsd_ver="1.12" tier="1" cde="3131740" owner="TSS" procurement_status="Completed" preferred_name="initial_pathologic_dx_days_to" display_order="9999" cde_ver="1.000">0</clin_shared:days_to_initial_pathologic_diagnosis>
                 <nte:days_to_new_tumor_event_after_initial_treatment precision="day" xsd_ver="2.2" tier="1" cde="3392464" owner="TSS" procurement_status="Completed" preferred_name="new_tumor_event_dx_days_to" display_order="68" cde_ver="1.000">1893</nte:days_to_new_tumor_event_after_initial_treatment>
                 <luad_nte:new_neoplasm_event_types>
                     <nte:new_neoplasm_event_type preferred_name="new_tumor_event_type" display_order="69" cde="3119721" cde_ver="1.000" xsd_ver="2.5" tier="2" owner="TSS" procurement_status="Completed" restricted="false" source_system_identifier="3663426">Locoregional Recurrence</nte:new_neoplasm_event_type>

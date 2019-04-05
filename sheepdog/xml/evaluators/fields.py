@@ -8,7 +8,7 @@ class BasicEvaluator(Evaluator):
     """
 
     def _evaluate(self):
-        """ Searches sml root for the property path and raises an exceoption if multiple paths are found
+        """ Searches xml root for the property path and raises an exceoption if multiple paths are found
         Returns:
              Any: text value for path in the xml
         Raises:
@@ -155,3 +155,17 @@ class TreatmentTherapyEvaluator(Evaluator):
     @staticmethod
     def is_radiation(path):
         return "radiation_therapy" in path
+
+
+class UniqueValueEvaluator(BasicEvaluator):
+    """ Searches XML and returns a value only if all elements found for
+        path has the same value, None values are omitted by the search
+        query
+    """
+
+    def _evaluate(self):
+        elements = self.search_path()  # list[str]
+        unique_values = set(elements)
+        if len(unique_values) == 1:
+            return unique_values.pop()
+        return None
