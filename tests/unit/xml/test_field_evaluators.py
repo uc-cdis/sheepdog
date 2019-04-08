@@ -77,6 +77,21 @@ def test_vital_status_evaluator(xml_fixture, props, expected):
                          ), [
                              dict(treatment_type="Radiation Therapy, NOS", treatment_or_therapy="yes"),
                              dict(treatment_type="Pharmaceutical Therapy, NOS", treatment_or_therapy="yes")
+                            ]), (dict(
+                             path=["//clin_shared:radiation_therapy", "//clin_shared:postoperative_rx_tx"],
+                             default="not reported",
+                             evaluator=dict(
+                                 name="treatment_therapy",
+                                 new_tumor_event_path="//nte:*[@preferred_name='new_tumor_event_type']",
+                                 additional_radiation_path="./nte:additional_radiation_therapy",
+                                 additional_pharmaceutical_path="./nte:additional_pharmaceutical_therapy",
+                                 allowed_tumor_events=[
+                                     "Locoregional Recurrence",
+                                     "Metastatic"
+                                ])
+                         ), [
+                             dict(treatment_type="Radiation Therapy, NOS", treatment_or_therapy="no"),
+                             dict(treatment_type="Pharmaceutical Therapy, NOS", treatment_or_therapy="not reported")
                             ])])
 def test_treatment_or_therapy_evaluator(xml_radiation_fixture, props, expected):
 

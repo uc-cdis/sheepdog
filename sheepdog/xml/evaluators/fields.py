@@ -115,7 +115,7 @@ class TreatmentTherapyEvaluator(Evaluator):
         return self._evaluate()
 
     def search(self, root, path, nullable=True):
-        val = "not reported"
+        val = None
         elements = root.xpath(path, namespaces=self.xml_namespaces, nullable=nullable)
         if [e for e in elements if e.text is not None and e.text.lower() == "yes"]:
             val = "yes"
@@ -153,10 +153,12 @@ class TreatmentTherapyEvaluator(Evaluator):
             for evt in tumor_events:
                 if evt.text in allowed_events:
                     # search parent for yes
-                    val = self.search(evt.getparent(), additional_path)
+                    search_result = self.search(evt.getparent(), additional_path)
+                    if search_result:
+                        val = search_result
                     if val == "yes":
                         break
-        return val
+        return val or self.default
 
     @staticmethod
     def is_radiation(path):
