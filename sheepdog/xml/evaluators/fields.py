@@ -177,11 +177,11 @@ class TreatmentTherapyEvaluator(Evaluator):
         tumor_event_elements = self.search_path(new_tumor_event_path)
         if tumor_event_elements:
             return [element for element in tumor_event_elements if element.text in allowed_events]
-        return self._get_special_nte_events()
+        return self._get_non_uniform_nte_events()
 
-    def _get_special_nte_events(self):
+    def _get_non_uniform_nte_events(self):
         # load tumor events for special projects like kich
-        if self.is_non_uniform_nte():
+        if not self.is_non_uniform_nte():
             return None
 
         new_tumor_event_path = "//*[local-name() = 'new_tumor_event']"
