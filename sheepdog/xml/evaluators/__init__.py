@@ -52,6 +52,10 @@ class Evaluator(object):
     def default(self):
         return self.property_mappings.get("default")
 
+    @property
+    def study(self):
+        return self.root_element.prefix.lower() if self.root_element else None
+
     def get_evaluator_property(self, key):
         return self.property_mappings.get("evaluator").get(key)
 
@@ -138,4 +142,4 @@ class Evaluator(object):
         for val, possible_values in value_mappings.items():
             if value in possible_values:
                 return val
-        raise ValueError("XML value {} not in the mapping: {}".format(value, value_mappings))
+        return value

@@ -1,3 +1,5 @@
+from lxml import etree
+
 from sheepdog.xml.evaluators import Evaluator
 
 
@@ -111,6 +113,13 @@ class VitalStatusEvaluator(LastFollowUpEvaluator):
 class TreatmentTherapyEvaluator(Evaluator):
     """ Computes treatment of therapy value set in the API, also sets the treatment_type"""
 
+    def __init__(self, root, namespaces, mappings):
+        super(TreatmentTherapyEvaluator, self).__init__(root, namespaces, mappings)
+        self.non_uniform_nte_study_list = self.get_evaluator_property("non_uniform_nte_namespaces") or []
+
+    def is_non_uniform_nte(self):
+        return self.study in self.non_uniform_nte_study_list
+
     def evaluate(self):
         return self._evaluate()
 
@@ -145,20 +154,52 @@ class TreatmentTherapyEvaluator(Evaluator):
         if val == "yes":
             return val
 
+        # search for new_tumor_event_type
+        tumor_events = self._get_tumor_events()
+        if tumor_events:
+            for evt in tumor_events:
+                # search parent for yes
+                additional_path_parent = self._get_additional_nte_root(evt)
+                search_result = self.search(additional_path_parent, additional_path)
+                if search_result:
+                    val = search_result
+                if val == "yes":
+                    break
+        else:
+            pass
+        return val or self.default
+
+    def _get_tumor_events(self):
+
         allowed_events = self.get_evaluator_property("allowed_tumor_events")
         # search for new_tumor_event_type
         new_tumor_event_path = self.get_evaluator_property("new_tumor_event_path")
-        tumor_events = self.search_path(new_tumor_event_path)
-        if tumor_events:
-            for evt in tumor_events:
-                if evt.text in allowed_events:
-                    # search parent for yes
-                    search_result = self.search(evt.getparent(), additional_path)
-                    if search_result:
-                        val = search_result
-                    if val == "yes":
-                        break
-        return val or self.default
+        tumor_event_elements = self.search_path(new_tumor_event_path)
+        if tumor_event_elements:
+            return [element for element in tumor_event_elements if element.text in allowed_events]
+        return self._get_special_nte_events()
+
+    def _get_special_nte_events(self):
+        # load tumor events for special projects like kich
+        if self.is_non_uniform_nte():
+            return None
+
+        new_tumor_event_path = "//*[local-name() = 'new_tumor_event']"
+        return self.search_path(new_tumor_event_path)
+
+    def _get_additional_nte_root(self, element):
+
+        # fix for KICH, KIRP, and KIRC
+        if self.is_non_uniform_nte():
+            return element
+
+        potential_parent = element.getparent()
+
+        # fix for LUAD, LUNG etc
+        parent_tag = etree.QName(potential_parent.tag).localname
+        if parent_tag in ["new_neoplasm_event_types"]:
+            return potential_parent.getparent()
+        return potential_parent
 
     @staticmethod
     def is_radiation(path):
