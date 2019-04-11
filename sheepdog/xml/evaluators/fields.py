@@ -116,12 +116,13 @@ class TreatmentTherapyEvaluator(Evaluator):
     def __init__(self, root, namespaces, mappings):
         super(TreatmentTherapyEvaluator, self).__init__(root, namespaces, mappings)
 
-        self.non_uniform_nte_study_list = self.get_evaluator_property("non_uniform_nte_namespaces") or []
-        # ensure its all in lower case
-        self.non_uniform_nte_study_list = [study.lower() for study in self.non_uniform_nte_study_list]
+        self.non_uniform_nte_study_paths = self.get_evaluator_property("non_uniform_nte_paths") or {}
 
     def is_non_uniform_nte(self):
-        return self.study in self.non_uniform_nte_study_list
+        return self.study in self.non_uniform_nte_study_paths.keys()
+
+    def get_study_nte_path(self):
+        return self.non_uniform_nte_study_paths.get(self.study)
 
     def evaluate(self):
         return self._evaluate()
@@ -187,8 +188,7 @@ class TreatmentTherapyEvaluator(Evaluator):
         if not self.is_non_uniform_nte():
             return None
 
-        new_tumor_event_path = "//*[local-name() = 'new_tumor_event']"
-        return self.search_path(new_tumor_event_path)
+        return self.search_path(self.get_study_nte_path())
 
     def _get_additional_nte_root(self, element):
 
