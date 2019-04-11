@@ -120,3 +120,29 @@ def test_unique_value_evaluator(xml_fixture, props, expected):
     nspace = xml.nsmap
     evaluator = fields.UniqueValueEvaluator(xml, nspace, props)
     assert expected == evaluator.evaluate()
+
+
+@pytest.mark.parametrize("props, expected",
+                         [(dict(path='//shared:days_to_death[not(@procurement_status = "Not Applicable" '
+                                     'or @procurement_status = "Not Available")]|//clin_shared:'
+                                     'days_to_death[not(@procurement_status = "Not Applicable" '
+                                     'or @procurement_status = "Not Available")]',
+                                nullable="false", type="int"), ["luad", "ucec"])])
+def test_get_study(xml_fixture, props, expected):
+    xml = etree.fromstring(xml_fixture)
+    nspace = xml.nsmap
+    evaluator = fields.BasicEvaluator(xml, nspace, props)
+    assert evaluator.study in expected
+
+
+@pytest.mark.parametrize("props, expected",
+                         [(dict(path='//clin_shared:icd_o_3_site',
+                                values={"X": ["C34.1", "C54.1", "c34.1", "c54.1"]}, type="str"), "X"),
+                          (dict(path='//admin:year_of_dcc_upload',
+                                values={-1000: ["2016"]}, type="int"), -1000)
+                          ])
+def test_value_mapping(xml_fixture, props, expected):
+    xml = etree.fromstring(xml_fixture)
+    nspace = xml.nsmap
+    evaluator = fields.BasicEvaluator(xml, nspace, props)
+    assert expected == evaluator.evaluate()

@@ -8,7 +8,7 @@
         <admin:disease_code xsd_ver="2.6">UCEC</admin:disease_code>
         <admin:day_of_dcc_upload xsd_ver="1.17">22</admin:day_of_dcc_upload>
         <admin:month_of_dcc_upload xsd_ver="1.17">12</admin:month_of_dcc_upload>
-        <admin:year_of_dcc_upload xsd_ver="1.17">2016</admin:year_of_dcc_upload>
+        <admin:year_of_dcc_upload xsd_ver="1.17">-1000</admin:year_of_dcc_upload>
         <admin:patient_withdrawal>
             <admin:withdrawn>false</admin:withdrawn>
         </admin:patient_withdrawal>

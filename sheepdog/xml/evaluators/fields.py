@@ -115,7 +115,10 @@ class TreatmentTherapyEvaluator(Evaluator):
 
     def __init__(self, root, namespaces, mappings):
         super(TreatmentTherapyEvaluator, self).__init__(root, namespaces, mappings)
+
         self.non_uniform_nte_study_list = self.get_evaluator_property("non_uniform_nte_namespaces") or []
+        # ensure its all in lower case
+        self.non_uniform_nte_study_list = [study.lower() for study in self.non_uniform_nte_study_list]
 
     def is_non_uniform_nte(self):
         return self.study in self.non_uniform_nte_study_list
