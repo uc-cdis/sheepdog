@@ -176,10 +176,12 @@ class TreatmentTherapyEvaluator(Evaluator):
         allowed_events = self.get_evaluator_property("allowed_tumor_events")
         # search for new_tumor_event_type
         new_tumor_event_path = self.get_evaluator_property("new_tumor_event_path")
-        tumor_event_elements = self.search_path(new_tumor_event_path)
+        tumor_event_elements = self.search_path(new_tumor_event_path) or []
         if tumor_event_elements:
-            return [element for element in tumor_event_elements if element.text in allowed_events]
-        return self._get_non_uniform_nte_events()
+            tumor_event_elements =  [element for element in tumor_event_elements if element.text in allowed_events]
+        if self.study == "ucec":
+            tumor_event_elements += self.search_path("//follow_up_v1.7:follow_up")
+        return tumor_event_elements or self._get_non_uniform_nte_events()
 
     def _get_non_uniform_nte_events(self):
         # load tumor events for special projects like kich
@@ -189,6 +191,10 @@ class TreatmentTherapyEvaluator(Evaluator):
         return self.search_path(self.get_study_nte_path())
 
     def _get_additional_nte_root(self, element):
+
+        # fix for UCEC follow up 1.7
+        if element.prefix == "follow_up_v1.7":
+            return element
 
         # fix for KICH, KIRP, and KIRC
         if self.is_non_uniform_nte():
