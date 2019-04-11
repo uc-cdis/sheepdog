@@ -169,8 +169,6 @@ class TreatmentTherapyEvaluator(Evaluator):
                     val = search_result
                 if val == "yes":
                     break
-        else:
-            pass
         return val or self.default
 
     def _get_tumor_events(self):
