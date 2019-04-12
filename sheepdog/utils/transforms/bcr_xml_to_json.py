@@ -669,6 +669,8 @@ class BcrClinicalXmlToJsonParser(object):
             namespaces["nte"] = "http://tcga.nci/bcr/xml/clinical/shared/new_tumor_event/2.7"
         if "shared_stage" not in namespaces:
             namespaces["shared_stage"] = "http://tcga.nci/bcr/xml/clinical/shared/stage/2.7"
+        if "follow_up_v1.7" not in namespaces:
+            namespaces["follow_up_v1.7"] = "http://tcga.nci/bcr/xml/clinical/ucec/followup/2.7/1.7"
 
         for data_type, params in self.xpath_ref.items():
 
