@@ -179,8 +179,8 @@ class TreatmentTherapyEvaluator(Evaluator):
         tumor_event_elements = self.search_path(new_tumor_event_path) or []
         if tumor_event_elements:
             tumor_event_elements = [element for element in tumor_event_elements if element.text in allowed_events]
-            if self.study == "ucec":  # add ucec v1.7 follow up path
-                tumor_event_elements += self.search_path("//follow_up_v1.7:follow_up")
+        if self.study == "ucec":  # add ucec v1.7 follow up path
+            tumor_event_elements += self.search_path("//follow_up_v1.7:follow_up")
         return tumor_event_elements or self._get_non_uniform_nte_events()
 
     def _get_non_uniform_nte_events(self):
