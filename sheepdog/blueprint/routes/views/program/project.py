@@ -388,6 +388,16 @@ def export_entities(program, project):
         404: No id is found
         403: Unauthorized request.
     """
+    try:
+        import uwsgi
+    except ImportError:
+        # not in uWSGI, skip
+        pass
+    else:
+        if hasattr(uwsgi, "set_user_harakiri"):
+            # disable HARAKIRI because export is meant to take a long time
+            uwsgi.set_user_harakiri(0)
+
     if flask.request.method == "GET":
         # Unpack multidict, or values will unnecessarily be lists.
         kwargs = {k: v for k, v in flask.request.args.iteritems()}
@@ -412,8 +422,10 @@ def export_entities(program, project):
         headers = {"Content-Disposition": content_disp}
         utils.transforms.graph_to_doc.validate_export_node(node_label)
         return flask.Response(
-            utils.transforms.graph_to_doc.export_all(
-                node_label, project_id, file_format, flask.current_app.db
+            flask.stream_with_context(
+                utils.transforms.graph_to_doc.export_all(
+                    node_label, project_id, file_format, flask.current_app.db
+                )
             ),
             mimetype=mimetype,
             headers=headers,
@@ -424,7 +436,11 @@ def export_entities(program, project):
         )
         content_disp = "attachment; filename={}".format(output.filename)
         headers = {"Content-Disposition": content_disp}
-        return flask.Response(output.get_response(), mimetype=mimetype, headers=headers)
+        return flask.Response(
+            flask.stream_with_context(output.get_response()),
+            mimetype=mimetype,
+            headers=headers,
+        )
 
 
 def create_files_viewer(dry_run=False, reassign=False):
