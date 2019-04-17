@@ -5,21 +5,24 @@
 # pylint: disable=superfluous-parens
 # pylint: disable=no-member
 import contextlib
+import csv
 import json
 import os
 import uuid
-import csv
 from StringIO import StringIO
 
 import boto
 import pytest
+from datamodelutils import models as md
 from flask import g
 from moto import mock_s3
 
-from datamodelutils import models as md
+from sheepdog.errors import HandledIntegrityError
+from sheepdog.globals import ROLES
 from sheepdog.transactions.upload import UploadTransaction
+from sheepdog.utils import get_external_proxies
+from sheepdog.utils.transforms import TSVToJSONConverter
 from tests.integration.datadict.submission.utils import data_fnames
-
 
 #: Do we have a cache case setting and should we do it?
 CACHE_CASES = False
@@ -815,3 +818,74 @@ def test_submit_export_encoding(client, pg_driver, cgci_blgsp, submitter):
         path,
         headers=submitter)
     assert len(r.json) == 1
+
+
+def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
+    """
+    Make sure that concurrent transactions don't cause duplicate submission.
+    """
+
+    data = {
+        "type": "experiment",
+        "submitter_id": "BLGSP-71-06-00019",
+        "projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98"
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path) # clean up (delete file)
+    assert data
+
+    program, project = BLGSP_PATH.split('/')[3:5]
+    tsv_data = TSVToJSONConverter().convert(data)[0]
+    doc_args = [None, 'tsv', data, tsv_data]
+    utx1, utx2 = [UploadTransaction(
+        program=program,
+        project=project,
+        role=ROLES['UPDATE'],
+        logger=app.logger,
+        flask_config=app.config,
+        signpost=app.signpost,
+        external_proxies=get_external_proxies(),
+        db_driver=pg_driver,
+    ) for _ in range(2)]
+    with pg_driver.session_scope(can_inherit=False) as s1, utx1:
+        utx1.parse_doc(*doc_args)
+        with pg_driver.session_scope(can_inherit=False) as s2, utx2:
+            utx2.parse_doc(*doc_args)
+
+            with pg_driver.session_scope(session=s2):
+                utx2.flush()
+
+            with pg_driver.session_scope(session=s2):
+                utx2.post_validate()
+
+            with pg_driver.session_scope(session=s2):
+                utx2.commit()
+
+        try:
+            with pg_driver.session_scope(session=s1):
+                utx1.flush()
+
+            with pg_driver.session_scope(session=s1):
+                utx1.post_validate()
+
+            with pg_driver.session_scope(session=s1):
+                utx1.commit()
+        except HandledIntegrityError:
+            pass
+
+    with pg_driver.session_scope():
+        assert pg_driver.nodes(md.Experiment).count() == 1
