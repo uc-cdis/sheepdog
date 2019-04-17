@@ -202,7 +202,8 @@ class UploadTransaction(TransactionBase):
                             break
                         entities.append(en)
                         label = en.node.label
-                else:
+                else:  # pylint: disable=useless-else-on-loop
+                    # https://github.com/PyCQA/pylint/pull/2760
                     for entity in entities:
                         entity.record_error(
                             "{} with {} already exists in the GDC".format(

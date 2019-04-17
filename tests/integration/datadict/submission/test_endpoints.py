@@ -861,31 +861,33 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
         external_proxies=get_external_proxies(),
         db_driver=pg_driver,
     ) for _ in range(2)]
-    with pg_driver.session_scope(can_inherit=False) as s1, utx1:
-        utx1.parse_doc(*doc_args)
-        with pg_driver.session_scope(can_inherit=False) as s2, utx2:
-            utx2.parse_doc(*doc_args)
+    with pg_driver.session_scope(can_inherit=False) as s1:
+        with utx1:
+            utx1.parse_doc(*doc_args)
+            with pg_driver.session_scope(can_inherit=False) as s2:
+                with utx2:
+                    utx2.parse_doc(*doc_args)
 
-            with pg_driver.session_scope(session=s2):
-                utx2.flush()
+                    with pg_driver.session_scope(session=s2):
+                        utx2.flush()
 
-            with pg_driver.session_scope(session=s2):
-                utx2.post_validate()
+                    with pg_driver.session_scope(session=s2):
+                        utx2.post_validate()
 
-            with pg_driver.session_scope(session=s2):
-                utx2.commit()
+                    with pg_driver.session_scope(session=s2):
+                        utx2.commit()
 
-        try:
-            with pg_driver.session_scope(session=s1):
-                utx1.flush()
+            try:
+                with pg_driver.session_scope(session=s1):
+                    utx1.flush()
 
-            with pg_driver.session_scope(session=s1):
-                utx1.post_validate()
+                with pg_driver.session_scope(session=s1):
+                    utx1.post_validate()
 
-            with pg_driver.session_scope(session=s1):
-                utx1.commit()
-        except HandledIntegrityError:
-            pass
+                with pg_driver.session_scope(session=s1):
+                    utx1.commit()
+            except HandledIntegrityError:
+                pass
 
     with pg_driver.session_scope():
         assert pg_driver.nodes(md.Experiment).count() == 1
