@@ -96,13 +96,14 @@ def assert_positive_response(resp):
     assert resp.json["success"] is True
 
 
-def assert_negative_response(resp):
+def assert_negative_response(resp, on_entity=True):
     assert resp.status_code != 200, resp.data
     entities = resp.json["entities"]
 
     # check if at least one entity has an error
-    entity_errors = [entity["errors"] for entity in entities if entity["errors"]]
-    assert entity_errors
+    if on_entity:
+        entity_errors = [entity["errors"] for entity in entities if entity["errors"]]
+        assert entity_errors
 
     assert resp.json["success"] is False
 

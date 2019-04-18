@@ -2,16 +2,18 @@
 Define the ``UploadTransaction`` class.
 """
 
+import re
 from collections import Counter
 
 # Validating Entity Existence in dbGaP
 from datamodelutils import validators
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.attributes import flag_modified
 
 from sheepdog.auth import dbgap
 from sheepdog import models
 from sheepdog import utils
-from sheepdog.errors import UserError
+from sheepdog.errors import UserError, HandledIntegrityError
 from sheepdog.globals import (
     case_cache_enabled,
     TX_LOG_STATE_ERRORED,
@@ -21,6 +23,10 @@ from sheepdog.globals import (
 from sheepdog.transactions.upload.entity import EntityErrors
 from sheepdog.transactions.transaction_base import TransactionBase
 from sheepdog.transactions.upload.entity_factory import UploadEntityFactory
+
+
+KEYS_REGEXP = re.compile(r"_props ->> '([^']+)+'::text")
+VALUES_REGEXP = re.compile(r"=\(([^\(\)]+)\)")
 
 
 class UploadTransaction(TransactionBase):
@@ -172,7 +178,43 @@ class UploadTransaction(TransactionBase):
         """
         for entity in self.valid_entities:
             entity.flush_to_session()
-        self.session.flush()
+        try:
+            self.session.flush()
+        except IntegrityError as e:
+            # don't handle non-unique constraint errors
+            if "duplicate key value violates unique constraint" not in e.message:
+                raise
+            values = VALUES_REGEXP.findall(e.message)
+            if not values:
+                raise
+            values = [v.strip() for v in values[0].split(",")]
+            keys = KEYS_REGEXP.findall(e.message)
+            if len(keys) == len(values):
+                values = dict(zip(keys, values))
+                entities = []
+                label = None
+                for en in self.valid_entities:
+                    for k, v in values.items():
+                        if getattr(en.node, k, None) != v:
+                            break
+                    else:
+                        if label and label != en.node.label:
+                            break
+                        entities.append(en)
+                        label = en.node.label
+                else:  # pylint: disable=useless-else-on-loop
+                    # https://github.com/PyCQA/pylint/pull/2760
+                    for entity in entities:
+                        entity.record_error(
+                            "{} with {} already exists".format(
+                                entity.node.label, values
+                            ),
+                            keys=keys,
+                        )
+                    if entities:
+                        raise HandledIntegrityError()
+            self.record_error("{} already exists".format(values))
+            raise HandledIntegrityError()
 
     @property
     def status_code(self):
