@@ -654,7 +654,7 @@ def test_data_file_update_url_invalid_id(
     assert new_url not in document.urls
 
     # response
-    assert_negative_response(resp)
+    assert_negative_response(resp, on_entity=False)
     assert_single_entity_from_response(resp)
 
 
@@ -868,7 +868,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     assert new_url not in different_file_matching_hash_and_size.urls
 
     # response
-    assert_negative_response(resp)
+    assert_negative_response(resp, on_entity=False)
     assert_single_entity_from_response(resp)
 
 

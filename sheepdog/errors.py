@@ -23,3 +23,7 @@ class NoIndexForFileError(UserError):
             file_id
         )
         self.code = 400
+
+
+class HandledIntegrityError(Exception):
+    pass
