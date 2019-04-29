@@ -445,7 +445,8 @@ class TransactionBase(object):
                 snapshot.old_props = entity.old_props
                 snapshot.new_props = entity.node.props
                 snapshot.action = entity.action
-                tx_log.entities.append(snapshot)
+                snapshot.transaction = tx_log
+                self.session.add(snapshot)
             # Must flush to database to create id
             tx_log.timestamp = timestamp
             if tx_log.documents:
