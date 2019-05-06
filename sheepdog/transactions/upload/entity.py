@@ -20,6 +20,7 @@ from sheepdog.globals import (
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.utils import get_suggestion
+from authutils.user import current_user
 
 
 def lookup_node(psql_driver, label, node_id=None, secondary_keys=None):
@@ -714,12 +715,15 @@ class UploadEntity(EntityBase):
                         and n.project_id != self.transaction.project_id
                     )
                     if disallowed:
-                        self.record_error(
-                            "Relationship to {} {} in project {} not allowed".format(
-                                n.label, n.node_id, n.project_id
-                            ),
-                            type=EntityErrors.INVALID_LINK,
-                        )
+                        # check to see if user has read role in other project
+                        roles_in_other_project = current_user.projects.get(n.project_id, set())
+                        if 'read' not in roles_in_other_project:
+                            self.record_error(
+                                "Relationship to {} {} in project {} not allowed. fyi {}".format(
+                                    n.label, n.node_id, n.project_id, roles_in_other_project
+                                ),
+                                type=EntityErrors.INVALID_LINK,
+                            )
                     if n not in getattr(self.node, name):
                         getattr(self.node, name).append(n)
 
