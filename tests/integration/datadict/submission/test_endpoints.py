@@ -879,7 +879,7 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
 
                     with pg_driver.session_scope(session=s2):
                         utx2.commit()
-            
+
             try:
                 with pg_driver.session_scope(session=s1):
                     utx1.flush()

@@ -56,7 +56,7 @@ def single_transaction_worker(transaction, *doc_args):
                                 '{} with {} already exists in the DB'
                                 .format(node.label, props), keys=props.keys()
                             )
-    
+
         except UserError as e:
             transaction.record_user_error(e)
             raise
