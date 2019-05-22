@@ -16,6 +16,7 @@ import pytest
 from datamodelutils import models as md
 from flask import g
 from moto import mock_s3
+from sqlalchemy.exc import IntegrityError
 
 from sheepdog.errors import HandledIntegrityError
 from sheepdog.globals import ROLES
@@ -861,6 +862,8 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
         external_proxies=get_external_proxies(),
         db_driver=pg_driver,
     ) for _ in range(2)]
+
+    response = ""
     with pg_driver.session_scope(can_inherit=False) as s1:
         with utx1:
             utx1.parse_doc(*doc_args)
@@ -876,18 +879,37 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
 
                     with pg_driver.session_scope(session=s2):
                         utx2.commit()
-
+            
             try:
                 with pg_driver.session_scope(session=s1):
                     utx1.flush()
+            except IntegrityError:
+                utx1.session.rollback()
+                from gdcdictionary import gdcdictionary
+                for entity in utx1.valid_entities:
+                    schema = gdcdictionary.schema[entity.node.label]
+                    node = entity.node
+                    for keys in schema['uniqueKeys']:
+                        props = {}
+                        if keys == ['id']:
+                            continue
+                        for key in keys:
+                            prop = schema['properties'][key].get('systemAlias')
+                            if prop:
+                                props[prop] = node[prop]
+                            else:
+                                props[key] = node[key]
+                        if utx1.db_driver.nodes(type(node)).props(props).count() > 0:
+                                entity.record_error(
+                                    '{} with {} already exists in the DB'
+                                    .format(node.label, props), keys=props.keys()
+                                )
+                        response = utx1.json
 
-                with pg_driver.session_scope(session=s1):
-                    utx1.post_validate()
 
-                with pg_driver.session_scope(session=s1):
-                    utx1.commit()
-            except HandledIntegrityError:
-                pass
+    assert response["entity_error_count"]==1
+    assert response["code"]==400
+    assert response['entities'][0]['errors'][0]['message'] == "experiment with {'project_id': 'CGCI-BLGSP', 'submitter_id': 'BLGSP-71-06-00019'} already exists in the DB"
 
     with pg_driver.session_scope():
         assert pg_driver.nodes(md.Experiment).count() == 1

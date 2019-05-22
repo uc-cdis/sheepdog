@@ -51,9 +51,9 @@ def single_transaction_worker(transaction, *doc_args):
                             props[prop] = node[prop]
                         else:
                             props[key] = node[key]
-                    if graph.nodes(type(node)).props(props).count() > 0:
+                    if transaction.db_driver.nodes(type(node)).props(props).count() > 0:
                             entity.record_error(
-                                '{} with {} already exists in the GDC'
+                                '{} with {} already exists in the DB'
                                 .format(node.label, props), keys=props.keys()
                             )
     
