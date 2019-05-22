@@ -10,6 +10,10 @@ import uuid
 import flask
 import lxml
 
+import psqlgraph
+from sqlalchemy.exc import IntegrityError
+from gdcdictionary import gdcdictionary
+
 from sheepdog import auth
 from sheepdog import utils
 from sheepdog.errors import ParsingError, SchemaError, UnsupportedError, UserError
@@ -32,8 +36,27 @@ def single_transaction_worker(transaction, *doc_args):
             transaction.flush()
             transaction.post_validate()
             transaction.commit()
-        except HandledIntegrityError:
-            pass
+        except IntegrityError:
+            transaction.session.rollback()
+            for entity in transaction.valid_entities:
+                schema = gdcdictionary.schema[entity.node.label]
+                node = entity.node
+                for keys in schema['uniqueKeys']:
+                    props = {}
+                    if keys == ['id']:
+                        continue
+                    for key in keys:
+                        prop = schema['properties'][key].get('systemAlias')
+                        if prop:
+                            props[prop] = node[prop]
+                        else:
+                            props[key] = node[key]
+                    if graph.nodes(type(node)).props(props).count() > 0:
+                            entity.record_error(
+                                '{} with {} already exists in the GDC'
+                                .format(node.label, props), keys=props.keys()
+                            )
+    
         except UserError as e:
             transaction.record_user_error(e)
             raise
@@ -42,6 +65,7 @@ def single_transaction_worker(transaction, *doc_args):
         finally:
             response = transaction.json
             code = transaction.status_code
+
     return response, code
 
 
