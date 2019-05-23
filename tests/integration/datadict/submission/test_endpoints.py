@@ -884,7 +884,7 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
                 with pg_driver.session_scope(session=s1):
                     utx1.flush()
             except IntegrityError:
-                utx1.session.rollback()
+                s1.rollback()
                 from gdcdictionary import gdcdictionary
                 for entity in utx1.valid_entities:
                     schema = gdcdictionary.schema[entity.node.label]
