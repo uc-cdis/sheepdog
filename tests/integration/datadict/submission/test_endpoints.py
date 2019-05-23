@@ -884,28 +884,9 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
                 with pg_driver.session_scope(session=s1):
                     utx1.flush()
             except IntegrityError:
-                utx1.session.rollback()
-                from gdcdictionary import gdcdictionary
-                for entity in utx1.valid_entities:
-                    schema = gdcdictionary.schema[entity.node.label]
-                    node = entity.node
-                    for keys in schema['uniqueKeys']:
-                        props = {}
-                        if keys == ['id']:
-                            continue
-                        for key in keys:
-                            prop = schema['properties'][key].get('systemAlias')
-                            if prop:
-                                props[prop] = node[prop]
-                            else:
-                                props[key] = node[key]
-                        if utx1.db_driver.nodes(type(node)).props(props).count() > 0:
-                                entity.record_error(
-                                    '{} with {} already exists in the DB'
-                                    .format(node.label, props), keys=props.keys()
-                                )
-                        response = utx1.json
-
+                s1.rollback()
+                utx1.integrity_check()
+                response = utx1.json
 
     assert response["entity_error_count"]==1
     assert response["code"]==400

@@ -37,26 +37,8 @@ def single_transaction_worker(transaction, *doc_args):
             transaction.post_validate()
             transaction.commit()
         except IntegrityError:
-            transaction.session.rollback()
-            for entity in transaction.valid_entities:
-                schema = gdcdictionary.schema[entity.node.label]
-                node = entity.node
-                for keys in schema['uniqueKeys']:
-                    props = {}
-                    if keys == ['id']:
-                        continue
-                    for key in keys:
-                        prop = schema['properties'][key].get('systemAlias')
-                        if prop:
-                            props[prop] = node[prop]
-                        else:
-                            props[key] = node[key]
-                    if transaction.db_driver.nodes(type(node)).props(props).count() > 0:
-                            entity.record_error(
-                                '{} with {} already exists in the DB'
-                                .format(node.label, props), keys=props.keys()
-                            )
-
+            session.rollback()
+            transaction.integrity_check()
         except UserError as e:
             transaction.record_user_error(e)
             raise
