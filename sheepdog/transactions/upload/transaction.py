@@ -10,6 +10,8 @@ from datamodelutils import validators
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.attributes import flag_modified
 
+from gdcdictionary import gdcdictionary
+
 from sheepdog.auth import dbgap
 from sheepdog import models
 from sheepdog import utils
@@ -159,6 +161,27 @@ class UploadTransaction(TransactionBase):
         """Create a SQLAlchemy model for all transaction entities."""
         for entity in self.valid_entities:
             entity.instantiate()
+
+    def integrity_check(self):
+        for entity in self.valid_entities:
+            schema = gdcdictionary.schema[entity.node.label]
+            node = entity.node
+            for keys in schema['uniqueKeys']:
+                props = {}
+                if keys == ['id']:
+                    continue
+                for key in keys:
+                    prop = schema['properties'][key].get('systemAlias')
+                    if prop:
+                        props[prop] = node[prop]
+                    else:
+                        props[key] = node[key]
+                if self.db_driver.nodes(type(node)).props(props).count() > 0:
+                        entity.record_error(
+                            '{} with {} already exists in the DB'
+                            .format(node.label, props), keys=props.keys()
+                        )
+
 
     def create_links(self):
         """Construct edges between all transaction entities."""
