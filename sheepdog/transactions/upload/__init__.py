@@ -10,6 +10,10 @@ import uuid
 import flask
 import lxml
 
+import psqlgraph
+from sqlalchemy.exc import IntegrityError
+from gdcdictionary import gdcdictionary
+
 from sheepdog import auth
 from sheepdog import utils
 from sheepdog.errors import ParsingError, SchemaError, UnsupportedError, UserError
@@ -32,8 +36,9 @@ def single_transaction_worker(transaction, *doc_args):
             transaction.flush()
             transaction.post_validate()
             transaction.commit()
-        except HandledIntegrityError:
-            pass
+        except IntegrityError:
+            transaction.session.rollback()
+            transaction.integrity_check()
         except UserError as e:
             transaction.record_user_error(e)
             raise
@@ -42,6 +47,7 @@ def single_transaction_worker(transaction, *doc_args):
         finally:
             response = transaction.json
             code = transaction.status_code
+
     return response, code
 
 
