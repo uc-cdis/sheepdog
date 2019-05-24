@@ -37,7 +37,7 @@ def single_transaction_worker(transaction, *doc_args):
             transaction.post_validate()
             transaction.commit()
         except IntegrityError:
-            session.rollback()
+            transaction.session.rollback()
             transaction.integrity_check()
         except UserError as e:
             transaction.record_user_error(e)
