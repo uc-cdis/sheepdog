@@ -24,6 +24,3 @@ flasgger==0.9.1
 # these two are required by fence -> cirrus -> google_cloud
 pyasn1-modules==0.0.11
 urllib3==1.23
--e git+https://github.com/uc-cdis/cirrus.git@0.0.0#egg=cirrus-0.0.0
-# required by fence
--e git+https://git@github.com/uc-cdis/userdatamodel.git@1.0.4#egg=userdatamodel

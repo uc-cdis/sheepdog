@@ -30,7 +30,7 @@ def encoded_jwt(iss):
 
         Args:
             private_key (str): private key
-            user (userdatamodel.models.User): user object
+            user (fake userdatamodel.models.User): user object
 
         Return:
             str: JWT containing claims encoded with private key
