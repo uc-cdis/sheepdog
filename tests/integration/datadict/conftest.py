@@ -9,7 +9,6 @@ import requests
 import requests_mock
 from mock import patch
 from flask.testing import make_test_environ_builder
-from fence.jwt.token import generate_signed_access_token
 from psqlgraph import PsqlGraphDriver
 from datamodelutils import models
 from cdispyutils.hmac4 import get_auth
