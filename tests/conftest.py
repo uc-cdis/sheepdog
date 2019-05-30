@@ -30,7 +30,7 @@ def encoded_jwt(iss):
 
         Args:
             private_key (str): private key
-            user (fake userdatamodel.models.User): user object
+            user (generic User object): user object
 
         Return:
             str: JWT containing claims encoded with private key
@@ -51,7 +51,7 @@ def create_user_header(encoded_jwt):
         private_key = utils.read_file(
             "./integration/resources/keys/test_private_key.pem"
         )
-        # set up a fake User object which has all the attributes that fence needs
+        # set up a fake User object which has all the attributes needed
         # to generate a token
         user_properties = {
             "id": 1,

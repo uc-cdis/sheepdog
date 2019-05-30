@@ -20,9 +20,6 @@ def read_file(filename):
 
 class JWTResult(object):
     """
-    Just copy-pasted from Fence code so that
-    we don't need to import Fence
-
     Just a container for the results necessary to keep track of from generating
     a JWT.
     """
@@ -35,9 +32,6 @@ class JWTResult(object):
 
 def issued_and_expiration_times(seconds_to_expire):
     """
-    Just copy-pasted from Fence code so that
-    we don't need to import Fence
-
     Return the times in unix time that a token is being issued and will be
     expired (the issuing time being now, and the expiration being
     ``seconds_to_expire`` seconds after that). Used for constructing JWTs
@@ -63,15 +57,15 @@ def generate_signed_access_token(
     linked_google_email=None,
 ):
     """
-    Just copy-pasted from Fence code so that
-    we don't need to import Fence
+    Usually, this token is obtained from an outside service.
+    We just simulate that here in order to not import any services.
 
     Generate a JWT access token and output a UTF-8
     string of the encoded JWT signed with the private key.
     Args:
         kid (str): key id of the keypair used to generate token
         private_key (str): RSA private key to sign and encode the JWT with
-        user (fence.models.User): User to generate ID token for
+        user (generic User object): User to generate ID token for
         expires_in (int): seconds until expiration
         scopes (List[str]): oauth scopes for user
     Return:
