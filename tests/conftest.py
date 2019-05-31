@@ -1,6 +1,5 @@
 import flask
 
-from fence.jwt.token import generate_signed_access_token
 import pytest
 
 from sheepdog.auth import ROLES
@@ -31,17 +30,17 @@ def encoded_jwt(iss):
 
         Args:
             private_key (str): private key
-            user (userdatamodel.models.User): user object
+            user (generic User object): user object
 
         Return:
             str: JWT containing claims encoded with private key
         """
         kid = JWT_KEYPAIR_FILES.keys()[0]
         scopes = ["openid"]
-        token = generate_signed_access_token(
-            kid, private_key, user, 3600, scopes, forced_exp_time=None
+        token = utils.generate_signed_access_token(
+            kid, private_key, user, 3600, scopes, iss=iss, forced_exp_time=None
         )
-        return token
+        return token.token
 
     return encoded_jwt_function
 
@@ -52,7 +51,7 @@ def create_user_header(encoded_jwt):
         private_key = utils.read_file(
             "./integration/resources/keys/test_private_key.pem"
         )
-        # set up a fake User object which has all the attributes that fence needs
+        # set up a fake User object which has all the attributes needed
         # to generate a token
         user_properties = {
             "id": 1,

@@ -44,8 +44,6 @@ install:
   - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then pip install -e git+https://git@github.com/uc-cdis/wool.git#egg=wool; fi
 
 before_script:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then psql -c "create database test_userapi" -U postgres; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then userdatamodel-init --db test_userapi; fi
   - pip freeze
   - python bin/setup_test_database.py
   - mkdir -p tests/integration/resources/keys; cd tests/integration/resources/keys; openssl genrsa -out test_private_key.pem 2048; openssl rsa -in test_private_key.pem -pubout -out test_public_key.pem; cd -
