@@ -25,13 +25,13 @@ more-itertools==5.0.0
 cdispyutils==0.2.13
 datamodelutils==0.4.5
 #psqlgraph==1.2.3
-# required for gdcdatamodel, not required for sheepdog
+# required for gen3datamodel, not required for sheepdog
 -e git+https://git@github.com/uc-cdis/cdiserrors.git@0.1.1#egg=cdiserrors
 -e git+https://git@github.com/uc-cdis/cdislogging.git@master#egg=cdislogging
 -e git+https://git@github.com/NCI-GDC/cdisutils.git@f54e393c89939b2200dfae45c6235cbe2bae1206#egg=cdisutils
 gdcdictionary==1.2.0
-gdcdatamodel==1.3.13
 -e git+https://git@github.com/uc-cdis/indexclient.git@1.6.0#egg=indexclient
+gen3datamodel==2.0.1
 -e git+https://git@github.com/uc-cdis/storage-client.git@0.1.7#egg=storageclient
 
 -e git+https://git@github.com/uc-cdis/psqlgraph.git@chore/postgresql#egg=psqlgraph
