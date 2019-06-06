@@ -624,10 +624,9 @@ class FileUploadEntity(UploadEntity):
 
         # update acl and uploader fields in indexd
         data = json.dumps({"acl": self.transaction.get_phsids(), "uploader": None})
-        url = "/index/" + self.object_id
         try:
             self.transaction.signpost._put(
-                url,
+                "index", self.object_id,
                 headers={"content-type": "application/json"},
                 data=data,
                 params={"rev": self.file_by_uuid.rev},
