@@ -325,6 +325,11 @@ class FileUploadEntity(UploadEntity):
         authz = []
         if consent_codes:
             authz = ["/consents/" + code for code in consent_codes]
+        else:
+            authz = [
+                "/programs/{}/projects/{}"
+                .format(self.transaction.program, self.transaction.project)
+            ]
 
         # IndexClient
         doc = self._create_index(
