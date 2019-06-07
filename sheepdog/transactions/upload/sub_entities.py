@@ -321,9 +321,15 @@ class FileUploadEntity(UploadEntity):
         if self.urls:
             urls.extend(self.urls)
 
+        consent_codes = self.node._props.get("consent_codes")
+        authz = []
+        if consent_codes:
+            authz = ["/consents/" + code for code in consent_codes]
+
         # IndexClient
         doc = self._create_index(
-            did=self.file_index, hashes=hashes, size=size, urls=urls, acl=acl
+            did=self.file_index, hashes=hashes, size=size, urls=urls, acl=acl,
+            authz=authz,
         )
 
         if self.use_object_id(self.entity_type):
