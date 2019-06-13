@@ -1,5 +1,5 @@
 from sheepdog.errors import UserError
-from sheepdog.globals import case_cache_enabled, TX_LOG_STATE_FAILED
+from sheepdog.globals import TX_LOG_STATE_FAILED
 from sheepdog.transactions.entity_base import EntityErrors
 from sheepdog.transactions.deletion.entity import DeletionEntity
 from sheepdog.transactions.transaction_base import MissingNode, TransactionBase
@@ -14,10 +14,6 @@ class DeletionTransaction(TransactionBase):
         self.fields_to_delete = kwargs.get("fields", None)
         self.to_delete = kwargs.get("to_delete", None)
 
-        # see DeletionEntity.related_cases() docstring for details
-        self.related_cases = {
-            # node_id: [{"id":.., "submitter_id": ..}]
-        }
 
     def write_transaction_log(self):
         """Save a log noting this project was opened"""
@@ -152,13 +148,3 @@ class DeletionTransaction(TransactionBase):
                 "Entity not found.", keys=["id"], id=ID, type=EntityErrors.NOT_FOUND
             )
             self.entities.append(missing)
-
-        # see DeletionEntity.related_cases() docstring for details
-        if case_cache_enabled():
-            self.related_cases = {
-                node.node_id: [
-                    {"id": c.node_id, "submitter_id": c.submitter_id}
-                    for c in node._related_cases_from_cache
-                ]
-                for node in nodes
-            }
