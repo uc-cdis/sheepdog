@@ -58,29 +58,6 @@ UNVERIFIED_PROJECT_CODES = []
 ERROR_STATE = "error"
 
 
-def case_cache_enabled():
-    """
-    Return if the case cache is enabled or not. NOTE that the dictionary must be initialized
-    first!
-
-    .. note::
-
-        This function assumes that the dictionary has already been initialized.
-        The except/return None behavior is to, for example, allow Sphinx to
-        still import/run individual modules without raising errors.
-    """
-    from sheepdog import dictionary
-
-    try:
-        return (
-            True
-            if dictionary.settings == None
-            else dictionary.settings.get("enable_case_cache", True)
-        )
-    except (AttributeError, KeyError, TypeError):
-        return True
-
-
 def dictionary_version():
     """
     Return the dictionary version. NOTE that the dictionary must be initialized
