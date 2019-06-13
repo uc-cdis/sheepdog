@@ -29,47 +29,6 @@ log = get_logger(__name__)
 SCHEMA_LOCATION_WHITELIST = ["https://github.com/nchbcr/xsd", "http://tcga-data.nci.nih.gov"]
 
 
-def _parse_schema_location(root):
-    """Get all schema locations from xml."""
-    try:
-        namespace = root.nsmap['xsi']
-    except Exception as e:
-        raise SchemaError("Can't get schema location namespace", e)
-    try:
-        schema_location = root.attrib["{%s}schemaLocation" % namespace]
-    except Exception as e:
-        raise SchemaError("Missing xsi:schemaLocation", e)
-    # schemaLocation is a space delimited list of namespace and location pairs
-    # return odd elements
-    locations = schema_location.split(' ')
-    if len(locations) >= 2 and len(locations) % 2 == 0:
-        return locations[1::2]
-    else:
-        raise SchemaError("schemaLocation has to be a list of namespace and url pairs")
-
-
-def _fetch_schema(schema_url):
-    """Fetch schema using the url from schemaLocation."""
-    if not any(map(schema_url.startswith, SCHEMA_LOCATION_WHITELIST)):
-        raise SchemaError("schema location: {} is not allowed".format(schema_url))
-    try:
-        r = requests.get(
-            schema_url,
-            proxies=flask.current_app.config.get('EXTERNAL_PROXIES')
-        )
-    except Exception as e:
-        raise SchemaError("Can't get xml XSD at {}".format(schema_url), e)
-    if r.status_code == 200:
-        try:
-            return etree.XMLSchema(etree.XML(r.text.encode('utf-8')))
-        except Exception as e:
-            raise SchemaError("Invalid XML XSD at {}".format(schema_url), e)
-    else:
-        raise SchemaError(
-            "Can't get XML XSD at {}: {}".format(schema_url, r.text)
-        )
-
-
 def validated_parse(xml):
     """
     Parse an XML document or fragment from a string and return the root node.
@@ -81,18 +40,6 @@ def validated_parse(xml):
         return root
     except etree.XMLSyntaxError as msg:
         log.error('User submitted invalid xml: {}'.format(msg))
-        raise
-    schemas = map(_fetch_schema, _parse_schema_location(root))
-    try:
-        for schema in schemas:
-            schema.assertValid(root)
-        return root
-    except (etree.XMLSchemaError, etree.DocumentInvalid) as msg:
-        log.error('User submitted invalid xml: {}'.format(msg))
-        # note(jsm): Here we re-raise. This exception should be
-        # caught by the caller, at the time this comment was
-        # written, it will be caught in
-        # ``..transaction.handle_xml_transaction``
         raise
 
 

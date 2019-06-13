@@ -8,7 +8,14 @@ PROPERTY_TYPES = {
     'str': str,
     'str.lower': lambda x: str(x).lower(),
     'str.title': lambda x: str(x).title(),
+    'str.title_upper': lambda x: title_upper(x)
 }
+
+
+def title_upper(x):
+    """Title first word and upper last word"""
+    words = x.split(" ")
+    return " ".join([words[0].title(), words[-1].upper()])
 
 
 class Evaluator(object):
@@ -140,6 +147,6 @@ class Evaluator(object):
             value = value.lower()
 
         for val, possible_values in value_mappings.items():
-            if value in possible_values:
+            if value in [pv.lower() for pv in possible_values if isinstance(pv, str)]:
                 return val
         return value
