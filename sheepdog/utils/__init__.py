@@ -298,7 +298,7 @@ def get_signpost(uuid):
         doc: Signpost doc to be modified later
     """
 
-    signpost_obj = flask.current_app.signpost.get(uuid)
+    signpost_obj = flask.current_app.index_client.get(uuid)
     if signpost_obj is None:
         raise InternalError("Signpost entry for {} doesn't exist".format(uuid))
     return signpost_obj

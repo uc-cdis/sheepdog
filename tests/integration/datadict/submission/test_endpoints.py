@@ -834,7 +834,7 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
         role=ROLES['UPDATE'],
         logger=app.logger,
         flask_config=app.config,
-        signpost=app.signpost,
+        signpost=app.index_client,
         external_proxies=get_external_proxies(),
         db_driver=pg_driver,
     ) for _ in range(2)]

@@ -52,7 +52,7 @@ def db_init(app):
     app.oauth2 = OAuth2Client(**app.config["OAUTH2"])
 
     app.logger.info("Initializing Indexd driver")
-    app.signpost = IndexClient(
+    app.index_client = IndexClient(
         app.config["SIGNPOST"]["host"],
         version=app.config["SIGNPOST"]["version"],
         auth=app.config["SIGNPOST"]["auth"],

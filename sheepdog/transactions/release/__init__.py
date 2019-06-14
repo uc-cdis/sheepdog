@@ -39,7 +39,7 @@ def handle_release_transaction(program, project, **tx_kwargs):
         program=program,
         project=project,
         logger=flask.current_app.logger,
-        signpost=flask.current_app.signpost,
+        signpost=flask.current_app.index_client,
         db_driver=db_driver,
         **tx_kwargs
     )

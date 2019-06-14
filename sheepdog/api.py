@@ -79,7 +79,7 @@ def db_init(app):
     app.oauth_client = oauth2_client.OAuthClient(**app.config["OAUTH2"])
 
     app.logger.info("Initializing Signpost driver")
-    app.signpost = SignpostClient(
+    app.index_client = SignpostClient(
         app.config["SIGNPOST"]["host"],
         version=app.config["SIGNPOST"]["version"],
         auth=app.config["SIGNPOST"]["auth"],
