@@ -4,7 +4,7 @@ from os import environ as env
 
 # Index client
 INDEX_CLIENT = {
-    "host": env.get("SIGNPOST_HOST", "http://localhost:8888"),
+    "host": env.get("INDEX_CLIENT_HOST", "http://localhost:8888"),
     "version": "v0",
     "auth": None,
 }

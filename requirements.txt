@@ -25,8 +25,6 @@ more-itertools==5.0.0
 cdispyutils==0.2.13
 datamodelutils==0.4.5
 psqlgraph==1.2.3
-# TODO remove
-# -e git+https://git@github.com/NCI-GDC/signpost.git@v1.1#egg=signpost
 # required for gdcdatamodel, not required for sheepdog
 -e git+https://git@github.com/uc-cdis/cdiserrors.git@0.1.1#egg=cdiserrors
 -e git+https://git@github.com/uc-cdis/cdislogging.git@master#egg=cdislogging
