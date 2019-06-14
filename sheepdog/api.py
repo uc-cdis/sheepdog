@@ -14,7 +14,7 @@ from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators, postgres_admin
 
 
-from indexclient.client import IndexClient as SignpostClient
+from indexclient.client import IndexClient
 
 import sheepdog
 from sheepdog.errors import (
@@ -78,8 +78,8 @@ def db_init(app):
 
     app.oauth_client = oauth2_client.OAuthClient(**app.config["OAUTH2"])
 
-    app.logger.info("Initializing Signpost driver")
-    app.index_client = SignpostClient(
+    app.logger.info("Initializing index client")
+    app.index_client = IndexClient(
         app.config["SIGNPOST"]["host"],
         version=app.config["SIGNPOST"]["version"],
         auth=app.config["SIGNPOST"]["auth"],
