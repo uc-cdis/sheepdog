@@ -2,8 +2,8 @@ import os
 from boto.s3.connection import OrdinaryCallingFormat
 from os import environ as env
 
-# Signpost
-SIGNPOST = {
+# Index client
+INDEX_CLIENT = {
     "host": env.get("SIGNPOST_HOST", "http://localhost:8888"),
     "version": "v0",
     "auth": None,

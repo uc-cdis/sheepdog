@@ -80,9 +80,9 @@ def db_init(app):
 
     app.logger.info("Initializing index client")
     app.index_client = IndexClient(
-        app.config["SIGNPOST"]["host"],
-        version=app.config["SIGNPOST"]["version"],
-        auth=app.config["SIGNPOST"]["auth"],
+        app.config["INDEX_CLIENT"]["host"],
+        version=app.config["INDEX_CLIENT"]["version"],
+        auth=app.config["INDEX_CLIENT"]["auth"],
     )
 
 
