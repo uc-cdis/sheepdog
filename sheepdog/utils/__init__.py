@@ -288,20 +288,20 @@ def get_node(project_id, uuid, db=None):
         raise UserError("File {} doesn't exist in {}".format(uuid, project_id))
 
 
-def get_signpost(uuid):
-    """Get signpost doc for a given UUID
+def get_file_record(uuid):
+    """Get file record for a given UUID
 
     Args:
         uuid (string): UUID that is possibly in the system
         passive (bool): if a uuid doesn't exist, that's ok
     Returns:
-        doc: Signpost doc to be modified later
+        file_record: file record to be modified later
     """
 
-    signpost_obj = flask.current_app.index_client.get(uuid)
-    if signpost_obj is None:
-        raise InternalError("Signpost entry for {} doesn't exist".format(uuid))
-    return signpost_obj
+    file_record = flask.current_app.index_client.get(uuid)
+    if file_record is None:
+        raise InternalError("File record for {} doesn't exist".format(uuid))
+    return file_record
 
 
 def get_suggestion(value, choices):
@@ -418,7 +418,7 @@ def lookup_program(psql_driver, program):
 def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run=False):
     node = get_node(project_id, uuid)
     check_action_allowed_in_state(action, node.file_state)
-    signpost_obj = get_signpost(uuid)
+    file_record = get_file_record(uuid)
 
     if dry_run:
         message = (
@@ -451,7 +451,7 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
             message = "Unable to parse json. Use the format {'s3_url':'s3/://...'}"
             return flask.Response(json.dumps({"message": message}), status=400)
 
-        update_signpost_url(signpost_obj, s3_url=new_url)
+        update_file_record_url(file_record, s3_url=new_url)
         update_state(node, SUCCESS_STATE)
         message = "URL successfully reassigned. New url: {}".format(new_url)
         return flask.Response(json.dumps({"message": message}), status=200)
@@ -459,12 +459,12 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
     resp = s3.make_s3_request(project_id, uuid, data, args, headers, method, action)
     if action in ["upload", "complete_multipart"]:
         if resp.status == 200:
-            update_signpost_url(signpost_obj, project_id + "/" + uuid)
+            update_file_record_url(file_record, project_id + "/" + uuid)
             update_state(node, SUCCESS_STATE)
     if action == "delete":
         if resp.status == 204:
             update_state(node, submitted_state())
-            update_signpost_url(signpost_obj, None)
+            update_file_record_url(file_record, None)
     return resp
 
 
@@ -474,14 +474,14 @@ def update_state(node, state):
         node.file_state = state
 
 
-def update_signpost_url(signpost_obj, key_name=None, s3_url=None):
-    """Update a signpost document with a new URL.
+def update_file_record_url(file_record, key_name=None, s3_url=None):
+    """Update a file record with a new URL.
 
     Args:
-        signpost_obj (Signpost Doc): Signpost object that will be modified
+        file_record: File record that will be modified
             with a new URL.
-        key_name (string): Name of the s3 key to update a signpost object with.
-        s3_url (string): The URL you wish assign a signpost object with.
+        key_name (string): Name of the s3 key to update a file record with.
+        s3_url (string): The URL you wish assign a file record with.
     """
 
     if key_name:
@@ -490,12 +490,12 @@ def update_signpost_url(signpost_obj, key_name=None, s3_url=None):
             bucket=flask.current_app.config["SUBMISSION"]["bucket"],
             name=key_name,
         )
-        signpost_obj.urls = [url]
+        file_record.urls = [url]
     elif s3_url:
-        signpost_obj.urls = [s3_url]
+        file_record.urls = [s3_url]
     else:
-        signpost_obj.urls = []
-    signpost_obj.patch()
+        file_record.urls = []
+    file_record.patch()
 
 
 def is_node_file(node):
