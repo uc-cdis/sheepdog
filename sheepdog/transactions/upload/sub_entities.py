@@ -586,12 +586,12 @@ class FileUploadEntity(UploadEntity):
         # update acl and uploader fields in indexd
         data = json.dumps({"acl": self.transaction.get_phsids(), "uploader": None})
         try:
-            self.transaction.signpost._put(
+            self.transaction.index_client._put(
                 "index", self.object_id,
                 headers={"content-type": "application/json"},
                 data=data,
                 params={"rev": self.file_by_uuid.rev},
-                auth=self.transaction.signpost.auth,
+                auth=self.transaction.index_client.auth,
             )
         except requests.HTTPError as e:
             self.record_error(
@@ -616,7 +616,7 @@ class FileUploadEntity(UploadEntity):
         # registered in indexd for this entity.
         if params:
             try:
-                document = self.transaction.signpost.get_with_params(params)
+                document = self.transaction.index_client.get_with_params(params)
             except requests.HTTPError as e:
                 raise UserError(
                     code=e.response.status_code,
@@ -636,7 +636,7 @@ class FileUploadEntity(UploadEntity):
         document = None
 
         if uuid:
-            document = self.transaction.signpost.get(uuid)
+            document = self.transaction.index_client.get(uuid)
 
         return document
 
@@ -662,7 +662,7 @@ class FileUploadEntity(UploadEntity):
         return None
 
     def _create_alias(self, **kwargs):
-        return self.transaction.signpost.create_alias(**kwargs)
+        return self.transaction.index_client.create_alias(**kwargs)
 
     def _create_index(self, **kwargs):
-        return self.transaction.signpost.create(**kwargs)
+        return self.transaction.index_client.create(**kwargs)

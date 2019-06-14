@@ -41,7 +41,7 @@ def _single_transaction(tx_cls, program, project, **tx_kwargs):
         program=program,
         project=project,
         logger=flask.current_app.logger,
-        signpost=flask.current_app.index_client,
+        index_client=flask.current_app.index_client,
         db_driver=db_driver,
         **tx_kwargs
     )
