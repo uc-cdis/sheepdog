@@ -16,7 +16,6 @@ from sheepdog import models
 from sheepdog import utils
 from sheepdog.errors import UserError, HandledIntegrityError
 from sheepdog.globals import (
-    case_cache_enabled,
     TX_LOG_STATE_ERRORED,
     TX_LOG_STATE_FAILED,
     TX_LOG_STATE_SUCCEEDED,
@@ -231,23 +230,6 @@ class UploadTransaction(TransactionBase):
                 "updated_entity_count": self.updated_entity_count,
             }
         )
-        if case_cache_enabled():
-            doc["cases_related_to_updated_entities_count"] = len(
-                {
-                    case["id"]
-                    for entity in doc["entities"]
-                    for case in entity["related_cases"]
-                    if entity["action"] == "update"
-                }
-            )
-            doc["cases_related_to_created_entities_count"] = len(
-                {
-                    case["id"]
-                    for entity in doc["entities"]
-                    for case in entity["related_cases"]
-                    if entity["action"] == "create"
-                }
-            )
         return doc
 
     @property
@@ -370,7 +352,7 @@ class BulkUploadTransaction(TransactionBase):
             document_name=name,
             logger=self.logger,
             transaction_id=self.transaction_id,
-            signpost=self.signpost,
+            index_client=self.index_client,
             flask_config=self.config,
             external_proxies=self.external_proxies,
         )

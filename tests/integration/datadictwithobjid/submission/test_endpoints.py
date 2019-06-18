@@ -18,8 +18,6 @@ from sheepdog.transactions.upload import UploadTransaction
 from tests.integration.datadict.submission.utils import data_fnames
 
 
-#: Do we have a cache case setting and should we do it?
-CACHE_CASES = False
 BLGSP_PATH = '/v0/submission/CGCI/BLGSP/'
 BRCA_PATH = '/v0/submission/TCGA/BRCA/'
 
@@ -298,9 +296,6 @@ def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
                 path, headers=submitter, data=f.read()
             )
             assert resp.status_code == 201, resp.data
-            if CACHE_CASES and fname not in ['experiment.json', 'case.json']:
-                case = resp.json['entities'][0]['related_cases'][0]
-                assert (case['submitter_id'] == case_sid), (fname, resp.data)
 
 
 def post_example_entities_together(client, submitter, data_fnames2=None):
@@ -329,25 +324,6 @@ def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter
     resp = post_example_entities_together(client, submitter)
     print resp.data
     assert resp.status_code == 201, resp.data
-    if CACHE_CASES:
-        assert resp.json['entities'][2]['related_cases'][0]['submitter_id'] \
-               == case_sid, resp.data
-
-
-@pytest.mark.skipif(not CACHE_CASES, reason="This dictionary does not cache cases")
-def test_related_cases(client, pg_driver, cgci_blgsp, submitter):
-    with open(os.path.join(DATA_DIR, 'case.json'), 'r') as f:
-        case_id = json.loads(f.read())['submitter_id']
-
-    resp = post_example_entities_together(client, submitter)
-    assert resp.json["cases_related_to_created_entities_count"] == 1, resp.data
-    assert resp.json["cases_related_to_updated_entities_count"] == 0, resp.data
-    for e in resp.json['entities']:
-        for c in e['related_cases']:
-            assert c['submitter_id'] == case_id, resp.data
-    resp = put_example_entities_together(client, submitter)
-    assert resp.json["cases_related_to_created_entities_count"] == 0, resp.data
-    assert resp.json["cases_related_to_updated_entities_count"] == 1, resp.data
 
 
 def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
@@ -572,10 +548,10 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
     # file is invalid, change the ``create`` and ``create_alias`` methods to
     # raise an error.
     monkeypatch.setattr(
-        UploadTransaction, 'signpost.create', fail_index_test, raising=False
+        UploadTransaction, 'index_client.create', fail_index_test, raising=False
     )
     monkeypatch.setattr(
-        UploadTransaction, 'signpost.create_alias', fail_index_test,
+        UploadTransaction, 'index_client.create_alias', fail_index_test,
         raising=False
     )
     # Attempt to post the invalid entities.

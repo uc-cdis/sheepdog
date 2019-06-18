@@ -6,8 +6,6 @@ import abc
 
 import psqlgraph
 
-from sheepdog.globals import case_cache_enabled
-
 
 class EntityErrors(object):
     """Enum of possible entity error classifications."""
@@ -72,7 +70,6 @@ class EntityBase(object):
             "action": self.action,
             "type": self.entity_type,
             "id": self.entity_id,
-            "related_cases": self.related_cases,
             "errors": self.errors,
             "warnings": self.warnings,
             "unique_keys": self.secondary_keys_dicts,
@@ -102,24 +99,6 @@ class EntityBase(object):
         )
         return count > 0
 
-    @property
-    def related_cases(self):
-        """Gets related cases from shortcut edge
-
-        """
-        if (
-            not case_cache_enabled()
-            or not self.node
-            or not self.entity_type
-            or not self.node.label
-        ):
-            return []
-        self.transaction.session.flush()
-
-        def make_id(case):
-            return {"id": case.node_id, "submitter_id": case.submitter_id}
-
-        return map(make_id, self.node._related_cases_from_cache)
 
     def get_links(self, node):
         """Return the possible links to submittable entities given a node."""

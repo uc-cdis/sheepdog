@@ -61,7 +61,7 @@ def fake_get_nodes(dids):
     return nodes
 
 
-def fake_urls_from_signpost(did):
+def fake_urls_from_index_client(did):
     return ["s3://fake-host/fake_bucket/{}".format(did)]
 
 
@@ -123,7 +123,7 @@ def run_with_fake_download():
             "sheepdog.download",
             key_for=fake_key_for,
             key_for_node=fake_key_for_node,
-            urls_from_signpost=fake_urls_from_signpost,
+            urls_from_index_client=fake_urls_from_index_client,
         ):
             if os.environ.get("GDC_FAKE_AUTH"):
                 run_with_fake_auth()

@@ -20,7 +20,7 @@ from sheepdog.test_settings import (
     Fernet,
     HMAC_ENCRYPTION_KEY,
     JWT_KEYPAIR_FILES,
-    SIGNPOST,
+    INDEX_CLIENT,
 )
 
 from tests import utils
@@ -99,7 +99,7 @@ def app(tmpdir, request):
             os.remove(filename)
     indexd_app = get_indexd_app()
 
-    indexd_init(*SIGNPOST['auth'])
+    indexd_init(*INDEX_CLIENT['auth'])
     indexd = Process(target=indexd_app.run, args=['localhost', port])
     indexd.start()
     wait_for_indexd_alive(port)
@@ -166,7 +166,7 @@ def cgci_blgsp(client, admin):
 
 @pytest.fixture()
 def index_client():
-    return IndexClient(SIGNPOST['host'], SIGNPOST['version'], SIGNPOST['auth'])
+    return IndexClient(INDEX_CLIENT['host'], INDEX_CLIENT['version'], INDEX_CLIENT['auth'])
 
 
 def dictionary_setup(_app):

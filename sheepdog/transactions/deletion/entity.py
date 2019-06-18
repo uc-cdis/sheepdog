@@ -30,18 +30,6 @@ class DeletionEntity(EntityBase):
                 )
             )
 
-    @property
-    def related_cases(self):
-        """Override super.related_cases because by the time we go to access
-        it, the node has been deleted in the session
-
-        By the time that the related cases were queried from the
-        database, the relationships had already been deleted, this
-        relationship is stored for later use,
-
-        """
-
-        return self.transaction.related_cases.get(self.node.node_id, [])
 
     @property
     def secondary_keys(self):

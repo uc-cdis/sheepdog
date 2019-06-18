@@ -14,7 +14,7 @@ from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators, postgres_admin
 
 
-from indexclient.client import IndexClient as SignpostClient
+from indexclient.client import IndexClient
 
 import sheepdog
 from sheepdog.errors import (
@@ -78,11 +78,11 @@ def db_init(app):
 
     app.oauth_client = oauth2_client.OAuthClient(**app.config["OAUTH2"])
 
-    app.logger.info("Initializing Signpost driver")
-    app.signpost = SignpostClient(
-        app.config["SIGNPOST"]["host"],
-        version=app.config["SIGNPOST"]["version"],
-        auth=app.config["SIGNPOST"]["auth"],
+    app.logger.info("Initializing index client")
+    app.index_client = IndexClient(
+        app.config["INDEX_CLIENT"]["host"],
+        version=app.config["INDEX_CLIENT"]["version"],
+        auth=app.config["INDEX_CLIENT"]["auth"],
     )
 
 
@@ -124,7 +124,6 @@ def app_init(app):
     app.logger.info("Initializing app")
 
     # explicit options set for compatibility with gdc's api
-    app.config["USE_SIGNPOST"] = False
     app.config["AUTH_SUBMISSION_LIST"] = True
     app.config["USE_DBGAP"] = False
     app.config["IS_GDC"] = False
