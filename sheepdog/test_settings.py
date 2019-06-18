@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from .config import LEGACY_MODE
 
-SIGNPOST = {
+INDEX_CLIENT = {
     "host": "http://localhost:8000",
     "version": "v0",
     "auth": ("fake_user", "fake_password"),

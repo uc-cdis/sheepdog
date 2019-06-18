@@ -55,7 +55,7 @@ class TransactionBase(object):
             dry_run: If True, the transaction will not be committed
             role: The role required to take this transaction
             user: The initializer of the transaction
-            signpost: Signpost driver (default: capp.signpost)
+            index_client: index client (default: capp.index_client)
             db_driver: PsqlGraph driver (default: capp.db)
             logger: Logging driver (default: capp.logger)
             transaction_id: Optionally inherit and write to an existing
@@ -70,7 +70,7 @@ class TransactionBase(object):
         self.role = kwargs.pop("role", None)
         # To be pulled from flask request context if not provided
         self.logger = kwargs.pop("logger", None) or current_app.logger
-        self.signpost = kwargs.pop("signpost", None) or current_app.signpost
+        self.index_client = kwargs.pop("index_client", None) or current_app.index_client
         self.db_driver = kwargs.pop("db_driver", None) or current_app.db
         self.config = kwargs.pop("flask_config", None) or current_app.config
         #: Create a transaction log, this will be created and committed to the
