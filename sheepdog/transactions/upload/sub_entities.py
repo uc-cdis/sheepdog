@@ -284,16 +284,14 @@ class FileUploadEntity(UploadEntity):
         if self.urls:
             urls.extend(self.urls)
 
+        namespace = flask.current_app.config.get("AUTH_NAMESPACE", "")
+        authz = [
+            "{}/programs/{}/projects/{}"
+            .format(namespace, self.transaction.program, self.transaction.project)
+        ]
         consent_codes = self.node._props.get("consent_codes")
-        authz = []
         if consent_codes:
-            authz = ["/consents/" + code for code in consent_codes]
-        else:
-            namespace = flask.current_app.config.get("AUTH_NAMESPACE", "")
-            authz = [
-                "{}/programs/{}/projects/{}"
-                .format(namespace, self.transaction.program, self.transaction.project)
-            ]
+            authz.extend("/consents/" + code for code in consent_codes)
 
         # IndexClient
         doc = self._create_index(
