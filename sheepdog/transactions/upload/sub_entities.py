@@ -6,6 +6,8 @@ import uuid
 import requests
 import json
 
+import flask
+
 from sheepdog.auth import current_token
 from sheepdog.errors import NoIndexForFileError, UserError
 
@@ -282,9 +284,25 @@ class FileUploadEntity(UploadEntity):
         if self.urls:
             urls.extend(self.urls)
 
+        namespace = flask.current_app.config.get("AUTH_NAMESPACE", "")
+        authz = [
+            "{}/programs/{}/projects/{}"
+            .format(namespace, self.transaction.program, self.transaction.project)
+        ]
+        use_consent_codes = (
+            dictionary.schema.get(self.entity_type, {})
+            .get("properties", {})
+            .get("consent_codes")
+        )
+        if use_consent_codes:
+            consent_codes = self.node._props.get("consent_codes")
+            if consent_codes:
+                authz.extend("/consents/" + code for code in consent_codes)
+
         # IndexClient
         doc = self._create_index(
-            did=self.file_index, hashes=hashes, size=size, urls=urls, acl=acl
+            did=self.file_index, hashes=hashes, size=size, urls=urls, acl=acl,
+            authz=authz,
         )
 
         if self.use_object_id(self.entity_type):

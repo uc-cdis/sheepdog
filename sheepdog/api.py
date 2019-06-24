@@ -138,6 +138,8 @@ def app_init(app):
     if app.config.get("USE_USER_HARAKIRI", True):
         setup_user_harakiri(app)
 
+    app.config["AUTH_NAMESPACE"] = "/" + os.getenv("AUTH_NAMESPACE", "").strip("/")
+
     app_register_blueprints(app)
     db_init(app)
     # exclude es init as it's not used yet
