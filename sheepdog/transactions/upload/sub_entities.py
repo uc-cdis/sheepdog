@@ -289,9 +289,15 @@ class FileUploadEntity(UploadEntity):
             "{}/programs/{}/projects/{}"
             .format(namespace, self.transaction.program, self.transaction.project)
         ]
-        consent_codes = self.node._props.get("consent_codes")
-        if consent_codes:
-            authz.extend("/consents/" + code for code in consent_codes)
+        use_consent_codes = (
+            dictionary.schema.get(self.entity_type, {})
+            .get("properties", {})
+            .get("consent_codes")
+        )
+        if use_consent_codes:
+            consent_codes = self.node._props.get("consent_codes")
+            if consent_codes:
+                authz.extend("/consents/" + code for code in consent_codes)
 
         # IndexClient
         doc = self._create_index(
