@@ -20,4 +20,3 @@ authutils==3.1.0
 gen3rbac==0.1.2
 -e git+https://git@github.com/uc-cdis/doiclient.git@1.0.0#egg=doiclient
 -e git+https://git@github.com/uc-cdis/dosclient.git@1.0.0#egg=dosclient
--e git+https://github.com/uc-cdis/rbac-client.git@0976a184ac9e70b3d426706ee1685a27fb462802#egg=gen3rbac&subdirectory=python
