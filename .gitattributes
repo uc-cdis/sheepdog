@@ -10,7 +10,7 @@ LICENSE export-ignore
 NOTICE export-ignore
 README.md export-ignore
 TestDockerfile export-ignore
-bin export-ignore
+# bin
 build_openapi.py export-ignore
 deployment export-ignore
 dev-requirements.txt export-ignore
