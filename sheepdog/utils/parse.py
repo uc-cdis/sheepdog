@@ -46,6 +46,8 @@ def parse_json(raw):
             raw, object_pairs_hook=oph_raise_for_duplicates
         )
     except Exception as e:
+        import logging
+        logging.error(raw)
         raise UserError('Unable to parse json: {}'.format(e))
 
 
