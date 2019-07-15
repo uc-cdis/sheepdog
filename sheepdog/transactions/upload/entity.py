@@ -265,6 +265,7 @@ class UploadEntity(EntityBase):
 
         # Check to see if it's registered in dbGaP is is an exception
         # to the rule
+        self.logger.error("MY_LOGS: doc is {}".format(self.doc))
         if self.entity_type == 'case':
             submitter_id = self.doc.get("submitter_id")
 
