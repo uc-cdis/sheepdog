@@ -105,6 +105,7 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
     transaction handler.
     """
     doc = flask.request.get_data()
+    flask.current_app.logger.error("SURPISE LOG!: {}".format(doc))
     content_type = flask.request.headers.get('Content-Type', '').lower()
     is_gdc = flask.current_app.config.get('IS_GDC')
     if content_type == 'text/csv':
