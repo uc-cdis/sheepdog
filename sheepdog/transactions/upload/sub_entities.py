@@ -624,16 +624,10 @@ class FileUploadEntity(UploadEntity):
             return
 
         # update acl and uploader fields in indexd
-        data = json.dumps({"acl": self.transaction.get_phsids(), "uploader": None})
+        self.file_by_uuid.acl = self.transaction.get_phsids()
+        self.file_by_uuid.uploader = None
         try:
-            self.transaction.index_client._put(
-                "index", self.object_id,
-                headers={"content-type": "application/json"},
-                data=data,
-                params={"rev": self.file_by_uuid.rev},
-                auth=self.transaction.index_client.auth,
-            )
-            self.file_by_uuid._load() # to sync new rev from server
+            self.file_by_uuid.patch()
         except requests.HTTPError as e:
             self.record_error(
                 "Failed to update acl and uploader fields in indexd: {}".format(
