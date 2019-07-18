@@ -233,6 +233,28 @@ class FileUploadEntity(UploadEntity):
                 if self.should_update_acl_uploader:
                     self._update_acl_uploader_for_file()
 
+                    # Temporary fix to update authz field in index record
+                    # in the data upload flow case,
+                    # while we don't have a way to do it properly (i.e. with permissions checks)
+                    document = self.file_by_uuid or self.file_by_hash
+                    namespace = flask.current_app.config.get("AUTH_NAMESPACE", "")
+                    authz = [
+                        "{}/programs/{}/projects/{}"
+                        .format(namespace, self.transaction.program, self.transaction.project)
+                    ]
+                    use_consent_codes = (
+                        dictionary.schema.get(self.entity_type, {})
+                        .get("properties", {})
+                        .get("consent_codes")
+                    )
+                    if use_consent_codes:
+                        consent_codes = self.node._props.get("consent_codes")
+                        if consent_codes:
+                            authz.extend("/consents/" + code for code in consent_codes)
+                    document.authz = authz
+                    document.patch()
+                    # End temporary fix
+
                 # Check if the category for the node is data_file or
                 # metadata_file, in which case, register a UUID and alias in
                 # the index service.
@@ -604,6 +626,8 @@ class FileUploadEntity(UploadEntity):
         # update acl and uploader fields in indexd
         data = json.dumps({"acl": self.transaction.get_phsids(), "uploader": None})
         try:
+            # This must be done via _put and _load as opposed to using document.patch()
+            # because the uploader field is (correctly) not in indexclient's UPDATABLE_ATTRS
             self.transaction.index_client._put(
                 "index", self.object_id,
                 headers={"content-type": "application/json"},
@@ -611,6 +635,7 @@ class FileUploadEntity(UploadEntity):
                 params={"rev": self.file_by_uuid.rev},
                 auth=self.transaction.index_client.auth,
             )
+            self.file_by_uuid._load() # to sync new rev from server
         except requests.HTTPError as e:
             self.record_error(
                 "Failed to update acl and uploader fields in indexd: {}".format(
