@@ -43,7 +43,12 @@ PERMISSIONS = {
     'delete': 'delete',
 }
 
-
+DISALLOWED_ANNOTATION_CLASSIFICATIONS = [
+    'Redaction',
+    'Complete Data Freeze',
+    'Downstream Data Freeze',
+    'Release Block'
+]
 TEMPLATE_NAME = 'submission_templates.tar.gz'
 
 PROGRAM_SEED = uuid.UUID('85b08c6a-56a6-4474-9c30-b65abfd214a8')

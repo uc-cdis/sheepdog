@@ -19,7 +19,9 @@ from sheepdog.globals import (
     UNVERIFIED_PROJECT_CODES,
     DATA_FILE_CATEGORIES,
     PRIMARY_URL_TYPE,
-    POSSIBLE_OPEN_FILE_NODES)
+    POSSIBLE_OPEN_FILE_NODES,
+    DISALLOWED_ANNOTATION_LIST)
+
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.utils import (
     generate_s3_url,
@@ -266,6 +268,16 @@ class UploadEntity(EntityBase):
         # Check to see if it's registered in dbGaP is is an exception
         # to the rule
         self.logger.error("MY_LOGS: doc is {}".format(self.doc))
+
+        if self.doc.get('classification', "") == 'annotation':
+            if node.props['classification'] in DISALLOWED_ANNOTATION_LIST:
+                return self.record_error(
+                    'Annotations of type {} cannot be submmited through this endpoint.'
+                    .format(node.props['classification']),
+                    type=EntityErrors.INVALID_PERMISSIONS,
+                )
+
+
         if self.entity_type == 'case':
             submitter_id = self.doc.get("submitter_id")
 
@@ -370,6 +382,15 @@ class UploadEntity(EntityBase):
             )
 
         node = query.one()
+
+        if node.label == 'annotation':
+            if node.props['classification'] in DISALLOWED_ANNOTATION_LIST:
+                return self.record_error(
+                    'Annotations of type {} cannot be submmited through this endpoint.'
+                    .format(node.props['classification']),
+                    type=EntityErrors.INVALID_PERMISSIONS,
+                )
+   
         self.old_props = {k: v for k, v in node.props.iteritems()}
 
         if node.label != self.entity_type:
