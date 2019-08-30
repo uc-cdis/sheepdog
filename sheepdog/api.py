@@ -13,7 +13,8 @@ from cdispyutils.uwsgi import setup_user_harakiri
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators, postgres_admin
 from indexclient.client import IndexClient
-from gen3auth import ArboristClient
+from gen3authz.client.arborist.client import ArboristClient
+
 
 import sheepdog
 from sheepdog.errors import (
@@ -148,7 +149,7 @@ def app_init(app):
     except KeyError:
         app.logger.error("Secret key not set in config! Authentication will not work")
 
-    # TODO: load config for base URL
+    # FIXME: load config for base URL
     app.auth = ArboristClient()
 
 

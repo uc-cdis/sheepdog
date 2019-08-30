@@ -11,6 +11,8 @@ import functools
 
 import flask
 
+from sheepdog.errors import AuthError, AuthZError
+
 
 def authorize_for_project(*required_roles):
     """
@@ -22,15 +24,15 @@ def authorize_for_project(*required_roles):
         @functools.wraps(func)
         def authorize_and_call(program, project, *args, **kwargs):
             resource = "/programs/{}/projects/{}".format(program, project)
-            flask.current_app.auth.auth_request({
-                "requests": [
-                    {
-                        "resource": resource,
-                        "action": {"service": "sheepdog", "method": role}
-                    }
-                    for role in required_roles
-                ]
-            })
+            try:
+                jwt = flask.request.headers["Authorization"].split("Bearer ")[1]
+            except Exception:  # this is the MVP, okay?
+                raise AuthError("didn't receive JWT correctly")
+            authz = flask.current_app.auth.auth_request(
+                jwt, "sheepdog", required_roles, [resource]
+            )
+            if not authz:
+                raise AuthZError("user is unauthorized")
             return func(program, project, *args, **kwargs)
 
         return authorize_and_call
