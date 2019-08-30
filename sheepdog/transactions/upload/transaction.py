@@ -6,12 +6,12 @@ import re
 from collections import Counter
 
 # Validating Entity Existence in dbGaP
+from authutils import dbgap
 from datamodelutils import validators
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.attributes import flag_modified
 from gdcdictionary import gdcdictionary
 
-from sheepdog.auth import dbgap
 from sheepdog import models
 from sheepdog import utils
 from sheepdog.errors import UserError, HandledIntegrityError

@@ -2,7 +2,7 @@ import flask
 
 import pytest
 
-from sheepdog.auth import ROLES
+from sheepdog.globals import ROLES
 from sheepdog.test_settings import JWT_KEYPAIR_FILES
 
 from tests import utils

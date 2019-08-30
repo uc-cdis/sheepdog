@@ -9,6 +9,7 @@ or
 
 import functools
 
+from authutils.token.validate import current_token
 import flask
 
 from sheepdog.errors import AuthError, AuthZError
@@ -38,3 +39,16 @@ def authorize_for_project(*required_roles):
         return authorize_and_call
 
     return wrapper
+
+
+def authorize(program, project, roles):
+    resource = "/programs/{}/projects/{}".format(program, project)
+    try:
+        jwt = flask.request.headers["Authorization"].split("Bearer ")[1]
+    except Exception:  # this is the MVP, okay?
+        raise AuthError("didn't receive JWT correctly")
+    authz = flask.current_app.auth.auth_request(
+        jwt, "sheepdog", roles, [resource]
+    )
+    if not authz:
+        raise AuthZError("user is unauthorized")
