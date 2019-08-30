@@ -14,6 +14,7 @@ from datamodelutils import models
 from cdispyutils.hmac4 import get_auth
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
+from gen3authz.client.arborist.client import ArboristClient
 
 import sheepdog
 from sheepdog.test_settings import (
@@ -132,6 +133,10 @@ def app(tmpdir, request):
     _app.jwt_public_keys = {_app.config['USER_API']: {
             'key-test': utils.read_file('./integration/resources/keys/test_public_key.pem')
     }}
+
+    # FIXME: load config for base URL
+    _app.auth = ArboristClient()
+
     return _app
 
 

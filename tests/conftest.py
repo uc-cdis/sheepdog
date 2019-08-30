@@ -100,6 +100,7 @@ def client(app):
     """
     Overriding the `client` fixture from pytest_flask to fix this bug:
     https://github.com/pytest-dev/pytest-flask/issues/42
+    Fixed in Flask 1.1.0
     """
     with app.test_client() as client:
         yield client
