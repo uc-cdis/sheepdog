@@ -207,9 +207,9 @@ def test_unauthenticated_post(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 401
 
 
-def test_unauthorized_post(client, pg_driver, cgci_blgsp, member):
-    # token only has _member_ role in CGCI
-    headers = member
+def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter, mock_arborist_requests):
+    headers = submitter
+    mock_arborist_requests(authorized=False)
     resp = client.post(
         BLGSP_PATH, headers=headers, data=json.dumps({
             "type": "experiment",
@@ -679,12 +679,12 @@ def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter, admi
     assert resp.status_code == 400
 
 
-def test_delete_project_without_admin_token(client, pg_driver, cgci_blgsp, member):
+def test_delete_project_without_admin_token(client, pg_driver, cgci_blgsp, submitter):
     """
     Test that returns error when attemping to delete non-empty project
     """
     path = '/v0/submission/CGCI/BLGSP'
-    resp = client.delete(path, headers=member)
+    resp = client.delete(path, headers=submitter)
     assert resp.status_code == 403
 
 
@@ -721,14 +721,14 @@ def test_delete_empty_non_program(client, pg_driver, cgci_blgsp, admin):
     assert resp.status_code == 400
 
 
-def test_delete_program_without_admin_token(client, pg_driver, admin, member):
+def test_delete_program_without_admin_token(client, pg_driver, admin, submitter):
     """
     Test that returns error since the client does not have
     privillege to delele the program
     """
     path = '/v0/submission/CGCI'
     put_cgci(client, admin)
-    resp = client.delete(path, headers=member)
+    resp = client.delete(path, headers=submitter)
     assert resp.status_code == 403
 
 
@@ -748,7 +748,7 @@ def test_delete_program(client, pg_driver, admin):
         assert not program
 
 
-def test_update_program_without_admin_token(client, pg_driver, admin, member):
+def test_update_program_without_admin_token(client, pg_driver, admin, submitter):
     """
     Test that returns authentication error since client does not have
     privilege to update the program
@@ -758,7 +758,7 @@ def test_update_program_without_admin_token(client, pg_driver, admin, member):
         'name': 'CGCI', 'type': 'program',
         'dbgap_accession_number': 'phs000235_2'
     })
-    resp = client.put('/v0/submission', headers=member, data=data)
+    resp = client.put('/v0/submission', headers=submitter, data=data)
     assert resp.status_code == 403
 
 

@@ -1,7 +1,17 @@
 import flask
 
 import pytest
+import requests
 
+# Python 2 and 3 compatible
+try:
+    from unittest.mock import MagicMock
+    from unittest.mock import patch
+except ImportError:
+    from mock import MagicMock
+    from mock import patch
+
+from sheepdog.errors import AuthZError
 from sheepdog.globals import ROLES
 from sheepdog.test_settings import JWT_KEYPAIR_FILES
 
@@ -10,7 +20,6 @@ from tests import utils
 
 SUBMITTER_USERNAME = "submitter"
 ADMIN_USERNAME = "admin"
-MEMBER_USERNAME = "member"
 
 
 @pytest.fixture(scope="session")
@@ -88,13 +97,6 @@ def admin(create_user_header):
     return create_user_header(ADMIN_USERNAME, project_access, is_admin=True)
 
 
-@pytest.fixture()
-def member(create_user_header):
-    project_ids = ["phs000218", "phs000235", "phs000178"]
-    project_access = {project: ["_member"] for project in project_ids}
-    return create_user_header(MEMBER_USERNAME, project_access)
-
-
 @pytest.yield_fixture
 def client(app):
     """
@@ -111,3 +113,40 @@ def client(app):
             top.pop()
         else:
             break
+
+
+@pytest.fixture(scope="function")
+def mock_arborist_requests(request):
+    """
+    This fixture returns a function which you call to mock the call to
+    arborist client's auth_request method.
+    By default, it returns a 200 response. If parameter "authorized" is set
+    to False, it raises a 401 error.
+    """
+
+    def do_patch(authorized=True):
+        def make_mock_response():
+            def response(*args, **kwargs):
+                if not authorized:
+                    raise AuthZError('Mocked Arborist says no')
+                mocked_response = MagicMock(requests.Response)
+                mocked_response.status_code = 200
+                return mocked_response
+            return response
+
+        mocked_get = MagicMock(side_effect=make_mock_response())
+        patch_get = patch("gen3authz.client.arborist.client.ArboristClient.auth_request", mocked_get)
+        patch_get.start()
+        request.addfinalizer(patch_get.stop)
+
+    return do_patch
+
+
+@pytest.fixture(autouse=True)
+def arborist_authorized(mock_arborist_requests):
+    """
+    By default, mocked arborist calls return Authorized.
+    To mock an unauthorized response, use fixture
+    "mock_arborist_requests(authorized=False)" in the test itself
+    """
+    mock_arborist_requests()

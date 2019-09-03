@@ -14,7 +14,22 @@ from authutils.token.validate import current_token
 import flask
 import re
 
-from sheepdog.errors import AuthError, AuthZError
+from sheepdog.errors import AuthNError, AuthZError
+
+
+def get_jwt_from_header():
+    try:
+        jwt = None
+        auth_header = flask.request.headers["Authorization"]
+        if auth_header:
+            items = auth_header.split(" ")
+            if len(items) == 2 and items[0].lower() == "bearer":
+                jwt = items[1]
+        assert jwt, "Unable to parse header"
+    except Exception as e:  # this is the MVP, okay? TODO better exception handling
+        print(e)
+        raise AuthNError("Didn't receive JWT correctly")
+    return jwt
 
 
 def authorize_for_project(*required_roles):
@@ -27,17 +42,12 @@ def authorize_for_project(*required_roles):
         @functools.wraps(func)
         def authorize_and_call(program, project, *args, **kwargs):
             resource = "/programs/{}/projects/{}".format(program, project)
-            try:
-                auth_header = flask.request.headers["Authorization"]
-                if auth_header:
-                    items = auth_header.split(" ")
-                    if len(items) == 2 and items[0].lower() == "bearer":
-                        jwt = items[1]
-                assert jwt
-            except Exception:  # this is the MVP, okay?
-                raise AuthError("didn't receive JWT correctly")
+            jwt = get_jwt_from_header()
             authz = flask.current_app.auth.auth_request(
-                jwt, "sheepdog", required_roles, [resource]
+                jwt=jwt,
+                service="sheepdog",
+                methods=required_roles,
+                resources=[resource]
             )
             if not authz:
                 raise AuthZError("user is unauthorized")
@@ -50,12 +60,12 @@ def authorize_for_project(*required_roles):
 
 def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
-    try:
-        jwt = flask.request.headers["Authorization"].split("Bearer ")[1]
-    except Exception:  # this is the MVP, okay?
-        raise AuthError("didn't receive JWT correctly")
+    jwt = get_jwt_from_header()
     authz = flask.current_app.auth.auth_request(
-        jwt, "sheepdog", roles, [resource]
+        jwt=jwt,
+        service="sheepdog",
+        methods=roles,
+        resources=[resource]
     )
     if not authz:
         raise AuthZError("user is unauthorized")

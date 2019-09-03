@@ -551,11 +551,6 @@ def create_files_viewer(dry_run=False, reassign=False):
             raise UserError("Unsupported file operation", code=405)
 
         project_id = program + "-" + project
-        role = PERMISSIONS[action]
-        roles = auth.get_program_project_roles(*project_id.split("-", 1))
-        if role not in roles:
-            raise AuthError("You don't have {} role to do '{}'".format(role, action))
-
         resp = utils.proxy_request(
             project_id,
             file_uuid,

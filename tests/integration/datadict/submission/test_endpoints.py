@@ -69,7 +69,9 @@ def put_cgci(client, auth=None):
 
 
 def put_cgci_blgsp(client, auth=None):
-    put_cgci(client, auth=auth)
+    r = put_cgci(client, auth=auth)
+    assert r.status_code == 200, r.data
+
     path = '/v0/submission/CGCI/'
     headers = auth
     data = json.dumps({
@@ -186,9 +188,9 @@ def test_unauthenticated_post(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 401
 
 
-def test_unauthorized_post(client, pg_driver, cgci_blgsp, member):
-    # token only has _member_ role in CGCI
-    headers = member
+def test_unauthorized_post(client, pg_driver, cgci_blgsp, submitter, mock_arborist_requests):
+    headers = submitter
+    mock_arborist_requests(authorized=False)
     resp = client.post(
         BLGSP_PATH, headers=headers, data=json.dumps({
             "type": "experiment",
