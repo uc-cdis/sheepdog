@@ -12,7 +12,6 @@ except ImportError:
     from mock import patch
 
 from sheepdog.errors import AuthZError
-from sheepdog.globals import ROLES
 from sheepdog.test_settings import JWT_KEYPAIR_FILES
 
 from tests import utils
@@ -56,7 +55,7 @@ def encoded_jwt(iss):
 
 @pytest.fixture(scope="session")
 def create_user_header(encoded_jwt):
-    def create_user_header_function(username, project_access, **kwargs):
+    def create_user_header_function(username, **kwargs):
         private_key = utils.read_file(
             "./integration/resources/keys/test_private_key.pem"
         )
@@ -66,7 +65,6 @@ def create_user_header(encoded_jwt):
             "id": 1,
             "username": "submitter",
             "is_admin": False,
-            "project_access": project_access,
             "policies": [],
             "google_proxy_group_id": None,
         }
@@ -80,9 +78,7 @@ def create_user_header(encoded_jwt):
 
 @pytest.fixture()
 def submitter(create_user_header):
-    project_ids = ["phs000218", "phs000235", "phs000178"]
-    project_access = {project: ROLES.values() for project in project_ids}
-    return create_user_header(SUBMITTER_USERNAME, project_access)
+    return create_user_header(SUBMITTER_USERNAME)
 
 
 @pytest.fixture()
@@ -92,9 +88,7 @@ def submitter_name():
 
 @pytest.fixture()
 def admin(create_user_header):
-    project_ids = ["phs000218", "phs000235", "phs000178"]
-    project_access = {project: ROLES.values() for project in project_ids}
-    return create_user_header(ADMIN_USERNAME, project_access, is_admin=True)
+    return create_user_header(ADMIN_USERNAME, is_admin=True)
 
 
 @pytest.yield_fixture
