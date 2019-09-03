@@ -18,16 +18,13 @@ from sheepdog.errors import AuthNError, AuthZError
 
 
 def get_jwt_from_header():
-    try:
-        jwt = None
-        auth_header = flask.request.headers["Authorization"]
-        if auth_header:
-            items = auth_header.split(" ")
-            if len(items) == 2 and items[0].lower() == "bearer":
-                jwt = items[1]
-        assert jwt, "Unable to parse header"
-    except Exception as e:  # this is the MVP, okay? TODO better exception handling
-        print(e)
+    jwt = None
+    auth_header = flask.request.headers.get("Authorization")
+    if auth_header:
+        items = auth_header.split(" ")
+        if len(items) == 2 and items[0].lower() == "bearer":
+            jwt = items[1]
+    if not jwt:
         raise AuthNError("Didn't receive JWT correctly")
     return jwt
 
