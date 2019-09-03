@@ -132,7 +132,6 @@ def app(tmpdir, request):
         }
     }
 
-    # FIXME: load config for base URL
     _app.auth = ArboristClient()
 
     return _app

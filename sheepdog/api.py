@@ -149,8 +149,11 @@ def app_init(app):
     except KeyError:
         app.logger.error("Secret key not set in config! Authentication will not work")
 
-    # FIXME: load config for base URL
-    app.auth = ArboristClient()
+    if app.config.get("ARBORIST"):
+        app.auth = ArboristClient(arborist_base_url=app.config["ARBORIST"])
+    else:
+        app.logger.info("Using default Arborist base URL")
+        app.auth = ArboristClient()
 
 
 app = Flask(__name__)

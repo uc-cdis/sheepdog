@@ -15,6 +15,9 @@ AUTH_ADMIN_CREDS = {
     "auth_url": "https://fake_auth_url",
     "user_domain_name": "some_domain",
 }
+
+ARBORIST = "http://arborist-service/"
+
 SUBMISSION = {"bucket": "test_submission", "host": "host"}
 
 

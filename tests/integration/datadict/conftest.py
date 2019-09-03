@@ -134,7 +134,6 @@ def app(tmpdir, request):
             'key-test': utils.read_file('./integration/resources/keys/test_public_key.pem')
     }}
 
-    # FIXME: load config for base URL
     _app.auth = ArboristClient()
 
     return _app
