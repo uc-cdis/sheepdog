@@ -49,7 +49,7 @@ def post_blgsp_files(client, headers):
 
 @pytest.mark.parametrize(
     "headers,status_code,to_delete",
-    [("submitter", 403, None), ("admin", 200, True), ("admin", 200, False)],
+    [("admin", 200, True), ("admin", 200, False)],
 )
 def test_to_delete(
     headers,
@@ -62,7 +62,7 @@ def test_to_delete(
     submitter,
     require_index_exists_off,
 ):
-    """Try to set the sysan of a node with admin credentials
+    """Try to set the sysan of a node with delete access
 
     Url:
         DELETE: /admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>
@@ -83,6 +83,40 @@ def test_to_delete(
         sur_node = pg_driver.nodes(md.SubmittedUnalignedReads).first()
         assert sur_node
         assert sur_node.sysan.get("to_delete") is to_delete
+
+
+def test_to_delete_unauthorized(
+    request,
+    client,
+    pg_driver,
+    cgci_blgsp,
+    submitter,
+    require_index_exists_off,
+    mock_arborist_requests,
+):
+    """Try to set the sysan of a node without delete access
+
+    Url:
+        DELETE: /admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>
+    """
+
+    headers = submitter
+
+    # submit files as submitter
+    entities = post_blgsp_files(client, submitter)
+    did = entities["submitted_unaligned_reads"]
+
+    to_delete = True
+    base_delete_path = create_blgsp_url("/entities/{}/to_delete/".format(did))
+    to_delete_path = base_delete_path + str(to_delete).lower()
+
+    mock_arborist_requests(authorized=False)
+    resp = client.delete(to_delete_path, headers=headers)
+    assert resp.status_code == 403, resp.data
+    with pg_driver.session_scope():
+        sur_node = pg_driver.nodes(md.SubmittedUnalignedReads).first()
+        assert sur_node
+        assert not sur_node.sysan.get("to_delete")
 
 
 def do_reassign(client, headers):
