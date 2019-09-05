@@ -22,7 +22,6 @@ DELIMITERS = {"csv": ",", "tsv": "\t"}
 SUPPORTED_FORMATS = ["csv", "tsv", "json"]
 
 ROLES = {
-    "ADMIN": "admin",
     "CREATE": "create",
     "DELETE": "delete",
     "DOWNLOAD": "download",

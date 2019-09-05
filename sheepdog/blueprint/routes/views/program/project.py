@@ -285,7 +285,7 @@ def create_delete_entities_viewer(dry_run=False):
     """
 
     @utils.assert_project_exists
-    @auth.authorize_for_project(ROLES["DELETE"], ROLES["ADMIN"])
+    @auth.authorize_for_project(ROLES["DELETE"])
     def delete_entities(program, project, ids, to_delete=None):
         """
         Delete existing GDC entities.
@@ -330,9 +330,6 @@ def create_delete_entities_viewer(dry_run=False):
         fields = flask.request.args.get("fields")
 
         if to_delete is not None:
-            # to_delete is admin only
-            auth.current_user.require_admin()
-
             # get value of that flag from string
             if to_delete.lower() == "false":
                 to_delete = False
@@ -453,7 +450,6 @@ def create_files_viewer(dry_run=False, reassign=False):
         ROLES["DELETE"],
         ROLES["DOWNLOAD"],
         ROLES["READ"],
-        ROLES["ADMIN"],
     ]
 
     @utils.assert_project_exists
@@ -514,6 +510,11 @@ def create_files_viewer(dry_run=False, reassign=False):
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
         :resheader Content-Type: |resheader_Content-Type|
         """
+
+        # admin only
+        # TODO: check if we need these (pauline)
+        auth.current_user.require_admin()
+
         headers = {
             k: v
             for k, v in flask.request.headers.iteritems()
@@ -535,8 +536,6 @@ def create_files_viewer(dry_run=False, reassign=False):
                 action = "upload"
         elif flask.request.method == "PUT":
             if reassign:
-                # admin only
-                auth.current_user.require_admin()
                 action = "reassign"
             elif flask.request.args.get("partNumber"):
                 action = "upload_part"
