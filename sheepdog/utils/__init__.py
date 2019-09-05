@@ -177,8 +177,7 @@ def create_entity_list(nodes):
         props["id"] = node.node_id
         props["type"] = node.label
         if hasattr(node, "project_id"):
-            program = node.project_id.split("-")[0]
-            project = "-".join(node.project_id.split("-")[1:])
+            program, project = node.project_id.split("-", 1)
         else:
             program, project = None, None
         for link_name in node._pg_links:  # pylint: disable=W0212

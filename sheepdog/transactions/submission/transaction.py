@@ -35,7 +35,7 @@ class SubmissionTransaction(TransactionBase):
             self.smtp_conf = smtp_conf
 
         try:
-            program, project = self.transaction.project_id.split("-")
+            program, project = self.transaction.project_id.split("-", 1)
             authorize(program, project, [ROLE_SUBMIT])
         except AuthZError:
             return self.record_error(

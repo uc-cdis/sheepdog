@@ -24,7 +24,7 @@ class DeletionEntity(EntityBase):
 
         # Check user permissions for deleting nodes
         try:
-            program, project = self.transaction.project_id.split("-")
+            program, project = self.transaction.project_id.split("-", 1)
             authorize(program, project, ["delete"])
         except AuthZError:
             return self.record_error(
