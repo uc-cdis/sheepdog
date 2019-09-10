@@ -136,6 +136,7 @@ def create_project(program):
                 "state": "active"
             }
     """
+    res = None
     auth.current_user.require_admin()
     doc = utils.parse.parse_request_json()
     if not isinstance(doc, dict):
@@ -208,7 +209,12 @@ def create_project(program):
             entity.node = node
             entity.entity_id = entity.node.node_id
             trans.entities = [entity]
-            return flask.jsonify(trans.json)
+            res = flask.jsonify(trans.json)
+
+        # create the resource in arborist
+        auth.create_resource(program_node.dbgap_accession_number, phsid)
+
+    return res
 
 
 @utils.assert_program_exists

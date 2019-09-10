@@ -11,10 +11,14 @@ import functools
 
 from authutils.user import current_user
 from authutils.token.validate import current_token
+from cdislogging import get_logger
 import flask
 import re
 
 from sheepdog.errors import AuthNError, AuthZError
+
+
+logger = get_logger(__name__)
 
 
 def get_jwt_from_header():
@@ -66,3 +70,22 @@ def authorize(program, project, roles):
     )
     if not authz:
         raise AuthZError("user is unauthorized")
+
+
+def create_resource(program, project=None):
+    resource = "/programs/{}".format(program)
+    if project:
+        resource += "/projects/{}".format(project)
+    logger.info("Creating arborist resource {}".format(resource))
+
+    json_data = {
+        "name": resource,
+        "description": "Created by sheepdog"  # TODO use authz provider field
+    }
+    resp = flask.current_app.auth.create_resource(
+        parent_path="",
+        resource_json=json_data,
+        create_parents=True
+    )
+    if resp.get("error"):
+        logger.error("Unable to create resource: code {} - {}".format(resp.error.code, resp.error.message))

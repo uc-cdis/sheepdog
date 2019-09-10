@@ -125,13 +125,24 @@ def mock_arborist_requests(request):
                     raise AuthZError('Mocked Arborist says no')
                 mocked_response = MagicMock(requests.Response)
                 mocked_response.status_code = 200
+
+                def mocked_get(*args, **kwargs):
+                    return None
+                mocked_response.get = mocked_get
+
                 return mocked_response
             return response
 
-        mocked_get = MagicMock(side_effect=make_mock_response())
-        patch_get = patch("gen3authz.client.arborist.client.ArboristClient.auth_request", mocked_get)
-        patch_get.start()
-        request.addfinalizer(patch_get.stop)
+        mocked_auth_request = MagicMock(side_effect=make_mock_response())
+
+        patch_auth_request = patch("gen3authz.client.arborist.client.ArboristClient.auth_request", mocked_auth_request)
+        patch_create_resource = patch("gen3authz.client.arborist.client.ArboristClient.create_resource", mocked_auth_request)
+
+        patch_auth_request.start()
+        patch_create_resource.start()
+
+        request.addfinalizer(patch_auth_request.stop)
+        request.addfinalizer(patch_create_resource.stop)
 
     return do_patch
 
