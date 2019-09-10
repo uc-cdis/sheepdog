@@ -13,7 +13,6 @@ from authutils.user import current_user
 from authutils.token.validate import current_token
 from cdislogging import get_logger
 import flask
-import re
 
 from sheepdog.errors import AuthNError, AuthZError
 
