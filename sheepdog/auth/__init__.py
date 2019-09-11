@@ -86,5 +86,5 @@ def create_resource(program, project=None):
         resource_json=json_data,
         create_parents=True
     )
-    if resp.get("error"):
+    if resp and resp.get("error"):
         logger.error("Unable to create resource: code {} - {}".format(resp.error.code, resp.error.message))
