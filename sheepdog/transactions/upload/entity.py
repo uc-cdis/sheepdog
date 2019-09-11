@@ -11,8 +11,8 @@ from psqlgraph.exc import ValidationError
 
 from sheepdog import dictionary
 from sheepdog import models
-from sheepdog.auth import get_program_project_roles
-from sheepdog.errors import InternalError
+from sheepdog.auth import authorize
+from sheepdog.errors import AuthZError, InternalError
 from sheepdog.globals import (
     REGEX_UUID,
     UNVERIFIED_PROGRAM_NAMES,
@@ -231,11 +231,13 @@ class UploadEntity(EntityBase):
             psqlgraph.Node
         """
         # Check user permissions for updating nodes
-        roles = self.get_user_roles()
-        if "create" not in roles:
+        try:
+            program, project = self.transaction.project_id.split("-", 1)
+            authorize(program, project, ["create"])
+        except AuthZError:
             return self.record_error(
-                "You do not have create permission for project {} only {}".format(
-                    self.transaction.project_id, roles
+                "You do not have create permission for project {}".format(
+                    self.transaction.project_id
                 ),
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
@@ -328,14 +330,16 @@ class UploadEntity(EntityBase):
             return None
 
         # Check user permissions for updating nodes
-        if "update" not in self.get_user_roles():
-            self.record_error(
+        try:
+            program, project = self.transaction.project_id.split("-", 1)
+            authorize(program, project, ["update"])
+        except AuthZError:
+            return self.record_error(
                 "You do not have update permission for project {}".format(
                     self.transaction.project_id
                 ),
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
-            return None
 
         self.old_props = {k: v for k, v in node.props.iteritems()}
 
@@ -615,27 +619,6 @@ class UploadEntity(EntityBase):
             if "default" in prop:
                 doc[key] = prop["default"]
         return doc
-
-    def get_user_roles(self):
-        return get_program_project_roles(*self.transaction.project_id.split("-", 1))
-
-    def is_case_creation_allowed(self, case_id):
-        """
-        Check if case creation is allowed:
-
-        #. Does the case exist in dbGaP?
-        #. Is the case in a predefined list of cases to allow?
-        #. Is the owning project in a predefined list of projects?
-        """
-        program, project = self.transaction.project_id.split("-", 1)
-        if program in UNVERIFIED_PROGRAM_NAMES:
-            return True
-        elif project in UNVERIFIED_PROJECT_CODES:
-            return True
-        else:
-            return self.transaction.dbgap_x_referencer.case_exists(
-                program, project, self.doc.get("submitter_id")
-            )
 
     def set_association_proxies(self):
         """

@@ -124,6 +124,7 @@ def root_create():
     if not program:
         raise UserError("No program specified in key 'name'")
 
+    # create the resource in sheepdog DB
     with current_app.db.session_scope(can_inherit=False) as session:
         node = current_app.db.nodes(models.Program).props(name=program).scalar()
         if node:
@@ -138,6 +139,9 @@ def root_create():
                 )
             )
             message = "Program registered."
+
+    # create the resource in arborist
+    auth.create_resource(phsid)
 
     return flask.jsonify({"id": node_id, "name": program, "message": message})
 

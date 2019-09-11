@@ -98,7 +98,6 @@ def generate_signed_access_token(
             "user": {
                 "name": user.username,
                 "is_admin": user.is_admin,
-                "projects": dict(user.project_access),
                 "google": {"proxy_group": user.google_proxy_group_id},
             }
         },
@@ -119,6 +118,6 @@ def generate_signed_access_token(
 
     # Browser may clip cookies larger than 4096 bytes
     if len(token) > 4096:
-        raise JWTSizeError("JWT exceeded 4096 bytes")
+        raise Exception("JWT exceeded 4096 bytes")
 
     return JWTResult(token=token, kid=kid, claims=claims)

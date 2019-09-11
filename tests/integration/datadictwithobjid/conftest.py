@@ -15,6 +15,7 @@ from datamodelutils import models
 from cdispyutils.hmac4 import get_auth
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
+from gen3authz.client.arborist.client import ArboristClient
 
 import sheepdog
 
@@ -130,6 +131,9 @@ def app(tmpdir, request):
             )
         }
     }
+
+    _app.auth = ArboristClient()
+
     return _app
 
 

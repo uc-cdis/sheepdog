@@ -61,8 +61,9 @@ def test_to_delete(
     cgci_blgsp,
     submitter,
     require_index_exists_off,
+    mock_arborist_requests,
 ):
-    """Try to set the sysan of a node with admin credentials
+    """Try to set the sysan of a node with and without delete access
 
     Url:
         DELETE: /admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>
@@ -76,6 +77,9 @@ def test_to_delete(
 
     base_delete_path = create_blgsp_url("/entities/{}/to_delete/".format(did))
     to_delete_path = base_delete_path + str(to_delete).lower()
+
+    if status_code != 200:
+        mock_arborist_requests(authorized=False)
 
     resp = client.delete(to_delete_path, headers=headers)
     assert resp.status_code == status_code, resp.data

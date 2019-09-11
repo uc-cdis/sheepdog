@@ -4,7 +4,8 @@ import sqlalchemy
 from flask import current_app as capp
 
 from sheepdog import utils
-from sheepdog.auth import get_program_project_roles
+from sheepdog.auth import authorize
+from sheepdog.errors import AuthZError
 from sheepdog.globals import (
     ENTITY_STATE_CATEGORIES,
     FLAG_IS_ASYNC,
@@ -33,15 +34,16 @@ class SubmissionTransaction(TransactionBase):
         if utils.should_send_email(self.app_config):
             self.smtp_conf = smtp_conf
 
-        roles = get_program_project_roles(*self.project_id.split("-", 1))
-        if ROLE_SUBMIT not in roles:
-            self.record_error(
+        try:
+            program, project = self.transaction.project_id.split("-", 1)
+            authorize(program, project, [ROLE_SUBMIT])
+        except AuthZError:
+            return self.record_error(
                 "You do not have submit permission for project {}".format(
                     self.project_id
                 ),
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
-            return
 
         self.project_node = utils.lookup_project(
             self.db_driver, self.program, self.project

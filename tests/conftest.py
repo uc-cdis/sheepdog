@@ -1,8 +1,17 @@
 import flask
 
 import pytest
+import requests
 
-from sheepdog.auth import ROLES
+# Python 2 and 3 compatible
+try:
+    from unittest.mock import MagicMock
+    from unittest.mock import patch
+except ImportError:
+    from mock import MagicMock
+    from mock import patch
+
+from sheepdog.errors import AuthZError
 from sheepdog.test_settings import JWT_KEYPAIR_FILES
 
 from tests import utils
@@ -10,7 +19,6 @@ from tests import utils
 
 SUBMITTER_USERNAME = "submitter"
 ADMIN_USERNAME = "admin"
-MEMBER_USERNAME = "member"
 
 
 @pytest.fixture(scope="session")
@@ -47,7 +55,7 @@ def encoded_jwt(iss):
 
 @pytest.fixture(scope="session")
 def create_user_header(encoded_jwt):
-    def create_user_header_function(username, project_access, **kwargs):
+    def create_user_header_function(username, **kwargs):
         private_key = utils.read_file(
             "./integration/resources/keys/test_private_key.pem"
         )
@@ -57,7 +65,6 @@ def create_user_header(encoded_jwt):
             "id": 1,
             "username": "submitter",
             "is_admin": False,
-            "project_access": project_access,
             "policies": [],
             "google_proxy_group_id": None,
         }
@@ -71,9 +78,7 @@ def create_user_header(encoded_jwt):
 
 @pytest.fixture()
 def submitter(create_user_header):
-    project_ids = ["phs000218", "phs000235", "phs000178"]
-    project_access = {project: ROLES.values() for project in project_ids}
-    return create_user_header(SUBMITTER_USERNAME, project_access)
+    return create_user_header(SUBMITTER_USERNAME)
 
 
 @pytest.fixture()
@@ -83,16 +88,7 @@ def submitter_name():
 
 @pytest.fixture()
 def admin(create_user_header):
-    project_ids = ["phs000218", "phs000235", "phs000178"]
-    project_access = {project: ROLES.values() for project in project_ids}
-    return create_user_header(ADMIN_USERNAME, project_access, is_admin=True)
-
-
-@pytest.fixture()
-def member(create_user_header):
-    project_ids = ["phs000218", "phs000235", "phs000178"]
-    project_access = {project: ["_member"] for project in project_ids}
-    return create_user_header(MEMBER_USERNAME, project_access)
+    return create_user_header(ADMIN_USERNAME, is_admin=True)
 
 
 @pytest.yield_fixture
@@ -100,6 +96,7 @@ def client(app):
     """
     Overriding the `client` fixture from pytest_flask to fix this bug:
     https://github.com/pytest-dev/pytest-flask/issues/42
+    Fixed in Flask 1.1.0
     """
     with app.test_client() as client:
         yield client
@@ -110,3 +107,49 @@ def client(app):
             top.pop()
         else:
             break
+
+
+@pytest.fixture(scope="function")
+def mock_arborist_requests(request):
+    """
+    This fixture returns a function which you call to mock the call to
+    arborist client's auth_request method.
+    By default, it returns a 200 response. If parameter "authorized" is set
+    to False, it raises a 401 error.
+    """
+
+    def do_patch(authorized=True):
+        def make_mock_response(*args, **kwargs):
+            if not authorized:
+                raise AuthZError('Mocked Arborist says no')
+            mocked_response = MagicMock(requests.Response)
+            mocked_response.status_code = 200
+
+            def mocked_get(*args, **kwargs):
+                return None
+            mocked_response.get = mocked_get
+
+            return mocked_response
+
+        mocked_auth_request = MagicMock(side_effect=make_mock_response)
+
+        patch_auth_request = patch("gen3authz.client.arborist.client.ArboristClient.auth_request", mocked_auth_request)
+        patch_create_resource = patch("gen3authz.client.arborist.client.ArboristClient.create_resource", mocked_auth_request)
+
+        patch_auth_request.start()
+        patch_create_resource.start()
+
+        request.addfinalizer(patch_auth_request.stop)
+        request.addfinalizer(patch_create_resource.stop)
+
+    return do_patch
+
+
+@pytest.fixture(autouse=True)
+def arborist_authorized(mock_arborist_requests):
+    """
+    By default, mocked arborist calls return Authorized.
+    To mock an unauthorized response, use fixture
+    "mock_arborist_requests(authorized=False)" in the test itself
+    """
+    mock_arborist_requests()

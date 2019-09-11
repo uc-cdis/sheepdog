@@ -12,9 +12,9 @@ from cdispyutils.log import get_handler
 from cdispyutils.uwsgi import setup_user_harakiri
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators, postgres_admin
-
-
 from indexclient.client import IndexClient
+from gen3authz.client.arborist.client import ArboristClient
+
 
 import sheepdog
 from sheepdog.errors import (
@@ -148,6 +148,12 @@ def app_init(app):
         app.secret_key = app.config["FLASK_SECRET_KEY"]
     except KeyError:
         app.logger.error("Secret key not set in config! Authentication will not work")
+
+    if app.config.get("ARBORIST"):
+        app.auth = ArboristClient(arborist_base_url=app.config["ARBORIST"])
+    else:
+        app.logger.info("Using default Arborist base URL")
+        app.auth = ArboristClient()
 
 
 app = Flask(__name__)
