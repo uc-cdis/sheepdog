@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from authutils import ROLES as all_roles
 from collections import defaultdict
 from mock import patch, PropertyMock
 import os
@@ -10,7 +11,6 @@ from flask import current_app
 from psqlgraph import PolyNode as Node
 
 from sheepdog.api import run_for_development
-from sheepdog.auth import ROLES as all_roles
 
 
 requests.packages.urllib3.disable_warnings()
@@ -117,6 +117,22 @@ def run_with_fake_auth():
         run_for_development(debug=debug, threaded=True)
 
 
+def run_with_fake_authz():
+    """
+    Mocks arborist calls.
+    """
+    authorized = True  # modify this to mock authorized/unauthorized
+    with patch(
+        'gen3authz.client.arborist.client.ArboristClient.create_resource',
+        new_callable=PropertyMock,
+    ), patch(
+        'gen3authz.client.arborist.client.ArboristClient.auth_request',
+        new_callable=PropertyMock,
+        return_value=lambda jwt, service, methods, resources: authorized,
+    ):
+        run_for_development(debug=debug, threaded=True)
+
+
 def run_with_fake_download():
     with patch("sheepdog.download.get_nodes", fake_get_nodes):
         with patch.multiple(
@@ -139,4 +155,4 @@ if __name__ == "__main__":
         if os.environ.get("GDC_FAKE_AUTH") == "True":
             run_with_fake_auth()
         else:
-            run_for_development(debug=debug, threaded=True)
+            run_with_fake_authz()
