@@ -42,7 +42,6 @@ def get_parent(path):
 
 PATH_TO_SCHEMA_DIR = get_parent(os.path.abspath(os.path.join(os.path.realpath(__file__), os.pardir))) + '/datadict/schemas'
 
-@pytest.fixture(scope='session')
 def pg_config():
     test_host = 'localhost'
     test_user = 'test'
