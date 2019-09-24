@@ -237,7 +237,7 @@ class FileUploadEntity(UploadEntity):
                     # in the data upload flow case,
                     # while we don't have a way to do it properly (i.e. with permissions checks)
                     document = self.file_by_uuid or self.file_by_hash
-                    namespace = flask.current_app.config.get("AUTH_NAMESPACE", "")
+                    namespace = flask.current_app.config.get("AUTH_NAMESPACE", "").rstrip("/")
                     authz = [
                         "{}/programs/{}/projects/{}"
                         .format(namespace, self.transaction.program, self.transaction.project)
@@ -306,7 +306,7 @@ class FileUploadEntity(UploadEntity):
         if self.urls:
             urls.extend(self.urls)
 
-        namespace = flask.current_app.config.get("AUTH_NAMESPACE", "")
+        namespace = flask.current_app.config.get("AUTH_NAMESPACE", "").rstrip("/")
         authz = [
             "{}/programs/{}/projects/{}"
             .format(namespace, self.transaction.program, self.transaction.project)
