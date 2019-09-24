@@ -63,7 +63,7 @@ def create_user_header(encoded_jwt):
         # to generate a token
         user_properties = {
             "id": 1,
-            "username": "submitter",
+            "username": username,
             "is_admin": False,
             "policies": [],
             "google_proxy_group_id": None,
