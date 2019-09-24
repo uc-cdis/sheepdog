@@ -120,7 +120,7 @@ def test_data_file_not_indexed(
     r = client.get(path, headers=submitter)
 
     data = r.json
-    assert len(data) == 1
+    assert data and len(data) == 1
     assert did == None
 
 
@@ -241,7 +241,7 @@ def test_data_file_already_indexed(
     r = client.get(path, headers=submitter)
 
     data = r.json
-    assert len(data) == 1
+    assert data and len(data) == 1
     assert data[0]["object_id"] == document.did
     assert data[0]["id"] != document.did
 
@@ -587,7 +587,7 @@ def test_data_file_already_indexed_object_id_provided_hash_match(
     r = client.get(path, headers=submitter)
 
     data = r.json
-    assert len(data) == 1
+    assert data and len(data) == 1
     assert data[0]["object_id"] == file["object_id"]
 
     # check that the acl and uploader fields have been updated in indexd
@@ -921,7 +921,7 @@ def test_create_file_no_required_index(
     r = client.get(path, headers=submitter)
 
     data = r.json
-    assert len(data) == 1
+    assert data and len(data) == 1
 
 
 @patch(

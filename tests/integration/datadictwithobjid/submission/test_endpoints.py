@@ -596,8 +596,8 @@ def test_valid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter,
 
     print r.json
     data = r.json
+    assert data and len(data) == 1
     object_id = data[0]['object_id']
-    assert len(data) == 1
     assert object_id
 
     assert sur_entity, 'No submitted_unaligned_reads entity created'
@@ -620,7 +620,7 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
         path,
         headers=submitter)
     data = r.json
-    assert len(data) == 1
+    assert data and len(data) == 1
     assert data[0]['id'] == case_id
 
 
