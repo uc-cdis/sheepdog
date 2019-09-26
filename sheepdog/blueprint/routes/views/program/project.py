@@ -410,7 +410,7 @@ def export_entities(program, project):
     project_id = "{}-{}".format(program, project)
     file_format = kwargs.get("file_format") or "tsv"
 
-    mimetype = "application/octet-stream"
+    mimetype = "application/json" if file_format.lower() == "json" else "application/octet-stream"
     if not kwargs.get("ids"):
         if not node_label:
             raise UserError("expected either `ids` or `node_label` parameter")

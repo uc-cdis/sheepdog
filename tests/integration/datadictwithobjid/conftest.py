@@ -36,7 +36,6 @@ PATH_TO_SCHEMA_DIR = (
 )
 
 
-@pytest.fixture(scope="session")
 def pg_config():
     test_host = "localhost"
     test_user = "test"
