@@ -149,8 +149,8 @@ def app_init(app):
     except KeyError:
         app.logger.error("Secret key not set in config! Authentication will not work")
 
-    if app.config.get("ARBORIST"):
-        app.auth = ArboristClient(arborist_base_url=app.config["ARBORIST"])
+    if app.config.get("ARBORIST_URL"):
+        app.auth = ArboristClient(arborist_base_url=app.config["ARBORIST_URL"])
     else:
         app.logger.info("Using default Arborist base URL")
         app.auth = ArboristClient()

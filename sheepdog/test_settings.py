@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from .config import LEGACY_MODE
+import os
 
 INDEX_CLIENT = {
     "host": "http://localhost:8000",
@@ -16,7 +17,7 @@ AUTH_ADMIN_CREDS = {
     "user_domain_name": "some_domain",
 }
 
-ARBORIST = "http://arborist-service/"
+ARBORIST_URL = os.environ.get("ARBORIST_URL", "http://arborist-service/")
 
 SUBMISSION = {"bucket": "test_submission", "host": "host"}
 
