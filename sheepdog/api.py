@@ -149,7 +149,8 @@ def app_init(app):
     except KeyError:
         app.logger.error("Secret key not set in config! Authentication will not work")
 
-    arborist_url = os.environ.get("ARBORIST_URL", "http://arborist-service/")
+    # ARBORIST deprecated, replaced by ARBORIST_URL
+    arborist_url = os.environ.get("ARBORIST_URL", os.environ.get("ARBORIST"))
     if arborist_url:
         app.auth = ArboristClient(arborist_base_url=arborist_url)
     else:
