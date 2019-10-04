@@ -16,8 +16,6 @@ AUTH_ADMIN_CREDS = {
     "user_domain_name": "some_domain",
 }
 
-ARBORIST = "http://arborist-service/"
-
 SUBMISSION = {"bucket": "test_submission", "host": "host"}
 
 
