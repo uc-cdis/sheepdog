@@ -127,10 +127,10 @@ def root_create():
     # create the resource in sheepdog DB
     with current_app.db.session_scope(can_inherit=False) as session:
         node = current_app.db.nodes(models.Program).props(name=program).scalar()
+
         if node:
             message = "Program is updated!"
             node_id = node.node_id
-            node.props["dbgap_accession_number"] = phsid
         else:
             node_id = str(uuid.uuid5(PROGRAM_SEED, program.encode("utf-8")))
             session.add(
@@ -140,10 +140,14 @@ def root_create():
             )
             message = "Program registered."
 
+        node.props.update(doc)
+
     # create the resource in arborist
     auth.create_resource(phsid)
 
-    return flask.jsonify({"id": node_id, "name": program, "message": message})
+    return flask.jsonify(dict(
+        {"id": node_id, "name": program, "message": message}, **doc
+    ))
 
 
 def get_dictionary():
