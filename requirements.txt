@@ -1,7 +1,7 @@
 authutils==3.1.1
 boto==2.36.0
 cryptography==2.3
-dictionaryutils==2.0.7
+dictionaryutils==2.0.8
 envelopes==0.4
 Flask==1.1.1
 flask-cors==3.0.3
