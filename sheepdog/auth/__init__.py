@@ -19,6 +19,11 @@ from sheepdog.errors import AuthNError, AuthZError
 
 logger = get_logger(__name__)
 
+try:
+    from authutils.token.validate import validate_request
+except ImportError:
+    logger.warning("Unable to import authutils validate_request. Sheepdog will error if config AUTH_SUBMISSION_LIST is set to True (note that it is True by default)")
+
 
 def get_jwt_from_header():
     jwt = None
