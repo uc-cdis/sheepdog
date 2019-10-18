@@ -56,7 +56,7 @@ class Docstring(object):
             and not lines[i].startswith(":")
         ):
             i += 1
-        description = " ".join(filter(None, lines[:i]))
+        description = " ".join([_f for _f in lines[:i] if _f])
         return description.strip()
 
     @classmethod
@@ -74,7 +74,7 @@ class Docstring(object):
         except ValueError:
             pass
 
-        args = map(Argument.from_string, filter(bool, section_args.split("\n")))
+        args = list(map(Argument.from_string, list(filter(bool, section_args.split("\n")))))
 
         if section in cls.single_arg_section_names:
             return args

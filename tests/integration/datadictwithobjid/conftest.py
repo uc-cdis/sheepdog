@@ -23,6 +23,7 @@ from sheepdog.test_settings import INDEX_CLIENT
 from tests.integration.datadictwithobjid.api import app as _app, app_init, indexd_init
 from tests.integration.datadictwithobjid.submission.test_endpoints import put_cgci_blgsp
 from tests import utils
+import imp
 
 
 def get_parent(path):
@@ -81,7 +82,7 @@ def app(tmpdir, request):
     dictionary_setup(_app)
     # this is to make sure sqlite is initialized
     # for every unit test
-    reload(default_settings)
+    imp.reload(default_settings)
 
     # fresh files before running
     for filename in ["auth.sq3", "index.sq3", "alias.sq3"]:

@@ -137,19 +137,19 @@ ALIAS_HOST = "alias.sq3"
 
 INDEX_TABLES = {
     "index_record": [
-        (0, u"did", u"VARCHAR", 1, None, 1),
-        (1, u"rev", u"VARCHAR", 0, None, 0),
-        (2, u"form", u"VARCHAR", 0, None, 0),
-        (3, u"size", u"INTEGER", 0, None, 0),
+        (0, "did", "VARCHAR", 1, None, 1),
+        (1, "rev", "VARCHAR", 0, None, 0),
+        (2, "form", "VARCHAR", 0, None, 0),
+        (3, "size", "INTEGER", 0, None, 0),
     ],
     "index_record_hash": [
-        (0, u"did", u"VARCHAR", 1, None, 1),
-        (1, u"hash_type", u"VARCHAR", 1, None, 1 if OLD_SQLITE else 2),
-        (2, u"hash_value", u"VARCHAR", 0, None, 0),
+        (0, "did", "VARCHAR", 1, None, 1),
+        (1, "hash_type", "VARCHAR", 1, None, 1 if OLD_SQLITE else 2),
+        (2, "hash_value", "VARCHAR", 0, None, 0),
     ],
     "index_record_url": [
-        (0, u"did", u"VARCHAR", 1, None, 1),
-        (1, u"url", u"VARCHAR", 1, None, 1 if OLD_SQLITE else 2),
+        (0, "did", "VARCHAR", 1, None, 1),
+        (1, "url", "VARCHAR", 1, None, 1 if OLD_SQLITE else 2),
     ],
 }
 
@@ -157,21 +157,21 @@ INDEX_TABLES = {
 # pulled from indexd/tests/test_setup.py
 ALIAS_TABLES = {
     "alias_record": [
-        (0, u"name", u"VARCHAR", 1, None, 1),
-        (1, u"rev", u"VARCHAR", 0, None, 0),
-        (2, u"size", u"INTEGER", 0, None, 0),
-        (3, u"release", u"VARCHAR", 0, None, 0),
-        (4, u"metastring", u"VARCHAR", 0, None, 0),
-        (5, u"keeper_authority", u"VARCHAR", 0, None, 0),
+        (0, "name", "VARCHAR", 1, None, 1),
+        (1, "rev", "VARCHAR", 0, None, 0),
+        (2, "size", "INTEGER", 0, None, 0),
+        (3, "release", "VARCHAR", 0, None, 0),
+        (4, "metastring", "VARCHAR", 0, None, 0),
+        (5, "keeper_authority", "VARCHAR", 0, None, 0),
     ],
     "alias_record_hash": [
-        (0, u"name", u"VARCHAR", 1, None, 1),
-        (1, u"hash_type", u"VARCHAR", 1, None, 1 if OLD_SQLITE else 2),
-        (2, u"hash_value", u"VARCHAR", 0, None, 0),
+        (0, "name", "VARCHAR", 1, None, 1),
+        (1, "hash_type", "VARCHAR", 1, None, 1 if OLD_SQLITE else 2),
+        (2, "hash_value", "VARCHAR", 0, None, 0),
     ],
     "alias_record_host_authority": [
-        (0, u"name", u"VARCHAR", 1, None, 1),
-        (1, u"host", u"VARCHAR", 1, None, 1 if OLD_SQLITE else 2),
+        (0, "name", "VARCHAR", 1, None, 1),
+        (1, "host", "VARCHAR", 1, None, 1 if OLD_SQLITE else 2),
     ],
 }
 

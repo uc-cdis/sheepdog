@@ -8,11 +8,11 @@ import copy
 import os
 import random
 
-from test_endpoints import put_cgci_blgsp
+from .test_endpoints import put_cgci_blgsp
 
-from utils import assert_positive_response
-from utils import assert_negative_response
-from utils import assert_single_entity_from_response
+from .utils import assert_positive_response
+from .utils import assert_negative_response
+from .utils import assert_single_entity_from_response
 
 # Python 2 and 3 compatible
 try:

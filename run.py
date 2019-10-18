@@ -15,7 +15,7 @@ from sheepdog.api import run_for_development
 
 requests.packages.urllib3.disable_warnings()
 
-all_role_values = all_roles.values()
+all_role_values = list(all_roles.values())
 roles = defaultdict(lambda: all_role_values)
 
 

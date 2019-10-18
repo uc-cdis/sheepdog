@@ -13,11 +13,10 @@ codacy-coverage
 Sphinx==1.6.5
 sphinx_rtd_theme
 flasgger==0.9.1
+#TODO: update this one
 -e git+https://git@github.com/uc-cdis/cdisutils-test.git@0.0.1#egg=cdisutilstest
-# TODO: when sheepdog is python 3, update to latest indexd
--e git+https://git@github.com/uc-cdis/indexd.git@1.1.3#egg=indexd
+-e git+https://git@github.com/uc-cdis/indexd.git@2.1.0#egg=indexd
 # indexd dependencies
 authutils==3.1.1
 gen3rbac==0.1.2
 -e git+https://git@github.com/uc-cdis/doiclient.git@1.0.0#egg=doiclient
--e git+https://git@github.com/uc-cdis/dosclient.git@1.0.0#egg=dosclient

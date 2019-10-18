@@ -9,7 +9,7 @@ import csv
 import json
 import os
 import uuid
-from StringIO import StringIO
+from io import StringIO
 
 import boto
 import pytest
@@ -112,7 +112,7 @@ def put_tcga_brca(client, submitter):
 def test_program_creation_endpoint(client, pg_driver, admin):
     resp = put_cgci(client, auth=admin)
     assert resp.status_code == 200, resp.data
-    print resp.data
+    print(resp.data)
     resp = client.get('/v0/submission/')
     assert resp.json['links'] == ['/v0/submission/CGCI'], resp.json
 
@@ -212,7 +212,7 @@ def test_put_valid_entity_missing_target(client, pg_driver, cgci_blgsp, submitte
         data=json.dumps(sample)
     )
 
-    print r.data
+    print(r.data)
     assert r.status_code == 400, r.data
     assert r.status_code == r.json['code']
     assert r.json['entities'][0]['errors'][0]['keys'] == ['cases'], r.json['entities'][0]['errors']
@@ -256,7 +256,7 @@ def test_put_valid_entity_invalid_type(client, pg_driver, cgci_blgsp, submitter)
             }
         ]))
 
-    print r.json
+    print(r.json)
     assert r.status_code == 400, r.data
     assert r.status_code == r.json['code']
     assert (r.json['entities'][2]['errors'][0]['keys']
@@ -301,13 +301,13 @@ def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter
     with open(os.path.join(DATA_DIR, 'case.json'), 'r') as f:
         case_sid = json.loads(f.read())['submitter_id']
     resp = post_example_entities_together(client, submitter)
-    print resp.data
+    print(resp.data)
     assert resp.status_code == 201, resp.data
 
 
 def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get('/v0/submission/CGCI/BLGSP/_dictionary')
-    print resp.data
+    print(resp.data)
     assert "/v0/submission/CGCI/BLGSP/_dictionary/slide" \
            in json.loads(resp.data)['links']
     assert "/v0/submission/CGCI/BLGSP/_dictionary/case" \
@@ -318,7 +318,7 @@ def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
 
 def test_top_level_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get('/v0/submission/_dictionary')
-    print resp.data
+    print(resp.data)
     assert "/v0/submission/_dictionary/slide" \
            in json.loads(resp.data)['links']
     assert "/v0/submission/_dictionary/case" \
@@ -395,7 +395,7 @@ def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
     with pg_driver.session_scope():
         case = pg_driver.nodes(md.Case).first()
         ct = case.created_datetime
-        print case.props
+        print(case.props)
         assert ct is not None, case.props
 
 
@@ -498,7 +498,7 @@ def test_invalid_json(client, pg_driver, cgci_blgsp, submitter):
     "key1": "valid value",
     "key2": not a string,
 }""")
-    print resp.data
+    print(resp.data)
     assert resp.status_code == 400
     assert 'Expecting value' in resp.json['message']
 

@@ -638,7 +638,7 @@ class BcrClinicalXmlToJsonParser(object):
         if "clin_shared" not in namespaces:
             namespaces["clin_shared"] = "NA"
 
-        for data_type, params in self.xpath_ref.items():
+        for data_type, params in list(self.xpath_ref.items()):
             # Base properties
             schema = dictionary.schema[data_type]
             clinical = {"type": data_type}
@@ -681,8 +681,8 @@ class BcrClinicalXmlToJsonParser(object):
         return self
 
     def insert_edges(self, doc, root, edges, namespaces):
-        for edge_label, edge in edges.items():
-            for dst_label, props in edge.items():
+        for edge_label, edge in list(edges.items()):
+            for dst_label, props in list(edge.items()):
                 edge_cls = flask.current_app.db.get_edge_by_labels(
                     doc["type"], edge_label, dst_label
                 )
@@ -696,8 +696,8 @@ class BcrClinicalXmlToJsonParser(object):
                 doc[edge_cls.__src_dst_assoc__] = {"id": xpath}
 
     def insert_edges_by_property(self, doc, root, edges, namespaces):
-        for edge_label, edge in edges.items():
-            for dst_label, dst_property in edge.items():
+        for edge_label, edge in list(edges.items()):
+            for dst_label, dst_property in list(edge.items()):
                 edge_cls = flask.current_app.db.get_edge_by_labels(
                     doc["type"], edge_label, dst_label
                 )
@@ -710,7 +710,7 @@ class BcrClinicalXmlToJsonParser(object):
 
     def insert_properties(self, doc, roots, properties, namespaces, schema):
         for root in roots:
-            for key, props in properties.items():
+            for key, props in list(properties.items()):
                 value = self.xpath(
                     root=root,
                     path=props["path"],
