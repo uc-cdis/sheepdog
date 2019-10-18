@@ -58,7 +58,7 @@ def get_manifest(program, project, ids):
     # it here and add the local_file_path
     files = [
         dict(local_file_path=doc.get("file_name"), **doc)
-        for file_type in exporter.result.values()
+        for file_type in list(exporter.result.values())
         for doc in file_type
     ]
 

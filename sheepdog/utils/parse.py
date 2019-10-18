@@ -18,7 +18,7 @@ def oph_raise_for_duplicates(object_pairs):
     with a message describing all violations.
     """
     counter = Counter(p[0] for p in object_pairs)
-    duplicates = [p for p in counter.iteritems() if p[1] > 1]
+    duplicates = [p for p in counter.items() if p[1] > 1]
     if duplicates:
         raise ValueError(
             "The document contains duplicate keys: {}".format(

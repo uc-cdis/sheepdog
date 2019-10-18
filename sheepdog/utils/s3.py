@@ -3,7 +3,7 @@ TODO
 """
 
 import socket
-import urlparse
+import urllib.parse
 
 import boto
 import flask
@@ -42,7 +42,7 @@ def make_s3_request(project_id, uuid, data, args, headers, method, action):
     key_name = project_id + "/" + uuid
     bucket = None
     if action in UPLOADING_PARTS:
-        upload_id = urlparse.parse_qs(args)["uploadId"][0]
+        upload_id = urllib.parse.parse_qs(args)["uploadId"][0]
         for ip in get_s3_hosts():
             bucket = get_submission_bucket()
             res = bucket.connection.make_request(

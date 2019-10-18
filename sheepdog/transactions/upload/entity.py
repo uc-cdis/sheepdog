@@ -289,7 +289,7 @@ class UploadEntity(EntityBase):
                 )
 
         # Fill in default system property values
-        for key, val in self.get_system_property_defaults().iteritems():
+        for key, val in self.get_system_property_defaults().items():
             if self.doc.get(key, None) is None:
                 self.doc[key] = val
 
@@ -341,7 +341,7 @@ class UploadEntity(EntityBase):
                 type=EntityErrors.INVALID_PERMISSIONS,
             )
 
-        self.old_props = {k: v for k, v in node.props.iteritems()}
+        self.old_props = {k: v for k, v in node.props.items()}
 
         if node.label != self.entity_type:
             self.record_error(
@@ -413,7 +413,7 @@ class UploadEntity(EntityBase):
             self.doc[name] = doc_links
 
             # Get set of node ids in the link document
-            map(doc_ids.add, [l.get("id") for l in doc_links if l.get("id")])
+            list(map(doc_ids.add, [l.get("id") for l in doc_links if l.get("id")]))
 
             # Get set of secondary_keys in the link document
             for link in doc_links:
@@ -433,7 +433,7 @@ class UploadEntity(EntityBase):
                 self.doc.pop(name)
 
     def _remove_empty_values(self, doc):
-        for key in doc.keys():
+        for key in list(doc.keys()):
             value = doc[key]
 
             if isinstance(value, dict):
@@ -462,12 +462,12 @@ class UploadEntity(EntityBase):
 
         special_keys = ["type", "id", "created_datetime", "updated_datetime"]
         pg_props = self.node.get_pg_properties()
-        prop_keys = pg_props.keys() + self.node._pg_links.keys() + special_keys
+        prop_keys = list(pg_props.keys()) + list(self.node._pg_links.keys()) + special_keys
         self.node.project_id = self.transaction.project_id
         default_props = self.get_system_property_defaults()
 
         # Set properties
-        for key, val in self.doc.iteritems():
+        for key, val in self.doc.items():
 
             # Does this key exist?
             if key not in prop_keys:
@@ -483,7 +483,7 @@ class UploadEntity(EntityBase):
                 pass
 
             # If key is a link, skip for now
-            elif key in self.node._pg_links.keys():
+            elif key in list(self.node._pg_links.keys()):
                 pass
 
             # Is it a system property?
@@ -577,7 +577,7 @@ class UploadEntity(EntityBase):
             node["project_id"] = project_id
 
         # Set given properties.
-        for key, val in properties.iteritems():
+        for key, val in properties.items():
             if key in node.__pg_properties__:
                 try:
                     node[key] = val

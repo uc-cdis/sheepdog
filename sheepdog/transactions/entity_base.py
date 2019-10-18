@@ -22,9 +22,7 @@ class EntityErrors(object):
     UNCATEGORIZED = "ERROR"
 
 
-class EntityBase(object):
-
-    __metaclass__ = abc.ABCMeta
+class EntityBase(object, metaclass=abc.ABCMeta):
 
     def __init__(self, transaction, node=None):
         self.transaction = transaction
@@ -129,7 +127,7 @@ class EntityBase(object):
         """
         Snapshot the properties as they are now to put in transaction log.
         """
-        self.old_props = {k: v for k, v in self.node.props.iteritems()}
+        self.old_props = {k: v for k, v in self.node.props.items()}
 
     def record_error(self, message, keys=None, type=None, **kwargs):
         """

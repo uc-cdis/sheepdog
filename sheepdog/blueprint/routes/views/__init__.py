@@ -182,7 +182,7 @@ def get_dictionary():
              ]
            }
     """
-    keys = dictionary.schema.keys() + ["_all"]
+    keys = list(dictionary.schema.keys()) + ["_all"]
     links = [flask.url_for(".get_dictionary_entry", entry=entry) for entry in keys]
     return flask.jsonify({"links": links})
 
