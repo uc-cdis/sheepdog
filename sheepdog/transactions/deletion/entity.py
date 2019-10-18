@@ -116,7 +116,7 @@ class DeletionEntity(EntityBase):
                 type=EntityErrors.INVALID_LINK,
                 dependents=[
                     {"id": node_id, "type": entity.node.label}
-                    for node_id, entity in self.dependents.iteritems()
+                    for node_id, entity in self.dependents.items()
                 ],
             )
 

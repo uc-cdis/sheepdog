@@ -133,7 +133,7 @@ def get_project_dictionary(program=None, project=None):
     """
     if flask.current_app.config.get("AUTH_SUBMISSION_LIST", True) is True:
         auth.validate_request(aud={"openid"}, purpose=None)
-    keys = dictionary.schema.keys() + ["_all"]
+    keys = list(dictionary.schema.keys()) + ["_all"]
     links = [
         flask.url_for(
             ".get_project_dictionary_entry",
@@ -194,7 +194,7 @@ def get_dictionary_entry(entry):
     """
     resolvers = {
         key.replace(".yaml", ""): resolver.source
-        for key, resolver in dictionary.resolvers.iteritems()
+        for key, resolver in dictionary.resolvers.items()
     }
     if entry in resolvers:
         return flask.jsonify(resolvers[entry])
@@ -276,7 +276,7 @@ def get_entities_by_id(program, project, entity_id_string):
             raise UserError(
                 "Not found: {}".format(", ".join(missing_entities), code=404)
             )
-        return flask.jsonify({"entities": utils.create_entity_list(entities.values())})
+        return flask.jsonify({"entities": utils.create_entity_list(list(entities.values()))})
 
 
 def create_delete_entities_viewer(dry_run=False):
@@ -397,7 +397,7 @@ def export_entities(program, project):
 
     if flask.request.method == "GET":
         # Unpack multidict, or values will unnecessarily be lists.
-        kwargs = {k: v for k, v in flask.request.args.iteritems()}
+        kwargs = {k: v for k, v in flask.request.args.items()}
     else:
         kwargs = utils.parse.parse_request_json()
 
@@ -517,7 +517,7 @@ def create_files_viewer(dry_run=False, reassign=False):
 
         headers = {
             k: v
-            for k, v in flask.request.headers.iteritems()
+            for k, v in flask.request.headers.items()
             if v and k != "X-Auth-Token"
         }
         url = flask.request.url.split("?")

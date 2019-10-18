@@ -82,7 +82,7 @@ def validated_parse(xml):
     except etree.XMLSyntaxError as msg:
         log.error("User submitted invalid xml: {}".format(msg))
         raise
-    schemas = map(_fetch_schema, _parse_schema_location(root))
+    schemas = list(map(_fetch_schema, _parse_schema_location(root)))
     try:
         for schema in schemas:
             schema.assertValid(root)
@@ -217,7 +217,7 @@ class BcrXmlToJsonParser(object):
 
         self.xml_root = validated_parse(str(xml)).getroottree()
         self.namespaces = self.xml_root.getroot().nsmap
-        for entity_type, param_list in self.xml_mapping.items():
+        for entity_type, param_list in list(self.xml_mapping.items()):
             for params in param_list:
                 self.parse_entity(entity_type, params)
 
@@ -228,7 +228,7 @@ class BcrXmlToJsonParser(object):
 
     @property
     def json(self):
-        return self.entities.values()
+        return list(self.entities.values())
 
     def parse_entity(self, entity_type, params):
         """
@@ -342,7 +342,7 @@ class BcrXmlToJsonParser(object):
 
         props = {}
         schema = dictionary.schema[entity_type]
-        for prop, args in params.properties.items():
+        for prop, args in list(params.properties.items()):
             if args is None:
                 if "null" in schema["properties"][prop].get("type", []):
                     props[prop] = None
@@ -388,7 +388,7 @@ class BcrXmlToJsonParser(object):
         if "const_properties" not in params or not params.const_properties:
             return {}
         props = {}
-        for prop, args in params.const_properties.items():
+        for prop, args in list(params.const_properties.items()):
             props[prop] = munge_property(args["value"], args["type"])
         return props
 
@@ -413,7 +413,7 @@ class BcrXmlToJsonParser(object):
 
         props = {}
         # Loop over all given datetime properties
-        for name, timespans in params.datetime_properties.items():
+        for name, timespans in list(params.datetime_properties.items()):
             times = {"year": 0, "month": 0, "day": 0}
             # Parse the year, month, day
             for span in times:
@@ -475,7 +475,7 @@ class BcrXmlToJsonParser(object):
         edges = {}
         if "edges" not in params or not params.edges:
             return edges
-        for edge_type, path in params.edges.items():
+        for edge_type, path in list(params.edges.items()):
             results = self.xpath(
                 path,
                 root,
@@ -507,8 +507,8 @@ class BcrXmlToJsonParser(object):
             return edges
         return edges
 
-        for edge_type, dst_params in params.edges_by_property.items():
-            for dst_label, dst_kv in dst_params.items():
+        for edge_type, dst_params in list(params.edges_by_property.items()):
+            for dst_label, dst_kv in list(dst_params.items()):
                 dst_matches = {
                     key: self.xpath(
                         val,
@@ -518,7 +518,7 @@ class BcrXmlToJsonParser(object):
                         single=True,
                         label="{}: {}".format(entity_type, entity_id),
                     )
-                    for key, val in dst_kv.items()
+                    for key, val in list(dst_kv.items())
                 }
                 # TODO: fix
                 dsts = []
@@ -535,7 +535,7 @@ class BcrXmlToJsonParser(object):
             return {}
 
         props = {}
-        for prop, args in params.edge_properties[edge_type].items():
+        for prop, args in list(params.edge_properties[edge_type].items()):
             path, _type = args["path"], args["type"]
             if not path:
                 continue
@@ -563,7 +563,7 @@ class BcrXmlToJsonParser(object):
 
         props = {}
         # Loop over all given datetime properties
-        for name, timespans in params.edge_datetime_properties[edge_type].items():
+        for name, timespans in list(params.edge_datetime_properties[edge_type].items()):
             times = {"year": 0, "month": 0, "day": 0}
 
             # Parse the year, month, day
@@ -638,7 +638,7 @@ class BcrClinicalXmlToJsonParser(object):
         if "clin_shared" not in namespaces:
             namespaces["clin_shared"] = "NA"
 
-        for data_type, params in self.xpath_ref.iteritems():
+        for data_type, params in self.xpath_ref.items():
             # Base properties
             schema = dictionary.schema[data_type]
             clinical = {"type": data_type}
@@ -681,8 +681,8 @@ class BcrClinicalXmlToJsonParser(object):
         return self
 
     def insert_edges(self, doc, root, edges, namespaces):
-        for edge_label, edge in edges.iteritems():
-            for dst_label, props in edge.iteritems():
+        for edge_label, edge in edges.items():
+            for dst_label, props in edge.items():
                 edge_cls = flask.current_app.db.get_edge_by_labels(
                     doc["type"], edge_label, dst_label
                 )
@@ -696,8 +696,8 @@ class BcrClinicalXmlToJsonParser(object):
                 doc[edge_cls.__src_dst_assoc__] = {"id": xpath}
 
     def insert_edges_by_property(self, doc, root, edges, namespaces):
-        for edge_label, edge in edges.iteritems():
-            for dst_label, dst_property in edge.iteritems():
+        for edge_label, edge in edges.items():
+            for dst_label, dst_property in edge.items():
                 edge_cls = flask.current_app.db.get_edge_by_labels(
                     doc["type"], edge_label, dst_label
                 )
@@ -705,12 +705,12 @@ class BcrClinicalXmlToJsonParser(object):
                     root=root, namespaces=namespaces, nullable=False, **props
                 )
                 doc[edge_cls.__src_dst_assoc__] = {
-                    key: xpath(props) for key, props in dst_property.items()
+                    key: xpath(props) for key, props in list(dst_property.items())
                 }
 
     def insert_properties(self, doc, roots, properties, namespaces, schema):
         for root in roots:
-            for key, props in properties.iteritems():
+            for key, props in properties.items():
                 value = self.xpath(
                     root=root,
                     path=props["path"],
@@ -734,7 +734,7 @@ def munge_property(prop, _type):
 
     types = {
         "int": int,
-        "long": long,
+        "long": int,
         "float": float,
         "str": str,
         "str.lower": lambda x: str(x).lower(),
