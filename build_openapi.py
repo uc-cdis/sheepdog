@@ -40,13 +40,13 @@ def translate_to_swag(doc, subs):
     spec = {
         "description": doc.get("Description", ""),
         "summary": summary,
-        "tags": map(lambda i: i.description, doc.get("Tags", [])),
+        "tags": [i.description for i in doc.get("Tags", [])],
     }
 
     # Responses and status codes
     resps = doc.get("Responses")
     spec["responses"] = {}
-    for code, props in resps.iteritems():
+    for code, props in resps.items():
         spec["responses"][code] = {"description": props.description}
         if props.type:
             ref = "#/definitions/{}".format(props.type)
@@ -63,7 +63,7 @@ def translate_to_swag(doc, subs):
             "description": props.description,
             "required": True,
         }
-        for name, props in args.iteritems()
+        for name, props in args.items()
         if props.name != "body"
     ]
 
@@ -76,7 +76,7 @@ def translate_to_swag(doc, subs):
                 "description": props.description,
                 "schema": {"$ref": "#/definitions/{}".format(props.type)},
             }
-            for name, props in args.iteritems()
+            for name, props in args.items()
             if props.name == "body"
         ]
     )
@@ -91,7 +91,7 @@ def translate_to_swag(doc, subs):
                 "type": swagger_types.get(props.type, props.type),
                 "description": props.description,
             }
-            for name, props in args.iteritems()
+            for name, props in args.items()
         ]
     )
 
@@ -105,13 +105,13 @@ def translate_to_swag(doc, subs):
                 "type": swagger_types.get(props.type, props.type),
                 "description": props.description,
             }
-            for name, props in args.iteritems()
+            for name, props in args.items()
         ]
     )
 
     # handle substitutions
     for p in spec["parameters"]:
-        for k, v in subs.iteritems():
+        for k, v in subs.items():
             p["description"] = p["description"].replace(k, v)
 
     return spec
@@ -132,7 +132,7 @@ def parse_sphinx_substitutions():
     subs = {}
     try:
         with open(file_name, "r") as f:
-            lines = map(lambda i: i.strip(), f.readlines())
+            lines = [i.strip() for i in f.readlines()]
             indexes = [i for i, s in enumerate(lines) if "replace::" in s]
             for i, start in enumerate(indexes):
                 end = indexes[i + 1] if i < len(indexes) - 1 else len(lines)
@@ -140,7 +140,7 @@ def parse_sphinx_substitutions():
                 description = " ".join(lines[start + 1 : end])
                 subs[name] = description.strip()
     except IOError:
-        print("Substitution file {} not found".format(file_name))
+        print(("Substitution file {} not found".format(file_name)))
     return subs
 
 
@@ -169,11 +169,11 @@ def build_swag_doc():
 
         docstring = route["view_func"].__doc__
         if not docstring:
-            print(
+            print((
                 "This endpoint is not documented: {}".format(
                     route["view_func"].__name__
                 )
-            )
+            ))
 
         parsed_doc = Docstring.from_string(docstring)
         spec = translate_to_swag(parsed_doc.sections, subs)
