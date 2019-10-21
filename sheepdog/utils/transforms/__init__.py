@@ -50,7 +50,7 @@ def set_row_type(row):
 
 def strip(text):
     """
-    Strip if the text is a basestring
+    Strip if the text is a string
     """
 
     if not isinstance(text, str):
@@ -103,7 +103,7 @@ class DelimitedConverter(object):
         """
         try:
             self.set_reader(doc)
-            list(map(self.add_row, self.reader))
+            map(self.add_row, self.reader)
         except Exception as e:
             current_app.logger.exception(e)
             raise UserError("Unable to parse document")

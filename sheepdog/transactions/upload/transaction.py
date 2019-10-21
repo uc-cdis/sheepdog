@@ -422,9 +422,9 @@ class BulkUploadTransaction(TransactionBase):
             return {item: count for item, count in counter if count > 1}
 
         ids = [entity.entity_id for entity in self.entities]
-        dup_ids = duplicates(list(Counter(ids).items()))
+        dup_ids = duplicates(Counter(ids).items())
         secondary_keys = [e.secondary_keys for e in self.entities]
-        dup_secondary_keys = duplicates(iter(Counter(secondary_keys).items()))
+        dup_secondary_keys = duplicates(Counter(secondary_keys).items())
         # Check secondary_keys
         for sk in dup_secondary_keys.keys():
             for entity in self.entities:

@@ -82,7 +82,7 @@ def validated_parse(xml):
     except etree.XMLSyntaxError as msg:
         log.error("User submitted invalid xml: {}".format(msg))
         raise
-    schemas = list(map(_fetch_schema, _parse_schema_location(root)))
+    schemas = map(_fetch_schema, _parse_schema_location(root))
     try:
         for schema in schemas:
             schema.assertValid(root)
@@ -475,7 +475,7 @@ class BcrXmlToJsonParser(object):
         edges = {}
         if "edges" not in params or not params.edges:
             return edges
-        for edge_type, path in list(params.edges.items()):
+        for edge_type, path in params.edges.items():
             results = self.xpath(
                 path,
                 root,
@@ -518,7 +518,7 @@ class BcrXmlToJsonParser(object):
                         single=True,
                         label="{}: {}".format(entity_type, entity_id),
                     )
-                    for key, val in list(dst_kv.items())
+                    for key, val in dst_kv.items()
                 }
                 # TODO: fix
                 dsts = []
@@ -696,8 +696,8 @@ class BcrClinicalXmlToJsonParser(object):
                 doc[edge_cls.__src_dst_assoc__] = {"id": xpath}
 
     def insert_edges_by_property(self, doc, root, edges, namespaces):
-        for edge_label, edge in list(edges.items()):
-            for dst_label, dst_property in list(edge.items()):
+        for edge_label, edge in edges.items():
+            for dst_label, dst_property in edge.items():
                 edge_cls = flask.current_app.db.get_edge_by_labels(
                     doc["type"], edge_label, dst_label
                 )

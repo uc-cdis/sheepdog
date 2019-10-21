@@ -74,7 +74,7 @@ class Docstring(object):
         except ValueError:
             pass
 
-        args = list(map(Argument.from_string, list(filter(bool, section_args.split("\n")))))
+        args = list(map(Argument.from_string, filter(bool, section_args.split("\n"))))
 
         if section in cls.single_arg_section_names:
             return args
