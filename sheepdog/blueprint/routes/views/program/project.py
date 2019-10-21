@@ -276,7 +276,7 @@ def get_entities_by_id(program, project, entity_id_string):
             raise UserError(
                 "Not found: {}".format(", ".join(missing_entities), code=404)
             )
-        return flask.jsonify({"entities": utils.create_entity_list(list(entities.values()))})
+        return flask.jsonify({"entities": utils.create_entity_list(entities.values())})
 
 
 def create_delete_entities_viewer(dry_run=False):

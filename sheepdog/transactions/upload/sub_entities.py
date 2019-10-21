@@ -575,7 +575,7 @@ class FileUploadEntity(UploadEntity):
         # check that the provided hash/size match those of the file in indexd
         # submitted hashes have to be a subset of the indexd ones
         hashes_match = all(
-            item in list(file_hashes.items()) for item in list(self._get_file_hashes().items())
+            item in file_hashes.items() for item in self._get_file_hashes().items()
         )
         sizes_match = self._get_file_size() == file_size
 

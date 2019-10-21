@@ -13,7 +13,6 @@ import os
 import io
 import tarfile
 import time
-import urllib.parse
 
 import boto
 import flask

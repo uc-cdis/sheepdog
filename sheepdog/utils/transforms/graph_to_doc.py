@@ -712,7 +712,7 @@ class ExportFile(object):
     def get_json_response(self):
         """Yield single json string."""
         # Throw away the keys because re-upload is not expecting them.
-        yield json_dumps_formatted([r for v in list(self.result.values()) for r in v])
+        yield json_dumps_formatted([r for v in self.result.values() for r in v])
 
     def get_response(self):
         """Return response based on format and number of results."""

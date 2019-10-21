@@ -27,7 +27,7 @@ from sheepdog.test_settings import (
 from tests import utils
 from tests.integration.datadict.api import app as _app, app_init, indexd_init
 from tests.integration.datadict.submission.test_endpoints import put_cgci_blgsp
-import imp
+import importlib
 
 try:
     reload  # Python 2.7
@@ -92,7 +92,7 @@ def app(tmpdir, request):
     dictionary_setup(_app)
     # this is to make sure sqlite is initialized
     # for every unit test
-    imp.reload(default_settings)
+    importlib.reload(default_settings)
 
     # fresh files before running
     for filename in ['auth.sq3', 'index.sq3', 'alias.sq3']:
@@ -191,4 +191,3 @@ def dictionary_setup(_app):
         from gdcdatamodel import validators as vd
         models.init(md)
         validators.init(vd)
-
