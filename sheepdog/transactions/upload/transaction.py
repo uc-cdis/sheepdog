@@ -426,7 +426,7 @@ class BulkUploadTransaction(TransactionBase):
         secondary_keys = [e.secondary_keys for e in self.entities]
         dup_secondary_keys = duplicates(iter(Counter(secondary_keys).items()))
         # Check secondary_keys
-        for sk in list(dup_secondary_keys.keys()):
+        for sk in dup_secondary_keys.keys():
             for entity in self.entities:
                 if entity.secondary_keys == sk:
                     entity.record_error(
@@ -435,7 +435,7 @@ class BulkUploadTransaction(TransactionBase):
                     )
 
         # Check GDC ids
-        for ID in list(dup_ids.keys()):
+        for ID in dup_ids.keys():
             for entity in self.entities:
                 if entity.entity_id == ID:
                     entity.record_error(

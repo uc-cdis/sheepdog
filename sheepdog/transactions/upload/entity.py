@@ -433,7 +433,7 @@ class UploadEntity(EntityBase):
                 self.doc.pop(name)
 
     def _remove_empty_values(self, doc):
-        for key in list(doc.keys()):
+        for key in doc.keys():
             value = doc[key]
 
             if isinstance(value, dict):
@@ -483,7 +483,7 @@ class UploadEntity(EntityBase):
                 pass
 
             # If key is a link, skip for now
-            elif key in list(self.node._pg_links.keys()):
+            elif key in self.node._pg_links.keys():
                 pass
 
             # Is it a system property?
