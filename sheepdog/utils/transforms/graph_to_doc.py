@@ -646,11 +646,11 @@ class ExportFile(object):
             raise InternalError("Unable to determine file name with no results")
 
         if self.is_delimited and self.is_singular:
-            return "{}.{}".format(list(self.result.keys())[0], self.file_format)
+            return "{}.{}".format(self.result.keys()[0], self.file_format)
         elif self.is_delimited:
             return "gdc_export_{}.tar.gz".format(self._get_sha())
         elif self.is_json and self.is_singular:
-            return "{}.json".format(list(self.result.keys())[0])
+            return "{}.json".format(self.result.keys()[0])
         elif self.is_json:
             return "gdc_export_{}.json".format(self._get_sha())
         else:
@@ -691,7 +691,7 @@ class ExportFile(object):
         """Yield delimited string per result."""
         self.get_tabular()
         if self.is_singular:
-            yield list(self.result.values())[0].getvalue()
+            yield self.result.values()[0].getvalue()
         else:
             tar = tarfile.open(self.filename, mode="w|gz", fileobj=self)
             for label, entities in self.result.items():
@@ -892,7 +892,7 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
         query_args = [cls] + linked_props
         query = session.query(*query_args).prop("project_id", project_id)
         # Join the related node tables using the links.
-        for link in list(cls._pg_links.values()):
+        for link in cls._pg_links.values():
             query = query.outerjoin(link["edge_out"]).outerjoin(link["dst_type"])
         # The result from the query should look like this (header just for
         # example):

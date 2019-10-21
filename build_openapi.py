@@ -140,7 +140,7 @@ def parse_sphinx_substitutions():
                 description = " ".join(lines[start + 1 : end])
                 subs[name] = description.strip()
     except IOError:
-        print(("Substitution file {} not found".format(file_name)))
+        print("Substitution file {} not found".format(file_name))
     return subs
 
 
@@ -169,11 +169,11 @@ def build_swag_doc():
 
         docstring = route["view_func"].__doc__
         if not docstring:
-            print((
+            print(
                 "This endpoint is not documented: {}".format(
                     route["view_func"].__name__
                 )
-            ))
+            )
 
         parsed_doc = Docstring.from_string(docstring)
         spec = translate_to_swag(parsed_doc.sections, subs)
