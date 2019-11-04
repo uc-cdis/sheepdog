@@ -23,7 +23,6 @@ class EntityErrors(object):
 
 
 class EntityBase(object, metaclass=abc.ABCMeta):
-
     def __init__(self, transaction, node=None):
         self.transaction = transaction
         self.logger = self.transaction.logger
@@ -96,7 +95,6 @@ class EntityBase(object, metaclass=abc.ABCMeta):
             .count()
         )
         return count > 0
-
 
     def get_links(self, node):
         """Return the possible links to submittable entities given a node."""

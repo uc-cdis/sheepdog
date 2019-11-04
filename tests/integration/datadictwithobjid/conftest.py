@@ -168,7 +168,9 @@ def cgci_blgsp(client, admin):
 
 @pytest.fixture()
 def index_client():
-    return IndexClient(INDEX_CLIENT["host"], INDEX_CLIENT["version"], INDEX_CLIENT["auth"])
+    return IndexClient(
+        INDEX_CLIENT["host"], INDEX_CLIENT["version"], INDEX_CLIENT["auth"]
+    )
 
 
 def dictionary_setup(_app):

@@ -462,7 +462,9 @@ class UploadEntity(EntityBase):
 
         special_keys = ["type", "id", "created_datetime", "updated_datetime"]
         pg_props = self.node.get_pg_properties()
-        prop_keys = list(pg_props.keys()) + list(self.node._pg_links.keys()) + special_keys
+        prop_keys = (
+            list(pg_props.keys()) + list(self.node._pg_links.keys()) + special_keys
+        )
         self.node.project_id = self.transaction.project_id
         default_props = self.get_system_property_defaults()
 

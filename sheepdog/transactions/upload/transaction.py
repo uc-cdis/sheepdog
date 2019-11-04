@@ -162,22 +162,21 @@ class UploadTransaction(TransactionBase):
         for entity in self.valid_entities:
             schema = gdcdictionary.schema[entity.node.label]
             node = entity.node
-            for keys in schema['uniqueKeys']:
+            for keys in schema["uniqueKeys"]:
                 props = {}
-                if keys == ['id']:
+                if keys == ["id"]:
                     continue
                 for key in keys:
-                    prop = schema['properties'][key].get('systemAlias')
+                    prop = schema["properties"][key].get("systemAlias")
                     if prop:
                         props[prop] = node[prop]
                     else:
                         props[key] = node[key]
                 if self.db_driver.nodes(type(node)).props(props).count() > 0:
-                        entity.record_error(
-                            '{} with {} already exists in the DB'
-                            .format(node.label, props), keys=list(props.keys())
-                        )
-
+                    entity.record_error(
+                        "{} with {} already exists in the DB".format(node.label, props),
+                        keys=list(props.keys()),
+                    )
 
     def instantiate(self):
         """Create a SQLAlchemy model for all transaction entities."""

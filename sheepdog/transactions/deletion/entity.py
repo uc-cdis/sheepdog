@@ -33,7 +33,6 @@ class DeletionEntity(EntityBase):
                 )
             )
 
-
     @property
     def secondary_keys(self):
         """Return the list of unique dicts for the node"""
