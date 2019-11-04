@@ -3,7 +3,7 @@ pytest-cov==2.5.1
 requests_mock==1.4.0
 httmock==1.2.3
 lockfile==0.10.2
-coverage==3.7.1
+coverage==4.0.0
 mock==1.0.1
 pytest-flask==0.15.0
 moto==0.4.5
