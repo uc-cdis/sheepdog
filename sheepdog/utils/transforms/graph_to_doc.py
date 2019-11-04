@@ -32,7 +32,7 @@ UNSUPPORTED_EXPORT_NODE_CATEGORIES = ["internal"]
 def _encode(val):
     """Encode keys or values for writing a tsv dict."""
     if isinstance(val, str):
-        return val.encode("utf-8")
+        return val
     elif not isinstance(val, str):
         return str(val)
     else:
@@ -650,11 +650,11 @@ class ExportFile(object):
             raise InternalError("Unable to determine file name with no results")
 
         if self.is_delimited and self.is_singular:
-            return "{}.{}".format(self.result.keys()[0], self.file_format)
+            return "{}.{}".format(list(self.result.keys())[0], self.file_format)
         elif self.is_delimited:
             return "gdc_export_{}.tar.gz".format(self._get_sha())
         elif self.is_json and self.is_singular:
-            return "{}.json".format(self.result.keys()[0])
+            return "{}.json".format(list(self.result.keys())[0])
         elif self.is_json:
             return "gdc_export_{}.json".format(self._get_sha())
         else:
@@ -695,7 +695,7 @@ class ExportFile(object):
         """Yield delimited string per result."""
         self.get_tabular()
         if self.is_singular:
-            yield self.result.values()[0].getvalue()
+            yield list(self.result.values())[0].getvalue()
         else:
             tar = tarfile.open(self.filename, mode="w|gz", fileobj=self)
             for label, entities in self.result.items():
