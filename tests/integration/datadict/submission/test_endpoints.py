@@ -724,7 +724,7 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
         headers=submitter)
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
-    assert len(r.data.strip().split('\n')) == case_count + 1
+    assert len(str(r.data, 'utf-8').strip().split('\n')) == case_count + 1
 
 
 def test_export_all_node_types_json(client, pg_driver, cgci_blgsp, submitter):
@@ -769,7 +769,7 @@ def test_submit_export_encoding(client, pg_driver, cgci_blgsp, submitter):
         headers=submitter)
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
-    tsv_output = csv.DictReader(StringIO(r.data), delimiter="\t")
+    tsv_output = csv.DictReader(StringIO(r.data.decode('utf-8')), delimiter="\t")
     row = next(tsv_output)
     assert row['submitter_id'] == 'BLGSP-submitter-ü'
 
@@ -787,7 +787,7 @@ def test_submit_export_encoding(client, pg_driver, cgci_blgsp, submitter):
         headers=submitter)
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
-    tsv_output = csv.DictReader(StringIO(r.data), delimiter="\t")
+    tsv_output = csv.DictReader(StringIO(r.data.decode('utf-8')), delimiter="\t")
     row = next(tsv_output)
     assert row['submitter_id'] == 'BLGSP-submitter-ü'
 

@@ -1,7 +1,7 @@
 authutils==3.1.1
 boto==2.36.0
 cryptography==2.3
-dictionaryutils==2.0.7
+-e git+https://git@github.com/uc-cdis/dictionaryutils.git@chore/py3#egg=dictionaryutils
 envelopes==0.4
 Flask==1.1.1
 flask-cors==3.0.3
@@ -22,15 +22,15 @@ sqlalchemy==1.3.5
 Werkzeug==0.16.0
 xmltodict==0.9.2
 more-itertools==5.0.0
--e git+https://git@github.com/uc-cdis/cdis_oauth2client.git@0.1.3#egg=cdis_oauth2client
+-e git+https://git@github.com/uc-cdis/cdis_oauth2client.git@chore/py3#egg=cdis_oauth2client
 cdispyutils==0.2.13
-datamodelutils==0.4.7
+-e git+https://git@github.com/uc-cdis/datamodelutils.git@chore/py3#egg=datamodelutils
 -e git+https://git@github.com/NCI-GDC/psqlgraph.git@release/py3#egg=psqlgraph
 # required for gen3datamodel, not required for sheepdog
--e git+https://git@github.com/uc-cdis/cdiserrors.git@0.1.1#egg=cdiserrors
+-e git+https://git@github.com/uc-cdis/cdiserrors.git@0.1.2#egg=cdiserrors
 -e git+https://git@github.com/uc-cdis/cdislogging.git@master#egg=cdislogging
 -e git+https://git@github.com/NCI-GDC/cdisutils.git@f54e393c89939b2200dfae45c6235cbe2bae1206#egg=cdisutils
-gen3dictionary==2.0.0
-gen3datamodel==2.0.2
+-e git+https://git@github.com/uc-cdis/datadictionary.git@chore/py3#egg=gen3dictionary
+-e git+https://git@github.com/uc-cdis/gdcdatamodel.git@chore/py3#egg=gen3datamodel
 -e git+https://git@github.com/uc-cdis/indexclient.git@1.6.2#egg=indexclient
 -e git+https://git@github.com/uc-cdis/storage-client.git@0.1.7#egg=storageclient

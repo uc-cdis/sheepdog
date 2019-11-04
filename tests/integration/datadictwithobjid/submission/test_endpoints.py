@@ -639,7 +639,7 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
         headers=submitter)
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
-    assert len(r.data.strip().split('\n')) == case_count + 1
+    assert len(str(r.data, 'utf-8').strip().split('\n')) == case_count + 1
 
 
 @pytest.mark.parametrize('file_type', ['json', 'tsv'])

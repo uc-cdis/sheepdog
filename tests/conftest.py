@@ -43,7 +43,7 @@ def encoded_jwt(iss):
         Return:
             str: JWT containing claims encoded with private key
         """
-        kid = JWT_KEYPAIR_FILES.keys()[0]
+        kid = list(JWT_KEYPAIR_FILES.keys())[0]
         scopes = ["openid"]
         token = utils.generate_signed_access_token(
             kid, private_key, user, 3600, scopes, iss=iss, forced_exp_time=None

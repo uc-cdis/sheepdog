@@ -103,7 +103,7 @@ class DelimitedConverter(object):
         """
         try:
             self.set_reader(doc)
-            map(self.add_row, self.reader)
+            list(map(self.add_row, self.reader))
         except Exception as e:
             current_app.logger.exception(e)
             raise UserError("Unable to parse document")
