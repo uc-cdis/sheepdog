@@ -14,7 +14,6 @@ class DeletionTransaction(TransactionBase):
         self.fields_to_delete = kwargs.get("fields", None)
         self.to_delete = kwargs.get("to_delete", None)
 
-
     def write_transaction_log(self):
         """Save a log noting this project was opened"""
 

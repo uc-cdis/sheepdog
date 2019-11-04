@@ -683,9 +683,7 @@ class ExportFile(object):
             writer.writeheader()
 
             for tsv_dict in get_tsv_dicts(entities, titles):
-                writer.writerow(
-                    {_encode(k): _encode(v) for k, v in tsv_dict.items()}
-                )
+                writer.writerow({_encode(k): _encode(v) for k, v in tsv_dict.items()})
 
     def get_delimited_response(self):
         """Yield delimited string per result."""

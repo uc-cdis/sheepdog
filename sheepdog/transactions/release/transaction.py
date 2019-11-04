@@ -32,7 +32,10 @@ class ReleaseTransaction(TransactionBase):
             return self.record_error("Project is already released.")
 
         if project.releasable is not True:
-            message = "Project is not releasable. " "Project must be submitted at least once first."
+            message = (
+                "Project is not releasable. "
+                "Project must be submitted at least once first."
+            )
             return self.record_error(message)
 
         project.released = True

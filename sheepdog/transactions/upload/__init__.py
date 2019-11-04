@@ -100,7 +100,7 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
     This function multiplexes on the content-type to call the appropriate
     transaction handler.
     """
-    doc = flask.request.get_data().decode('utf-8')
+    doc = flask.request.get_data().decode("utf-8")
     content_type = flask.request.headers.get("Content-Type", "").lower()
     if content_type == "text/csv":
         doc_format = "csv"

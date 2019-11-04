@@ -410,7 +410,11 @@ def export_entities(program, project):
     project_id = "{}-{}".format(program, project)
     file_format = kwargs.get("file_format") or "tsv"
 
-    mimetype = "application/json" if file_format.lower() == "json" else "application/octet-stream"
+    mimetype = (
+        "application/json"
+        if file_format.lower() == "json"
+        else "application/octet-stream"
+    )
     if not kwargs.get("ids"):
         if not node_label:
             raise UserError("expected either `ids` or `node_label` parameter")
@@ -516,9 +520,7 @@ def create_files_viewer(dry_run=False, reassign=False):
         auth.current_user.require_admin()
 
         headers = {
-            k: v
-            for k, v in flask.request.headers.items()
-            if v and k != "X-Auth-Token"
+            k: v for k, v in flask.request.headers.items() if v and k != "X-Auth-Token"
         }
         url = flask.request.url.split("?")
         args = url[-1] if len(url) > 1 else ""
