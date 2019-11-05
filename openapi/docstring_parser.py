@@ -56,7 +56,7 @@ class Docstring(object):
             and not lines[i].startswith(":")
         ):
             i += 1
-        description = " ".join([_f for _f in lines[:i] if _f])
+        description = " ".join(filter(None, lines[:i]))
         return description.strip()
 
     @classmethod
