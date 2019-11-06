@@ -5,7 +5,7 @@ FROM quay.io/cdis/python-nginx:pybase3-1.0.0
 
 RUN apk update \
     && apk add postgresql-libs postgresql-dev libffi-dev libressl-dev \
-    && apk add linux-headers musl-dev gcc libxml2-dev \
+    && apk add linux-headers musl-dev gcc libxml2-dev libxslt-dev \
     && apk add curl bash git vim
 
 COPY . /sheepdog
