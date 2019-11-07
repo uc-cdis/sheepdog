@@ -24,7 +24,8 @@ RUN mkdir -p /var/www/sheepdog \
 EXPOSE 80
 
 RUN COMMIT=`git rev-parse HEAD` && echo "COMMIT=\"${COMMIT}\"" >sheepdog/version_data.py \
-    && VERSION=`git describe --always --tags` && echo "VERSION=\"${VERSION}\"" >>sheepdog/version_data.py
+    && VERSION=`git describe --always --tags` && echo "VERSION=\"${VERSION}\"" >>sheepdog/version_data.py \
+    && python setup.py install
 
 WORKDIR /var/www/sheepdog
 
