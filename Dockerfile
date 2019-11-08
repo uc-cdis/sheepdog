@@ -15,7 +15,7 @@ WORKDIR /sheepdog
 RUN python -m pip install --upgrade pip \
     && python -m pip install --upgrade setuptools \
     && pip --version \
-    && python -m pip install -r requirements.txt
+    && pip install -r requirements.txt
 
 RUN mkdir -p /var/www/sheepdog \
     && mkdir /run/ngnix/ \
