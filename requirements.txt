@@ -32,7 +32,7 @@ git+https://git@github.com/NCI-GDC/psqlgraph.git@release/py3#egg=psqlgraph
 git+https://git@github.com/uc-cdis/cdiserrors.git@0.1.2#egg=cdiserrors
 git+https://git@github.com/uc-cdis/cdislogging.git@master#egg=cdislogging
 git+https://git@github.com/NCI-GDC/cdisutils.git@f54e393c89939b2200dfae45c6235cbe2bae1206#egg=cdisutils
-git+https://git@github.com/uc-cdis/datadictionary.git@chore/py3#egg=gen3dictionary
+gen3dictionary==2.0.1
 git+https://git@github.com/uc-cdis/gdcdatamodel.git@chore/py3#egg=gen3datamodel
 git+https://git@github.com/uc-cdis/indexclient.git@1.6.2#egg=indexclient
 git+https://git@github.com/uc-cdis/storage-client.git@0.1.7#egg=storageclient
