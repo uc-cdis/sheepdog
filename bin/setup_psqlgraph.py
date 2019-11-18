@@ -108,19 +108,23 @@ def create_indexes(host, user, password, database):
     for scls in Node.get_subclasses():
         tablename = scls.__tablename__
         list(map(engine.execute, index(tablename, ["node_id",])))
-        list(map(
-            engine.execute,
-            [
-                "CREATE INDEX ON {} USING gin (_sysan)".format(tablename),
-                "CREATE INDEX ON {} USING gin (_props)".format(tablename),
-                "CREATE INDEX ON {} USING gin (_sysan, _props)".format(tablename),
-            ],
-        ))
+        list(
+            map(
+                engine.execute,
+                [
+                    "CREATE INDEX ON {} USING gin (_sysan)".format(tablename),
+                    "CREATE INDEX ON {} USING gin (_props)".format(tablename),
+                    "CREATE INDEX ON {} USING gin (_sysan, _props)".format(tablename),
+                ],
+            )
+        )
     for scls in Edge.get_subclasses():
-        list(map(
-            engine.execute,
-            index(scls.__tablename__, ["src_id", "dst_id", "dst_id, src_id",]),
-        ))
+        list(
+            map(
+                engine.execute,
+                index(scls.__tablename__, ["src_id", "dst_id", "dst_id, src_id",]),
+            )
+        )
 
 
 if __name__ == "__main__":
