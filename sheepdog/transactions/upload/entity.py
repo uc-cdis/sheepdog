@@ -413,7 +413,7 @@ class UploadEntity(EntityBase):
             self.doc[name] = doc_links
 
             # Get set of node ids in the link document
-            map(doc_ids.add, [l.get("id") for l in doc_links if l.get("id")])
+            list(map(doc_ids.add, [l.get("id") for l in doc_links if l.get("id")]))
 
             # Get set of secondary_keys in the link document
             for link in doc_links:
