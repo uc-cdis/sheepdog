@@ -148,7 +148,6 @@ def create_project(program):
     project = doc.get("code")
     if not project:
         raise UserError("No project specified in key 'code'")
-    project = project
     # Parse dbgap accession number.
     phsid = doc.get("dbgap_accession_number")
     if not phsid:
