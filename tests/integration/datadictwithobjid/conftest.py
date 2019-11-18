@@ -24,6 +24,7 @@ from tests.integration.datadictwithobjid.api import app as _app, app_init, index
 from tests.integration.datadictwithobjid.submission.test_endpoints import put_cgci_blgsp
 from tests import utils
 
+
 def get_parent(path):
     print(path)
     return path[0 : path.rfind("/")]
