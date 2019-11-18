@@ -881,7 +881,7 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
         #
         # This is used to look up the classes for the linked nodes.
         # Now, fill out the properties lists from the titles.
-        for prop in map(format_prop, titles):
+        for prop in list(map(format_prop, titles)):
             if type(prop) is tuple:
                 link_name, link_prop = prop
                 link_cls = cls._pg_links[link_name]["dst_type"]

@@ -70,7 +70,7 @@ class DeletionTransaction(TransactionBase):
                 for e in self.valid_entities:
                     e.node.sysan["to_delete"] = self.to_delete
             else:
-                map(self.session.delete, [e.node for e in self.valid_entities])
+                list(map(self.session.delete, [e.node for e in self.valid_entities]))
 
     def _delete_fields(self):
         """
