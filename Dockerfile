@@ -1,7 +1,7 @@
 # To run: docker run -v /path/to/wsgi.py:/var/www/sheepdog/wsgi.py --name=sheepdog -p 81:80 sheepdog
 # To check running container: docker exec -it sheepdog /bin/bash
 
-FROM quay.io/cdis/python-nginx:pybase3-1.0.0
+FROM quay.io/cdis/python-nginx:pybase3-1.1.0
 
 RUN apk update \
     && apk add postgresql-libs postgresql-dev libffi-dev libressl-dev \
