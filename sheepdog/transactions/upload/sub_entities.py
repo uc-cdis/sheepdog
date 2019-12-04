@@ -337,7 +337,7 @@ class FileUploadEntity(UploadEntity):
             self.object_id = str(doc.did)
             self.node._props["object_id"] = self.object_id
 
-        self._create_alias(record=alias, hashes=hashes, size=size, release="private")
+        self._create_alias(alias, doc.did)
 
     def _update_index(self):
         """
@@ -709,8 +709,8 @@ class FileUploadEntity(UploadEntity):
             return self.doc.get("file_size")
         return None
 
-    def _create_alias(self, **kwargs):
-        return self.transaction.index_client.create_alias(**kwargs)
+    def _create_alias(self, alias, did):
+        return self.transaction.index_client.add_alias_for_did(alias, did)
 
     def _create_index(self, **kwargs):
         return self.transaction.index_client.create(**kwargs)
