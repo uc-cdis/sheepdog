@@ -14,7 +14,7 @@ Sphinx==1.6.5
 sphinx_rtd_theme
 flasgger==0.9.1
 -e git+https://git@github.com/uc-cdis/cdisutils-test.git@1.0.0#egg=cdisutilstest
--e git+https://git@github.com/uc-cdis/indexd.git@2.1.0#egg=indexd
+-e git+https://git@github.com/uc-cdis/indexd.git@2.3.0#egg=indexd
 # indexd dependencies
 authutils==3.1.1
 gen3rbac==0.1.2

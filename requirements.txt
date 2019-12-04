@@ -10,7 +10,7 @@ fuzzywuzzy==0.6.1
 gen3authz==0.2.1
 graphene==2.0.1
 jsonschema==2.5.1
-lxml==3.8.0
+lxml==4.4.2
 pbr==2.0.0
 psycopg2==2.7.3.2
 python-keystoneclient==1.8.1
@@ -27,12 +27,12 @@ git+https://git@github.com/uc-cdis/cdis_oauth2client.git@chore/py3#egg=cdis_oaut
 cdispyutils==0.2.13
 git+https://git@github.com/uc-cdis/datamodelutils.git@chore/py3#egg=datamodelutils
 # TODO:update to pypi version once released
-git+https://git@github.com/uc-cdis/psqlgraph.git@chore/py3#egg=psqlgraph
+git+https://git@github.com/uc-cdis/psqlgraph.git@develop#egg=psqlgraph
 # required for gen3datamodel, not required for sheepdog
 git+https://git@github.com/uc-cdis/cdiserrors.git@0.1.2#egg=cdiserrors
 git+https://git@github.com/uc-cdis/cdislogging.git@master#egg=cdislogging
 git+https://git@github.com/NCI-GDC/cdisutils.git@f54e393c89939b2200dfae45c6235cbe2bae1206#egg=cdisutils
 gen3dictionary==2.0.1
-git+https://git@github.com/uc-cdis/gdcdatamodel.git@chore/py3#egg=gen3datamodel
-git+https://git@github.com/uc-cdis/indexclient.git@1.6.2#egg=indexclient
+git+https://git@github.com/uc-cdis/gdcdatamodel.git@develop#egg=gen3datamodel
+git+https://git@github.com/uc-cdis/indexclient.git@2.0.0#egg=indexclient
 git+https://git@github.com/uc-cdis/storage-client.git@0.1.7#egg=storageclient
