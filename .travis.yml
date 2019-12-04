@@ -48,8 +48,8 @@ script:
   # datadict and datadictwithobjid tests must run separately to allow
   # loading different datamodels
 - py.test -vv --cov=sheepdog --cov-report xml tests/integration/datadict
-- py.test -vv --cov=sheepdog --cov-report xml tests/integration/datadictwithobjid
-- py.test -vv --cov=sheepdog --cov-report xml tests/unit
+- py.test -vv --cov=sheepdog --cov-report xml --cov-append tests/integration/datadictwithobjid
+- py.test -vv --cov=sheepdog --cov-report xml --cov-append tests/unit
 
 after_script:
 - python-codacy-coverage -r coverage.xml
