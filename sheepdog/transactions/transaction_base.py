@@ -325,7 +325,7 @@ class TransactionBase(object):
         Record an error message.
 
         Args:
-            message (str): a message explaining what when wrong
+            message (str): a message explaining what went wrong
 
         Return:
             None

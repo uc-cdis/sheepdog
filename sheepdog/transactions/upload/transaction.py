@@ -293,7 +293,7 @@ class UploadTransaction(TransactionBase):
             self.entities.append(entity)
         except Exception as e:  # pylint: disable=broad-except
             self.logger.exception(e)
-            self.record_error("Unable to parse entity")
+            self.record_error("Unable to parse entity. Details: {}".format(e))
 
 
 class BulkUploadTransaction(TransactionBase):
