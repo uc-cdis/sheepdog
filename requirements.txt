@@ -28,7 +28,7 @@ cdispyutils==0.2.13
 git+https://git@github.com/uc-cdis/datamodelutils.git@chore/py3#egg=datamodelutils
 # TODO:update to pypi version once released
 # required for gen3datamodel, not required for sheepdog
-psqlgraph=3.0.0
+psqlgraph==3.0.0
 git+https://git@github.com/uc-cdis/cdiserrors.git@0.1.2#egg=cdiserrors
 git+https://git@github.com/uc-cdis/cdislogging.git@master#egg=cdislogging
 git+https://git@github.com/NCI-GDC/cdisutils.git@f54e393c89939b2200dfae45c6235cbe2bae1206#egg=cdisutils
