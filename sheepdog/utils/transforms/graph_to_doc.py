@@ -17,7 +17,7 @@ import psqlgraph
 
 from sheepdog import dictionary
 from sheepdog.errors import InternalError, NotFoundError, UnsupportedError, UserError
-from sheepdog.globals import DELIMITERS, SUPPORTED_FORMATS
+from sheepdog.globals import DELIMITERS, SUB_DELIMITERS, SUPPORTED_FORMATS
 
 
 log = get_logger(__name__)
@@ -358,13 +358,10 @@ def _get_links_delimited(link, exclude_id):
     """Return parsed link template from link schema in delimited form."""
     link_template = []
     target_schema = dictionary.schema[link["target_type"]]
-    # add a #1 to the link to indicate it's a many relationship
-    to_many = link["multiplicity"] in ["many_to_many", "one_to_many"]
-    postfix = "#1" if to_many else ""
 
     # default key for link is the GDC ID
     if not exclude_id:
-        link_template.append("id" + postfix)
+        link_template.append("id")
 
     unique_keys = [key for key in target_schema["uniqueKeys"] if key != ["id"]]
 
@@ -372,7 +369,7 @@ def _get_links_delimited(link, exclude_id):
         keys = copy.copy(unique_key)
         if "project_id" in keys:
             keys.remove("project_id")
-        link_template += [prop + postfix for prop in keys]
+        link_template += [prop for prop in keys]
 
         # right now we only have one alias for each entity,
         # so we pick the first one for now
@@ -382,11 +379,10 @@ def _get_links_delimited(link, exclude_id):
 
 
 def _get_links(file_format, schema, exclude_id):
-    """Parse links from schema
-
+    """
+    Parse links from schema
     we don't have project specific schema now
     so right now this uses top level schema
-
     """
 
     links = dict()
@@ -766,6 +762,70 @@ def validate_export_node(node_label):
         raise UserError("cannot export node with category `internal`")
 
 
+def format_prop(prop):
+    """
+    Map over ``titles`` to get properties usable for looking up from
+    node instances.
+
+    Change properties to have 'node_id' instead of 'id', and 'label'
+    instead of 'type', so that the props can be looked up as dictionary
+    entries:
+
+    .. code-block:: python
+
+        node[prop]
+
+    """
+    if prop == "id":
+        return "node_id"
+    elif prop == "type":
+        return "label"
+    return prop
+
+
+def format_linked_prop(prop):
+    """
+    For properties which link to other nodes, convert the link to a
+    tuple such that the linked property can be looked up using the
+    elements of the tuple as indexes. For example, for a ``Case`` node
+    with a link to `experiments.id`:
+
+    .. code-block:: python
+
+        # prop == ('experiments', 0, 'node_id')
+        node[prop[0]][prop[1]][prop[2]]
+    """
+    link_name, link_alias = split_link(prop)
+    if is_link_plural(prop):
+        alias_root, _ = split_link_alias(link_alias)
+        return (link_name, format_prop(alias_root))
+    else:
+        return (link_name, format_prop(link_alias))
+
+
+def get_all_titles(node_label):
+    # Get the template for this node, which is basically the column
+    # headers in the resulting TSV.
+    unstripped_template = entity_to_template(
+        node_label, exclude_id=False, file_format="tsv"
+    )
+    # Strip asterisks.
+    template = [prop.lstrip("*") for prop in unstripped_template]
+    # Get the titles so the linked fields are at the end (to match the
+    # structure of the query we will run later).
+    titles_non_linked = []
+    titles_linked = []
+    for title in template:
+        if is_link_field(title):
+            titles_linked.append(title)
+        else:
+            # 'urls' is part of the templates but not part of the dicts
+            # and not exported, so we remove it here
+            if title != "urls":
+                titles_non_linked.append(title)
+    return titles_non_linked, titles_linked
+
+
 def export_all(node_label, project_id, file_format, db, **kwargs):
     """
     Export all nodes of type with name ``node_label`` to a TSV file and yield
@@ -793,79 +853,18 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
     # example ``node_label`` (so ``gdcdatamodel.models.Case`` is the example
     # class).
 
+    titles_non_linked, titles_linked = get_all_titles(node_label)
+    # Example ``titles_non_linked``:
+    #     [
+    #         'type', 'id', 'submitter_id', 'disease_type', 'primary_site'
+    #     ]
+    # Example ``titles_linked``:
+    #     [
+    #         'experiments.id', 'experiments.submitter_id'
+    #     ]
     with db.session_scope() as session:
-
-        cls = psqlgraph.Node.get_subclass(node_label)
-
-        # Get the template for this node, which is basically the column
-        # headers in the resulting TSV.
-        unstripped_template = entity_to_template(
-            node_label, exclude_id=False, file_format="tsv"
-        )
-        # Strip asterisks.
-        template = [prop.lstrip("*") for prop in unstripped_template]
-        # Get the titles so the linked fields are at the end (to match the
-        # structure of the query we will run later).
-        titles_non_linked = []
-        titles_linked = []
-        for title in template:
-            if is_link_field(title):
-                titles_linked.append(title)
-            else:
-                # 'urls' is part of the templates but not part of the dicts
-                # and not exported, so we remove it here
-                if title != "urls":
-                    titles_non_linked.append(title)
-        titles = titles_non_linked + titles_linked
-        # Example ``titles``:
-        #
-        #     [
-        #         'type', 'id', 'submitter_id', 'disease_type', 'primary_site',
-        #         'experiments.id', 'experiments.submitter_id'
-        #     ]
-
-        def format_prop(prop):
-            """
-            Map over ``titles`` to get properties usable for looking up from
-            node instances.
-
-            Change properties to have 'node_id' instead of 'id', and 'label'
-            instead of 'type', so that the props can be looked up as dictionary
-            entries:
-
-            .. code-block:: python
-
-                node[prop]
-
-            For properties which link to other nodes, convert the link to a
-            tuple such that the linked property can be looked up using the
-            elements of the tuple as indexes. For example, for a ``Case`` node
-            with a link to `experiments.id`:
-
-            .. code-block:: python
-
-                # prop == ('experiments', 0, 'node_id')
-                node[prop[0]][prop[1]][prop[2]]
-            """
-            if prop == "id":
-                return "node_id"
-            elif prop == "type":
-                return "label"
-            elif is_link_field(prop):
-                link_name, link_alias = split_link(prop)
-                if is_link_plural(prop):
-                    alias_root, _ = split_link_alias(link_alias)
-                    return (link_name, format_prop(alias_root))
-                else:
-                    return (link_name, format_prop(link_alias))
-            return prop
-
-        # ``props`` is just a list of strings of the properties of the node
-        # class that should go in the result.
-        props = []
         # ``linked_props`` is a list of attributes belonging to linked classes
         # (for example, ``Experiment.node_id``).
-        linked_props = []
         # Example ``cls._pg_links`` for reference:
         #
         #     Case._pg_links == {
@@ -877,13 +876,8 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
         #
         # This is used to look up the classes for the linked nodes.
         # Now, fill out the properties lists from the titles.
-        for prop in list(map(format_prop, titles)):
-            if type(prop) is tuple:
-                link_name, link_prop = prop
-                link_cls = cls._pg_links[link_name]["dst_type"]
-                linked_props.append(getattr(link_cls, link_prop))
-            else:
-                props.append(prop)
+        cls = psqlgraph.Node.get_subclass(node_label)
+        linked_props = make_linked_props(cls, titles_linked)
 
         # Build up the query. The query will contain, firstly, the node class,
         # and secondly, all the relevant properties in linked nodes.
@@ -902,30 +896,74 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
             yield '{ "data": ['
         else:  # json
             # Yield the lines of the file.
-            yield "{}\n".format("\t".join(titles))
+            yield "{}\n".format("\t".join(titles_non_linked + titles_linked))
+
+
+        # ``props`` is just a list of strings of the properties of the node
+        # class that should go in the result.
+        props = [format_prop(t) for t in titles_non_linked]
+        list_obj = result_to_dictionary(query, props, titles_linked)
 
         js_list_separator = ""
-        for result in query.yield_per(1000):
-            row = []
-            json_obj = {"link_fields": {}}
-            # Write in the properties from just the node.
-            node = result[0]
-            for prop in props:
-                val = list_to_comma_string(node[prop])
-                row.append(val)
-                json_obj[prop] = val
-            # Tack on the linked properties.
-            row.extend([list_to_comma_string(col) for col in result[1:]])
-            for idx, title in enumerate(titles_linked):
-                json_obj["link_fields"][title] = result[idx + 1] or ""
-            # Convert row elements to string if they are not
-            for idx, val in enumerate(row):
-                row[idx] = _encode(row[idx])
-            if file_format == "json":
-                yield js_list_separator + json.dumps(json_obj)
+        for obj in list_obj:
+            if file_format == 'json':
+                yield js_list_separator + json.dumps(obj)
             else:
-                yield "{}\n".format("\t".join(row))
+                yield "{}\n".format(result_to_delimited_file(obj, props, titles_linked, file_format))
             js_list_separator = ","
 
         if file_format == "json":
             yield "]}"
+
+
+def make_linked_props(cls, titles_linked):
+    # ``linked_props`` is a list of attributes belonging to linked classes
+    # (for example, ``Experiment.node_id``).
+    # Example ``cls._pg_links`` for reference:
+    #
+    #     Case._pg_links == {
+    #         'experiments': {
+    #             'dst_type': gdcdatamodel.models.Experiment,
+    #             'edge_out': '_CaseMemberOfExperiment_out',
+    #         }
+    #     }
+    #
+    # This is used to look up the classes for the linked nodes.
+    # Now, fill out the properties lists from the titles.
+    return [getattr(cls._pg_links[link_name]["dst_type"], link_prop)
+                    for (link_name, link_prop) in list(map(format_linked_prop, titles_linked))]
+
+
+def result_to_delimited_file(obj, props, titles_linked, file_format):
+    splitter = DELIMITERS.get(file_format)
+    sub_splitter = SUB_DELIMITERS.get(file_format)
+    link_props_split = list(map(format_linked_prop, titles_linked))
+
+    l_prop_values = [str(v) for k, v in obj.items() if k in props]
+    link_fields = []
+    for (link_name, link_prop) in link_props_split:
+        s = sub_splitter.join(list(map(lambda x: str(x.get(link_prop, "")), obj[link_name])))
+        link_fields.append(s)
+    return splitter.join(l_prop_values + link_fields)
+
+
+def result_to_dictionary(query, props, titles_linked):
+    all_results = {}
+    link_props_split = list(map(format_linked_prop, titles_linked))
+    for result in query.yield_per(1000):
+        node = result[0]
+        node_id = node['node_id']
+        if node_id not in all_results:
+            all_results[node_id] = { prop: list_to_comma_string(node[prop]) for prop in props }
+        saved_obj = all_results[node_id]
+        linked_fields = {}
+        for idx, (link_name, link_prop) in enumerate(link_props_split):
+            if (link_name not in linked_fields):
+                linked_fields[link_name] = {}
+            linked_fields[link_name][link_prop] = result[idx + 1] or ""
+        for k, v in linked_fields.items():
+            if k not in saved_obj:
+                saved_obj[k] = []
+            saved_obj[k].append(v)
+
+    return [ v for v in all_results.values() ]

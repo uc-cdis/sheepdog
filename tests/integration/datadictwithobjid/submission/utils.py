@@ -12,7 +12,7 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 re_md5 = re.compile(r"(i?)(?<![a-z0-9])[a-f0-9]{32}(?![a-z0-9])")
 
 data_fnames = [
-    "experiment.json",
+    "experiment.1.json",
     "case.json",
     "sample.json",
     "aliquot.json",

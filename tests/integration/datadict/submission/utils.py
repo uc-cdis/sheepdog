@@ -12,7 +12,8 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 re_md5 = re.compile(r"(i?)(?<![a-z0-9])[a-f0-9]{32}(?![a-z0-9])")
 
 data_fnames = [
-    "experiment.json",
+    "experiment.1.json",
+    "experiment.2.json",
     "case.json",
     "sample.json",
     "aliquot.json",
@@ -21,6 +22,20 @@ data_fnames = [
     "exposure.json",
     "treatment.json",
 ]
+
+extended_data_fnames = [
+    "experiment.1.json",
+    "experiment.2.json",
+    "experimental_metadata.json",
+    "case.json",
+    "sample.json",
+    "aliquot.json",
+    "demographic.json",
+    "diagnosis.json",
+    "exposure.json",
+    "treatment.json",
+]
+
 
 PATH = "/v0/submission/graphql"
 BLGSP_PATH = "/v0/submission/CGCI/BLGSP/"

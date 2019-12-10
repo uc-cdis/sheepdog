@@ -12,18 +12,16 @@ import uuid
 from io import StringIO
 
 import boto
-import pytest
 from datamodelutils import models as md
 from flask import g
 from moto import mock_s3
 from sqlalchemy.exc import IntegrityError
 
-from sheepdog.errors import HandledIntegrityError
 from sheepdog.globals import ROLES
 from sheepdog.transactions.upload import UploadTransaction
 from sheepdog.utils import get_external_proxies
 from sheepdog.utils.transforms import TSVToJSONConverter
-from tests.integration.datadict.submission.utils import data_fnames
+from tests.integration.datadict.submission.utils import data_fnames, extended_data_fnames
 
 BLGSP_PATH = "/v0/submission/CGCI/BLGSP/"
 BRCA_PATH = "/v0/submission/TCGA/BRCA/"
@@ -270,8 +268,6 @@ def test_put_valid_entity_invalid_type(client, pg_driver, cgci_blgsp, submitter)
 
 def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
     path = BLGSP_PATH
-    with open(os.path.join(DATA_DIR, "case.json"), "r") as f:
-        case_sid = json.loads(f.read())["submitter_id"]
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), "r") as f:
             resp = client.post(path, headers=submitter, data=f.read())
@@ -286,7 +282,8 @@ def post_example_entities_together(client, submitter, data_fnames2=None):
     for fname in data_fnames2:
         with open(os.path.join(DATA_DIR, fname), "r") as f:
             data.append(json.loads(f.read()))
-    return client.post(path, headers=submitter, data=json.dumps(data))
+    resp = client.post(path, headers=submitter, data=json.dumps(data))
+    return resp
 
 
 def put_example_entities_together(client, headers):
@@ -395,6 +392,18 @@ def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter, admin
     assert resp_json["entity_error_count"] == 1
     assert resp_json["created_entity_count"] == 0
     assert resp_json["entities"][0]["errors"][0]["type"] == "INVALID_PERMISSIONS"
+
+
+def test_insert_multiple_parents(client, pg_driver, cgci_blgsp, submitter, require_index_exists_off):
+    post_example_entities_together(client, submitter)
+    path = BLGSP_PATH
+    with open(os.path.join(DATA_DIR, 'experimental_metadata.tsv'), 'r') as f:
+        headers = submitter
+        headers["Content-Type"] = "text/tsv"
+        resp = client.post(
+            path, headers=headers, data=f.read()
+        )
+        assert resp.status_code == 201, resp.data
 
 
 def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
@@ -691,8 +700,8 @@ def test_can_submit_with_asterisk_tsv(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
 
-def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
-    post_example_entities_together(client, submitter)
+def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter, require_index_exists_off):
+    post_example_entities_together(client, submitter, extended_data_fnames)
     with pg_driver.session_scope():
         case_id = pg_driver.nodes(md.Case).first().node_id
     path = "/v0/submission/CGCI/BLGSP/export/?ids={case_id}".format(case_id=case_id)
@@ -707,24 +716,24 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     assert data[0]["id"] == case_id
 
 
-def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
-    post_example_entities_together(client, submitter)
+def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter, require_index_exists_off):
+    post_example_entities_together(client, submitter, extended_data_fnames)
     with pg_driver.session_scope() as s:
-        case = pg_driver.nodes(md.Case).first()
-        new_case = md.Case(str(uuid.uuid4()))
-        new_case.props = case.props
-        new_case.submitter_id = "case-2"
-        s.add(new_case)
-        case_count = pg_driver.nodes(md.Case).count()
-    path = "/v0/submission/CGCI/BLGSP/export/?node_label=case"
+        experimental_metadata = pg_driver.nodes(md.ExperimentalMetadata).first()
+        new_experimental_metadata = md.ExperimentalMetadata(str(uuid.uuid4()))
+        new_experimental_metadata.props = experimental_metadata.props
+        new_experimental_metadata.submitter_id = 'case-2'
+        s.add(new_experimental_metadata)
+        experimental_metadata_count = pg_driver.nodes(md.ExperimentalMetadata).count()
+    path = '/v0/submission/CGCI/BLGSP/export/?node_label=experimental_metadata'
     r = client.get(path, headers=submitter)
     assert r.status_code == 200, r.data
-    assert r.headers["Content-Disposition"].endswith("tsv")
-    assert len(str(r.data, "utf-8").strip().split("\n")) == case_count + 1
+    assert r.headers['Content-Disposition'].endswith('tsv')
+    assert len(r.data.strip().split('\n')) == experimental_metadata_count + 1
 
 
-def test_export_all_node_types_json(client, pg_driver, cgci_blgsp, submitter):
-    post_example_entities_together(client, submitter)
+def test_export_all_node_types_json(client, pg_driver, cgci_blgsp, submitter, require_index_exists_off):
+    post_example_entities_together(client, submitter, extended_data_fnames)
     with pg_driver.session_scope() as s:
         case = pg_driver.nodes(md.Case).first()
         new_case = md.Case(str(uuid.uuid4()))

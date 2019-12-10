@@ -137,11 +137,11 @@ def test_tsv_submission_handle_array_type(client):
     """
 
     file_data = copy.deepcopy(DEFAULT_METADATA_FILE)
-    file_data["array_field"] = " code a, codeb "
+    file_data["array_field"] = " code a,codeb"
 
     # convert the file to TSV
     file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experimental_metadata.tsv"
+        os.path.dirname(os.path.realpath(__file__)), "data/experimental_metadata_tmp.tsv"
     )
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(file_data.keys()), delimiter="\t")
