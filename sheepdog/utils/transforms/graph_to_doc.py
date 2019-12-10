@@ -51,9 +51,7 @@ def get_node_category(node_type):
     """
     cls = psqlgraph.Node.get_subclass(node_type)
     if cls is None:
-        raise UserError(
-            'Node type "{}" not found in dictionary'.format(node_type)
-        )
+        raise UserError('Node type "{}" not found in dictionary'.format(node_type))
     return cls._dictionary.get("category")
 
 
