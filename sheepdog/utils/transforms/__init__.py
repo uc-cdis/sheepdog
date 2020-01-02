@@ -86,7 +86,7 @@ class DelimitedConverter(object):
 
     def __init__(self):
         self.reader = csv.reader(io.StringIO(""))
-        self.format = ''
+        self.format = ""
         self.errors = []
         self.docs = []
 
@@ -164,7 +164,7 @@ class DelimitedConverter(object):
         self.docs.append(doc)
 
     def add_link_value(self, links, cls, key, value):
-        key_parts = key.split('.')
+        key_parts = key.split(".")
         if len(key_parts) == 0:
             return
 
@@ -194,7 +194,7 @@ class DelimitedConverter(object):
             if v == "null":
                 converted_value = None
             start_id += 1
-            r_values[start_id] = { prop: converted_value }
+            r_values[start_id] = {prop: converted_value}
         return r_values
 
     @staticmethod
@@ -242,8 +242,9 @@ class DelimitedConverter(object):
 
         link_name, value = strip(link_name), strip(value)
         edge = getattr(to_cls, link_name)
-        return DelimitedConverter.get_converted_type_from_list(Node.get_subclass_named(edge.target_class.__dst_class__),
-                                                               prop, value)
+        return DelimitedConverter.get_converted_type_from_list(
+            Node.get_subclass_named(edge.target_class.__dst_class__), prop, value
+        )
 
     @property
     def is_valid(self):
@@ -271,7 +272,7 @@ class DelimitedConverter(object):
 class TSVToJSONConverter(DelimitedConverter):
     def set_reader(self, doc):
         # Standardize the new line format
-        self.format = 'tsv'
+        self.format = "tsv"
         doc = "\n".join(strip(doc).splitlines())
         f = io.StringIO(doc)
         self.reader = csv.DictReader(f, delimiter="\t")
@@ -280,7 +281,7 @@ class TSVToJSONConverter(DelimitedConverter):
 class CSVToJSONConverter(DelimitedConverter):
     def set_reader(self, doc):
         # Standardize the new line format
-        self.format = 'csv'
+        self.format = "csv"
         doc = "\n".join(strip(doc).splitlines())
         f = io.StringIO(doc)
         self.reader = csv.DictReader(f, delimiter=",")

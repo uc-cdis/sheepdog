@@ -33,10 +33,10 @@ def post_blgsp_files(client, headers):
 
     test_fnames = data_fnames + ["read_group.json", "submitted_unaligned_reads.json"]
 
-    #entity_types = [fname.replace(".json", "") for fname in data_fnames]
+    # entity_types = [fname.replace(".json", "") for fname in data_fnames]
     entity_types = {}
     for fname in data_fnames:
-        fname = fname.split('.')[0]
+        fname = fname.split(".")[0]
         if fname not in entity_types:
             entity_types[fname] = 1
         else:
@@ -45,11 +45,11 @@ def post_blgsp_files(client, headers):
     assert resp.status_code == 201, resp.data
 
     submitted_entities = {}
-    for entity in resp.json['entities']:
+    for entity in resp.json["entities"]:
         if entity["type"] not in submitted_entities:
             submitted_entities[entity["type"]] = [entity["id"]]
         else:
-            submitted_entities.get(entity['type']).append(entity['id'])
+            submitted_entities.get(entity["type"]).append(entity["id"])
 
     for k, v in entity_types.items():
         assert k in submitted_entities, "entity not found in submission"

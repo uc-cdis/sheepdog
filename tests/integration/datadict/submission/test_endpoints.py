@@ -21,7 +21,10 @@ from sheepdog.globals import ROLES
 from sheepdog.transactions.upload import UploadTransaction
 from sheepdog.utils import get_external_proxies
 from sheepdog.utils.transforms import TSVToJSONConverter
-from tests.integration.datadict.submission.utils import data_fnames, extended_data_fnames
+from tests.integration.datadict.submission.utils import (
+    data_fnames,
+    extended_data_fnames,
+)
 
 BLGSP_PATH = "/v0/submission/CGCI/BLGSP/"
 BRCA_PATH = "/v0/submission/TCGA/BRCA/"
@@ -394,15 +397,15 @@ def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter, admin
     assert resp_json["entities"][0]["errors"][0]["type"] == "INVALID_PERMISSIONS"
 
 
-def test_insert_multiple_parents(client, pg_driver, cgci_blgsp, submitter, require_index_exists_off):
+def test_insert_multiple_parents(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
     post_example_entities_together(client, submitter)
     path = BLGSP_PATH
-    with open(os.path.join(DATA_DIR, 'experimental_metadata.tsv'), 'r') as f:
+    with open(os.path.join(DATA_DIR, "experimental_metadata.tsv"), "r") as f:
         headers = submitter
         headers["Content-Type"] = "text/tsv"
-        resp = client.post(
-            path, headers=headers, data=f.read()
-        )
+        resp = client.post(path, headers=headers, data=f.read())
         assert resp.status_code == 201, resp.data
 
 
@@ -700,7 +703,9 @@ def test_can_submit_with_asterisk_tsv(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
 
-def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter, require_index_exists_off):
+def test_export_entity_by_id(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
     post_example_entities_together(client, submitter, extended_data_fnames)
     with pg_driver.session_scope():
         case_id = pg_driver.nodes(md.Case).first().node_id
@@ -716,23 +721,29 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter, require_i
     assert data[0]["id"] == case_id
 
 
-def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter, require_index_exists_off):
+def test_export_all_node_types(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
     post_example_entities_together(client, submitter, extended_data_fnames)
     with pg_driver.session_scope() as s:
         experimental_metadata = pg_driver.nodes(md.ExperimentalMetadata).first()
         new_experimental_metadata = md.ExperimentalMetadata(str(uuid.uuid4()))
         new_experimental_metadata.props = experimental_metadata.props
-        new_experimental_metadata.submitter_id = 'case-2'
+        new_experimental_metadata.submitter_id = "case-2"
         s.add(new_experimental_metadata)
         experimental_metadata_count = pg_driver.nodes(md.ExperimentalMetadata).count()
-    path = '/v0/submission/CGCI/BLGSP/export/?node_label=experimental_metadata'
+    path = "/v0/submission/CGCI/BLGSP/export/?node_label=experimental_metadata"
     r = client.get(path, headers=submitter)
     assert r.status_code == 200, r.data
-    assert r.headers['Content-Disposition'].endswith('tsv')
-    assert len(str(r.data, "utf-8").strip().split("\n")) == experimental_metadata_count + 1
+    assert r.headers["Content-Disposition"].endswith("tsv")
+    assert (
+        len(str(r.data, "utf-8").strip().split("\n")) == experimental_metadata_count + 1
+    )
 
 
-def test_export_all_node_types_json(client, pg_driver, cgci_blgsp, submitter, require_index_exists_off):
+def test_export_all_node_types_json(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
     post_example_entities_together(client, submitter, extended_data_fnames)
     with pg_driver.session_scope() as s:
         case = pg_driver.nodes(md.Case).first()

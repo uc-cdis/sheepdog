@@ -45,7 +45,7 @@ def pg_config():
     test_user = "test"
     test_pass = "test"
     test_db = "sheepdog_automated_test"
-    return dict(host=test_host, user=test_user, password=test_pass, database=test_db,)
+    return dict(host=test_host, user=test_user, password=test_pass, database=test_db)
 
 
 @pytest.fixture

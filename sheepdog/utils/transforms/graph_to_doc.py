@@ -898,7 +898,6 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
             # Yield the lines of the file.
             yield "{}\n".format("\t".join(titles_non_linked + titles_linked))
 
-
         # ``props`` is just a list of strings of the properties of the node
         # class that should go in the result.
         props = [format_prop(t) for t in titles_non_linked]
@@ -906,10 +905,12 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
 
         js_list_separator = ""
         for obj in list_obj:
-            if file_format == 'json':
+            if file_format == "json":
                 yield js_list_separator + json.dumps(obj)
             else:
-                yield "{}\n".format(result_to_delimited_file(obj, props, titles_linked, file_format))
+                yield "{}\n".format(
+                    result_to_delimited_file(obj, props, titles_linked, file_format)
+                )
             js_list_separator = ","
 
         if file_format == "json":
@@ -930,8 +931,10 @@ def make_linked_props(cls, titles_linked):
     #
     # This is used to look up the classes for the linked nodes.
     # Now, fill out the properties lists from the titles.
-    return [getattr(cls._pg_links[link_name]["dst_type"], link_prop)
-                    for (link_name, link_prop) in list(map(format_linked_prop, titles_linked))]
+    return [
+        getattr(cls._pg_links[link_name]["dst_type"], link_prop)
+        for (link_name, link_prop) in list(map(format_linked_prop, titles_linked))
+    ]
 
 
 def result_to_delimited_file(obj, props, titles_linked, file_format):
@@ -942,7 +945,9 @@ def result_to_delimited_file(obj, props, titles_linked, file_format):
     l_prop_values = [str(v) for k, v in obj.items() if k in props]
     link_fields = []
     for (link_name, link_prop) in link_props_split:
-        s = sub_splitter.join(list(map(lambda x: str(x.get(link_prop, "")), obj[link_name])))
+        s = sub_splitter.join(
+            list(map(lambda x: str(x.get(link_prop, "")), obj[link_name]))
+        )
         link_fields.append(s)
     return splitter.join(l_prop_values + link_fields)
 
@@ -952,13 +957,15 @@ def result_to_dictionary(query, props, titles_linked):
     link_props_split = list(map(format_linked_prop, titles_linked))
     for result in query.yield_per(1000):
         node = result[0]
-        node_id = node['node_id']
+        node_id = node["node_id"]
         if node_id not in all_results:
-            all_results[node_id] = { prop: list_to_comma_string(node[prop]) for prop in props }
+            all_results[node_id] = {
+                prop: list_to_comma_string(node[prop]) for prop in props
+            }
         saved_obj = all_results[node_id]
         linked_fields = {}
         for idx, (link_name, link_prop) in enumerate(link_props_split):
-            if (link_name not in linked_fields):
+            if link_name not in linked_fields:
                 linked_fields[link_name] = {}
             linked_fields[link_name][link_prop] = result[idx + 1] or ""
         for k, v in linked_fields.items():
@@ -966,4 +973,4 @@ def result_to_dictionary(query, props, titles_linked):
                 saved_obj[k] = []
             saved_obj[k].append(v)
 
-    return [ v for v in all_results.values() ]
+    return [v for v in all_results.values()]

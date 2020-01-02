@@ -109,7 +109,7 @@ def create_indexes(host, user, password, database):
     index = lambda t, c: ["CREATE INDEX ON {} ({})".format(t, x) for x in c]
     for scls in Node.get_subclasses():
         tablename = scls.__tablename__
-        list(map(engine.execute, index(tablename, ["node_id",])))
+        list(map(engine.execute, index(tablename, ["node_id"])))
         list(
             map(
                 engine.execute,
@@ -124,7 +124,7 @@ def create_indexes(host, user, password, database):
         list(
             map(
                 engine.execute,
-                index(scls.__tablename__, ["src_id", "dst_id", "dst_id, src_id",]),
+                index(scls.__tablename__, ["src_id", "dst_id", "dst_id, src_id"]),
             )
         )
 
