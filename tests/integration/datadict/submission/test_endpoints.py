@@ -729,7 +729,7 @@ def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter, require
     r = client.get(path, headers=submitter)
     assert r.status_code == 200, r.data
     assert r.headers['Content-Disposition'].endswith('tsv')
-    assert len(r.data.strip().split('\n')) == experimental_metadata_count + 1
+    assert len(str(r.data, "utf-8").strip().split("\n")) == experimental_metadata_count + 1
 
 
 def test_export_all_node_types_json(client, pg_driver, cgci_blgsp, submitter, require_index_exists_off):
