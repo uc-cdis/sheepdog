@@ -1,6 +1,6 @@
-from imp import reload
 import os
 import json
+import importlib
 from multiprocessing import Process
 
 from indexd import default_settings, get_app as get_indexd_app
@@ -81,7 +81,7 @@ def app(tmpdir, request):
     dictionary_setup(_app)
     # this is to make sure sqlite is initialized
     # for every unit test
-    reload(default_settings)
+    importlib.reload(default_settings)
 
     # fresh files before running
     for filename in ["auth.sq3", "index.sq3", "alias.sq3"]:

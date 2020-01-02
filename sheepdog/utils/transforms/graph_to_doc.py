@@ -33,10 +33,8 @@ def _encode(val):
     """Encode keys or values for writing a tsv dict."""
     if isinstance(val, str):
         return val
-    elif not isinstance(val, str):
-        return str(val)
     else:
-        return val
+        return str(val)
 
 
 def get_node_category(node_type):

@@ -34,4 +34,4 @@ git+https://git@github.com/NCI-GDC/cdisutils.git@f54e393c89939b2200dfae45c6235cb
 gen3dictionary==2.0.1
 gen3datamodel==3.0.1
 git+https://git@github.com/uc-cdis/indexclient.git@2.0.0#egg=indexclient
-git+https://git@github.com/uc-cdis/storage-client.git@0.1.7#egg=storageclient
+git+https://git@github.com/uc-cdis/storage-client.git@01.0.0#egg=storageclient
