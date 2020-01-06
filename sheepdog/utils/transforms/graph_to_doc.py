@@ -7,7 +7,7 @@ import copy
 import csv
 import hashlib
 import json
-import StringIO
+import io
 import tarfile
 import time
 
@@ -31,12 +31,10 @@ UNSUPPORTED_EXPORT_NODE_CATEGORIES = ["internal"]
 
 def _encode(val):
     """Encode keys or values for writing a tsv dict."""
-    if isinstance(val, unicode):
-        return val.encode("utf-8")
-    elif not isinstance(val, str):
-        return str(val)
-    else:
+    if isinstance(val, str):
         return val
+    else:
+        return str(val)
 
 
 def get_node_category(node_type):
@@ -51,9 +49,7 @@ def get_node_category(node_type):
     """
     cls = psqlgraph.Node.get_subclass(node_type)
     if cls is None:
-        raise UserError(
-            'Node type "{}" not found in dictionary'.format(node_type)
-        )
+        raise UserError('Node type "{}" not found in dictionary'.format(node_type))
     return cls._dictionary.get("category")
 
 
@@ -73,13 +69,13 @@ def parse_ids(ids):
     if not ids:
         raise UserError("Please provide valid ids")
 
-    if isinstance(ids, (str, unicode)):
+    if isinstance(ids, str):
         ids = ids.split(",")
     elif not isinstance(ids, list):
         raise UserError("Invalid list of ids: {}".format(ids))
 
     # Assert that all entries in list are string or unicode
-    if not all(isinstance(id_, (str, unicode)) for id_ in ids):
+    if not all(isinstance(id_, str) for id_ in ids):
         raise UserError("Ids must be strings: {}".format(ids))
 
     return ids
@@ -110,7 +106,7 @@ def get_link_titles(entities, template):
         if link_count > 1:
             link_titles = (
                 get_link_name(split_link_alias(key)[0], column)
-                for column in xrange(link_count)
+                for column in range(link_count)
             )
             titles.extend(link_titles)
         else:
@@ -199,7 +195,7 @@ def get_node_link_json(node, props):
         else:
             links[edge_name] = [alias_root]
 
-    for edge_name, aliases in links.iteritems():
+    for edge_name, aliases in links.items():
         edges = getattr(node, edge_name, [])
         edge_aliases = [
             {
@@ -275,7 +271,7 @@ def entity_to_template_str(label, file_format, **kwargs):
     if file_format == "json":
         return json_dumps_formatted(template)
     elif file_format in DELIMITERS:
-        output = StringIO.StringIO()
+        output = io.StringIO()
         writer = csv.writer(output, delimiter=DELIMITERS[file_format])
         writer.writerow(template)
         writer.writerow(tsv_example_row(label, template))
@@ -310,7 +306,7 @@ def get_json_template(entity_types):
 
 def get_delimited_template(entity_types, file_format, filename=TEMPLATE_NAME):
     """Return :param:`file_format` (TSV or CSV) template for entity types."""
-    tar_obj = StringIO.StringIO()
+    tar_obj = io.StringIO()
     tar = tarfile.open(filename, mode="w|gz", fileobj=tar_obj)
 
     for entity_type in entity_types:
@@ -318,7 +314,7 @@ def get_delimited_template(entity_types, file_format, filename=TEMPLATE_NAME):
         partname = "{}.{}".format(entity_type, file_format)
         tarinfo = tarfile.TarInfo(name=partname)
         tarinfo.size = len(content)
-        tar.addfile(tarinfo, StringIO.StringIO(content))
+        tar.addfile(tarinfo, io.StringIO(content))
 
     tar.close()
     return tar_obj.getvalue()
@@ -334,7 +330,7 @@ def get_all_template(file_format, categories=None, exclude=None, **kwargs):
     exclude = exclude.split(",") if exclude else []
     entity_types = [
         entity_type
-        for entity_type, schema in dictionary.schema.iteritems()
+        for entity_type, schema in dictionary.schema.items()
         if "project_id" in schema.get("properties", {})
         and (not categories or schema["category"] in categories)
         and (not exclude or entity_type not in exclude)
@@ -557,7 +553,7 @@ class ExportFile(object):
         self.templates = dict()
         self.category = category
         self.get_nodes(ids, with_children)
-        self._buffer = StringIO.StringIO()
+        self._buffer = io.StringIO()
 
     def write(self, data):
         """Write data do internal buffer."""
@@ -578,7 +574,7 @@ class ExportFile(object):
     def reset(self):
         """Clear buffer."""
         self._buffer.close()
-        self._buffer = StringIO.StringIO()
+        self._buffer = io.StringIO()
 
     def get_nodes(self, ids, with_children):
         """Look up nodes and set self.result"""
@@ -650,11 +646,11 @@ class ExportFile(object):
             raise InternalError("Unable to determine file name with no results")
 
         if self.is_delimited and self.is_singular:
-            return "{}.{}".format(self.result.keys()[0], self.file_format)
+            return "{}.{}".format(list(self.result.keys())[0], self.file_format)
         elif self.is_delimited:
             return "gdc_export_{}.tar.gz".format(self._get_sha())
         elif self.is_json and self.is_singular:
-            return "{}.json".format(self.result.keys()[0])
+            return "{}.json".format(list(self.result.keys())[0])
         elif self.is_json:
             return "gdc_export_{}.json".format(self._get_sha())
         else:
@@ -675,35 +671,33 @@ class ExportFile(object):
         delimiter = DELIMITERS[self.file_format]
         json_output, self.result = self.result, {}
 
-        for label, entities in json_output.iteritems():
+        for label, entities in json_output.items():
             template = self.templates[label]
             template = [t.lstrip("*") for t in template]
             titles = []
             titles.extend(get_link_titles(entities, template))
             titles.extend(get_non_link_props(template))
-            buff = StringIO.StringIO()
+            buff = io.StringIO()
             writer = csv.DictWriter(buff, titles, delimiter=delimiter)
             self.result[label] = buff
             writer.writeheader()
 
             for tsv_dict in get_tsv_dicts(entities, titles):
-                writer.writerow(
-                    {_encode(k): _encode(v) for k, v in tsv_dict.iteritems()}
-                )
+                writer.writerow({_encode(k): _encode(v) for k, v in tsv_dict.items()})
 
     def get_delimited_response(self):
         """Yield delimited string per result."""
         self.get_tabular()
         if self.is_singular:
-            yield self.result.values()[0].getvalue()
+            yield list(self.result.values())[0].getvalue()
         else:
             tar = tarfile.open(self.filename, mode="w|gz", fileobj=self)
-            for label, entities in self.result.iteritems():
+            for label, entities in self.result.items():
                 partname = "{}.{}".format(label, self.file_format)
                 info = tarfile.TarInfo(name=partname)
                 content = entities.getvalue()
                 info.size = len(content)
-                tar.addfile(info, StringIO.StringIO(content))
+                tar.addfile(info, io.StringIO(content))
                 yield self.getvalue()
                 self.reset()
             tar.close()
@@ -883,7 +877,7 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
         #
         # This is used to look up the classes for the linked nodes.
         # Now, fill out the properties lists from the titles.
-        for prop in map(format_prop, titles):
+        for prop in list(map(format_prop, titles)):
             if type(prop) is tuple:
                 link_name, link_prop = prop
                 link_cls = cls._pg_links[link_name]["dst_type"]
@@ -921,7 +915,7 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
                 row.append(val)
                 json_obj[prop] = val
             # Tack on the linked properties.
-            row.extend(map(lambda col: list_to_comma_string(col), result[1:]))
+            row.extend([list_to_comma_string(col) for col in result[1:]])
             for idx, title in enumerate(titles_linked):
                 json_obj["link_fields"][title] = result[idx + 1] or ""
             # Convert row elements to string if they are not

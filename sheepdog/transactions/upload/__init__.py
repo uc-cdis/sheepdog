@@ -100,7 +100,7 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
     This function multiplexes on the content-type to call the appropriate
     transaction handler.
     """
-    doc = flask.request.get_data()
+    doc = flask.request.get_data().decode("utf-8")
     content_type = flask.request.headers.get("Content-Type", "").lower()
     if content_type == "text/csv":
         doc_format = "csv"
@@ -273,7 +273,7 @@ def handle_biospecimen_bcr_xml_transaction(role, program, project, **tx_kwargs):
     """
     Entrypoint from the flask blueprint for BCR Biospecimen XML XSD 2.6
     """
-    project_node_id = str(uuid.uuid5(PROJECT_SEED, project.encode("utf-8")))
+    project_node_id = str(uuid.uuid5(PROJECT_SEED, project))
     parser = utils.transforms.BcrXmlToJsonParser(project_node_id)
     return handle_xml_transaction(role, program, project, parser, **tx_kwargs)
 

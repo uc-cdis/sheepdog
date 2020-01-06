@@ -14,7 +14,6 @@ class DeletionTransaction(TransactionBase):
         self.fields_to_delete = kwargs.get("fields", None)
         self.to_delete = kwargs.get("to_delete", None)
 
-
     def write_transaction_log(self):
         """Save a log noting this project was opened"""
 
@@ -71,7 +70,7 @@ class DeletionTransaction(TransactionBase):
                 for e in self.valid_entities:
                     e.node.sysan["to_delete"] = self.to_delete
             else:
-                map(self.session.delete, [e.node for e in self.valid_entities])
+                list(map(self.session.delete, [e.node for e in self.valid_entities]))
 
     def _delete_fields(self):
         """

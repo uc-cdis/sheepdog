@@ -15,7 +15,7 @@ from sheepdog.api import run_for_development
 
 requests.packages.urllib3.disable_warnings()
 
-all_role_values = all_roles.values()
+all_role_values = list(all_roles.values())
 roles = defaultdict(lambda: all_role_values)
 
 
@@ -123,10 +123,10 @@ def run_with_fake_authz():
     """
     authorized = True  # modify this to mock authorized/unauthorized
     with patch(
-        'gen3authz.client.arborist.client.ArboristClient.create_resource',
+        "gen3authz.client.arborist.client.ArboristClient.create_resource",
         new_callable=PropertyMock,
     ), patch(
-        'gen3authz.client.arborist.client.ArboristClient.auth_request',
+        "gen3authz.client.arborist.client.ArboristClient.auth_request",
         new_callable=PropertyMock,
         return_value=lambda jwt, service, methods, resources: authorized,
     ):

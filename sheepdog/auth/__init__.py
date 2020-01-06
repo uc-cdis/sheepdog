@@ -22,7 +22,9 @@ logger = get_logger(__name__)
 try:
     from authutils.token.validate import validate_request
 except ImportError:
-    logger.warning("Unable to import authutils validate_request. Sheepdog will error if config AUTH_SUBMISSION_LIST is set to True (note that it is True by default)")
+    logger.warning(
+        "Unable to import authutils validate_request. Sheepdog will error if config AUTH_SUBMISSION_LIST is set to True (note that it is True by default)"
+    )
 
 
 def get_jwt_from_header():
@@ -52,7 +54,7 @@ def authorize_for_project(*required_roles):
                 jwt=jwt,
                 service="sheepdog",
                 methods=required_roles,
-                resources=[resource]
+                resources=[resource],
             )
             if not authz:
                 raise AuthZError("user is unauthorized")
@@ -67,10 +69,7 @@ def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
     jwt = get_jwt_from_header()
     authz = flask.current_app.auth.auth_request(
-        jwt=jwt,
-        service="sheepdog",
-        methods=roles,
-        resources=[resource]
+        jwt=jwt, service="sheepdog", methods=roles, resources=[resource]
     )
     if not authz:
         raise AuthZError("user is unauthorized")
@@ -84,12 +83,14 @@ def create_resource(program, project=None):
 
     json_data = {
         "name": resource,
-        "description": "Created by sheepdog"  # TODO use authz provider field
+        "description": "Created by sheepdog",  # TODO use authz provider field
     }
     resp = flask.current_app.auth.create_resource(
-        parent_path="",
-        resource_json=json_data,
-        create_parents=True
+        parent_path="", resource_json=json_data, create_parents=True
     )
     if resp and resp.get("error"):
-        logger.error("Unable to create resource: code {} - {}".format(resp.error.code, resp.error.message))
+        logger.error(
+            "Unable to create resource: code {} - {}".format(
+                resp.error.code, resp.error.message
+            )
+        )

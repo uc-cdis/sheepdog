@@ -102,7 +102,6 @@ def create_project(program):
     Args:
         program (str): |program_id|
         body (schema_project): input body
-    
     Responses:
         200: Registered successfully.
         400: User error.
@@ -149,7 +148,6 @@ def create_project(program):
     project = doc.get("code")
     if not project:
         raise UserError("No project specified in key 'code'")
-    project = project.encode("utf-8")
     # Parse dbgap accession number.
     phsid = doc.get("dbgap_accession_number")
     if not phsid:
@@ -165,7 +163,7 @@ def create_project(program):
         node = utils.lookup_project(flask.current_app.db, program, project)
         if not node:
             # Create a new project node
-            node_uuid = str(uuid.uuid5(PROJECT_SEED, project.encode("utf-8")))
+            node_uuid = str(uuid.uuid5(PROJECT_SEED, project))
             if flask.current_app.db.nodes(models.Project).ids(node_uuid).first():
                 raise UserError(
                     "ERROR: Project {} already exists in DB".format(project)

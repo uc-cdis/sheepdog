@@ -146,11 +146,7 @@ class FileUploadEntity(UploadEntity):
         self._populate_files_from_index()
 
         # file already indexed and object_id provided: data upload flow
-        if (
-            self.use_object_id(self.entity_type)
-            and self.object_id
-            and self.file_exists
-        ):
+        if self.use_object_id(self.entity_type) and self.object_id and self.file_exists:
             if self._is_valid_hash_size_for_file():
                 self.should_update_acl_uploader = True
         else:
@@ -237,10 +233,15 @@ class FileUploadEntity(UploadEntity):
                     # in the data upload flow case,
                     # while we don't have a way to do it properly (i.e. with permissions checks)
                     document = self.file_by_uuid or self.file_by_hash
-                    namespace = flask.current_app.config.get("AUTH_NAMESPACE", "").rstrip("/")
+                    namespace = flask.current_app.config.get(
+                        "AUTH_NAMESPACE", ""
+                    ).rstrip("/")
                     authz = [
-                        "{}/programs/{}/projects/{}"
-                        .format(namespace, self.transaction.program, self.transaction.project)
+                        "{}/programs/{}/projects/{}".format(
+                            namespace,
+                            self.transaction.program,
+                            self.transaction.project,
+                        )
                     ]
                     use_consent_codes = (
                         dictionary.schema.get(self.entity_type, {})
@@ -308,8 +309,9 @@ class FileUploadEntity(UploadEntity):
 
         namespace = flask.current_app.config.get("AUTH_NAMESPACE", "").rstrip("/")
         authz = [
-            "{}/programs/{}/projects/{}"
-            .format(namespace, self.transaction.program, self.transaction.project)
+            "{}/programs/{}/projects/{}".format(
+                namespace, self.transaction.program, self.transaction.project
+            )
         ]
         use_consent_codes = (
             dictionary.schema.get(self.entity_type, {})
@@ -323,7 +325,11 @@ class FileUploadEntity(UploadEntity):
 
         # IndexClient
         doc = self._create_index(
-            did=self.file_index, hashes=hashes, size=size, urls=urls, acl=acl,
+            did=self.file_index,
+            hashes=hashes,
+            size=size,
+            urls=urls,
+            acl=acl,
             authz=authz,
         )
 
@@ -331,7 +337,7 @@ class FileUploadEntity(UploadEntity):
             self.object_id = str(doc.did)
             self.node._props["object_id"] = self.object_id
 
-        self._create_alias(record=alias, hashes=hashes, size=size, release="private")
+        self._create_alias(alias, doc.did)
 
     def _update_index(self):
         """
@@ -344,9 +350,7 @@ class FileUploadEntity(UploadEntity):
             document.urls = self.urls
             # remove url metadata for deleted urls if that happens
             document.urls_metadata = {
-                k: v
-                for (k, v) in document.urls_metadata.iteritems()
-                if k in document.urls
+                k: v for (k, v) in document.urls_metadata.items() if k in document.urls
             }
             document.patch()
 
@@ -629,13 +633,14 @@ class FileUploadEntity(UploadEntity):
             # This must be done via _put and _load as opposed to using document.patch()
             # because the uploader field is (correctly) not in indexclient's UPDATABLE_ATTRS
             self.transaction.index_client._put(
-                "index", self.object_id,
+                "index",
+                self.object_id,
                 headers={"content-type": "application/json"},
                 data=data,
                 params={"rev": self.file_by_uuid.rev},
                 auth=self.transaction.index_client.auth,
             )
-            self.file_by_uuid._load() # to sync new rev from server
+            self.file_by_uuid._load()  # to sync new rev from server
         except requests.HTTPError as e:
             self.record_error(
                 "Failed to update acl and uploader fields in indexd: {}".format(
@@ -704,8 +709,8 @@ class FileUploadEntity(UploadEntity):
             return self.doc.get("file_size")
         return None
 
-    def _create_alias(self, **kwargs):
-        return self.transaction.index_client.create_alias(**kwargs)
+    def _create_alias(self, alias, did):
+        return self.transaction.index_client.add_alias_for_did(alias, did)
 
     def _create_index(self, **kwargs):
         return self.transaction.index_client.create(**kwargs)

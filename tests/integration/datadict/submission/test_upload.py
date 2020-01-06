@@ -8,11 +8,11 @@ import copy
 import os
 import random
 
-from test_endpoints import put_cgci_blgsp
+from .test_endpoints import put_cgci_blgsp
 
-from utils import assert_positive_response
-from utils import assert_negative_response
-from utils import assert_single_entity_from_response
+from .utils import assert_positive_response
+from .utils import assert_negative_response
+from .utils import assert_single_entity_from_response
 
 # Python 2 and 3 compatible
 try:
@@ -61,7 +61,9 @@ def submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp):
     assert resp.status_code == 200, resp.data
 
 
-def submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp, data=None, format="json"):
+def submit_metadata_file(
+    client, pg_driver, admin, submitter, cgci_blgsp, data=None, format="json"
+):
     data = data or DEFAULT_METADATA_FILE
     headers = submitter
     put_cgci_blgsp(client, admin)
@@ -69,7 +71,7 @@ def submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp, data=N
         headers["Content-Type"] = "text/tsv"
     elif format == "csv":
         headers["Content-Type"] = "text/csv"
-    else: # json
+    else:  # json
         data = json.dumps(data)
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     return resp
@@ -150,7 +152,7 @@ def test_tsv_submission_handle_array_type(client):
     doc = None
     with open(file_path, "r") as f:
         doc = f.read()
-    os.remove(file_path) # clean up (delete file)
+    os.remove(file_path)  # clean up (delete file)
     assert doc
 
     from sheepdog.utils.transforms import TSVToJSONConverter
@@ -923,8 +925,7 @@ def test_submit_valid_tsv_data_file(
 
     # convert to TSV (save to file)
     file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "data/file_tmp.tsv"
+        os.path.dirname(os.path.realpath(__file__)), "data/file_tmp.tsv"
     )
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(file.keys()), delimiter="\t")
@@ -935,7 +936,7 @@ def test_submit_valid_tsv_data_file(
     data = None
     with open(file_path, "r") as f:
         data = f.read()
-    os.remove(file_path) # clean up (delete file)
+    os.remove(file_path)  # clean up (delete file)
     assert data
 
     resp = submit_metadata_file(
@@ -995,8 +996,7 @@ def test_submit_valid_csv_data_file(
 
     # convert to CSV (save to file)
     file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "data/file_tmp.csv"
+        os.path.dirname(os.path.realpath(__file__)), "data/file_tmp.csv"
     )
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(file.keys()), delimiter=",")
@@ -1007,7 +1007,7 @@ def test_submit_valid_csv_data_file(
     data = None
     with open(file_path, "r") as f:
         data = f.read()
-    os.remove(file_path) # clean up (delete file)
+    os.remove(file_path)  # clean up (delete file)
     assert data
 
     resp = submit_metadata_file(
@@ -1132,8 +1132,7 @@ def test_can_submit_data_file_with_asterisk_tsv(
 
     # convert to TSV (save to file)
     file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "data/file_tmp.tsv"
+        os.path.dirname(os.path.realpath(__file__)), "data/file_tmp.tsv"
     )
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(file.keys()), delimiter="\t")
@@ -1144,7 +1143,7 @@ def test_can_submit_data_file_with_asterisk_tsv(
     data = None
     with open(file_path, "r") as f:
         data = f.read()
-    os.remove(file_path) # clean up (delete file)
+    os.remove(file_path)  # clean up (delete file)
     assert data
 
     resp = submit_metadata_file(

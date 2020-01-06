@@ -18,7 +18,7 @@ def test_gdc_type_mappings():
 
     # parse long
     long_val = munge_property("3111118", "long")
-    assert isinstance(long_val, long)
+    assert isinstance(long_val, int)
     with pytest.raises(ValueError):
         munge_property("4.9", "long")
 

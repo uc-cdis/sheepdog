@@ -5,12 +5,7 @@ group: deprecated-2017Q2
 language: python
 
 python:
-  - "2.7"
   - "3.6"
-
-matrix:
-  allow_failures:
-    - python: "3.6"
 
 sudo: false
 
@@ -53,8 +48,8 @@ script:
   # datadict and datadictwithobjid tests must run separately to allow
   # loading different datamodels
 - py.test -vv --cov=sheepdog --cov-report xml tests/integration/datadict
-- py.test -vv --cov=sheepdog --cov-report xml tests/integration/datadictwithobjid
-- py.test -vv --cov=sheepdog --cov-report xml tests/unit
+- py.test -vv --cov=sheepdog --cov-report xml --cov-append tests/integration/datadictwithobjid
+- py.test -vv --cov=sheepdog --cov-report xml --cov-append tests/unit
 
 after_script:
 - python-codacy-coverage -r coverage.xml

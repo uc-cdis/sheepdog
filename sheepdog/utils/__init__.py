@@ -10,10 +10,9 @@ import csv
 import functools
 import json
 import os
-import StringIO
+import io
 import tarfile
 import time
-import urlparse
 
 import boto
 import flask
@@ -173,7 +172,7 @@ def check_action_allowed_in_state(action, file_state):
 def create_entity_list(nodes):
     docs = []
     for node in nodes:
-        props = {k: v for k, v in node.props.iteritems()}
+        props = {k: v for k, v in node.props.items()}
         props["id"] = node.node_id
         props["type"] = node.label
         if hasattr(node, "project_id"):
@@ -204,7 +203,7 @@ def get_all_template(file_format, categories=None, exclude=None, **kwargs):
     exclude = exclude.split(",") if exclude else []
     entity_types = [
         entity_type
-        for entity_type, schema in dictionary.schema.iteritems()
+        for entity_type, schema in dictionary.schema.items()
         if "project_id" in schema.get("properties", {})
         and (not categories or schema["category"] in categories)
         and (not exclude or entity_type not in exclude)
@@ -227,7 +226,7 @@ def get_delimited_template(entity_types, file_format, filename=TEMPLATE_NAME):
     Return:
         ``file_format`` (TSV or CSV) template for entity types.
     """
-    tar_obj = StringIO.StringIO()
+    tar_obj = io.StringIO()
     tar = tarfile.open(filename, mode="w|gz", fileobj=tar_obj)
 
     for entity_type in entity_types:
@@ -235,7 +234,7 @@ def get_delimited_template(entity_types, file_format, filename=TEMPLATE_NAME):
         partname = "{}.{}".format(entity_type, file_format)
         tarinfo = tarfile.TarInfo(name=partname)
         tarinfo.size = len(content)
-        tar.addfile(tarinfo, StringIO.StringIO(content))
+        tar.addfile(tarinfo, io.StringIO(content))
 
     tar.close()
     return tar_obj.getvalue()

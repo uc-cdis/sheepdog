@@ -3,7 +3,7 @@ TODO
 """
 
 import csv
-import StringIO
+import io
 
 from flask import current_app
 from psqlgraph import Node
@@ -50,10 +50,10 @@ def set_row_type(row):
 
 def strip(text):
     """
-    Strip if the text is a basestring
+    Strip if the text is a string
     """
 
-    if not isinstance(text, basestring):
+    if not isinstance(text, str):
         return text
 
     else:
@@ -65,17 +65,17 @@ def strip_whitespace_from_str_dict(dictionary):
     Return new dict with leading/trailing whitespace removed from keys and
     values.
     """
-    return {strip(key): strip(value) for key, value in dictionary.iteritems()}
+    return {strip(key): strip(value) for key, value in dictionary.items()}
 
 
 def get_links_from_row(row):
     """Return a dict of key/value pairs that are links."""
-    return {k: v for k, v in row.iteritems() if "." in k}
+    return {k: v for k, v in row.items() if "." in k}
 
 
 def get_props_from_row(row):
     """Return a dict of key/value pairs that are props, not links."""
-    return {k: v for k, v in row.iteritems() if "." not in k and v != ""}
+    return {k: v for k, v in row.items() if "." not in k and v != ""}
 
 
 class DelimitedConverter(object):
@@ -84,7 +84,7 @@ class DelimitedConverter(object):
     """
 
     def __init__(self):
-        self.reader = csv.reader(StringIO.StringIO(""))
+        self.reader = csv.reader(io.StringIO(""))
         self.errors = []
         self.docs = []
 
@@ -103,7 +103,7 @@ class DelimitedConverter(object):
         """
         try:
             self.set_reader(doc)
-            map(self.add_row, self.reader)
+            list(map(self.add_row, self.reader))
         except Exception as e:
             current_app.logger.exception(e)
             raise UserError("Unable to parse document")
@@ -145,7 +145,7 @@ class DelimitedConverter(object):
 
         # Add properties
         props_dict = get_props_from_row(row)
-        for key, value in props_dict.iteritems():
+        for key, value in props_dict.items():
             if value == "null":
                 doc[key] = None
             else:
@@ -155,10 +155,10 @@ class DelimitedConverter(object):
 
         # Add links
         links_dict = get_links_from_row(row)
-        for key, value in links_dict.iteritems():
+        for key, value in links_dict.items():
             self.add_link_value(links, cls, key, value)
 
-        doc.update({k: v.values() for k, v in links.iteritems()})
+        doc.update({k: list(v.values()) for k, v in links.items()})
         self.docs.append(doc)
 
     def add_link_value(self, links, cls, key, value):
@@ -259,7 +259,7 @@ class TSVToJSONConverter(DelimitedConverter):
     def set_reader(self, doc):
         # Standardize the new line format
         doc = "\n".join(strip(doc).splitlines())
-        f = StringIO.StringIO(doc)
+        f = io.StringIO(doc)
         self.reader = csv.DictReader(f, delimiter="\t")
 
 
@@ -267,5 +267,5 @@ class CSVToJSONConverter(DelimitedConverter):
     def set_reader(self, doc):
         # Standardize the new line format
         doc = "\n".join(strip(doc).splitlines())
-        f = StringIO.StringIO(doc)
+        f = io.StringIO(doc)
         self.reader = csv.DictReader(f, delimiter=",")

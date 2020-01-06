@@ -53,9 +53,9 @@ source_suffix = ".rst"
 master_doc = "contents"
 
 # General information about the project.
-project = u"sheepdog"
-copyright = u"2017, Center for Data Intensive Science"
-author = u"Center for Data Intensive Science"
+project = "sheepdog"
+copyright = "2017, Center for Data Intensive Science"
+author = "Center for Data Intensive Science"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -238,8 +238,8 @@ latex_documents = [
     (
         master_doc,
         "sheepdog.tex",
-        u"sheepdog Documentation",
-        u"Center for Data Intensive Science",
+        "sheepdog Documentation",
+        "Center for Data Intensive Science",
         "manual",
     )
 ]
@@ -269,7 +269,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "sheepdog", u"sheepdog Documentation", [author], 1)]
+man_pages = [(master_doc, "sheepdog", "sheepdog Documentation", [author], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -284,7 +284,7 @@ texinfo_documents = [
     (
         master_doc,
         "sheepdog",
-        u"sheepdog Documentation",
+        "sheepdog Documentation",
         author,
         "sheepdog",
         "One line description of project.",

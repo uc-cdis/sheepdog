@@ -43,7 +43,7 @@ def encoded_jwt(iss):
         Return:
             str: JWT containing claims encoded with private key
         """
-        kid = JWT_KEYPAIR_FILES.keys()[0]
+        kid = list(JWT_KEYPAIR_FILES.keys())[0]
         scopes = ["openid"]
         token = utils.generate_signed_access_token(
             kid, private_key, user, 3600, scopes, iss=iss, forced_exp_time=None
@@ -121,20 +121,27 @@ def mock_arborist_requests(request):
     def do_patch(authorized=True):
         def make_mock_response(*args, **kwargs):
             if not authorized:
-                raise AuthZError('Mocked Arborist says no')
+                raise AuthZError("Mocked Arborist says no")
             mocked_response = MagicMock(requests.Response)
             mocked_response.status_code = 200
 
             def mocked_get(*args, **kwargs):
                 return None
+
             mocked_response.get = mocked_get
 
             return mocked_response
 
         mocked_auth_request = MagicMock(side_effect=make_mock_response)
 
-        patch_auth_request = patch("gen3authz.client.arborist.client.ArboristClient.auth_request", mocked_auth_request)
-        patch_create_resource = patch("gen3authz.client.arborist.client.ArboristClient.create_resource", mocked_auth_request)
+        patch_auth_request = patch(
+            "gen3authz.client.arborist.client.ArboristClient.auth_request",
+            mocked_auth_request,
+        )
+        patch_create_resource = patch(
+            "gen3authz.client.arborist.client.ArboristClient.create_resource",
+            mocked_auth_request,
+        )
 
         patch_auth_request.start()
         patch_create_resource.start()

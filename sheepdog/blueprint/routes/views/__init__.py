@@ -132,7 +132,7 @@ def root_create():
             node_id = node.node_id
             node.props["dbgap_accession_number"] = phsid
         else:
-            node_id = str(uuid.uuid5(PROGRAM_SEED, program.encode("utf-8")))
+            node_id = str(uuid.uuid5(PROGRAM_SEED, program))
             session.add(
                 models.Program(  # pylint: disable=not-callable
                     node_id, name=program, dbgap_accession_number=phsid
@@ -182,7 +182,7 @@ def get_dictionary():
              ]
            }
     """
-    keys = dictionary.schema.keys() + ["_all"]
+    keys = list(dictionary.schema.keys()) + ["_all"]
     links = [flask.url_for(".get_dictionary_entry", entry=entry) for entry in keys]
     return flask.jsonify({"links": links})
 

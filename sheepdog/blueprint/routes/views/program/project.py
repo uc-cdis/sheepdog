@@ -133,7 +133,7 @@ def get_project_dictionary(program=None, project=None):
     """
     if flask.current_app.config.get("AUTH_SUBMISSION_LIST", True) is True:
         auth.validate_request(aud={"openid"}, purpose=None)
-    keys = dictionary.schema.keys() + ["_all"]
+    keys = list(dictionary.schema.keys()) + ["_all"]
     links = [
         flask.url_for(
             ".get_project_dictionary_entry",
@@ -194,7 +194,7 @@ def get_dictionary_entry(entry):
     """
     resolvers = {
         key.replace(".yaml", ""): resolver.source
-        for key, resolver in dictionary.resolvers.iteritems()
+        for key, resolver in dictionary.resolvers.items()
     }
     if entry in resolvers:
         return flask.jsonify(resolvers[entry])
@@ -397,7 +397,7 @@ def export_entities(program, project):
 
     if flask.request.method == "GET":
         # Unpack multidict, or values will unnecessarily be lists.
-        kwargs = {k: v for k, v in flask.request.args.iteritems()}
+        kwargs = {k: v for k, v in flask.request.args.items()}
     else:
         kwargs = utils.parse.parse_request_json()
 
@@ -410,7 +410,11 @@ def export_entities(program, project):
     project_id = "{}-{}".format(program, project)
     file_format = kwargs.get("file_format") or "tsv"
 
-    mimetype = "application/json" if file_format.lower() == "json" else "application/octet-stream"
+    mimetype = (
+        "application/json"
+        if file_format.lower() == "json"
+        else "application/octet-stream"
+    )
     if not kwargs.get("ids"):
         if not node_label:
             raise UserError("expected either `ids` or `node_label` parameter")
@@ -516,9 +520,7 @@ def create_files_viewer(dry_run=False, reassign=False):
         auth.current_user.require_admin()
 
         headers = {
-            k: v
-            for k, v in flask.request.headers.iteritems()
-            if v and k != "X-Auth-Token"
+            k: v for k, v in flask.request.headers.items() if v and k != "X-Auth-Token"
         }
         url = flask.request.url.split("?")
         args = url[-1] if len(url) > 1 else ""
