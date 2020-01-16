@@ -29,6 +29,7 @@ from tests.integration.datadict.api import app as _app, app_init, indexd_init
 from tests.integration.datadict.submission.test_endpoints import put_cgci_blgsp
 import importlib
 
+
 def get_parent(path):
     print(path)
     return path[0 : path.rfind("/")]

@@ -407,6 +407,12 @@ def test_insert_multiple_parents(
         headers["Content-Type"] = "text/tsv"
         resp = client.post(path, headers=headers, data=f.read())
         assert resp.status_code == 201, resp.data
+    data = json.loads(resp.data)
+    submitted_id = data["entities"][0]["id"]
+    resp = client.get(
+        "/v0/submission/CGCI/BLGSP/export/?ids={}".format(submitted_id), headers=headers
+    )
+    # here, assert that resp.data contains the 2 expected links
 
 
 def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
