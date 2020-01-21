@@ -378,6 +378,7 @@ def export_entities(program, project):
         format (str): output format, ``json`` or ``tsv`` or ``csv``; default is ``tsv``
         with_children (str): whether to recursively find children or not; default is False
         category (str): category of node to filter on children. Example: ``clinical``
+        without_id (true/false): whether to include the ids in the export file; default is False
 
     Responses:
         200: Success
@@ -406,6 +407,8 @@ def export_entities(program, project):
         kwargs["file_format"] = kwargs["format"]
         del kwargs["format"]
 
+    without_id = kwargs.get("without_id", "false").lower() == "true"
+
     node_label = kwargs.get("node_label")
     project_id = "{}-{}".format(program, project)
     file_format = kwargs.get("file_format") or "tsv"
@@ -425,7 +428,11 @@ def export_entities(program, project):
         return flask.Response(
             flask.stream_with_context(
                 utils.transforms.graph_to_doc.export_all(
-                    node_label, project_id, file_format, flask.current_app.db
+                    node_label,
+                    project_id,
+                    file_format,
+                    flask.current_app.db,
+                    without_id,
                 )
             ),
             mimetype=mimetype,

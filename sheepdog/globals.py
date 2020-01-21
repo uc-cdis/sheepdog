@@ -19,6 +19,7 @@ REGEX_UUID = re.compile(
 FLAG_IS_ASYNC = "async"
 
 DELIMITERS = {"csv": ",", "tsv": "\t"}
+# SUB_DELIMITERS is used to separate items in a list of the same array field.
 SUB_DELIMITERS = {"csv": "#", "tsv": ","}
 SUPPORTED_FORMATS = ["csv", "tsv", "json"]
 

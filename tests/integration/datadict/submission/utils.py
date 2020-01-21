@@ -23,19 +23,9 @@ data_fnames = [
     "treatment.json",
 ]
 
-extended_data_fnames = [
-    "experiment.1.json",
-    "experiment.2.json",
-    "experimental_metadata.json",
-    "case.json",
-    "sample.json",
-    "aliquot.json",
-    "demographic.json",
-    "diagnosis.json",
-    "exposure.json",
-    "treatment.json",
-]
-
+# add experimental_metadata for exporting test. This file should not be deleted after the test
+# since we need keep it for comparing the exporting result.
+extended_data_fnames = data_fnames + ["experimental_metadata.json"]
 
 PATH = "/v0/submission/graphql"
 BLGSP_PATH = "/v0/submission/CGCI/BLGSP/"

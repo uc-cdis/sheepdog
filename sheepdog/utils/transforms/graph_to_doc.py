@@ -29,14 +29,6 @@ TEMPLATE_NAME = "submission_templates.tar.gz"
 UNSUPPORTED_EXPORT_NODE_CATEGORIES = ["internal"]
 
 
-def _encode(val):
-    """Encode keys or values for writing a tsv dict."""
-    if isinstance(val, str):
-        return val
-    else:
-        return str(val)
-
-
 def get_node_category(node_type):
     """
     Get the category for the given node type specified
@@ -96,25 +88,6 @@ def get_link_name(key, number):
     return "{}#{}".format(key, str(number + 1))
 
 
-def get_link_titles(entities, template):
-    """Return a list of link tities for given entities and template."""
-    titles = []
-
-    for key in get_link_props(template):
-        link_name, _ = split_link(key)
-        link_count = max([len(row[link_name]) for row in entities])
-        if link_count > 1:
-            link_titles = (
-                get_link_name(split_link_alias(key)[0], column)
-                for column in range(link_count)
-            )
-            titles.extend(link_titles)
-        else:
-            titles.append(key)
-
-    return titles
-
-
 def is_link_field(field):
     """Return boolean whether field should be considered a link."""
     return "." in field
@@ -125,61 +98,6 @@ def split_link(link):
     return link.split(".", 1)
 
 
-def split_link_alias(link_alias):
-    """Return (alias_root, link_id) from link alias."""
-    alias_root, alias_id = link_alias.split("#", 1)
-    return alias_root, int(alias_id)
-
-
-def is_link_plural(key):
-    """Return true if link represents a to_many relationship."""
-    if not is_link_field(key):
-        log.warning("is_link_singular() called on non-link: %s", key)
-
-    return "#" in key
-
-
-def get_tsv_dict_plural_links(entity, link_titles):
-    """Return plural link portion of tsv dict for single entity."""
-    tsv_dict = {}
-    plural_links = [link for link in link_titles if is_link_plural(link)]
-
-    for key in plural_links:
-        tsv_dict[key] = ""
-        link_name, link_alias = split_link(key)
-        alias_root, link_id = split_link_alias(link_alias)
-
-        if link_name not in entity:
-            continue
-
-        link = entity[link_name]
-        if len(link) >= link_id and alias_root in link[link_id - 1]:
-            val = link[int(link_id) - 1][alias_root]
-            tsv_dict[key] = list_to_comma_string(val)
-
-    return tsv_dict
-
-
-def get_tsv_dict_singular_links(entity, link_titles):
-    """Return singular link portion of tsv dict for single entity."""
-    tsv_dict = {}
-    singular_links = [link for link in link_titles if not is_link_plural(link)]
-
-    for key in singular_links:
-        link_name, link_alias = split_link(key)
-        links = entity[link_name]
-
-        if len(links) > 1:
-            log.warning("called on plural links: %s", links)
-
-        if links:
-            tsv_dict[key] = list_to_comma_string(links[0][link_alias])
-        else:
-            tsv_dict[key] = ""
-
-    return tsv_dict
-
-
 def get_node_link_json(node, props):
     """Return the fields in the node json from links"""
 
@@ -188,18 +106,19 @@ def get_node_link_json(node, props):
 
     for link in link_props:
         edge_name, alias = split_link(link)
-        alias_root = alias.split("#", 1)[0]
 
         if edge_name in links:
-            links[edge_name].append(alias_root)
+            links[edge_name].append(alias)
         else:
-            links[edge_name] = [alias_root]
+            links[edge_name] = [alias]
 
     for edge_name, aliases in links.items():
         edges = getattr(node, edge_name, [])
         edge_aliases = [
             {
-                alias: (edge.node_id if alias == "id" else edge[alias])
+                ("node_id" if alias == "id" else alias): (
+                    edge.node_id if alias == "id" else edge[alias]
+                )
                 for alias in aliases
             }
             for edge in edges
@@ -234,35 +153,17 @@ def list_to_comma_string(val):
     """
 
     if val is None:
-        return ""
+        return val
 
     if isinstance(val, list):
         val = ",".join(val)
     return val
 
 
-def get_tsv_dict_non_links(entity, non_link_titles):
-    """Return non-link portion of tsv dict for single entity."""
-    return {key: list_to_comma_string(entity[key]) for key in non_link_titles}
-
-
-def get_tabular_entity(entity, link_titles, non_link_titles):
-    """Return tsv_dict for a single entity"""
-
-    tsv_dict = {}
-    tsv_dict.update(get_tsv_dict_plural_links(entity, link_titles))
-    tsv_dict.update(get_tsv_dict_singular_links(entity, link_titles))
-    tsv_dict.update(get_tsv_dict_non_links(entity, non_link_titles))
-
-    return tsv_dict
-
-
-def get_tsv_dicts(entities, titles):
+def get_tsv_dicts(entities, non_link_titles, link_titles):
     """Return a generator of tsv_dicts given iterable :param:`entities`."""
-    link_titles = get_link_props(titles)
-    non_link_titles = get_non_link_props(titles)
     for entity in entities:
-        yield get_tabular_entity(entity, link_titles, non_link_titles)
+        yield dict_props_to_list(entity, non_link_titles, link_titles, "tsv")
 
 
 def entity_to_template_str(label, file_format, **kwargs):
@@ -529,6 +430,7 @@ class ExportFile(object):
         category=None,
         program=None,
         project=None,
+        without_id=False,
         **kwargs
     ):
 
@@ -548,7 +450,7 @@ class ExportFile(object):
         self.result = defaultdict(list)
         self.templates = dict()
         self.category = category
-        self.get_nodes(ids, with_children)
+        self.get_nodes(ids, with_children, without_id)
         self._buffer = io.StringIO()
 
     def write(self, data):
@@ -572,7 +474,7 @@ class ExportFile(object):
         self._buffer.close()
         self._buffer = io.StringIO()
 
-    def get_nodes(self, ids, with_children):
+    def get_nodes(self, ids, with_children, without_id):
         """Look up nodes and set self.result"""
         ids = parse_ids(ids)
         with flask.current_app.db.session_scope():
@@ -587,13 +489,13 @@ class ExportFile(object):
                 raise NotFoundError("Unable to find {}".format(", ".join(ids)))
             missing_ids = set(ids) - found_ids
             if missing_ids:
-                log.warn("Unable to find: %s", ", ".join(missing_ids))
+                log.warning("Unable to find: %s", ", ".join(missing_ids))
             if with_children:
                 parents = copy.copy(self.nodes)
                 for node in parents:
                     self.get_entity_tree(node, self.nodes)
 
-            self.get_dictionary()
+            self.get_dictionary(without_id)
 
     def get_entity_tree(self, node, visited):
         """
@@ -670,16 +572,15 @@ class ExportFile(object):
         for label, entities in json_output.items():
             template = self.templates[label]
             template = [t.lstrip("*") for t in template]
-            titles = []
-            titles.extend(get_link_titles(entities, template))
-            titles.extend(get_non_link_props(template))
+            link_titles = get_link_props(template)
+            non_link_titles = get_non_link_props(template)
             buff = io.StringIO()
-            writer = csv.DictWriter(buff, titles, delimiter=delimiter)
+            writer = csv.writer(buff, delimiter=delimiter)
             self.result[label] = buff
-            writer.writeheader()
+            writer.writerow(non_link_titles + link_titles)
 
-            for tsv_dict in get_tsv_dicts(entities, titles):
-                writer.writerow({_encode(k): _encode(v) for k, v in tsv_dict.items()})
+            for tsv_line in get_tsv_dicts(entities, non_link_titles, link_titles):
+                writer.writerow(tsv_line)
 
     def get_delimited_response(self):
         """Yield delimited string per result."""
@@ -713,13 +614,16 @@ class ExportFile(object):
         else:
             raise UnsupportedError(self.file_format)
 
-    def get_node_dictionary(self, node):
+    def get_node_dictionary(self, node, without_id):
         """Return the json doc for a single node."""
         entity = {"id": node.node_id}
         props = self.templates.get(node.label)
         if not props:
             props = entity_to_template(
-                node.label, program=self.program, project=self.project, exclude_id=False
+                node.label,
+                program=self.program,
+                project=self.project,
+                exclude_id=without_id,
             )
             self.templates[node.label] = props
         # 'urls' is part of the templates but not part of the dicts
@@ -733,10 +637,10 @@ class ExportFile(object):
         entity.update(get_node_non_link_json(node, stripped_props))
         return entity
 
-    def get_dictionary(self):
+    def get_dictionary(self, without_id):
         """Return export as a dictionary."""
         for node in self.nodes:
-            node_json = self.get_node_dictionary(node)
+            node_json = self.get_node_dictionary(node, without_id)
             self.result[node.label].append(node_json)
         return self.result
 
@@ -760,6 +664,30 @@ def validate_export_node(node_label):
     category = get_node_category(node_label)
     if category in UNSUPPORTED_EXPORT_NODE_CATEGORIES:
         raise UserError("cannot export node with category `internal`")
+
+
+def reformat_prop(obj):
+    """
+    Map over ``titles`` to get properties usable for looking up from
+    node instances.
+
+    Change properties to have 'node_id' instead of 'id', and 'label'
+    instead of 'type', so that the props can be looked up as dictionary
+    entries:
+
+    .. code-block:: python
+
+        node[prop]
+
+    """
+    new_obj = {k: v for (k, v) in obj.items() if v is not None}
+    if "node_id" in new_obj:
+        new_obj["id"] = new_obj["node_id"]
+        del new_obj["node_id"]
+    if "label" in new_obj:
+        new_obj["type"] = new_obj["label"]
+        del new_obj["label"]
+    return new_obj
 
 
 def format_prop(prop):
@@ -792,22 +720,27 @@ def format_linked_prop(prop):
 
     .. code-block:: python
 
-        # prop == ('experiments', 0, 'node_id')
+        # prop == ('experiments', 'node_id')
         node[prop[0]][prop[1]][prop[2]]
     """
     link_name, link_alias = split_link(prop)
-    if is_link_plural(prop):
-        alias_root, _ = split_link_alias(link_alias)
-        return (link_name, format_prop(alias_root))
-    else:
-        return (link_name, format_prop(link_alias))
+    return (link_name, format_prop(link_alias))
 
 
-def get_all_titles(node_label):
+def get_all_titles(node_label, exclude_id):
     # Get the template for this node, which is basically the column
     # headers in the resulting TSV.
+    # Example ``titles_non_linked``:
+    #     [
+    #         'type', 'id', 'submitter_id', 'disease_type', 'primary_site'
+    #     ]
+    # Example ``titles_linked``:
+    #     [
+    #         'experiments.id', 'experiments.submitter_id'
+    #     ]
+
     unstripped_template = entity_to_template(
-        node_label, exclude_id=False, file_format="tsv"
+        node_label, exclude_id=exclude_id, file_format="tsv"
     )
     # Strip asterisks.
     template = [prop.lstrip("*") for prop in unstripped_template]
@@ -826,7 +759,7 @@ def get_all_titles(node_label):
     return titles_non_linked, titles_linked
 
 
-def export_all(node_label, project_id, file_format, db, **kwargs):
+def export_all(node_label, project_id, file_format, db, without_id):
     """
     Export all nodes of type with name ``node_label`` to a TSV file and yield
     rows of the resulting TSV.
@@ -853,15 +786,7 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
     # example ``node_label`` (so ``gdcdatamodel.models.Case`` is the example
     # class).
 
-    titles_non_linked, titles_linked = get_all_titles(node_label)
-    # Example ``titles_non_linked``:
-    #     [
-    #         'type', 'id', 'submitter_id', 'disease_type', 'primary_site'
-    #     ]
-    # Example ``titles_linked``:
-    #     [
-    #         'experiments.id', 'experiments.submitter_id'
-    #     ]
+    titles_non_linked, titles_linked = get_all_titles(node_label, without_id)
     with db.session_scope() as session:
         # ``linked_props`` is a list of attributes belonging to linked classes
         # (for example, ``Experiment.node_id``).
@@ -879,7 +804,7 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
         cls = psqlgraph.Node.get_subclass(node_label)
         linked_props = make_linked_props(cls, titles_linked)
 
-        # Build up the query. The query will contain, firstly, the node class,
+        # Bui ld up the query. The query will contain, firstly, the node class,
         # and secondly, all the relevant properties in linked nodes.
         query_args = [cls] + linked_props
         query = session.query(*query_args).prop("project_id", project_id)
@@ -892,24 +817,26 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
         # Case instance          experiments.id   experiments.submitter_id
         # (<Case(...[uuid]...)>, u'...[uuid]...', u'exp-01')
 
+        # ``props`` is just a list of strings of the properties of the node
+        # class that should go in the result.
+        list_obj = result_to_dictionary(query, titles_non_linked, titles_linked)
+        props = [format_prop(t) for t in titles_non_linked]
         if file_format == "json":
             yield '{ "data": ['
         else:  # json
             # Yield the lines of the file.
             yield "{}\n".format("\t".join(titles_non_linked + titles_linked))
 
-        # ``props`` is just a list of strings of the properties of the node
-        # class that should go in the result.
-        props = [format_prop(t) for t in titles_non_linked]
-        list_obj = result_to_dictionary(query, props, titles_linked)
-
         js_list_separator = ""
         for obj in list_obj:
             if file_format == "json":
-                yield js_list_separator + json.dumps(obj)
+                yield js_list_separator + json.dumps(reformat_prop(obj))
             else:
                 yield "{}\n".format(
-                    result_to_delimited_file(obj, props, titles_linked, file_format)
+                    result_to_delimited_file(
+                        dict_props_to_list(obj, props, titles_linked, file_format),
+                        file_format,
+                    )
                 )
             js_list_separator = ","
 
@@ -918,41 +845,38 @@ def export_all(node_label, project_id, file_format, db, **kwargs):
 
 
 def make_linked_props(cls, titles_linked):
-    # ``linked_props`` is a list of attributes belonging to linked classes
-    # (for example, ``Experiment.node_id``).
-    # Example ``cls._pg_links`` for reference:
-    #
-    #     Case._pg_links == {
-    #         'experiments': {
-    #             'dst_type': gdcdatamodel.models.Experiment,
-    #             'edge_out': '_CaseMemberOfExperiment_out',
-    #         }
-    #     }
-    #
-    # This is used to look up the classes for the linked nodes.
-    # Now, fill out the properties lists from the titles.
     return [
         getattr(cls._pg_links[link_name]["dst_type"], link_prop)
         for (link_name, link_prop) in list(map(format_linked_prop, titles_linked))
     ]
 
 
-def result_to_delimited_file(obj, props, titles_linked, file_format):
-    splitter = DELIMITERS.get(file_format)
+def dict_props_to_list(obj, props, titles_linked, file_format):
     sub_splitter = SUB_DELIMITERS.get(file_format)
     link_props_split = list(map(format_linked_prop, titles_linked))
 
-    l_prop_values = [str(v) for k, v in obj.items() if k in props]
+    l_prop_values = [str(obj.get(k)) for k in props]
     link_fields = []
     for (link_name, link_prop) in link_props_split:
         s = sub_splitter.join(
-            list(map(lambda x: str(x.get(link_prop, "")), obj[link_name]))
+            list(
+                filter(
+                    lambda x: x != "",
+                    map(lambda x: str(x.get(link_prop, "")), obj.get(link_name, [])),
+                )
+            )
         )
         link_fields.append(s)
-    return splitter.join(l_prop_values + link_fields)
+    return l_prop_values + link_fields
 
 
-def result_to_dictionary(query, props, titles_linked):
+def result_to_delimited_file(props_values, file_format):
+    splitter = DELIMITERS.get(file_format)
+    return splitter.join(props_values)
+
+
+def result_to_dictionary(query, titles_non_linked, titles_linked):
+    props = [format_prop(t) for t in titles_non_linked]
     all_results = {}
     link_props_split = list(map(format_linked_prop, titles_linked))
     for result in query.yield_per(1000):
@@ -963,14 +887,14 @@ def result_to_dictionary(query, props, titles_linked):
                 prop: list_to_comma_string(node[prop]) for prop in props
             }
         saved_obj = all_results[node_id]
-        linked_fields = {}
+        linked_fields = defaultdict(defaultdict)
         for idx, (link_name, link_prop) in enumerate(link_props_split):
-            if link_name not in linked_fields:
-                linked_fields[link_name] = {}
-            linked_fields[link_name][link_prop] = result[idx + 1] or ""
+            if result[idx + 1] is None:
+                continue
+            linked_fields[link_name][link_prop] = result[idx + 1]
         for k, v in linked_fields.items():
             if k not in saved_obj:
                 saved_obj[k] = []
             saved_obj[k].append(v)
 
-    return [v for v in all_results.values()]
+    return all_results.values()

@@ -143,7 +143,7 @@ class DelimitedConverter(object):
         # Parse type
         cls = set_row_type(row)
         if cls is None:
-            return self.docs.append(get_props_from_row(row))
+            return
 
         # Add properties
         props_dict = get_props_from_row(row)
@@ -159,8 +159,7 @@ class DelimitedConverter(object):
         links_dict = get_links_from_row(row)
         for key, value in links_dict.items():
             self.add_link_value(links, cls, key, value)
-
-        doc.update({k: list(v.values()) for k, v in links.items()})
+        doc.update(links)
         self.docs.append(doc)
 
     def add_link_value(self, links, cls, key, value):
@@ -178,23 +177,20 @@ class DelimitedConverter(object):
             return self.record_error(error, columns=[key])
 
         if link_name not in links:
-            links[link_name] = {}
+            links[link_name] = []
 
-        l_values = self.value_to_list_value(links, cls, link_name, prop, value)
-        links[link_name].update(l_values)
+        l_values = self.value_to_list_value(cls, link_name, prop, value)
+        if l_values is not None:
+            links[link_name].extend(l_values)
 
-    def value_to_list_value(self, links, cls, link_name, prop, value):
+    def value_to_list_value(self, cls, link_name, prop, value):
+        if value is None:
+            return value
         l_values = value.split(SUB_DELIMITERS.get(self.format))
-        r_values = {}
-        start_id = len(links[link_name])
+        r_values = []
         for v in l_values:
             converted_value = self.convert_link_value(cls, link_name, prop, v)
-            if converted_value is None:
-                return r_values
-            if v == "null":
-                converted_value = None
-            start_id += 1
-            r_values[start_id] = {prop: converted_value}
+            r_values.append({prop: converted_value})
         return r_values
 
     @staticmethod
@@ -223,7 +219,13 @@ class DelimitedConverter(object):
     def convert_type(to_cls, key, value):
         """
         Cast value based on key.
-        TODO
+        Args:
+            to_cls: class to be converted
+            key: property is converted
+            value: value is concerted
+
+        Return:
+            value with correct type
         """
         if value is None:
             return None
@@ -235,9 +237,16 @@ class DelimitedConverter(object):
     def convert_link_value(to_cls, link_name, prop, value):
         """
         Cast value based on key.
-        TODO
+        Args:
+            to_cls: class to be converted
+            link_name: name of link to be converted
+            key: property is converted
+            value: value is concerted
+
+        Return:
+            value with correct type
         """
-        if value is None:
+        if value is None or value in ["", "null"]:
             return None
 
         link_name, value = strip(link_name), strip(value)

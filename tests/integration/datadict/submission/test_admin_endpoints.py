@@ -4,6 +4,7 @@ Tests for admin endpoint functionality.
 # pylint: disable=unused-argument, no-member
 
 import json
+from collections import defaultdict
 
 import pytest
 
@@ -33,23 +34,16 @@ def post_blgsp_files(client, headers):
 
     test_fnames = data_fnames + ["read_group.json", "submitted_unaligned_reads.json"]
 
-    # entity_types = [fname.replace(".json", "") for fname in data_fnames]
-    entity_types = {}
+    entity_types = defaultdict(int)
     for fname in data_fnames:
         fname = fname.split(".")[0]
-        if fname not in entity_types:
-            entity_types[fname] = 1
-        else:
-            entity_types[fname] = entity_types.get(fname) + 1
+        entity_types[fname] += 1
     resp = post_example_entities_together(client, headers, data_fnames2=test_fnames)
     assert resp.status_code == 201, resp.data
 
-    submitted_entities = {}
+    submitted_entities = defaultdict(list)
     for entity in resp.json["entities"]:
-        if entity["type"] not in submitted_entities:
-            submitted_entities[entity["type"]] = [entity["id"]]
-        else:
-            submitted_entities.get(entity["type"]).append(entity["id"])
+        submitted_entities[entity["type"]].append(entity["id"])
 
     for k, v in entity_types.items():
         assert k in submitted_entities, "entity not found in submission"

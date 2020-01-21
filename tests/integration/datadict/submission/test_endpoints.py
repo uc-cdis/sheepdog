@@ -112,6 +112,17 @@ def put_tcga_brca(client, submitter):
     return r
 
 
+def add_and_get_new_experimental_metadata_count(pg_driver):
+    with pg_driver.session_scope() as s:
+        experimental_metadata = pg_driver.nodes(md.ExperimentalMetadata).first()
+        new_experimental_metadata = md.ExperimentalMetadata(str(uuid.uuid4()))
+        new_experimental_metadata.props = experimental_metadata.props
+        new_experimental_metadata.submitter_id = "case-2"
+        s.add(new_experimental_metadata)
+        experimental_metadata_count = pg_driver.nodes(md.ExperimentalMetadata).count()
+    return experimental_metadata_count
+
+
 def test_program_creation_endpoint(client, pg_driver, admin):
     resp = put_cgci(client, auth=admin)
     assert resp.status_code == 200, resp.data
@@ -397,8 +408,8 @@ def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter, admin
     assert resp_json["entities"][0]["errors"][0]["type"] == "INVALID_PERMISSIONS"
 
 
-def test_insert_multiple_parents(
-    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+def test_insert_multiple_parents_and_export_by_ids(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off, admin
 ):
     post_example_entities_together(client, submitter)
     path = BLGSP_PATH
@@ -412,7 +423,10 @@ def test_insert_multiple_parents(
     resp = client.get(
         "/v0/submission/CGCI/BLGSP/export/?ids={}".format(submitted_id), headers=headers
     )
-    # here, assert that resp.data contains the 2 expected links
+    str_data = str(resp.data)
+    assert "BLGSP-71-experiment-01" in str_data
+    assert "BLGSP-71-experiment-02" in str_data
+    assert "experiments.submitter_id" in str_data
 
 
 def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
@@ -727,24 +741,81 @@ def test_export_entity_by_id(
     assert data[0]["id"] == case_id
 
 
+def do_test_export(client, pg_driver, submitter, node_type, format_type):
+    post_example_entities_together(client, submitter, extended_data_fnames)
+    experimental_metadata_count = add_and_get_new_experimental_metadata_count(pg_driver)
+    r = get_export_data(client, submitter, node_type, format_type, False)
+    assert r.status_code == 200, r.data
+    assert r.headers["Content-Disposition"].endswith(format_type)
+    if format_type == "tsv":
+        str_data = str(r.data, "utf-8")
+        assert len(str_data.strip().split("\n")) == experimental_metadata_count + 1
+        return str_data
+    else:
+        js_data = json.loads(r.data)
+        assert len(js_data["data"]) == experimental_metadata_count
+        return js_data
+
+
+def get_export_data(client, submitter, node_type, format_type, without_id):
+    path = "/v0/submission/CGCI/BLGSP/export/?node_label={}&format={}".format(
+        node_type, format_type
+    )
+    if without_id:
+        path += "&without_id=True"
+    r = client.get(path, headers=submitter)
+    return r
+
+
 def test_export_all_node_types(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
-    post_example_entities_together(client, submitter, extended_data_fnames)
-    with pg_driver.session_scope() as s:
-        experimental_metadata = pg_driver.nodes(md.ExperimentalMetadata).first()
-        new_experimental_metadata = md.ExperimentalMetadata(str(uuid.uuid4()))
-        new_experimental_metadata.props = experimental_metadata.props
-        new_experimental_metadata.submitter_id = "case-2"
-        s.add(new_experimental_metadata)
-        experimental_metadata_count = pg_driver.nodes(md.ExperimentalMetadata).count()
-    path = "/v0/submission/CGCI/BLGSP/export/?node_label=experimental_metadata"
-    r = client.get(path, headers=submitter)
-    assert r.status_code == 200, r.data
-    assert r.headers["Content-Disposition"].endswith("tsv")
-    assert (
-        len(str(r.data, "utf-8").strip().split("\n")) == experimental_metadata_count + 1
+    do_test_export(client, pg_driver, submitter, "experimental_metadata", "tsv")
+
+
+def test_export_all_node_types_and_resubmit_json(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    js_id_data = do_test_export(
+        client, pg_driver, submitter, "experimental_metadata", "json"
     )
+    js_data = json.loads(
+        get_export_data(client, submitter, "experimental_metadata", "json", True).data
+    )
+
+    for o in js_id_data.get("data"):
+        did = o["id"]
+        path = BLGSP_PATH + "entities/" + did
+        resp = client.delete(path, headers=submitter)
+        assert resp.status_code == 200, resp.data
+
+    headers = submitter
+    resp = client.post(BLGSP_PATH, headers=headers, data=json.dumps(js_data["data"]))
+    assert resp.status_code == 201, resp.data
+
+
+def test_export_all_node_types_and_resubmit_tsv(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    str_id_data = do_test_export(
+        client, pg_driver, submitter, "experimental_metadata", "tsv"
+    )
+    str_data = str(
+        get_export_data(client, submitter, "experimental_metadata", "tsv", True).data,
+        "utf-8",
+    )
+
+    reader = csv.DictReader(StringIO(str_id_data), dialect="excel-tab")
+    for row in reader:
+        did = row["id"]
+        path = BLGSP_PATH + "entities/" + did
+        resp = client.delete(path, headers=submitter)
+        assert resp.status_code == 200, resp.data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.post(BLGSP_PATH, headers=headers, data=str_data)
+    assert resp.status_code == 201, resp.data
 
 
 def test_export_all_node_types_json(
