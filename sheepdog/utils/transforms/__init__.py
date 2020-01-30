@@ -13,6 +13,7 @@ from sheepdog.utils.transforms.bcr_xml_to_json import (
     BcrXmlToJsonParser,
     BcrClinicalXmlToJsonParser,
 )
+from sheepdog.globals import SUB_DELIMITERS
 
 
 def parse_bool_from_string(value):
@@ -85,6 +86,7 @@ class DelimitedConverter(object):
 
     def __init__(self):
         self.reader = csv.reader(io.StringIO(""))
+        self.format = ""
         self.errors = []
         self.docs = []
 
@@ -141,7 +143,7 @@ class DelimitedConverter(object):
         # Parse type
         cls = set_row_type(row)
         if cls is None:
-            return self.docs.append(get_props_from_row(row))
+            return
 
         # Add properties
         props_dict = get_props_from_row(row)
@@ -157,73 +159,54 @@ class DelimitedConverter(object):
         links_dict = get_links_from_row(row)
         for key, value in links_dict.items():
             self.add_link_value(links, cls, key, value)
-
-        doc.update({k: list(v.values()) for k, v in links.items()})
+        doc.update(links)
         self.docs.append(doc)
 
     def add_link_value(self, links, cls, key, value):
-        """
-        TODO
-        """
-        converted_value = self.convert_type(cls, key, value)
-        if converted_value is None:
+        key_parts = key.split(".")
+        if len(key_parts) == 0:
             return
-        if value == "null":
-            converted_value = None
 
-        parsed = key.split(".")
-        link = parsed[0]
-        if not link:
+        link_name = key_parts[0]
+        if not link_name:
             error = "Invalid link name: {}".format(key)
             return self.record_error(error, columns=[key])
-        prop = ".".join(parsed[1:])
+        prop = ".".join(key_parts[1:])
         if not prop:
             error = "Invalid link property name: {}".format(key)
             return self.record_error(error, columns=[key])
 
-        # Add to doc
-        if "#" in prop:
-            items = prop.split("#")
-            if len(items) > 2:
-                error = "# is not allowed in link identitifer"
-                return self.record_error(error, columns=[key])
-            prop = items[0]
-            link_id = items[1]
-        else:
-            link_id = 1
+        if link_name not in links:
+            links[link_name] = []
 
-        if link in links:
-            if link_id in links[link]:
-                if isinstance(links[link][link_id], dict):
-                    links[link][link_id][prop] = converted_value
-                else:
-                    # this block should never be reached
-                    error = "name collision: name {} specified twice"
-                    return self.record_error(error.format(link), columns=[key, link])
-            else:
-                links[link][link_id] = {prop: converted_value}
+        l_values = self.value_to_list_value(cls, link_name, prop, value)
+        if l_values is not None:
+            links[link_name].extend(l_values)
 
-        else:
-            links[link] = {link_id: {prop: converted_value}}
+    def value_to_list_value(self, cls, link_name, prop, value):
+        if value is None:
+            return value
+        l_values = value.split(SUB_DELIMITERS.get(self.format))
+        r_values = []
+        for v in l_values:
+            converted_value = self.convert_link_value(cls, link_name, prop, v)
+            r_values.append({prop: converted_value})
+        return r_values
 
     @staticmethod
-    def convert_type(to_cls, key, value):
-        """
-        Cast value based on key.
-        TODO
-        """
-        if value is None:
-            return None
-
-        key, value = strip(key), strip(value)
-        types = to_cls.__pg_properties__.get(key, (str,))
-        types = types or (str,)
+    def get_converted_type_from_list(cls, prop_name, value):
+        types = cls.__pg_properties__.get(prop_name, (str,))
         value_type = types[0]
         try:
             if value_type == bool:
                 return parse_bool_from_string(value)
             elif value_type == list:
                 return parse_list_from_string(value)
+            elif value_type == float:
+                if float(value).is_integer():
+                    return int(value)
+                else:
+                    return float(value)
             elif strip(value) == "":
                 return None
             else:
@@ -231,6 +214,46 @@ class DelimitedConverter(object):
         except Exception as exception:  # pylint: disable=broad-except
             current_app.logger.exception(exception)
             return value
+
+    @staticmethod
+    def convert_type(to_cls, key, value):
+        """
+        Cast value based on key.
+        Args:
+            to_cls: class to be converted
+            key: property is converted
+            value: value is concerted
+
+        Return:
+            value with correct type
+        """
+        if value is None:
+            return None
+
+        key, value = strip(key), strip(value)
+        return DelimitedConverter.get_converted_type_from_list(to_cls, key, value)
+
+    @staticmethod
+    def convert_link_value(to_cls, link_name, prop, value):
+        """
+        Cast value based on key.
+        Args:
+            to_cls: class to be converted
+            link_name: name of link to be converted
+            key: property is converted
+            value: value is concerted
+
+        Return:
+            value with correct type
+        """
+        if value is None or value in ["", "null"]:
+            return None
+
+        link_name, value = strip(link_name), strip(value)
+        edge = getattr(to_cls, link_name)
+        return DelimitedConverter.get_converted_type_from_list(
+            Node.get_subclass_named(edge.target_class.__dst_class__), prop, value
+        )
 
     @property
     def is_valid(self):
@@ -258,6 +281,7 @@ class DelimitedConverter(object):
 class TSVToJSONConverter(DelimitedConverter):
     def set_reader(self, doc):
         # Standardize the new line format
+        self.format = "tsv"
         doc = "\n".join(strip(doc).splitlines())
         f = io.StringIO(doc)
         self.reader = csv.DictReader(f, delimiter="\t")
@@ -266,6 +290,7 @@ class TSVToJSONConverter(DelimitedConverter):
 class CSVToJSONConverter(DelimitedConverter):
     def set_reader(self, doc):
         # Standardize the new line format
+        self.format = "csv"
         doc = "\n".join(strip(doc).splitlines())
         f = io.StringIO(doc)
         self.reader = csv.DictReader(f, delimiter=",")

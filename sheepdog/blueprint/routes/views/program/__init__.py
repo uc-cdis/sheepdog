@@ -102,6 +102,7 @@ def create_project(program):
     Args:
         program (str): |program_id|
         body (schema_project): input body
+
     Responses:
         200: Registered successfully.
         400: User error.

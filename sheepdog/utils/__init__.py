@@ -89,22 +89,22 @@ def _get_links_delimited(link, exclude_id):
     """
     link_template = []
     target_schema = dictionary.schema[link["target_type"]]
-    # Add a #1 to the link to indicate it's a many relationship.
-    to_many = link["multiplicity"] in ["many_to_many", "one_to_many"]
-    postfix = "#1" if to_many else ""
     # default key for link is the GDC ID
     if not exclude_id:
-        link_template.append("id" + postfix)
-    unique_keys = (key for key in target_schema["uniqueKeys"] if key != ["id"])
+        link_template.append("id")
+
+    unique_keys = [key for key in target_schema["uniqueKeys"] if key != ["id"]]
+
     for unique_key in unique_keys:
         keys = copy.copy(unique_key)
         if "project_id" in keys:
             keys.remove("project_id")
-        link_template += [prop + postfix for prop in keys]
+        link_template += [prop for prop in keys]
 
         # right now we only have one alias for each entity,
         # so we pick the first one for now
         break
+
     return link_template
 
 

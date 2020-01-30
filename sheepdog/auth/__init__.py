@@ -23,7 +23,8 @@ try:
     from authutils.token.validate import validate_request
 except ImportError:
     logger.warning(
-        "Unable to import authutils validate_request. Sheepdog will error if config AUTH_SUBMISSION_LIST is set to True (note that it is True by default)"
+        "Unable to import authutils validate_request. Sheepdog will error if config AUTH_SUBMISSION_LIST is set to "
+        "True (note that it is True by default) "
     )
 
 

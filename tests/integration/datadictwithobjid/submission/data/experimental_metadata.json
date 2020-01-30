@@ -1,0 +1,15 @@
+{
+    "type": "experimental_metadata",
+    "data_type": "Experimental Metadata",
+    "file_name": "CGCI-file-a.bam",
+    "md5sum": "35b39360cc41a7b635980159aef265ba",
+    "data_format": "some_format",
+    "submitter_id": "BLGSP-71-experimental-01-b",
+    "experiments": [
+      {"submitter_id": "BLGSP-71-experiment-01"},
+      {"submitter_id": "BLGSP-71-experiment-02"}
+    ],
+    "data_category": "data_file",
+    "file_size": 42,
+    "state_comment": "comments"
+}

@@ -12,18 +12,19 @@ import uuid
 from io import StringIO
 
 import boto
-import pytest
 from datamodelutils import models as md
 from flask import g
 from moto import mock_s3
 from sqlalchemy.exc import IntegrityError
 
-from sheepdog.errors import HandledIntegrityError
 from sheepdog.globals import ROLES
 from sheepdog.transactions.upload import UploadTransaction
 from sheepdog.utils import get_external_proxies
 from sheepdog.utils.transforms import TSVToJSONConverter
-from tests.integration.datadict.submission.utils import data_fnames
+from tests.integration.datadict.submission.utils import (
+    data_fnames,
+    extended_data_fnames,
+)
 
 BLGSP_PATH = "/v0/submission/CGCI/BLGSP/"
 BRCA_PATH = "/v0/submission/TCGA/BRCA/"
@@ -109,6 +110,17 @@ def put_tcga_brca(client, submitter):
     assert r.status_code == 200, r.data
     del g.user
     return r
+
+
+def add_and_get_new_experimental_metadata_count(pg_driver):
+    with pg_driver.session_scope() as s:
+        experimental_metadata = pg_driver.nodes(md.ExperimentalMetadata).first()
+        new_experimental_metadata = md.ExperimentalMetadata(str(uuid.uuid4()))
+        new_experimental_metadata.props = experimental_metadata.props
+        new_experimental_metadata.submitter_id = "case-2"
+        s.add(new_experimental_metadata)
+        experimental_metadata_count = pg_driver.nodes(md.ExperimentalMetadata).count()
+    return experimental_metadata_count
 
 
 def test_program_creation_endpoint(client, pg_driver, admin):
@@ -270,8 +282,6 @@ def test_put_valid_entity_invalid_type(client, pg_driver, cgci_blgsp, submitter)
 
 def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
     path = BLGSP_PATH
-    with open(os.path.join(DATA_DIR, "case.json"), "r") as f:
-        case_sid = json.loads(f.read())["submitter_id"]
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), "r") as f:
             resp = client.post(path, headers=submitter, data=f.read())
@@ -286,7 +296,8 @@ def post_example_entities_together(client, submitter, data_fnames2=None):
     for fname in data_fnames2:
         with open(os.path.join(DATA_DIR, fname), "r") as f:
             data.append(json.loads(f.read()))
-    return client.post(path, headers=submitter, data=json.dumps(data))
+    resp = client.post(path, headers=submitter, data=json.dumps(data))
+    return resp
 
 
 def put_example_entities_together(client, headers):
@@ -395,6 +406,27 @@ def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter, admin
     assert resp_json["entity_error_count"] == 1
     assert resp_json["created_entity_count"] == 0
     assert resp_json["entities"][0]["errors"][0]["type"] == "INVALID_PERMISSIONS"
+
+
+def test_insert_multiple_parents_and_export_by_ids(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off, admin
+):
+    post_example_entities_together(client, submitter)
+    path = BLGSP_PATH
+    with open(os.path.join(DATA_DIR, "experimental_metadata.tsv"), "r") as f:
+        headers = submitter
+        headers["Content-Type"] = "text/tsv"
+        resp = client.post(path, headers=headers, data=f.read())
+        assert resp.status_code == 201, resp.data
+    data = json.loads(resp.data)
+    submitted_id = data["entities"][0]["id"]
+    resp = client.get(
+        "/v0/submission/CGCI/BLGSP/export/?ids={}".format(submitted_id), headers=headers
+    )
+    str_data = str(resp.data)
+    assert "BLGSP-71-experiment-01" in str_data
+    assert "BLGSP-71-experiment-02" in str_data
+    assert "experiments.submitter_id" in str_data
 
 
 def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
@@ -691,8 +723,10 @@ def test_can_submit_with_asterisk_tsv(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
 
-def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
-    post_example_entities_together(client, submitter)
+def test_export_entity_by_id(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    post_example_entities_together(client, submitter, extended_data_fnames)
     with pg_driver.session_scope():
         case_id = pg_driver.nodes(md.Case).first().node_id
     path = "/v0/submission/CGCI/BLGSP/export/?ids={case_id}".format(case_id=case_id)
@@ -707,24 +741,87 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     assert data[0]["id"] == case_id
 
 
-def test_export_all_node_types(client, pg_driver, cgci_blgsp, submitter):
-    post_example_entities_together(client, submitter)
-    with pg_driver.session_scope() as s:
-        case = pg_driver.nodes(md.Case).first()
-        new_case = md.Case(str(uuid.uuid4()))
-        new_case.props = case.props
-        new_case.submitter_id = "case-2"
-        s.add(new_case)
-        case_count = pg_driver.nodes(md.Case).count()
-    path = "/v0/submission/CGCI/BLGSP/export/?node_label=case"
-    r = client.get(path, headers=submitter)
+def do_test_export(client, pg_driver, submitter, node_type, format_type):
+    post_example_entities_together(client, submitter, extended_data_fnames)
+    experimental_metadata_count = add_and_get_new_experimental_metadata_count(pg_driver)
+    r = get_export_data(client, submitter, node_type, format_type, False)
     assert r.status_code == 200, r.data
-    assert r.headers["Content-Disposition"].endswith("tsv")
-    assert len(str(r.data, "utf-8").strip().split("\n")) == case_count + 1
+    assert r.headers["Content-Disposition"].endswith(format_type)
+    if format_type == "tsv":
+        str_data = str(r.data, "utf-8")
+        assert len(str_data.strip().split("\n")) == experimental_metadata_count + 1
+        return str_data
+    else:
+        js_data = json.loads(r.data)
+        assert len(js_data["data"]) == experimental_metadata_count
+        return js_data
 
 
-def test_export_all_node_types_json(client, pg_driver, cgci_blgsp, submitter):
-    post_example_entities_together(client, submitter)
+def get_export_data(client, submitter, node_type, format_type, without_id):
+    path = "/v0/submission/CGCI/BLGSP/export/?node_label={}&format={}".format(
+        node_type, format_type
+    )
+    if without_id:
+        path += "&without_id=True"
+    r = client.get(path, headers=submitter)
+    return r
+
+
+def test_export_all_node_types(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    do_test_export(client, pg_driver, submitter, "experimental_metadata", "tsv")
+
+
+def test_export_all_node_types_and_resubmit_json(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    js_id_data = do_test_export(
+        client, pg_driver, submitter, "experimental_metadata", "json"
+    )
+    js_data = json.loads(
+        get_export_data(client, submitter, "experimental_metadata", "json", True).data
+    )
+
+    for o in js_id_data.get("data"):
+        did = o["id"]
+        path = BLGSP_PATH + "entities/" + did
+        resp = client.delete(path, headers=submitter)
+        assert resp.status_code == 200, resp.data
+
+    headers = submitter
+    resp = client.post(BLGSP_PATH, headers=headers, data=json.dumps(js_data["data"]))
+    assert resp.status_code == 201, resp.data
+
+
+def test_export_all_node_types_and_resubmit_tsv(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    str_id_data = do_test_export(
+        client, pg_driver, submitter, "experimental_metadata", "tsv"
+    )
+    str_data = str(
+        get_export_data(client, submitter, "experimental_metadata", "tsv", True).data,
+        "utf-8",
+    )
+
+    reader = csv.DictReader(StringIO(str_id_data), dialect="excel-tab")
+    for row in reader:
+        did = row["id"]
+        path = BLGSP_PATH + "entities/" + did
+        resp = client.delete(path, headers=submitter)
+        assert resp.status_code == 200, resp.data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.post(BLGSP_PATH, headers=headers, data=str_data)
+    assert resp.status_code == 201, resp.data
+
+
+def test_export_all_node_types_json(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    post_example_entities_together(client, submitter, extended_data_fnames)
     with pg_driver.session_scope() as s:
         case = pg_driver.nodes(md.Case).first()
         new_case = md.Case(str(uuid.uuid4()))

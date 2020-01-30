@@ -4,6 +4,7 @@ Tests for admin endpoint functionality.
 # pylint: disable=unused-argument, no-member
 
 import json
+from collections import defaultdict
 
 import pytest
 
@@ -33,16 +34,20 @@ def post_blgsp_files(client, headers):
 
     test_fnames = data_fnames + ["read_group.json", "submitted_unaligned_reads.json"]
 
-    entity_types = [fname.replace(".json", "") for fname in data_fnames]
+    entity_types = defaultdict(int)
+    for fname in data_fnames:
+        fname = fname.split(".")[0]
+        entity_types[fname] += 1
     resp = post_example_entities_together(client, headers, data_fnames2=test_fnames)
     assert resp.status_code == 201, resp.data
 
-    submitted_entities = {
-        entity["type"]: entity["id"] for entity in resp.json["entities"]
-    }
+    submitted_entities = defaultdict(list)
+    for entity in resp.json["entities"]:
+        submitted_entities[entity["type"]].append(entity["id"])
 
-    for entity_type in entity_types:
-        assert entity_type in submitted_entities, "entity not found in submission"
+    for k, v in entity_types.items():
+        assert k in submitted_entities, "entity not found in submission"
+        assert v == len(submitted_entities.get(k))
 
     return submitted_entities
 
@@ -73,9 +78,9 @@ def test_to_delete(
 
     # submit files as submitter
     entities = post_blgsp_files(client, submitter)
-    did = entities["submitted_unaligned_reads"]
+    dids = entities["submitted_unaligned_reads"]
 
-    base_delete_path = create_blgsp_url("/entities/{}/to_delete/".format(did))
+    base_delete_path = create_blgsp_url("/entities/{}/to_delete/".format(dids[0]))
     to_delete_path = base_delete_path + str(to_delete).lower()
 
     if status_code != 200:
@@ -103,13 +108,13 @@ def do_reassign(client, headers):
     """
 
     entities = post_blgsp_files(client, headers)
-    did = entities["submitted_unaligned_reads"]
+    dids = entities["submitted_unaligned_reads"]
     s3_url = "s3://whatever/you/want"
 
-    reassign_path = create_blgsp_url("/files/{}/reassign".format(did))
+    reassign_path = create_blgsp_url("/files/{}/reassign".format(dids[0]))
     data = json.dumps({"s3_url": s3_url})
 
-    return client.put(reassign_path, headers=headers, data=data), did, s3_url
+    return client.put(reassign_path, headers=headers, data=data), dids[0], s3_url
 
 
 def test_reassign_with_admin(
