@@ -378,7 +378,7 @@ def export_entities(program, project):
         format (str): output format, ``json`` or ``tsv`` or ``csv``; default is ``tsv``
         with_children (str): whether to recursively find children or not; default is False
         category (str): category of node to filter on children. Example: ``clinical``
-        without_id (true/false): whether to include the ids in the export file; default is False
+        without_id (bool): whether to include the ids in the export file; default is False
 
     Responses:
         200: Success

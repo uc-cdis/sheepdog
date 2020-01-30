@@ -201,31 +201,6 @@ paths:
         name: program
         required: true
         type: string
-      - description: 'Responses:'
-        in: path
-        name: null
-        required: true
-        type: null
-      - description: Registered successfully.
-        in: path
-        name: '200'
-        required: true
-        type: ''
-      - description: User error.
-        in: path
-        name: '400'
-        required: true
-        type: ''
-      - description: Program not found.
-        in: path
-        name: '404'
-        required: true
-        type: ''
-      - description: Unauthorized request.
-        in: path
-        name: '403'
-        required: true
-        type: ''
       - description: input body
         in: body
         name: body
@@ -254,31 +229,6 @@ paths:
         name: program
         required: true
         type: string
-      - description: 'Responses:'
-        in: path
-        name: null
-        required: true
-        type: null
-      - description: Registered successfully.
-        in: path
-        name: '200'
-        required: true
-        type: ''
-      - description: User error.
-        in: path
-        name: '400'
-        required: true
-        type: ''
-      - description: Program not found.
-        in: path
-        name: '404'
-        required: true
-        type: ''
-      - description: Unauthorized request.
-        in: path
-        name: '403'
-        required: true
-        type: ''
       - description: input body
         in: body
         name: body
@@ -307,31 +257,6 @@ paths:
         name: program
         required: true
         type: string
-      - description: 'Responses:'
-        in: path
-        name: null
-        required: true
-        type: null
-      - description: Registered successfully.
-        in: path
-        name: '200'
-        required: true
-        type: ''
-      - description: User error.
-        in: path
-        name: '400'
-        required: true
-        type: ''
-      - description: Program not found.
-        in: path
-        name: '404'
-        required: true
-        type: ''
-      - description: Unauthorized request.
-        in: path
-        name: '403'
-        required: true
-        type: ''
       - description: input body
         in: body
         name: body
@@ -882,11 +807,10 @@ paths:
         in: query
         name: category
         type: string
-      - description: 'without_id (true/false): whether to include the ids in the export
-          file; default is False'
+      - description: whether to include the ids in the export file; default is False
         in: query
-        name: null
-        type: null
+        name: without_id
+        type: boolean
       produces:
       - application/json
       responses:
@@ -945,11 +869,10 @@ paths:
         in: query
         name: category
         type: string
-      - description: 'without_id (true/false): whether to include the ids in the export
-          file; default is False'
+      - description: whether to include the ids in the export file; default is False
         in: query
-        name: null
-        type: null
+        name: without_id
+        type: boolean
       produces:
       - application/json
       responses:
