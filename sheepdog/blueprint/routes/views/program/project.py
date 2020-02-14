@@ -1102,6 +1102,7 @@ def create_clinical_viewer(dry_run=False):
 
 
 @utils.assert_project_exists
+@auth.require_sheepdog_project_admin
 def delete_project(program, project):
     """
     Delete project under a specific program
@@ -1122,7 +1123,6 @@ def delete_project(program, project):
         404: Resource not found.
         403: Unauthorized request.
     """
-    auth.current_user.require_admin()
     with flask.current_app.db.session_scope() as session:
         node = utils.lookup_project(flask.current_app.db, program, project)
         if node.edges_in:
