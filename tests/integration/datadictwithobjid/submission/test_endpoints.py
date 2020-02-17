@@ -122,15 +122,21 @@ def add_and_get_new_experimental_metadata_count(pg_driver):
     return experimental_metadata_count
 
 
-def test_program_creation_endpoint(client, pg_driver, admin):
-    resp = put_cgci(client, auth=admin)
+def test_program_creation_endpoint(client, pg_driver, submitter):
+    # Does not test authz.
+    resp = put_cgci(client, auth=submitter)
     assert resp.status_code == 200, resp.data
     print(resp.data)
     resp = client.get("/v0/submission/")
     assert resp.json["links"] == ["/v0/submission/CGCI"], resp.json
 
 
-def test_program_creation_without_admin_token(client, pg_driver, submitter):
+def test_program_creation_unauthorized(
+    client, pg_driver, submitter, mock_arborist_requests
+):
+    # Just checks that this is guarded with an Arborist auth request.
+    # (Does not check that the auth request is for the Sheepdog admin policy.)
+    mock_arborist_requests(authorized=False)
     path = "/v0/submission/"
     headers = submitter
     data = json.dumps({"name": "CGCI", "type": "program"})
@@ -146,10 +152,10 @@ def test_program_creation_endpoint_for_program_not_supported(
     assert resp.status_code == 404
 
 
-def test_project_creation_endpoint(client, pg_driver, admin):
-    resp = put_cgci_blgsp(client, auth=admin)
+def test_project_creation_endpoint(client, pg_driver, submitter):
+    # Does not test authz.
+    resp = put_cgci_blgsp(client, auth=submitter)
     assert resp.status_code == 200
-
     resp = client.get("/v0/submission/CGCI/")
     with pg_driver.session_scope():
         assert pg_driver.nodes(md.Project).count() == 1
@@ -158,9 +164,15 @@ def test_project_creation_endpoint(client, pg_driver, admin):
     assert resp.json["links"] == ["/v0/submission/CGCI/BLGSP"], resp.json
 
 
-def test_project_creation_without_admin_token(client, pg_driver, submitter, admin):
-    put_cgci(client, admin)
+def test_project_creation_unauthorized(
+    client, pg_driver, submitter, mock_arborist_requests
+):
+    # Just checks that this is guarded with an Arborist auth request.
+    # (Does not check that the auth request is for the Sheepdog admin policy.)
+    put_cgci(client, submitter)
     path = "/v0/submission/CGCI/"
+
+    mock_arborist_requests(authorized=False)
     resp = client.put(
         path,
         headers=submitter,
@@ -752,10 +764,15 @@ def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter, admi
     assert resp.status_code == 400
 
 
-def test_delete_project_without_admin_token(client, pg_driver, cgci_blgsp, submitter):
+def test_delete_project_unauthorized(
+    client, pg_driver, cgci_blgsp, submitter, mock_arborist_requests
+):
     """
     Test that returns error when attemping to delete non-empty project
     """
+    # Just checks that this is guarded with an Arborist auth request.
+    # (Does not check that the auth request is for the Sheepdog admin policy.)
+    mock_arborist_requests(authorized=False)
     path = "/v0/submission/CGCI/BLGSP"
     resp = client.delete(path, headers=submitter)
     assert resp.status_code == 403
@@ -791,13 +808,18 @@ def test_delete_empty_non_program(client, pg_driver, cgci_blgsp, admin):
     assert resp.status_code == 400
 
 
-def test_delete_program_without_admin_token(client, pg_driver, admin, submitter):
+def test_delete_program_unauthorized(
+    client, pg_driver, submitter, mock_arborist_requests
+):
     """
     Test that returns error since the client does not have
-    privillege to delele the program
+    privilege to delete the program
     """
+    # Just checks that this is guarded with an Arborist auth request.
+    # (Does not check that the auth request is for the Sheepdog admin policy.)
     path = "/v0/submission/CGCI"
-    put_cgci(client, admin)
+    put_cgci(client, submitter)
+    mock_arborist_requests(authorized=False)
     resp = client.delete(path, headers=submitter)
     assert resp.status_code == 403
 
@@ -815,12 +837,17 @@ def test_delete_program(client, pg_driver, admin):
         assert not program
 
 
-def test_update_program_without_admin_token(client, pg_driver, admin, submitter):
+def test_update_program_unauthorized(
+    client, pg_driver, submitter, mock_arborist_requests
+):
     """
-    Test that returns authentication error since client does not have
+    Test that returns authorization error since client does not have
     privilege to update the program
     """
-    put_cgci(client, admin)
+    # Just checks that this is guarded with an Arborist auth request.
+    # (Does not check that the auth request is for the Sheepdog admin policy.)
+    put_cgci(client, submitter)
+    mock_arborist_requests(authorized=False)
     data = json.dumps(
         {"name": "CGCI", "type": "program", "dbgap_accession_number": "phs000235_2"}
     )
