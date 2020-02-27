@@ -161,8 +161,8 @@ def pg_driver(request, client):
 
 
 @pytest.fixture()
-def cgci_blgsp(client, admin):
-    put_cgci_blgsp(client, admin)
+def cgci_blgsp(client, submitter):
+    put_cgci_blgsp(client, submitter)
 
 
 @pytest.fixture()

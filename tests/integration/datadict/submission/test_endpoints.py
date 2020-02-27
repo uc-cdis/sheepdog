@@ -389,8 +389,8 @@ def test_put_dry_run(client, pg_driver, cgci_blgsp, submitter):
         assert not pg_driver.nodes(md.Experiment).first()
 
 
-def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter, admin):
-    put_tcga_brca(client, admin)
+def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter):
+    put_tcga_brca(client, submitter)
     resp = client.put(
         BLGSP_PATH,
         headers=submitter,
@@ -422,7 +422,7 @@ def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter, admin
 
 
 def test_insert_multiple_parents_and_export_by_ids(
-    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off, admin
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
     post_example_entities_together(client, submitter)
     path = BLGSP_PATH
@@ -452,9 +452,9 @@ def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
 
 
 def test_disallow_cross_project_references(
-    client, pg_driver, cgci_blgsp, submitter, admin
+    client, pg_driver, cgci_blgsp, submitter
 ):
-    put_tcga_brca(client, admin)
+    put_tcga_brca(client, submitter)
     data = {
         "progression_or_recurrence": "unknown",
         "classification_of_tumor": "other",

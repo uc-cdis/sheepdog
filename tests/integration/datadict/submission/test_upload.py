@@ -46,8 +46,8 @@ DEFAULT_METADATA_FILE = {
 }
 
 
-def submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp):
-    put_cgci_blgsp(client, admin)
+def submit_first_experiment(client, pg_driver, submitter, cgci_blgsp):
+    put_cgci_blgsp(client, submitter)
 
     # first submit experiment
     data = json.dumps(
@@ -62,11 +62,11 @@ def submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp):
 
 
 def submit_metadata_file(
-    client, pg_driver, admin, submitter, cgci_blgsp, data=None, format="json"
+    client, pg_driver, submitter, cgci_blgsp, data=None, format="json"
 ):
     data = data or DEFAULT_METADATA_FILE
     headers = submitter
-    put_cgci_blgsp(client, admin)
+    put_cgci_blgsp(client, submitter)
     if format == "tsv":
         headers["Content-Type"] = "text/tsv"
     elif format == "csv":
@@ -92,7 +92,6 @@ def test_data_file_not_indexed(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
     require_index_exists_off,
@@ -100,12 +99,12 @@ def test_data_file_not_indexed(
     """
     Test node and data file creation when neither exist and no ID is provided.
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     get_index_uuid.return_value = None
     get_index_hash.return_value = None
 
-    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
 
     # index creation
     assert create_index.call_count == 1
@@ -184,7 +183,6 @@ def test_data_file_not_indexed_id_provided(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
     require_index_exists_off,
@@ -193,7 +191,7 @@ def test_data_file_not_indexed_id_provided(
     Test node and data file creation when neither exist and an ID is provided.
     That ID should be used for the node and file index creation
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     get_index_uuid.return_value = None
     get_index_hash.return_value = None
@@ -201,7 +199,7 @@ def test_data_file_not_indexed_id_provided(
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
     file["id"] = DEFAULT_UUID
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=file
+        client, pg_driver, submitter, cgci_blgsp, data=file
     )
 
     # index creation
@@ -244,7 +242,6 @@ def test_data_file_already_indexed(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
@@ -253,7 +250,7 @@ def test_data_file_already_indexed(
     no ID is provided. sheepdog should fall back on the hash/size of the file
     to find it in indexing service.
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     document = MagicMock()
     document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
@@ -269,7 +266,7 @@ def test_data_file_already_indexed(
 
     get_index_uuid.side_effect = get_index_by_uuid
 
-    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
 
     # no index or alias creation
     assert not create_index.called
@@ -301,7 +298,6 @@ def test_data_file_already_indexed_id_provided(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
@@ -309,7 +305,7 @@ def test_data_file_already_indexed_id_provided(
     Test submitting when the file is already indexed in the index client and
     an id is provided in the submission.
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     document = MagicMock()
     document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
@@ -329,7 +325,7 @@ def test_data_file_already_indexed_id_provided(
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
     file["id"] = document.did
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=file
+        client, pg_driver, submitter, cgci_blgsp, data=file
     )
 
     # no index or alias creation
@@ -362,7 +358,6 @@ def test_data_file_update_url(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
@@ -370,7 +365,7 @@ def test_data_file_update_url(
     Test submitting the same data again but updating the URL field (should
     get added to the indexed file in index service).
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     document = MagicMock()
     document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
@@ -387,14 +382,14 @@ def test_data_file_update_url(
 
     get_index_uuid.side_effect = get_index_by_uuid
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
 
     # now submit again but change url
     new_url = "some/new/url/location/to/add"
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
     updated_file["urls"] = new_url
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+        client, pg_driver, submitter, cgci_blgsp, data=updated_file
     )
 
     # no index or alias creation
@@ -431,7 +426,6 @@ def test_data_file_update_multiple_urls(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
@@ -439,7 +433,7 @@ def test_data_file_update_multiple_urls(
     Test submitting the same data again but updating the URL field (should
     get added to the indexed file in index service).
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     document = MagicMock()
     document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
@@ -456,7 +450,7 @@ def test_data_file_update_multiple_urls(
 
     get_index_uuid.side_effect = get_index_by_uuid
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
 
     # now submit again but change url
     new_url = "some/new/url/location/to/add"
@@ -466,7 +460,7 @@ def test_data_file_update_multiple_urls(
     # comma separated list of urls INCLUDING the url that's already there
     updated_file["urls"] = DEFAULT_URL + "," + new_url + "," + another_new_url
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+        client, pg_driver, submitter, cgci_blgsp, data=updated_file
     )
 
     # no index or alias creation
@@ -508,7 +502,6 @@ def test_data_file_update_url_id_provided(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
@@ -516,7 +509,7 @@ def test_data_file_update_url_id_provided(
     Test submitting the same data again (with the id provided) and updating the
     URL field (should get added to the indexed file in index service).
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     document = MagicMock()
     document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
@@ -533,7 +526,7 @@ def test_data_file_update_url_id_provided(
 
     get_index_uuid.side_effect = get_index_by_uuid
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
 
     # now submit again but change url
     new_url = "some/new/url/location/to/add"
@@ -541,7 +534,7 @@ def test_data_file_update_url_id_provided(
     updated_file["urls"] = new_url
     updated_file["id"] = document.did
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+        client, pg_driver, submitter, cgci_blgsp, data=updated_file
     )
 
     # no index or alias creation
@@ -581,7 +574,6 @@ def test_data_file_update_url_invalid_id(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
@@ -593,7 +585,7 @@ def test_data_file_update_url_invalid_id(
     FIXME: the 1:1 between node id and index/file id is temporary so this
            test may need to be modified in the future
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     document = MagicMock()
     document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
@@ -603,7 +595,7 @@ def test_data_file_update_url_invalid_id(
     # the uuid provided doesn't have a matching indexed file
     get_index_uuid.return_value = None
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
 
     # now submit again but change url
     new_url = "some/new/url/location/to/add"
@@ -611,7 +603,7 @@ def test_data_file_update_url_invalid_id(
     updated_file["urls"] = new_url
     updated_file["id"] = DEFAULT_UUID
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+        client, pg_driver, submitter, cgci_blgsp, data=updated_file
     )
 
     # no index or alias creation
@@ -642,7 +634,6 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
@@ -659,7 +650,7 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
 
     FIXME At the moment, we do not allow updating like this
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     document = MagicMock()
     document.did = DEFAULT_UUID
@@ -669,7 +660,7 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     # index yields no match given hash/size
     get_index_hash.return_value = None
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
 
     # now submit again but change url
     new_url = "some/new/url/location/to/add"
@@ -679,7 +670,7 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
     updated_file["md5sum"] = DEFAULT_FILE_HASH.replace("0", "2")
     updated_file["file_size"] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+        client, pg_driver, submitter, cgci_blgsp, data=updated_file
     )
 
     # no index or alias creation
@@ -710,7 +701,6 @@ def test_data_file_update_url_different_file_not_indexed(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
@@ -730,7 +720,7 @@ def test_data_file_update_url_different_file_not_indexed(
     the submitter_id/project). There is already a match for that, BUT
     the provided file hash/size is different than the previously submitted one.
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     document = MagicMock()
     document.did = DEFAULT_UUID
@@ -740,7 +730,7 @@ def test_data_file_update_url_different_file_not_indexed(
     # index yields no match given hash/size
     get_index_hash.return_value = None
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
 
     # now submit again but change url
     new_url = "some/new/url/location/to/add"
@@ -749,7 +739,7 @@ def test_data_file_update_url_different_file_not_indexed(
     updated_file["md5sum"] = DEFAULT_FILE_HASH.replace("0", "2")
     updated_file["file_size"] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+        client, pg_driver, submitter, cgci_blgsp, data=updated_file
     )
 
     # no index or alias creation
@@ -780,7 +770,6 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
@@ -796,7 +785,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
 
     FIXME At the moment, we do not allow updating like this
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     document_with_id = MagicMock()
     document_with_id.did = DEFAULT_UUID
@@ -809,7 +798,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     get_index_uuid.return_value = document_with_id
     get_index_hash.return_value = different_file_matching_hash_and_size
 
-    submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
 
     # now submit again but change url
     new_url = "some/new/url/location/to/add"
@@ -819,7 +808,7 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     updated_file["md5sum"] = DEFAULT_FILE_HASH.replace("0", "2")
     updated_file["file_size"] = DEFAULT_FILE_SIZE + 1
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+        client, pg_driver, submitter, cgci_blgsp, data=updated_file
     )
 
     # no index or alias creation
@@ -852,7 +841,6 @@ def test_create_file_no_required_index(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
     require_index_exists_on,
@@ -861,14 +849,14 @@ def test_create_file_no_required_index(
     With REQUIRE_FILE_INDEX_EXISTS = True.
     Test submitting a data file that does not exist in indexd (should raise an error and should not create an index or an alias).
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     # no record in indexd for this file
     get_index_uuid.return_value = None
     get_index_hash.return_value = None
 
     # creating raises an error
-    resp = submit_metadata_file(client, pg_driver, admin, submitter, cgci_blgsp)
+    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
     assert resp.status_code == 400
 
     # no index or alias creation
@@ -896,14 +884,13 @@ def test_submit_valid_tsv_data_file(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
     """
     Test that we can submit a valid TSV data file
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     document = MagicMock()
     document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
@@ -941,7 +928,7 @@ def test_submit_valid_tsv_data_file(
     assert data
 
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data, format="tsv"
+        client, pg_driver, submitter, cgci_blgsp, data, format="tsv"
     )
 
     # no index or alias creation
@@ -967,14 +954,13 @@ def test_submit_valid_csv_data_file(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
     """
     Test that we can submit a valid CSV data file
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     document = MagicMock()
     document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
@@ -1012,7 +998,7 @@ def test_submit_valid_csv_data_file(
     assert data
 
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data, format="csv"
+        client, pg_driver, submitter, cgci_blgsp, data, format="csv"
     )
 
     # no index or alias creation
@@ -1038,14 +1024,13 @@ def test_can_submit_data_file_with_asterisk_json(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
     """
     Test that we can submit a file when some fields have asterisks prepended
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     document = MagicMock()
     document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
@@ -1070,7 +1055,7 @@ def test_can_submit_data_file_with_asterisk_json(
         file["*{}".format(key)] = file.pop(key)
 
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data=file
+        client, pg_driver, submitter, cgci_blgsp, data=file
     )
 
     # no index or alias creation
@@ -1098,7 +1083,6 @@ def test_can_submit_data_file_with_asterisk_tsv(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
@@ -1106,7 +1090,7 @@ def test_can_submit_data_file_with_asterisk_tsv(
     Test that we can submit a file when some fields have asterisks prepended
     Specifically, "file_size" (and other integer fields) should work with asterisks
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     document = MagicMock()
     document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
@@ -1148,7 +1132,7 @@ def test_can_submit_data_file_with_asterisk_tsv(
     assert data
 
     resp = submit_metadata_file(
-        client, pg_driver, admin, submitter, cgci_blgsp, data, format="tsv"
+        client, pg_driver, submitter, cgci_blgsp, data, format="tsv"
     )
 
     # no index or alias creation
@@ -1174,14 +1158,13 @@ def test_link_case_insensitivity(
     get_index_hash,
     client,
     pg_driver,
-    admin,
     submitter,
     cgci_blgsp,
 ):
     """
     Test that links are case insensitive.
     """
-    submit_first_experiment(client, pg_driver, admin, submitter, cgci_blgsp)
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
     for i in range(16):
         document = MagicMock()
@@ -1206,7 +1189,7 @@ def test_link_case_insensitivity(
             for k in updated_file["experiments"]["submitter_id"]
         )
         resp = submit_metadata_file(
-            client, pg_driver, admin, submitter, cgci_blgsp, data=updated_file
+            client, pg_driver, submitter, cgci_blgsp, data=updated_file
         )
 
         # no index or alias creation

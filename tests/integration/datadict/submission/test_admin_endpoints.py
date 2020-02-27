@@ -54,7 +54,7 @@ def post_blgsp_files(client, headers):
 
 @pytest.mark.parametrize(
     "headers,status_code,to_delete",
-    [("submitter", 403, None), ("admin", 200, True), ("admin", 200, False)],
+    [("submitter", 403, None), ("submitter", 200, True), ("submitter", 200, False)],
 )
 def test_to_delete(
     headers,
