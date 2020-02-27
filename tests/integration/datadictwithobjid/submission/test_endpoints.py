@@ -476,9 +476,7 @@ def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
         assert ct is not None, case.props
 
 
-def test_disallow_cross_project_references(
-    client, pg_driver, cgci_blgsp, submitter
-):
+def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, submitter):
     put_tcga_brca(client, submitter)
     data = {
         "progression_or_recurrence": "unknown",

@@ -198,9 +198,7 @@ def test_data_file_not_indexed_id_provided(
 
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
     file["id"] = DEFAULT_UUID
-    resp = submit_metadata_file(
-        client, pg_driver, submitter, cgci_blgsp, data=file
-    )
+    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp, data=file)
 
     # index creation
     assert create_index.call_count == 1
@@ -324,9 +322,7 @@ def test_data_file_already_indexed_id_provided(
 
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
     file["id"] = document.did
-    resp = submit_metadata_file(
-        client, pg_driver, submitter, cgci_blgsp, data=file
-    )
+    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp, data=file)
 
     # no index or alias creation
     assert not create_index.called
@@ -1054,9 +1050,7 @@ def test_can_submit_data_file_with_asterisk_json(
     for key in file.keys():
         file["*{}".format(key)] = file.pop(key)
 
-    resp = submit_metadata_file(
-        client, pg_driver, submitter, cgci_blgsp, data=file
-    )
+    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp, data=file)
 
     # no index or alias creation
     assert not create_index.called
