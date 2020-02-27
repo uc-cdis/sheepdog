@@ -63,7 +63,6 @@ def create_user_header(encoded_jwt):
         user_properties = {
             "id": 1,
             "username": username,
-            "is_admin": False,
             "policies": [],
             "google_proxy_group_id": None,
         }
