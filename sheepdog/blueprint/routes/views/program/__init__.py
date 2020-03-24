@@ -85,6 +85,7 @@ def get_projects(program):
 
 
 @utils.assert_program_exists
+@auth.require_sheepdog_project_admin
 def create_project(program):
     """
     Register a project.
@@ -137,7 +138,6 @@ def create_project(program):
             }
     """
     res = None
-    auth.current_user.require_admin()
     doc = utils.parse.parse_request_json()
     if not isinstance(doc, dict):
         raise UserError("Program endpoint only supports single documents")
@@ -217,6 +217,7 @@ def create_project(program):
 
 
 @utils.assert_program_exists
+@auth.require_sheepdog_program_admin
 def delete_program(program):
     """
     Delete a program given program name. If the program
@@ -237,7 +238,6 @@ def delete_program(program):
         404: Program not found.
         403: Unauthorized request.
     """
-    auth.current_user.require_admin()
     with flask.current_app.db.session_scope() as session:
         node = utils.lookup_program(flask.current_app.db, program)
         if node.edges_in:

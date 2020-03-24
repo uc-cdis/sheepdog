@@ -122,15 +122,21 @@ def add_and_get_new_experimental_metadata_count(pg_driver):
     return experimental_metadata_count
 
 
-def test_program_creation_endpoint(client, pg_driver, admin):
-    resp = put_cgci(client, auth=admin)
+def test_program_creation_endpoint(client, pg_driver, submitter):
+    # Does not test authz.
+    resp = put_cgci(client, auth=submitter)
     assert resp.status_code == 200, resp.data
     print(resp.data)
     resp = client.get("/v0/submission/")
     assert resp.json["links"] == ["/v0/submission/CGCI"], resp.json
 
 
-def test_program_creation_without_admin_token(client, pg_driver, submitter):
+def test_program_creation_unauthorized(
+    client, pg_driver, submitter, mock_arborist_requests
+):
+    # Just checks that this is guarded with an Arborist auth request.
+    # (Does not check that the auth request is for the Sheepdog admin policy.)
+    mock_arborist_requests(authorized=False)
     path = "/v0/submission/"
     headers = submitter
     data = json.dumps({"name": "CGCI", "type": "program"})
@@ -146,10 +152,10 @@ def test_program_creation_endpoint_for_program_not_supported(
     assert resp.status_code == 404
 
 
-def test_project_creation_endpoint(client, pg_driver, admin):
-    resp = put_cgci_blgsp(client, auth=admin)
+def test_project_creation_endpoint(client, pg_driver, submitter):
+    # Does not test authz.
+    resp = put_cgci_blgsp(client, auth=submitter)
     assert resp.status_code == 200
-
     resp = client.get("/v0/submission/CGCI/")
     with pg_driver.session_scope():
         assert pg_driver.nodes(md.Project).count() == 1
@@ -158,9 +164,15 @@ def test_project_creation_endpoint(client, pg_driver, admin):
     assert resp.json["links"] == ["/v0/submission/CGCI/BLGSP"], resp.json
 
 
-def test_project_creation_without_admin_token(client, pg_driver, submitter, admin):
-    put_cgci(client, admin)
+def test_project_creation_unauthorized(
+    client, pg_driver, submitter, mock_arborist_requests
+):
+    # Just checks that this is guarded with an Arborist auth request.
+    # (Does not check that the auth request is for the Sheepdog admin policy.)
+    put_cgci(client, submitter)
     path = "/v0/submission/CGCI/"
+
+    mock_arborist_requests(authorized=False)
     resp = client.put(
         path,
         headers=submitter,
@@ -178,17 +190,17 @@ def test_project_creation_without_admin_token(client, pg_driver, submitter, admi
 
 
 def test_project_creation_invalid_due_to_registed_project_name(
-    client, pg_driver, admin
+    client, pg_driver, submitter
 ):
-    resp = put_cgci_blgsp(client, auth=admin)
+    resp = put_cgci_blgsp(client, auth=submitter)
     assert resp.status_code == 200
-    resp = put_cgci2(client, auth=admin)
+    resp = put_cgci2(client, auth=submitter)
     assert resp.status_code == 200
 
     path = "/v0/submission/CGCI2/"
     resp = client.put(
         path,
-        headers=admin,
+        headers=submitter,
         data=json.dumps(
             {
                 "type": "project",
@@ -402,8 +414,8 @@ def test_put_dry_run(client, pg_driver, cgci_blgsp, submitter):
         assert not pg_driver.nodes(md.Experiment).first()
 
 
-def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter, admin):
-    put_tcga_brca(client, admin)
+def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter):
+    put_tcga_brca(client, submitter)
     resp = client.put(
         BLGSP_PATH,
         headers=submitter,
@@ -435,7 +447,7 @@ def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter, admin
 
 
 def test_insert_multiple_parents_and_export_by_ids(
-    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off, admin
+    client, pg_driver, cgci_blgsp, require_index_exists_off, submitter
 ):
     post_example_entities_together(client, submitter)
     path = BLGSP_PATH
@@ -464,10 +476,8 @@ def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
         assert ct is not None, case.props
 
 
-def test_disallow_cross_project_references(
-    client, pg_driver, cgci_blgsp, submitter, admin
-):
-    put_tcga_brca(client, admin)
+def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, submitter):
+    put_tcga_brca(client, submitter)
     data = {
         "progression_or_recurrence": "unknown",
         "classification_of_tumor": "other",
@@ -688,13 +698,13 @@ def get_export_data(client, submitter, node_type, format_type, without_id):
 
 
 def test_export_all_node_types(
-    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off, admin
+    client, pg_driver, cgci_blgsp, require_index_exists_off, submitter
 ):
     do_test_export(client, pg_driver, submitter, "experimental_metadata", "tsv")
 
 
 def test_export_all_node_types_json(
-    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off, admin
+    client, pg_driver, cgci_blgsp, require_index_exists_off, submitter
 ):
     post_example_entities_together(client, submitter, extended_data_fnames)
     with pg_driver.session_scope() as s:
@@ -730,7 +740,7 @@ def test_export_error(client, cgci_blgsp, submitter, file_type):
         assert response.status_code == 400
 
 
-def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
+def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter):
     """
     Test that returns error  when attemping to delete non-empty project
     """
@@ -748,79 +758,94 @@ def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter, admi
     )
 
     path = "/v0/submission/CGCI/BLGSP"
-    resp = client.delete(path, headers=admin)
+    resp = client.delete(path, headers=submitter)
     assert resp.status_code == 400
 
 
-def test_delete_project_without_admin_token(client, pg_driver, cgci_blgsp, submitter):
+def test_delete_project_unauthorized(
+    client, pg_driver, cgci_blgsp, submitter, mock_arborist_requests
+):
     """
     Test that returns error when attemping to delete non-empty project
     """
+    # Just checks that this is guarded with an Arborist auth request.
+    # (Does not check that the auth request is for the Sheepdog admin policy.)
+    mock_arborist_requests(authorized=False)
     path = "/v0/submission/CGCI/BLGSP"
     resp = client.delete(path, headers=submitter)
     assert resp.status_code == 403
 
 
-def test_delete_non_existed_project(client, pg_driver, cgci_blgsp, submitter, admin):
+def test_delete_non_existed_project(client, pg_driver, cgci_blgsp, submitter):
     """
     Test that returns error when attemping to delete a non-existed project
     """
     path = "/v0/submission/CGCI/NOT_EXIST"
-    resp = client.delete(path, headers=admin)
+    resp = client.delete(path, headers=submitter)
     assert resp.status_code == 404
 
 
-def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter, admin):
+def test_delete_empty_project(client, pg_driver, cgci_blgsp, submitter):
     """
     Test that successfully deletes an empty project
     """
     path = "/v0/submission/CGCI/BLGSP"
-    resp = client.delete(path, headers=admin)
+    resp = client.delete(path, headers=submitter)
     assert resp.status_code == 204
     with flask.current_app.db.session_scope():
         project = flask.current_app.db.nodes(md.Project).props(code="BLGSP").first()
         assert not project
 
 
-def test_delete_empty_non_program(client, pg_driver, cgci_blgsp, admin):
+def test_delete_empty_non_program(client, pg_driver, cgci_blgsp, submitter):
     """
     Test that return error  when attempting to delete a non-empty program
     """
     path = "/v0/submission/CGCI"
-    resp = client.delete(path, headers=admin)
+    resp = client.delete(path, headers=submitter)
     assert resp.status_code == 400
 
 
-def test_delete_program_without_admin_token(client, pg_driver, admin, submitter):
+def test_delete_program_unauthorized(
+    client, pg_driver, submitter, mock_arborist_requests
+):
     """
     Test that returns error since the client does not have
-    privillege to delele the program
+    privilege to delete the program
     """
+    # Just checks that this is guarded with an Arborist auth request.
+    # (Does not check that the auth request is for the Sheepdog admin policy.)
     path = "/v0/submission/CGCI"
-    put_cgci(client, admin)
+    put_cgci(client, submitter)
+    mock_arborist_requests(authorized=False)
     resp = client.delete(path, headers=submitter)
     assert resp.status_code == 403
 
 
-def test_delete_program(client, pg_driver, admin):
+def test_delete_program(client, pg_driver, submitter):
     """
     Test that successfully deletes an empty program
     """
     path = "/v0/submission/CGCI"
-    put_cgci(client, admin)
-    resp = client.delete(path, headers=admin)
+    put_cgci(client, submitter)
+    resp = client.delete(path, headers=submitter)
     assert resp.status_code == 204
     with flask.current_app.db.session_scope():
         program = flask.current_app.db.nodes(md.Program).props(name="CGCI").first()
         assert not program
 
 
-def test_update_program_without_admin_token(client, pg_driver, admin, submitter):
+def test_update_program_unauthorized(
+    client, pg_driver, submitter, mock_arborist_requests
+):
     """
-    Test that returns authentication error since client does not have
+    Test that returns authorization error since client does not have
     privilege to update the program
     """
-    put_cgci(client, admin)
+    # Just checks that this is guarded with an Arborist auth request.
+    # (Does not check that the auth request is for the Sheepdog admin policy.)
+    put_cgci(client, submitter)
+    mock_arborist_requests(authorized=False)
     data = json.dumps(
         {"name": "CGCI", "type": "program", "dbgap_accession_number": "phs000235_2"}
     )
@@ -828,15 +853,15 @@ def test_update_program_without_admin_token(client, pg_driver, admin, submitter)
     assert resp.status_code == 403
 
 
-def test_update_program(client, pg_driver, admin):
+def test_update_program(client, pg_driver, submitter):
     """
     Test that successfully updates a program
     """
-    put_cgci(client, admin)
+    put_cgci(client, submitter)
     data = json.dumps(
         {"name": "CGCI", "type": "program", "dbgap_accession_number": "phs000235_2"}
     )
-    resp = client.put("/v0/submission", headers=admin, data=data)
+    resp = client.put("/v0/submission", headers=submitter, data=data)
     assert resp.status_code == 200
     with flask.current_app.db.session_scope():
         program = flask.current_app.db.nodes(md.Program).props(name="CGCI").first()

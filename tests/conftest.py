@@ -18,7 +18,6 @@ from tests import utils
 
 
 SUBMITTER_USERNAME = "submitter"
-ADMIN_USERNAME = "admin"
 
 
 @pytest.fixture(scope="session")
@@ -64,7 +63,6 @@ def create_user_header(encoded_jwt):
         user_properties = {
             "id": 1,
             "username": username,
-            "is_admin": False,
             "policies": [],
             "google_proxy_group_id": None,
         }
@@ -84,11 +82,6 @@ def submitter(create_user_header):
 @pytest.fixture()
 def submitter_name():
     return SUBMITTER_USERNAME
-
-
-@pytest.fixture()
-def admin(create_user_header):
-    return create_user_header(ADMIN_USERNAME, is_admin=True)
 
 
 @pytest.yield_fixture
