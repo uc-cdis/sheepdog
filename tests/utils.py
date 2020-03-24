@@ -97,7 +97,6 @@ def generate_signed_access_token(
         "context": {
             "user": {
                 "name": user.username,
-                "is_admin": user.is_admin,
                 "google": {"proxy_group": user.google_proxy_group_id},
             }
         },
