@@ -54,7 +54,7 @@ def post_blgsp_files(client, headers):
 
 @pytest.mark.parametrize(
     "headers,status_code,to_delete",
-    [("submitter", 403, None), ("admin", 200, True), ("admin", 200, False)],
+    [("submitter", 403, None), ("submitter", 200, True), ("submitter", 200, False)],
 )
 def test_to_delete(
     headers,
@@ -94,37 +94,39 @@ def test_to_delete(
         assert sur_node.sysan.get("to_delete") is to_delete
 
 
-def do_reassign(client, headers):
-    """Perform the http reassign action
+def test_reassign(
+    client, pg_driver, cgci_blgsp, index_client, submitter, require_index_exists_off
+):
+    """Try to reassign a node's remote URL
 
-    Args:
-        client (pytest.Fixture): Allows you to mock http requests through flask
-        headers (dict): http headers with token
-
-    Returns:
-        requests.Response: http response from doing reassign request
-        string: did
-        string: s3 url that you changed it to
+    Url:
+        PUT: /admin/<program>/<project>/files/<file_uuid>/reassign
+        data: {"s3_url": "s3://whatever/you/want"}
     """
+    # Does not test authz.
 
-    entities = post_blgsp_files(client, headers)
+    # Set up for http reassign action
+    entities = post_blgsp_files(client, submitter)
     dids = entities["submitted_unaligned_reads"]
     s3_url = "s3://whatever/you/want"
-
     reassign_path = create_blgsp_url("/files/{}/reassign".format(dids[0]))
     data = json.dumps({"s3_url": s3_url})
+    # http reassign action
+    resp = client.put(reassign_path, headers=submitter, data=data)
 
-    return client.put(reassign_path, headers=headers, data=data), dids[0], s3_url
+    assert resp.status_code == 200, resp.data
+    assert index_client.get(dids[0]), "Did not register with indexd?"
+    assert s3_url in index_client.get(dids[0]).urls, "Did not successfully reassign"
 
 
-def test_reassign_with_admin(
+def test_reassign_unauthorized(
     client,
     pg_driver,
     cgci_blgsp,
     submitter,
     index_client,
-    admin,
     require_index_exists_off,
+    mock_arborist_requests,
 ):
     """Try to reassign a node's remote URL
 
@@ -132,25 +134,21 @@ def test_reassign_with_admin(
         PUT: /admin/<program>/<project>/files/<file_uuid>/reassign
         data: {"s3_url": "s3://whatever/you/want"}
     """
+    # Just checks that this is guarded with an Arborist auth request.
+    # (Does not check that the auth request is for the Sheepdog admin policy.)
 
-    resp, did, s3_url = do_reassign(client, admin)
-    assert resp.status_code == 200, resp.data
-    assert index_client.get(did), "Did not register with indexd?"
-    assert s3_url in index_client.get(did).urls, "Did not successfully reassign"
+    # Set up for http reassign action
+    entities = post_blgsp_files(client, submitter)
+    dids = entities["submitted_unaligned_reads"]
+    s3_url = "s3://whatever/you/want"
+    reassign_path = create_blgsp_url("/files/{}/reassign".format(dids[0]))
+    data = json.dumps({"s3_url": s3_url})
+    # Mock arborist auth requests so they return false
+    mock_arborist_requests(authorized=False)
+    # http reassign action
+    resp = client.put(reassign_path, headers=submitter, data=data)
 
-
-def test_reassign_without_admin(
-    client, pg_driver, cgci_blgsp, submitter, index_client, require_index_exists_off
-):
-    """Try to reassign a node's remote URL
-
-    Url:
-        PUT: /admin/<program>/<project>/files/<file_uuid>/reassign
-        data: {"s3_url": "s3://whatever/you/want"}
-    """
-
-    resp, did, s3_url = do_reassign(client, submitter)
     assert resp.status_code == 403, resp.data
-    assert index_client.get(did), "Index should have been created."
-    assert len(index_client.get(did).urls) == 0, "No files have been uploaded"
-    assert s3_url not in index_client.get(did).urls, "Should not have reassigned"
+    assert index_client.get(dids[0]), "Index should have been created."
+    assert len(index_client.get(dids[0]).urls) == 0, "No files have been uploaded"
+    assert s3_url not in index_client.get(dids[0]).urls, "Should not have reassigned"

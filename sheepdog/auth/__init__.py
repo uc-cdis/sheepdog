@@ -66,6 +66,50 @@ def authorize_for_project(*required_roles):
     return wrapper
 
 
+def require_sheepdog_program_admin(func):
+    """
+    Wrap a function to allow access to the handler if the user has access to
+    the resource /services/sheepdog/submission/program (Sheepdog program admin)
+    """
+
+    @functools.wraps(func)
+    def authorize_and_call(*args, **kwargs):
+        jwt = get_jwt_from_header()
+        authz = flask.current_app.auth.auth_request(
+            jwt=jwt,
+            service="sheepdog",
+            methods="*",
+            resources=["/services/sheepdog/submission/program"],
+        )
+        if not authz:
+            raise AuthZError("Unauthorized: User must be Sheepdog program admin")
+        return func(*args, **kwargs)
+
+    return authorize_and_call
+
+
+def require_sheepdog_project_admin(func):
+    """
+    Wrap a function to allow access to the handler if the user has access to
+    the resource /services/sheepdog/submission/project (Sheepdog project admin)
+    """
+
+    @functools.wraps(func)
+    def authorize_and_call(*args, **kwargs):
+        jwt = get_jwt_from_header()
+        authz = flask.current_app.auth.auth_request(
+            jwt=jwt,
+            service="sheepdog",
+            methods="*",
+            resources=["/services/sheepdog/submission/project"],
+        )
+        if not authz:
+            raise AuthZError("Unauthorized: User must be Sheepdog project admin")
+        return func(*args, **kwargs)
+
+    return authorize_and_call
+
+
 def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
     jwt = get_jwt_from_header()
