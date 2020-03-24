@@ -1032,6 +1032,7 @@ def test_update_to_null_invalid1(client, pg_driver, cgci_blgsp, submitter):
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
 
+
 def test_update_to_null_invalid2(client, pg_driver, cgci_blgsp, submitter):
     headers = submitter
     data = json.dumps(
@@ -1044,13 +1045,10 @@ def test_update_to_null_invalid2(client, pg_driver, cgci_blgsp, submitter):
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 200, resp.data
 
-    data = json.dumps(
-        {
-            "type": "null",
-        }
-    )
+    data = json.dumps({"type": "null",})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
+
 
 def test_update_to_null_invalid3(client, pg_driver, cgci_blgsp, submitter):
     headers = submitter
@@ -1064,11 +1062,7 @@ def test_update_to_null_invalid3(client, pg_driver, cgci_blgsp, submitter):
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 200, resp.data
 
-    data = json.dumps(
-        {
-            "id": None,
-        }
-    )
+    data = json.dumps({"id": None,})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
 
@@ -1206,6 +1200,7 @@ def test_update_to_null_invalid_tsv1(client, pg_driver, cgci_blgsp, submitter):
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 400, resp.data
 
+
 def test_update_to_null_invalid_tsv2(client, pg_driver, cgci_blgsp, submitter):
     """
     Test that we can update a TSV file with null
@@ -1264,6 +1259,7 @@ def test_update_to_null_invalid_tsv2(client, pg_driver, cgci_blgsp, submitter):
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 400, resp.data
+
 
 def test_update_to_null_invalid_tsv3(client, pg_driver, cgci_blgsp, submitter):
     """
