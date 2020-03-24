@@ -960,3 +960,366 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
 
     with pg_driver.session_scope():
         assert pg_driver.nodes(md.Experiment).count() == 1
+
+
+"""
+Need to be able to update sheepdog files to have null values 
+*For json and tsv*
+"""
+
+
+def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
+    headers = submitter
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+            "experimental_description": "my desc",
+            "number_samples_per_experimental_group": 1,
+            "indels_identified": True,
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        headers=headers,
+        data=data,
+    )
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+            "experimental_description": None,
+            "number_samples_per_experimental_group": "null",
+            "indels_identified": "null",
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        headers=headers,
+        data=data,
+    )
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+
+
+def test_update_to_null_invalid1(client, pg_driver, cgci_blgsp, submitter):
+    headers = submitter
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "null",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 400, resp.data
+
+def test_update_to_null_invalid2(client, pg_driver, cgci_blgsp, submitter):
+    headers = submitter
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+
+    data = json.dumps(
+        {
+            "type": "null",
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 400, resp.data
+
+def test_update_to_null_invalid3(client, pg_driver, cgci_blgsp, submitter):
+    headers = submitter
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+
+    data = json.dumps(
+        {
+            "id": None,
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 400, resp.data
+
+
+def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that we can update a TSV file with null
+    """
+
+    data = {
+        "type": "experiment",
+        "submitter_id": "BLGSP-71-06-00019",
+        "projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
+        "experimental_description": "my desc",
+        "number_samples_per_experimental_group": 1,
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        headers=headers,
+        data=data,
+    )
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+
+    data = {
+        "type": "experiment",
+        "submitter_id": "BLGSP-71-06-00019",
+        "projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
+        "experimental_description": "null",
+        "number_samples_per_experimental_group": None,
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+
+
+def test_update_to_null_invalid_tsv1(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that we can update a TSV file with null
+    """
+
+    data = {
+        "type": "experiment",
+        "submitter_id": "BLGSP-71-06-00019",
+        "projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
+        "type_of_sample": "sample type",
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+
+    data = {
+        "type": "experiment",
+        "submitter_id": "null",
+        "projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 400, resp.data
+
+def test_update_to_null_invalid_tsv2(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that we can update a TSV file with null
+    """
+
+    data = {
+        "type": "experiment",
+        "submitter_id": "BLGSP-71-06-00019",
+        "projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
+        "type_of_sample": "sample type",
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+
+    data = {
+        "type": "null",
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 400, resp.data
+
+def test_update_to_null_invalid_tsv3(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that we can update a TSV file with null
+    """
+
+    data = {
+        "type": "experiment",
+        "submitter_id": "BLGSP-71-06-00019",
+        "projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
+        "type_of_sample": "sample type",
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+
+    data = {
+        "id": None,
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 400, resp.data
