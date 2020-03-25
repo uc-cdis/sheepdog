@@ -972,6 +972,7 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
     with pg_driver.session_scope():
         assert pg_driver.nodes(md.Experiment).count() == 1
 
+
 def test_number_transform(client, pg_driver, cgci_blgsp, submitter):
     """
     Test that a json float is correctly converted to an int
