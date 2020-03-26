@@ -973,63 +973,32 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
         assert pg_driver.nodes(md.Experiment).count() == 1
 
 
-def test_number_transform(client, pg_driver, cgci_blgsp, submitter):
+def test_zero_decimal_float(client, pg_driver, cgci_blgsp, submitter):
     """
-    Test that a json float is correctly converted to an int
+    Test that float values with a zero decimal are accepted by Sheepdog
+    for properites of type "number" even if they look like integers. 
+    We are testing with TSV because the str values from TSV are cast 
+    to the proper type by Sheepdog. 
     """
-    data = {
-        "type": "experiment",
-        "submitter_id": "BLGSP-71-06-00019",
-        "projects.code": "BLGSP",
-    }
-
-    # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
+    resp = client.put(
+        BLGSP_PATH,
+        headers=submitter,
+        data=json.dumps(
+            [
+                {
+                    "type": "experiment",
+                    "submitter_id": "BLGSP-71-06-00019",
+                    "projects": {"code": "BLGSP"},
+                },
+                {
+                    "type": "case",
+                    "submitter_id": "BLGSP-71-case-01",
+                    "experiments": {"submitter_id": "BLGSP-71-06-00019"},
+                },
+            ]
+        ),
     )
-    with open(file_path, "w") as f:
-        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
-        dw.writeheader()
-        dw.writerow(data)
 
-    # read the TSV data
-    data = None
-    with open(file_path, "r") as f:
-        data = f.read()
-    os.remove(file_path)  # clean up (delete file)
-    assert data
-
-    headers = submitter
-    headers["Content-Type"] = "text/tsv"
-    resp = client.put(BLGSP_PATH, headers=headers, data=data)
-    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
-    assert resp.status_code == 200, resp.data
-
-    data = {
-        "type": "case",
-        "submitter_id": "BLGSP-71-case-01",
-        "experiments.submitter_id": "BLGSP-71-06-00019",
-    }
-
-    # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
-    with open(file_path, "w") as f:
-        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
-        dw.writeheader()
-        dw.writerow(data)
-
-    # read the TSV data
-    data = None
-    with open(file_path, "r") as f:
-        data = f.read()
-    os.remove(file_path)  # clean up (delete file)
-    assert data
-
-    headers = submitter
-    headers["Content-Type"] = "text/tsv"
-    resp = client.put(BLGSP_PATH, headers=headers, data=data)
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 200, resp.data
 
@@ -1037,7 +1006,7 @@ def test_number_transform(client, pg_driver, cgci_blgsp, submitter):
         "type": "sample",
         "submitter_id": "sample1",
         "cases.submitter_id": "BLGSP-71-case-01",
-        "sample_volume": "2.0",
+        "sample_volume": 2.0,
     }
 
     # convert to TSV (save to file)
