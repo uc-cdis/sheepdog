@@ -207,7 +207,7 @@ class DelimitedConverter(object):
                 return parse_list_from_string(value)
             elif value_type == float:
                 if float(value).is_integer():
-                    return int(value)
+                    return int(float(value))
                 else:
                     return float(value)
             elif strip(value) == "":

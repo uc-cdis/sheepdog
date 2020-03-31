@@ -973,6 +973,65 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
         assert pg_driver.nodes(md.Experiment).count() == 1
 
 
+def test_zero_decimal_float(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that float values with a zero decimal are accepted by Sheepdog
+    for properites of type "number" even if they look like integers. 
+    We are testing with TSV because the str values from TSV are cast 
+    to the proper type by Sheepdog. 
+    """
+    resp = client.put(
+        BLGSP_PATH,
+        headers=submitter,
+        data=json.dumps(
+            [
+                {
+                    "type": "experiment",
+                    "submitter_id": "BLGSP-71-06-00019",
+                    "projects": {"code": "BLGSP"},
+                },
+                {
+                    "type": "case",
+                    "submitter_id": "BLGSP-71-case-01",
+                    "experiments": {"submitter_id": "BLGSP-71-06-00019"},
+                },
+            ]
+        ),
+    )
+
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+
+    data = {
+        "type": "sample",
+        "submitter_id": "sample1",
+        "cases.submitter_id": "BLGSP-71-case-01",
+        "sample_volume": 2.0,
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+
+
 def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
     """
     Test that updating a non required field to null works correclty 
@@ -1017,9 +1076,19 @@ def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
         data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
-    assert json.loads(resp.data)['entities'][0]['properties']['experimental_description'] == None
-    assert json.loads(resp.data)['entities'][0]['properties']['number_samples_per_experimental_group'] == None
-    assert json.loads(resp.data)['entities'][0]['properties']['indels_identified'] == None
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"]["experimental_description"]
+        == None
+    )
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"][
+            "number_samples_per_experimental_group"
+        ]
+        == None
+    )
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"]["indels_identified"] == None
+    )
 
 
 def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
@@ -1036,7 +1105,7 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
     )
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 200, resp.data
-    id = json.loads(resp.data)['entities'][0]['id']
+    id = json.loads(resp.data)["entities"][0]["id"]
 
     data = json.dumps({"submitter_id": None,})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
@@ -1051,14 +1120,15 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 400, resp.data
 
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{id}",
-        headers=headers,
-        data=data,
+        f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers, data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
-    assert json.loads(resp.data)['entities'][0]['properties']['submitter_id'] == 'BLGSP-71-06-00019'
-    assert json.loads(resp.data)['entities'][0]['properties']['type'] == 'experiment'
-    assert json.loads(resp.data)['entities'][0]['properties']['id'] == id
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"]["submitter_id"]
+        == "BLGSP-71-06-00019"
+    )
+    assert json.loads(resp.data)["entities"][0]["properties"]["type"] == "experiment"
+    assert json.loads(resp.data)["entities"][0]["properties"]["id"] == id
 
 
 def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
@@ -1066,14 +1136,14 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     Test that we can update a TSV file with null
     """
 
-    data = json.dumps (
+    data = json.dumps(
         {
-        "type": "experiment",
-        "submitter_id": "BLGSP-71-06-00019",
-        "projects": {"id" : "daa208a7-f57a-562c-a04a-7a7c77542c98"},
-        "experimental_description": "my desc",
-        "number_samples_per_experimental_group": 1,
-    }
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+            "experimental_description": "my desc",
+            "number_samples_per_experimental_group": 1,
+        }
     )
 
     headers = submitter
@@ -1124,8 +1194,16 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
         data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
-    assert json.loads(resp.data)['entities'][0]['properties']['experimental_description'] == None
-    assert json.loads(resp.data)['entities'][0]['properties']['number_samples_per_experimental_group'] == None
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"]["experimental_description"]
+        == None
+    )
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"][
+            "number_samples_per_experimental_group"
+        ]
+        == None
+    )
 
 
 def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
@@ -1133,19 +1211,19 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     Test that updating a required field (using TSV) to null results in an error
     """
 
-    data = json.dumps (
+    data = json.dumps(
         {
-        "type": "experiment",
-        "submitter_id": "BLGSP-71-06-00019",
-        "projects": {"id" : "daa208a7-f57a-562c-a04a-7a7c77542c98"},
-        "type_of_sample": "sample type",
-    }
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+            "type_of_sample": "sample type",
+        }
     )
 
     headers = submitter
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 200, resp.data
-    id = json.loads(resp.data)['entities'][0]['id']
+    id = json.loads(resp.data)["entities"][0]["id"]
 
     data = {
         "type": "experiment",
@@ -1167,7 +1245,7 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     data = None
     with open(file_path, "r") as f:
         data = f.read()
-    # os.remove(file_path)  # clean up (delete file)
+    os.remove(file_path)  # clean up (delete file)
     assert data
 
     headers = submitter
@@ -1177,10 +1255,11 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 400, resp.data
 
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{id}",
-        headers=headers,
-        data=data,
+        f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers, data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
-    assert json.loads(resp.data)['entities'][0]['properties']['submitter_id'] == 'BLGSP-71-06-00019'
-    assert json.loads(resp.data)['entities'][0]['properties']['id'] == id
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"]["submitter_id"]
+        == "BLGSP-71-06-00019"
+    )
+    assert json.loads(resp.data)["entities"][0]["properties"]["id"] == id
