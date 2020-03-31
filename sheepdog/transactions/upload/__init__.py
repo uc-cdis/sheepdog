@@ -111,6 +111,11 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
     else:
         doc_format = "json"
         data = utils.parse.parse_request_json()
+        print("data: ", data)
+        for k, v in data.items():
+            if v == "null":
+                data[k] = None
+        print("data: ", data)
         errors = None
     # TODO: use errors value?
     name = flask.request.headers.get("X-Document-Name", None)

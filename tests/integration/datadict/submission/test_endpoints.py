@@ -985,7 +985,7 @@ def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
             "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
             "experimental_description": "my desc",
             "number_samples_per_experimental_group": 1,
-            "indels_identified": True,
+            "copy_numbers_identified": True,
         }
     )
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
@@ -1002,9 +1002,9 @@ def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
             "type": "experiment",
             "submitter_id": "BLGSP-71-06-00019",
             "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
-            "experimental_description": "null",
-            "number_samples_per_experimental_group": "null",
-            "indels_identified": "null",
+            "experimental_description": 'null',
+            "number_samples_per_experimental_group": 'null',
+            "copy_numbers_identified": 'null',
         }
     )
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
@@ -1038,15 +1038,15 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
     id = json.loads(resp.data)['entities'][0]['id']
 
-    data = json.dumps({"submitter_id": "null",})
+    data = json.dumps({"submitter_id": 'null',})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
 
-    data = json.dumps({"type": "null",})
+    data = json.dumps({"type": 'null',})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
 
-    data = json.dumps({"id": "null",})
+    data = json.dumps({"id": 'null',})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
 
@@ -1059,6 +1059,7 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
     assert json.loads(resp.data)['entities'][0]['properties']['submitter_id'] == 'BLGSP-71-06-00019'
     assert json.loads(resp.data)['entities'][0]['properties']['type'] == 'experiment'
     assert json.loads(resp.data)['entities'][0]['properties']['id'] == id
+    assert False
 
 
 def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
@@ -1091,7 +1092,7 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
         "type": "experiment",
         "submitter_id": "BLGSP-71-06-00019",
         "projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
-        "experimental_description": "null",
+        "experimental_description": 'null',
         "number_samples_per_experimental_group": 'null',
     }
 
@@ -1110,6 +1111,7 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
         data = f.read()
     os.remove(file_path)  # clean up (delete file)
     assert data
+    print(data)
 
     headers = submitter
     headers["Content-Type"] = "text/tsv"
@@ -1148,9 +1150,8 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
 
     data = {
         "type": "experiment",
-        "submitter_id": "null",
+        "submitter_id": 'null',
         "projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
-        "type": "null",
         "id": 'null',
     }
 
@@ -1167,7 +1168,7 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     data = None
     with open(file_path, "r") as f:
         data = f.read()
-    os.remove(file_path)  # clean up (delete file)
+    # os.remove(file_path)  # clean up (delete file)
     assert data
 
     headers = submitter
@@ -1183,5 +1184,4 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert json.loads(resp.data)['entities'][0]['properties']['submitter_id'] == 'BLGSP-71-06-00019'
-    assert json.loads(resp.data)['entities'][0]['properties']['type'] == 'experiment'
     assert json.loads(resp.data)['entities'][0]['properties']['id'] == id
