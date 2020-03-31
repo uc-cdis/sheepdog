@@ -1002,9 +1002,9 @@ def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
             "type": "experiment",
             "submitter_id": "BLGSP-71-06-00019",
             "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
-            "experimental_description": 'null',
-            "number_samples_per_experimental_group": 'null',
-            "copy_numbers_identified": 'null',
+            "experimental_description": None,
+            "number_samples_per_experimental_group": None,
+            "copy_numbers_identified": None,
         }
     )
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
@@ -1038,15 +1038,15 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
     id = json.loads(resp.data)['entities'][0]['id']
 
-    data = json.dumps({"submitter_id": 'null',})
+    data = json.dumps({"submitter_id": None,})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
 
-    data = json.dumps({"type": 'null',})
+    data = json.dumps({"type": None,})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
 
-    data = json.dumps({"id": 'null',})
+    data = json.dumps({"id": None,})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
 
@@ -1059,7 +1059,6 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
     assert json.loads(resp.data)['entities'][0]['properties']['submitter_id'] == 'BLGSP-71-06-00019'
     assert json.loads(resp.data)['entities'][0]['properties']['type'] == 'experiment'
     assert json.loads(resp.data)['entities'][0]['properties']['id'] == id
-    assert False
 
 
 def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
@@ -1092,8 +1091,8 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
         "type": "experiment",
         "submitter_id": "BLGSP-71-06-00019",
         "projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
-        "experimental_description": 'null',
-        "number_samples_per_experimental_group": 'null',
+        "experimental_description": None,
+        "number_samples_per_experimental_group": None,
     }
 
     # convert to TSV (save to file)
@@ -1150,9 +1149,9 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
 
     data = {
         "type": "experiment",
-        "submitter_id": 'null',
+        "submitter_id": None,
         "projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
-        "id": 'null',
+        "id": None,
     }
 
     # convert to TSV (save to file)
