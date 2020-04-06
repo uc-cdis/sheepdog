@@ -153,7 +153,7 @@ def list_to_comma_string(val):
     """
 
     if val is None:
-        return val
+        return ""
 
     if isinstance(val, list):
         val = ",".join(val)

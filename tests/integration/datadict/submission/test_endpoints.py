@@ -826,7 +826,25 @@ def test_export_all_node_types_and_resubmit_tsv(
     headers = submitter
     headers["Content-Type"] = "text/tsv"
     resp = client.post(BLGSP_PATH, headers=headers, data=str_data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 201, resp.data
+
+def test_export_all_node_types_and_resubmit_tsv2(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    str_id_data = do_test_export(
+        client, pg_driver, submitter, "experiment", "tsv"
+    )
+    str_data = str(
+        get_export_data(client, submitter, "experiment", "tsv", True).data,
+        "utf-8",
+    )
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=str_data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
 
 
 def test_export_all_node_types_json(
