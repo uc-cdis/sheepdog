@@ -821,7 +821,9 @@ def export_all(node_label, project_id, file_format, db, without_id):
 
         # ``props`` is just a list of strings of the properties of the node
         # class that should go in the result.
-        list_obj = result_to_dictionary(query, titles_non_linked, titles_linked, file_format)
+        list_obj = result_to_dictionary(
+            query, titles_non_linked, titles_linked, file_format
+        )
         props = [format_prop(t) for t in titles_non_linked]
         if file_format == "json":
             yield '{ "data": ['

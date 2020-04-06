@@ -829,12 +829,11 @@ def test_export_all_node_types_and_resubmit_tsv(
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 201, resp.data
 
+
 def test_export_all_node_types_and_resubmit_json2(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
-    js_id_data = do_test_export(
-        client, pg_driver, submitter, "experiment", "json"
-    )
+    js_id_data = do_test_export(client, pg_driver, submitter, "experiment", "json")
     js_data = json.loads(
         get_export_data(client, submitter, "experiment", "json", True).data
     )
@@ -848,12 +847,9 @@ def test_export_all_node_types_and_resubmit_json2(
 def test_export_all_node_types_and_resubmit_tsv2(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
-    str_id_data = do_test_export(
-        client, pg_driver, submitter, "experiment", "tsv"
-    )
+    str_id_data = do_test_export(client, pg_driver, submitter, "experiment", "tsv")
     str_data = str(
-        get_export_data(client, submitter, "experiment", "tsv", True).data,
-        "utf-8",
+        get_export_data(client, submitter, "experiment", "tsv", True).data, "utf-8",
     )
 
     headers = submitter
