@@ -829,6 +829,22 @@ def test_export_all_node_types_and_resubmit_tsv(
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 201, resp.data
 
+def test_export_all_node_types_and_resubmit_json2(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    js_id_data = do_test_export(
+        client, pg_driver, submitter, "experiment", "json"
+    )
+    js_data = json.loads(
+        get_export_data(client, submitter, "experiment", "json", True).data
+    )
+
+    headers = submitter
+    resp = client.put(BLGSP_PATH, headers=headers, data=json.dumps(js_data["data"]))
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+
+
 def test_export_all_node_types_and_resubmit_tsv2(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
