@@ -77,7 +77,6 @@ def get_links_from_row(row):
 def get_props_from_row(row):
     """Return a dict of key/value pairs that are props, not links."""
     return {k: v for k, v in row.items() if "." not in k}
-    # return {k: v for k, v in row.items() if "." not in k and v != ""}
 
 
 class DelimitedConverter(object):
@@ -149,6 +148,7 @@ class DelimitedConverter(object):
         # Add properties
         props_dict = get_props_from_row(row)
         for key, value in props_dict.items():
+            # Translating a tsv null value (empty string) to None so the dictionary can remove that key's value
             if value == "":
                 doc[key] = None
             elif value == "null":

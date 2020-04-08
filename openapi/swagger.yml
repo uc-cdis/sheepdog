@@ -343,8 +343,8 @@ paths:
       description: Create or update any valid entities specified in the request body.
         To associate an entity with an existing, already indexed data file, specify
         the `object_id` in the body of the entity. To remove a non-required property 
-        of a valid entity (set it to `Null`) you must set that property's value to `"null"`
-        in the request body. 
+        of an existing entity (set it to `Null`) you must set that property's value to `None` 
+        (in JSON submissions) or an empty value (in TSV/CSV submissions).
       parameters:
       - description: The program to which the submitter belongs and in which the entities
           will be created. The `program` is the human-readable name, e.g. TCGA.
