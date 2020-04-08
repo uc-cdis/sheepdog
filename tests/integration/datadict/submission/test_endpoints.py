@@ -841,11 +841,11 @@ def test_export_all_node_types_and_resubmit_json_with_empty_field(
     js_data = json.loads(
         get_export_data(client, submitter, "experiment", "json", True).data
     )
-    nonempty = ['project_id', 'submitter_id', 'projects', 'type']
+    nonempty = ["project_id", "submitter_id", "projects", "type"]
     print(js_data)
-    for key in js_data['data'][0].keys():
+    for key in js_data["data"][0].keys():
         assert key in nonempty
-    for key in js_data['data'][1].keys():
+    for key in js_data["data"][1].keys():
         assert key in nonempty
 
     headers = submitter
@@ -864,14 +864,14 @@ def test_export_all_node_types_and_resubmit_tsv_with_empty_field(
     str_id_data = do_test_export(client, pg_driver, submitter, "experiment", "tsv")
     str_data = get_export_data(client, submitter, "experiment", "tsv", True).data
 
-    nonempty = ['project_id', 'submitter_id', 'projects.code', 'type']
+    nonempty = ["project_id", "submitter_id", "projects.code", "type"]
     tsv_output = csv.DictReader(StringIO(str_data.decode("utf-8")), delimiter="\t")
     row = next(tsv_output)
-    for k,v in row.items():
+    for k, v in row.items():
         if k not in nonempty:
             assert v == ""
     row = next(tsv_output)
-    for k,v in row.items():
+    for k, v in row.items():
         if k not in nonempty:
             assert v == ""
 
