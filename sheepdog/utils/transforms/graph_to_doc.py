@@ -153,9 +153,10 @@ def list_to_comma_string(val, file_format):
     """
 
     if val is None:
-        if file_format == "tsv":
-            return ""
-        return val
+        """ If a field is empty we must replace it with an empty string for tsv/csv exports and leave it as None for json exports """
+        if file_format == "json":
+            return val
+        return ""
 
     if isinstance(val, list):
         val = ",".join(val)

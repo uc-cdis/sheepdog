@@ -830,13 +830,23 @@ def test_export_all_node_types_and_resubmit_tsv(
     assert resp.status_code == 201, resp.data
 
 
-def test_export_all_node_types_and_resubmit_json2(
+def test_export_all_node_types_and_resubmit_json_with_empty_field(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
+    """
+    Test that we can export an entity with empty fields (as json) then resubmit it. 
+    The exported entity should have the empty fields omitted. 
+    """
     js_id_data = do_test_export(client, pg_driver, submitter, "experiment", "json")
     js_data = json.loads(
         get_export_data(client, submitter, "experiment", "json", True).data
     )
+    nonempty = ['project_id', 'submitter_id', 'projects', 'type']
+    print(js_data)
+    for key in js_data['data'][0].keys():
+        assert key in nonempty
+    for key in js_data['data'][1].keys():
+        assert key in nonempty
 
     headers = submitter
     resp = client.put(BLGSP_PATH, headers=headers, data=json.dumps(js_data["data"]))
@@ -844,14 +854,28 @@ def test_export_all_node_types_and_resubmit_json2(
     assert resp.status_code == 200, resp.data
 
 
-def test_export_all_node_types_and_resubmit_tsv2(
+def test_export_all_node_types_and_resubmit_tsv_with_empty_field(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
+    """
+    Test that we can export an entity with empty fields (as tsv) then resubmit it. The empty values 
+    of the exported entity should be empty strings.
+    """
     str_id_data = do_test_export(client, pg_driver, submitter, "experiment", "tsv")
-    str_data = str(
-        get_export_data(client, submitter, "experiment", "tsv", True).data, "utf-8",
-    )
+    str_data = get_export_data(client, submitter, "experiment", "tsv", True).data
 
+    nonempty = ['project_id', 'submitter_id', 'projects.code', 'type']
+    tsv_output = csv.DictReader(StringIO(str_data.decode("utf-8")), delimiter="\t")
+    row = next(tsv_output)
+    for k,v in row.items():
+        if k not in nonempty:
+            assert v == ""
+    row = next(tsv_output)
+    for k,v in row.items():
+        if k not in nonempty:
+            assert v == ""
+
+    str_data = str(str_data, "utf-8")
     headers = submitter
     headers["Content-Type"] = "text/tsv"
     resp = client.put(BLGSP_PATH, headers=headers, data=str_data)
