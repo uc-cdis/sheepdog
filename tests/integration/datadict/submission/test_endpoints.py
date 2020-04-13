@@ -1263,3 +1263,49 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
         == "BLGSP-71-06-00019"
     )
     assert json.loads(resp.data)["entities"][0]["properties"]["id"] == id
+
+def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that updating a non required field to null works correclty 
+    """
+    headers = submitter
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+            "type_of_data": "Raw",
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        headers=headers,
+        data=data,
+    )
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+            "type_of_data": None,
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        headers=headers,
+        data=data,
+    )
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"]["type_of_data"]
+        == None
+    )
