@@ -1264,6 +1264,7 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     )
     assert json.loads(resp.data)["entities"][0]["properties"]["id"] == id
 
+
 def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
     """
     Test that updating a non required field to null works correclty 
@@ -1305,7 +1306,4 @@ def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
         data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
-    assert (
-        json.loads(resp.data)["entities"][0]["properties"]["type_of_data"]
-        == None
-    )
+    assert json.loads(resp.data)["entities"][0]["properties"]["type_of_data"] == None
