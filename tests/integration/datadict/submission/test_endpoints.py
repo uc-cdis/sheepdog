@@ -843,10 +843,9 @@ def test_export_all_node_types_and_resubmit_json_with_empty_field(
     )
     nonempty = ["project_id", "submitter_id", "projects", "type"]
     print(js_data)
-    for key in js_data["data"][0].keys():
-        assert key in nonempty
-    for key in js_data["data"][1].keys():
-        assert key in nonempty
+    for data in js_data["data"]:
+        for key in data.keys():
+            assert key in nonempty
 
     headers = submitter
     resp = client.put(BLGSP_PATH, headers=headers, data=json.dumps(js_data["data"]))
@@ -866,14 +865,10 @@ def test_export_all_node_types_and_resubmit_tsv_with_empty_field(
 
     nonempty = ["project_id", "submitter_id", "projects.code", "type"]
     tsv_output = csv.DictReader(StringIO(str_data.decode("utf-8")), delimiter="\t")
-    row = next(tsv_output)
-    for k, v in row.items():
-        if k not in nonempty:
-            assert v == ""
-    row = next(tsv_output)
-    for k, v in row.items():
-        if k not in nonempty:
-            assert v == ""
+    for row in tsv_output:
+        for k, v in row.items():
+            if k not in nonempty:
+                assert v == ""
 
     str_data = str(str_data, "utf-8")
     headers = submitter
