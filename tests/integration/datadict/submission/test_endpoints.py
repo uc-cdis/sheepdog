@@ -1027,7 +1027,7 @@ def test_zero_decimal_float(client, pg_driver, cgci_blgsp, submitter):
     Test that float values with a zero decimal are accepted by Sheepdog
     for properites of type "number" even if they look like integers. 
     We are testing with TSV because the str values from TSV are cast 
-    to the proper type by Sheepdog. 
+    to the proper type by Sheepdog.  
     """
     resp = client.put(
         BLGSP_PATH,
