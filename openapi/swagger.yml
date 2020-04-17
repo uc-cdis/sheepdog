@@ -344,7 +344,7 @@ paths:
         To associate an entity with an existing, already indexed data file, specify
         the `object_id` in the body of the entity. To remove a non-required property 
         of an existing entity (set it to `Null`) you must set that property's value to
-        `None` (in JSON submissions) or an empty value (in TSV/CSV submissions)
+        `null` (in JSON submissions) or an empty value (in TSV/CSV submissions)
         in the request body. 
       parameters:
       - description: The program to which the submitter belongs and in which the entities
