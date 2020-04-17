@@ -1267,7 +1267,7 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
 
 def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
     """
-    Test that updating a non required field to null works correclty 
+    Test that updating a non required enum field to null works correclty 
     """
     headers = submitter
     data = json.dumps(
