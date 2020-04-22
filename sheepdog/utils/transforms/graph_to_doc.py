@@ -144,7 +144,7 @@ def get_node_non_link_json(node, props):
     return entity
 
 
-def list_to_comma_string(val):
+def list_to_comma_string(val, file_format):
     """
     Handle array fields by converting them to a comma-separated string.
 
@@ -153,7 +153,10 @@ def list_to_comma_string(val):
     """
 
     if val is None:
-        return val
+        """ If a field is empty we must replace it with an empty string for tsv/csv exports and leave it as None for json exports """
+        if file_format == "json":
+            return val
+        return ""
 
     if isinstance(val, list):
         val = ",".join(val)
@@ -819,7 +822,9 @@ def export_all(node_label, project_id, file_format, db, without_id):
 
         # ``props`` is just a list of strings of the properties of the node
         # class that should go in the result.
-        list_obj = result_to_dictionary(query, titles_non_linked, titles_linked)
+        list_obj = result_to_dictionary(
+            query, titles_non_linked, titles_linked, file_format
+        )
         props = [format_prop(t) for t in titles_non_linked]
         if file_format == "json":
             yield '{ "data": ['
@@ -875,7 +880,7 @@ def result_to_delimited_file(props_values, file_format):
     return splitter.join(props_values)
 
 
-def result_to_dictionary(query, titles_non_linked, titles_linked):
+def result_to_dictionary(query, titles_non_linked, titles_linked, file_format):
     props = [format_prop(t) for t in titles_non_linked]
     all_results = {}
     link_props_split = list(map(format_linked_prop, titles_linked))
@@ -884,7 +889,7 @@ def result_to_dictionary(query, titles_non_linked, titles_linked):
         node_id = node["node_id"]
         if node_id not in all_results:
             all_results[node_id] = {
-                prop: list_to_comma_string(node[prop]) for prop in props
+                prop: list_to_comma_string(node[prop], file_format) for prop in props
             }
         saved_obj = all_results[node_id]
         linked_fields = defaultdict(defaultdict)
