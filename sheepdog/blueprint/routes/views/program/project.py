@@ -465,6 +465,10 @@ def create_files_viewer(dry_run=False, reassign=False):
 
     @utils.assert_project_exists
     @auth.authorize_for_project(*auth_roles)
+    # admin only
+    # TODO: check if we need these (pauline)
+    @auth.require_sheepdog_program_admin
+    @auth.require_sheepdog_project_admin
     def file_operations(program, project, file_uuid):
         """
         Handle molecular file operations.  This will only be available once the
@@ -521,10 +525,6 @@ def create_files_viewer(dry_run=False, reassign=False):
         :reqheader X-Auth-Token: |reqheader_X-Auth-Token|
         :resheader Content-Type: |resheader_Content-Type|
         """
-
-        # admin only
-        # TODO: check if we need these (pauline)
-        auth.current_user.require_admin()
 
         headers = {
             k: v for k, v in flask.request.headers.items() if v and k != "X-Auth-Token"
@@ -1102,6 +1102,7 @@ def create_clinical_viewer(dry_run=False):
 
 
 @utils.assert_project_exists
+@auth.require_sheepdog_project_admin
 def delete_project(program, project):
     """
     Delete project under a specific program
@@ -1122,7 +1123,6 @@ def delete_project(program, project):
         404: Resource not found.
         403: Unauthorized request.
     """
-    auth.current_user.require_admin()
     with flask.current_app.db.session_scope() as session:
         node = utils.lookup_project(flask.current_app.db, program, project)
         if node.edges_in:

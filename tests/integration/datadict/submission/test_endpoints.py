@@ -123,15 +123,21 @@ def add_and_get_new_experimental_metadata_count(pg_driver):
     return experimental_metadata_count
 
 
-def test_program_creation_endpoint(client, pg_driver, admin):
-    resp = put_cgci(client, auth=admin)
+def test_program_creation_endpoint(client, pg_driver, submitter):
+    # Does not test authz.
+    resp = put_cgci(client, auth=submitter)
     assert resp.status_code == 200, resp.data
     print(resp.data)
     resp = client.get("/v0/submission/")
     assert resp.json["links"] == ["/v0/submission/CGCI"], resp.json
 
 
-def test_program_creation_without_admin_token(client, pg_driver, submitter):
+def test_program_creation_unauthorized(
+    client, pg_driver, submitter, mock_arborist_requests
+):
+    # Just checks that this is guarded with an Arborist auth request.
+    # (Does not check that the auth request is for the Sheepdog admin policy.)
+    mock_arborist_requests(authorized=False)
     path = "/v0/submission/"
     headers = submitter
     data = json.dumps({"name": "CGCI", "type": "program"})
@@ -147,8 +153,9 @@ def test_program_creation_endpoint_for_program_not_supported(
     assert resp.status_code == 404
 
 
-def test_project_creation_endpoint(client, pg_driver, admin):
-    resp = put_cgci_blgsp(client, auth=admin)
+def test_project_creation_endpoint(client, pg_driver, submitter):
+    # Does not test authz.
+    resp = put_cgci_blgsp(client, auth=submitter)
     assert resp.status_code == 200
     resp = client.get("/v0/submission/CGCI/")
     with pg_driver.session_scope():
@@ -158,9 +165,15 @@ def test_project_creation_endpoint(client, pg_driver, admin):
     assert resp.json["links"] == ["/v0/submission/CGCI/BLGSP"], resp.json
 
 
-def test_project_creation_without_admin_token(client, pg_driver, submitter, admin):
-    put_cgci(client, admin)
+def test_project_creation_unauthorized(
+    client, pg_driver, submitter, mock_arborist_requests
+):
+    # Just checks that this is guarded with an Arborist auth request.
+    # (Does not check that the auth request is for the Sheepdog admin policy.)
+    put_cgci(client, submitter)
     path = "/v0/submission/CGCI/"
+
+    mock_arborist_requests(authorized=False)
     resp = client.put(
         path,
         headers=submitter,
@@ -376,8 +389,8 @@ def test_put_dry_run(client, pg_driver, cgci_blgsp, submitter):
         assert not pg_driver.nodes(md.Experiment).first()
 
 
-def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter, admin):
-    put_tcga_brca(client, admin)
+def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter):
+    put_tcga_brca(client, submitter)
     resp = client.put(
         BLGSP_PATH,
         headers=submitter,
@@ -409,7 +422,7 @@ def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter, admin
 
 
 def test_insert_multiple_parents_and_export_by_ids(
-    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off, admin
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
     post_example_entities_together(client, submitter)
     path = BLGSP_PATH
@@ -438,10 +451,8 @@ def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
         assert ct is not None, case.props
 
 
-def test_disallow_cross_project_references(
-    client, pg_driver, cgci_blgsp, submitter, admin
-):
-    put_tcga_brca(client, admin)
+def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, submitter):
+    put_tcga_brca(client, submitter)
     data = {
         "progression_or_recurrence": "unknown",
         "classification_of_tumor": "other",
@@ -960,3 +971,62 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
 
     with pg_driver.session_scope():
         assert pg_driver.nodes(md.Experiment).count() == 1
+
+
+def test_zero_decimal_float(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that float values with a zero decimal are accepted by Sheepdog
+    for properites of type "number" even if they look like integers. 
+    We are testing with TSV because the str values from TSV are cast 
+    to the proper type by Sheepdog. 
+    """
+    resp = client.put(
+        BLGSP_PATH,
+        headers=submitter,
+        data=json.dumps(
+            [
+                {
+                    "type": "experiment",
+                    "submitter_id": "BLGSP-71-06-00019",
+                    "projects": {"code": "BLGSP"},
+                },
+                {
+                    "type": "case",
+                    "submitter_id": "BLGSP-71-case-01",
+                    "experiments": {"submitter_id": "BLGSP-71-06-00019"},
+                },
+            ]
+        ),
+    )
+
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+
+    data = {
+        "type": "sample",
+        "submitter_id": "sample1",
+        "cases.submitter_id": "BLGSP-71-case-01",
+        "sample_volume": 2.0,
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data

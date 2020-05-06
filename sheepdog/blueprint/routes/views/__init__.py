@@ -63,6 +63,7 @@ def get_programs():
     return flask.jsonify({"links": links})
 
 
+@auth.require_sheepdog_program_admin
 def root_create():
     """
     Register a program.
@@ -111,7 +112,6 @@ def root_create():
             "dbgap_accession_number": "phs000178"
         }
     """
-    auth.current_user.require_admin()
     message = None
     node_id = None
     doc = parse.parse_request_json()
