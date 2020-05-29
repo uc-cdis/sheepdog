@@ -1,7 +1,7 @@
 authutils==4.0.0
 boto==2.36.0
 cryptography==2.3
-dictionaryutils==3.0.0
+dictionaryutils==3.1.0
 envelopes==0.4
 Flask==1.1.1
 flask-cors==3.0.3
@@ -24,7 +24,7 @@ Werkzeug==0.16.0
 xmltodict==0.9.2
 more-itertools==5.0.0
 cdis_oauth2client==1.0.0
-cdispyutils==1.0.3
+cdispyutils==1.0.4
 datamodelutils==1.0.0
 # required for gen3datamodel, not required for sheepdog
 psqlgraph==3.0.0

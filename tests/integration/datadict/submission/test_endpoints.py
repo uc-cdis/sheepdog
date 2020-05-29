@@ -826,7 +826,56 @@ def test_export_all_node_types_and_resubmit_tsv(
     headers = submitter
     headers["Content-Type"] = "text/tsv"
     resp = client.post(BLGSP_PATH, headers=headers, data=str_data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 201, resp.data
+
+
+def test_export_all_node_types_and_resubmit_json_with_empty_field(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    """
+    Test that we can export an entity with empty fields (as json) then resubmit it. 
+    The exported entity should have the empty fields omitted. 
+    """
+    js_id_data = do_test_export(client, pg_driver, submitter, "experiment", "json")
+    js_data = json.loads(
+        get_export_data(client, submitter, "experiment", "json", True).data
+    )
+    nonempty = ["project_id", "submitter_id", "projects", "type"]
+    print(js_data)
+    for data in js_data["data"]:
+        for key in data.keys():
+            assert key in nonempty
+
+    headers = submitter
+    resp = client.put(BLGSP_PATH, headers=headers, data=json.dumps(js_data["data"]))
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+
+
+def test_export_all_node_types_and_resubmit_tsv_with_empty_field(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    """
+    Test that we can export an entity with empty fields (as tsv) then resubmit it. The empty values 
+    of the exported entity should be empty strings.
+    """
+    str_id_data = do_test_export(client, pg_driver, submitter, "experiment", "tsv")
+    str_data = get_export_data(client, submitter, "experiment", "tsv", True).data
+
+    nonempty = ["project_id", "submitter_id", "projects.code", "type"]
+    tsv_output = csv.DictReader(StringIO(str_data.decode("utf-8")), delimiter="\t")
+    for row in tsv_output:
+        for k, v in row.items():
+            if k not in nonempty:
+                assert v == ""
+
+    str_data = str(str_data, "utf-8")
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=str_data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
 
 
 def test_export_all_node_types_json(
@@ -978,7 +1027,7 @@ def test_zero_decimal_float(client, pg_driver, cgci_blgsp, submitter):
     Test that float values with a zero decimal are accepted by Sheepdog
     for properites of type "number" even if they look like integers. 
     We are testing with TSV because the str values from TSV are cast 
-    to the proper type by Sheepdog. 
+    to the proper type by Sheepdog.  
     """
     resp = client.put(
         BLGSP_PATH,
@@ -1030,3 +1079,280 @@ def test_zero_decimal_float(client, pg_driver, cgci_blgsp, submitter):
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 200, resp.data
+
+
+def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that updating a non required field to null works correclty 
+    """
+    headers = submitter
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+            "experimental_description": "my desc",
+            "number_samples_per_experimental_group": 1,
+            "copy_numbers_identified": True,
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        headers=headers,
+        data=data,
+    )
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+            "experimental_description": None,
+            "number_samples_per_experimental_group": None,
+            "copy_numbers_identified": None,
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        headers=headers,
+        data=data,
+    )
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"]["experimental_description"]
+        == None
+    )
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"][
+            "number_samples_per_experimental_group"
+        ]
+        == None
+    )
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"]["indels_identified"] == None
+    )
+
+
+def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that updating a required field to null results in an error
+    """
+    headers = submitter
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+    id = json.loads(resp.data)["entities"][0]["id"]
+
+    data = json.dumps({"submitter_id": None,})
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 400, resp.data
+
+    data = json.dumps({"type": None,})
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 400, resp.data
+
+    data = json.dumps({"id": None,})
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 400, resp.data
+
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers, data=data,
+    )
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"]["submitter_id"]
+        == "BLGSP-71-06-00019"
+    )
+    assert json.loads(resp.data)["entities"][0]["properties"]["type"] == "experiment"
+    assert json.loads(resp.data)["entities"][0]["properties"]["id"] == id
+
+
+def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that we can update a TSV file with null
+    """
+
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+            "experimental_description": "my desc",
+            "number_samples_per_experimental_group": 1,
+        }
+    )
+
+    headers = submitter
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        headers=headers,
+        data=data,
+    )
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+
+    data = {
+        "type": "experiment",
+        "submitter_id": "BLGSP-71-06-00019",
+        "projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
+        "experimental_description": None,
+        "number_samples_per_experimental_group": None,
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+    print(data)
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        headers=headers,
+        data=data,
+    )
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"]["experimental_description"]
+        == None
+    )
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"][
+            "number_samples_per_experimental_group"
+        ]
+        == None
+    )
+
+
+def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that updating a required field (using TSV) to null results in an error
+    """
+
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+            "type_of_sample": "sample type",
+        }
+    )
+
+    headers = submitter
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data
+    id = json.loads(resp.data)["entities"][0]["id"]
+
+    data = {
+        "type": "experiment",
+        "submitter_id": None,
+        "projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
+        "id": None,
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 400, resp.data
+
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers, data=data,
+    )
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"]["submitter_id"]
+        == "BLGSP-71-06-00019"
+    )
+    assert json.loads(resp.data)["entities"][0]["properties"]["id"] == id
+
+
+def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that updating a non required enum field to null works correclty 
+    """
+    headers = submitter
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+            "type_of_data": "Raw",
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        headers=headers,
+        data=data,
+    )
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+
+    data = json.dumps(
+        {
+            "type": "experiment",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+            "type_of_data": None,
+        }
+    )
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert resp.status_code == 200, resp.data
+
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        headers=headers,
+        data=data,
+    )
+    print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
+    assert json.loads(resp.data)["entities"][0]["properties"]["type_of_data"] == None
