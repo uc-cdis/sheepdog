@@ -15,6 +15,7 @@ from cdislogging import get_logger
 import flask
 import psqlgraph
 
+from sheepdog import auth
 from sheepdog import dictionary
 from sheepdog.errors import InternalError, NotFoundError, UnsupportedError, UserError
 from sheepdog.globals import DELIMITERS, SUB_DELIMITERS, SUPPORTED_FORMATS
@@ -487,6 +488,7 @@ class ExportFile(object):
                 .props(project_id=self.project_id)
                 .all()
             )
+            auth.check_resource_access(self.program, self.project, self.nodes)
             found_ids = {node.node_id for node in self.nodes}
             if not found_ids:
                 raise NotFoundError("Unable to find {}".format(", ".join(ids)))
@@ -811,6 +813,12 @@ def export_all(node_label, project_id, file_format, db, without_id):
         # and secondly, all the relevant properties in linked nodes.
         query_args = [cls] + linked_props
         query = session.query(*query_args).prop("project_id", project_id)
+
+        #add filter by id the user is authorized to access
+        auth_ids = auth.get_authorized_ids(project_id.split('-')[0], project_id.split('-')[1])
+        if auth_ids:
+            query = query.prop_in('submitter_id', auth_ids)
+
         # Join the related node tables using the links.
         for link in cls._pg_links.values():
             query = query.outerjoin(link["edge_out"]).outerjoin(link["dst_type"])
