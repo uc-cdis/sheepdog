@@ -1156,20 +1156,20 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
     id = json.loads(resp.data)["entities"][0]["id"]
 
-    data = json.dumps({"submitter_id": None,})
+    data = json.dumps({"submitter_id": None})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
 
-    data = json.dumps({"type": None,})
+    data = json.dumps({"type": None})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
 
-    data = json.dumps({"id": None,})
+    data = json.dumps({"id": None})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
 
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers, data=data,
+        f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers, data=data
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
@@ -1304,7 +1304,7 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 400, resp.data
 
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers, data=data,
+        f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers, data=data
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
