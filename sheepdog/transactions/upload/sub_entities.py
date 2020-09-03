@@ -58,7 +58,7 @@ class FileUploadEntity(UploadEntity):
            index service
         2) If an id is provided in the submission we can look up that uuid in
            index service
-        2) The hash/file_size combo provided should be unique in the index
+        3) The hash/file_size combo provided should be unique in the index
            service for each file
 
     Handling Relationship Between Graph Node and Indexed File:
