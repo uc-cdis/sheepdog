@@ -147,7 +147,11 @@ class FileUploadEntity(UploadEntity):
 
         # file already indexed and object_id provided: data upload flow
         if self.use_object_id(self.entity_type) and self.object_id and self.file_exists:
-            if self._is_valid_hash_size_for_file():
+            if (
+                self._is_valid_hash_size_for_file()
+                and not self.file_by_uuid.acl
+                and not self.file_by_uuid.authz
+            ):
                 self.should_update_acl_uploader = True
         else:
             self._set_node_and_file_ids()
