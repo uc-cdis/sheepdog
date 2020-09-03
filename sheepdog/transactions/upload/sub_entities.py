@@ -112,7 +112,7 @@ class FileUploadEntity(UploadEntity):
         self.file_by_hash = None
         self.object_id = None
         self.urls = []
-        self.should_update_acl_uploader = False
+        self.should_update_acl_and_authz = False
 
     def parse(self, doc):
         """
@@ -154,7 +154,7 @@ class FileUploadEntity(UploadEntity):
                     hasattr(self.file_by_uuid, "authz") and self.file_by_uuid.authz
                 )
             ):
-                self.should_update_acl_uploader = True
+                self.should_update_acl_and_authz = True
         else:
             self._set_node_and_file_ids()
 
@@ -232,7 +232,7 @@ class FileUploadEntity(UploadEntity):
         try:
             if role == "create":
                 # data upload flow: update the blank record in indexd
-                if self.should_update_acl_uploader:
+                if self.should_update_acl_and_authz:
                     self._update_acl_uploader_for_file()
 
                     # Temporary fix to update authz field in index record
