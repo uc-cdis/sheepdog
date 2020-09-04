@@ -149,10 +149,8 @@ class FileUploadEntity(UploadEntity):
         if self.use_object_id(self.entity_type) and self.object_id and self.file_exists:
             if (
                 self._is_valid_hash_size_for_file()
-                and not (hasattr(self.file_by_uuid, "acl") and self.file_by_uuid.acl)
-                and not (
-                    hasattr(self.file_by_uuid, "authz") and self.file_by_uuid.authz
-                )
+                and not getattr(self.file_by_uuid, "acl", None)
+                and not getattr(self.file_by_uuid, "authz", None)
             ):
                 self.should_update_acl_and_authz = True
         else:
