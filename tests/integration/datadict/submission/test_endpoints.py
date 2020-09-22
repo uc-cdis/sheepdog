@@ -1356,3 +1356,45 @@ def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert json.loads(resp.data)["entities"][0]["properties"]["type_of_data"] == None
+
+
+def test_submit_blank_link(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    """
+    Test that a TSV can be submitted with an empty link column,
+    when the link is not required.
+    """
+    data = {
+        "type": "experimental_metadata",
+        "experiments.submitter_id": "",  # TSV link format
+        "data_type": "Experimental Metadata",
+        "file_name": "CGCI-file-b.bam",
+        "md5sum": "35b39360cc41a7b635980159aef265ba",
+        "data_format": "some_format",
+        "submitter_id": "BLGSP-71-experimental-01-b",
+        "data_category": "data_file",
+        "file_size": 42,
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "data/experimental_metadata_tmp.tsv",
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data

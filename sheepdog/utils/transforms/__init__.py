@@ -193,7 +193,10 @@ class DelimitedConverter(object):
         r_values = []
         for v in l_values:
             converted_value = self.convert_link_value(cls, link_name, prop, v)
-            r_values.append({prop: converted_value})
+            # only add the prop if there is a link - for example
+            # TSV submissions may include empty link columns
+            if converted_value:
+                r_values.append({prop: converted_value})
         return r_values
 
     @staticmethod
