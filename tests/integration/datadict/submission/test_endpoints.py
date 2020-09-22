@@ -1101,7 +1101,6 @@ def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
-        data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
 
@@ -1122,7 +1121,6 @@ def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
-        data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
@@ -1168,9 +1166,7 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
 
-    resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers, data=data
-    )
+    resp = client.get(f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers)
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
         json.loads(resp.data)["entities"][0]["properties"]["submitter_id"]
@@ -1202,7 +1198,6 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
-        data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
 
@@ -1240,7 +1235,6 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
-        data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
@@ -1303,9 +1297,7 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 400, resp.data
 
-    resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers, data=data
-    )
+    resp = client.get(f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers)
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
         json.loads(resp.data)["entities"][0]["properties"]["submitter_id"]
@@ -1333,7 +1325,6 @@ def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
-        data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
 
@@ -1352,10 +1343,69 @@ def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
-        data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert json.loads(resp.data)["entities"][0]["properties"]["type_of_data"] == None
+
+
+def test_update_to_null_link(client, cgci_blgsp, submitter, require_index_exists_off):
+    """
+    Test that updating a non required link to null works correctly
+    """
+    # create an entity with a link
+    headers = submitter
+    experiement_submitter_id = "BLGSP-71-06-00019"
+    experimental_metadata = {
+        "type": "experimental_metadata",
+        "submitter_id": "experimental_metadata_001",
+        "experiments": {"submitter_id": experiement_submitter_id},
+        "data_type": "Experimental Metadata",
+        "file_name": "CGCI-file-b.bam",
+        "md5sum": "35b39360cc41a7b635980159aef265ba",
+        "data_format": "some_format",
+        "submitter_id": "BLGSP-71-experimental-01-b",
+        "data_category": "data_file",
+        "file_size": 42,
+    }
+    resp = client.put(
+        BLGSP_PATH,
+        headers=submitter,
+        data=json.dumps(
+            [
+                {
+                    "type": "experiment",
+                    "submitter_id": experiement_submitter_id,
+                    "projects": {"code": "BLGSP"},
+                },
+                experimental_metadata,
+            ]
+        ),
+    )
+    assert resp.status_code == 200, json.dumps(json.loads(resp.data), indent=2)
+
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][1]['id']}",
+        headers=headers,
+    )
+    entity = json.loads(resp.data)["entities"][0]
+    assert (
+        entity["properties"]["experiments"][0]["submitter_id"]
+        == experiement_submitter_id
+    ), json.dumps(entity, indent=2)
+
+    # update the entity by explicitly removing the link
+    experimental_metadata["experiments"] = None
+    resp = client.put(
+        BLGSP_PATH, headers=headers, data=json.dumps(experimental_metadata)
+    )
+    assert resp.status_code == 200, json.dumps(json.loads(resp.data), indent=2)
+
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        headers=headers,
+    )
+    entity = json.loads(resp.data)["entities"][0]
+    assert "experiments" not in entity, json.dumps(entity, indent=2)
 
 
 def test_submit_blank_link(
