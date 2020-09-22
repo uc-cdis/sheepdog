@@ -834,8 +834,8 @@ def test_export_all_node_types_and_resubmit_json_with_empty_field(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
     """
-    Test that we can export an entity with empty fields (as json) then resubmit it. 
-    The exported entity should have the empty fields omitted. 
+    Test that we can export an entity with empty fields (as json) then resubmit it.
+    The exported entity should have the empty fields omitted.
     """
     js_id_data = do_test_export(client, pg_driver, submitter, "experiment", "json")
     js_data = json.loads(
@@ -857,7 +857,7 @@ def test_export_all_node_types_and_resubmit_tsv_with_empty_field(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
     """
-    Test that we can export an entity with empty fields (as tsv) then resubmit it. The empty values 
+    Test that we can export an entity with empty fields (as tsv) then resubmit it. The empty values
     of the exported entity should be empty strings.
     """
     str_id_data = do_test_export(client, pg_driver, submitter, "experiment", "tsv")
@@ -1025,9 +1025,9 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
 def test_zero_decimal_float(client, pg_driver, cgci_blgsp, submitter):
     """
     Test that float values with a zero decimal are accepted by Sheepdog
-    for properites of type "number" even if they look like integers. 
-    We are testing with TSV because the str values from TSV are cast 
-    to the proper type by Sheepdog.  
+    for properites of type "number" even if they look like integers.
+    We are testing with TSV because the str values from TSV are cast
+    to the proper type by Sheepdog.
     """
     resp = client.put(
         BLGSP_PATH,
@@ -1083,7 +1083,7 @@ def test_zero_decimal_float(client, pg_driver, cgci_blgsp, submitter):
 
 def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
     """
-    Test that updating a non required field to null works correclty 
+    Test that updating a non required field to null works correctly
     """
     headers = submitter
     data = json.dumps(
@@ -1316,7 +1316,7 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
 
 def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
     """
-    Test that updating a non required enum field to null works correclty 
+    Test that updating a non required enum field to null works correctly
     """
     headers = submitter
     data = json.dumps(
