@@ -2,8 +2,7 @@ authlib==0.14.2
 authutils==4.0.0
 boto==2.36.0
 cryptography==2.8
-# dictionaryutils==3.1.0
-git+https://git@github.com/uc-cdis/dictionaryutils.git@fix/optional-link#egg=dictionaryutils
+dictionaryutils==3.4.0
 envelopes==0.4
 Flask==1.1.1
 flask-cors==3.0.3
