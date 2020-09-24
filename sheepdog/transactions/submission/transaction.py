@@ -80,9 +80,7 @@ class SubmissionTransaction(TransactionBase):
 
     @property
     def submitted_entity_count(self):
-        """Returns the number of entities if submission is successful else 0.
-
-        """
+        """Returns the number of entities if submission is successful else 0."""
 
         if not self.success:
             return 0
@@ -162,8 +160,10 @@ class SubmissionTransaction(TransactionBase):
         from_addr = self.app_config.get("EMAIL_FROM_ADDRESS")
         to_addr = self.app_config.get("EMAIL_SUPPORT_ADDRESS")
         preformatted = self.app_config.get("EMAIL_NOTIFICATION_SUBMISSION")
-        subject = "[SUBMISSION] Project {project_id} has been submitted by {user}".format(
-            project_id=self.project_id, user=self.user.username
+        subject = (
+            "[SUBMISSION] Project {project_id} has been submitted by {user}".format(
+                project_id=self.project_id, user=self.user.username
+            )
         )
 
         number_of_cases = 0
