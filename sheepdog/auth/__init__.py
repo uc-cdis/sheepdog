@@ -130,7 +130,11 @@ def authorize(program, project, roles, resources_tmp=None):
         raise AuthZError("user is unauthorized")
 
 
-def create_resource(program, project=None):
+def create_resource(program, project=None, extra_data=None):
+    logger.warn("LUCA RESOURCE ATTENTION")
+    logger.warn(extra_data)
+
+
     resource = "/programs/{}".format(program)
     if project:
         resource += "/projects/{}".format(project)
@@ -174,6 +178,9 @@ def check_resource_access(program, project, nodes):
 
                 if tmp.label == stop_node:
                     subject_submitter_ids.append({"id": tmp_dad[0].node_id, "submitter_id": tmp_dad[0].props.get("submitter_id", None)})
+                else: 
+                    logger.warn("resource not found " + node.label)
+                    logger.warn(node)
 
     try:
         resources = [
@@ -185,6 +192,7 @@ def check_resource_access(program, project, nodes):
         return "You do not have read permission on project {} for one or more of the subjects requested"
 
 
+# TEST BUT YOU NEED TO ADD ACTUAL ID LIST NOT ONLY THE ONE LISTED IN THE DB
 def get_authorized_ids(program, project):
     try:
         mapping = flask.current_app.auth.auth_mapping(current_user.username)
