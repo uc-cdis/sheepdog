@@ -130,14 +130,30 @@ def authorize(program, project, roles, resources_tmp=None):
         raise AuthZError("user is unauthorized")
 
 
-def create_resource(program, project=None, extra_data=None):
+def create_resource(program, project=None, data=None):
     logger.warn("LUCA RESOURCE ATTENTION")
-    logger.warn(extra_data)
-
+    logger.warn(data)   # {'type': 'subject', 'persons': [{'submitter_id': 'lavefrrg'}], 'submitter_id': 'test_sub_1', 'state': 'validated'}
+    
 
     resource = "/programs/{}".format(program)
+
     if project:
         resource += "/projects/{}".format(project)
+
+    stop_node = flask.current_app.node_authz_entity
+    person_node = flask.current_app.subject_entity
+    logger.warn(stop_node)
+    logger.warn(person_node)
+    logger.warn(stop_node[:-1])
+    logger.warn(person_node[:-1])
+
+    if data and data["type"] == "person":
+        resource += "/persons/{}".format(data["submitter_id"])
+    elif data and data["type"] == "subject":
+        resource += "/persons/{}/subjects/{}".format(data["persons"][0]["submitter_id"], data["submitter_id"])
+    logger.warn(resource)
+
+
     logger.info("Creating arborist resource {}".format(resource))
 
     json_data = {

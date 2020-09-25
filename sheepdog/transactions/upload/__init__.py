@@ -141,14 +141,14 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
         )
 
         # create the resource in arborist
-        auth.create_resource(program, project, doc_args)
+        auth.create_resource(program, project, doc_args[3])
 
         return flask.jsonify(response)
     else:
         response, code = single_transaction_worker(transaction, *doc_args)
 
         # create the resource in arborist
-        auth.create_resource(program, project, doc_args)
+        auth.create_resource(program, project, doc_args[3])
 
         return flask.jsonify(response), code
 
