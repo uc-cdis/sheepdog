@@ -144,8 +144,8 @@ def create_resource(program, project=None, data=None):
     person_node = flask.current_app.subject_entity
     logger.warn(stop_node)
     logger.warn(person_node)
-    logger.warn(stop_node[:-1])
-    logger.warn(person_node[:-1])
+    logger.warn(stop_node.label)
+    logger.warn(person_node.label) # [:-1]
 
     if data and data["type"] == "person":
         resource += "/persons/{}".format(data["submitter_id"])
