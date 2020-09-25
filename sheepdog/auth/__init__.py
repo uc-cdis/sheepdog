@@ -140,17 +140,18 @@ def create_resource(program, project=None, data=None):
     if project:
         resource += "/projects/{}".format(project)
 
+
     stop_node = flask.current_app.node_authz_entity
     person_node = flask.current_app.subject_entity
-    logger.warn(stop_node)
-    logger.warn(person_node)
-    logger.warn(stop_node.label)
-    logger.warn(person_node.label) # [:-1]
-
-    if data and data["type"] == "person":
+    if data and data["type"] == person_node.label:
         resource += "/persons/{}".format(data["submitter_id"])
-    elif data and data["type"] == "subject":
-        resource += "/persons/{}/subjects/{}".format(data["persons"][0]["submitter_id"], data["submitter_id"])
+    elif data and data["type"] == stop_node.label:
+        person = None
+        if isinstance(data["persons"], list):
+            person = data["persons"][0]
+        else:
+            person = data["persons"]
+        resource += "/persons/{}/subjects/{}".format(person.["submitter_id"], data["submitter_id"])
     logger.warn(resource)
 
 
