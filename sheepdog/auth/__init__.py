@@ -151,7 +151,7 @@ def create_resource(program, project=None, data=None):
             person = data["persons"][0]
         else:
             person = data["persons"]
-        resource += "/persons/{}/subjects/{}".format(person.["submitter_id"], data["submitter_id"])
+        resource += "/persons/{}/subjects/{}".format(person["submitter_id"], data["submitter_id"])
     logger.warn(resource)
 
 
