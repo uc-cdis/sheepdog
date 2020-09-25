@@ -158,16 +158,22 @@ def app_init(app):
         app.logger.info("Using default Arborist base URL")
         app.auth = ArboristClient()
 
+
     app.node_authz_entity_name = os.environ.get("AUTHZ_ENTITY_NAME", None)
+    app.node_authz_entity = None
+    app.subject_entity  = None
     if app.node_authz_entity_name:
         full_module_name = "datamodelutils.models"
         mymodule = importlib.import_module(full_module_name)
         for i in dir(mymodule):
+            app.logger.warn(i)
+            if i.lower() == "person":
+                attribute = getattr(mymodule, i)
+                app.subject_entity  = attribute
             if i.lower() == app.node_authz_entity_name.lower():
                 attribute = getattr(mymodule, i)
                 app.node_authz_entity = attribute
-    else:
-        app.node_authz_entity = None
+    
 
 
 app = Flask(__name__)
