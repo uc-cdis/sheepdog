@@ -15,7 +15,9 @@ WORKDIR /sheepdog
 RUN python -m pip install --upgrade pip \
     && python -m pip install --upgrade setuptools \
     && pip --version \
-    && pip install -r requirements.txt
+    && pip install -r requirements.txt 
+    # && pip uninstall authlib -y \
+    # && pip install authlib==0.14.2
 
 RUN mkdir -p /var/www/sheepdog \
     && mkdir /run/ngnix/ \
