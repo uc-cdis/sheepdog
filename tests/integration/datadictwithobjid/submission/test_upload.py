@@ -542,6 +542,7 @@ def test_data_file_already_indexed_object_id_provided_hash_match(
     document.size = file["file_size"]
     document.hashes = {"md5": file["md5sum"], "other": "abc123"}
     document.acl = []
+    document.authz = []
     document.uploader = submitter_name
     get_index_uuid.return_value = document
     get_index_hash.return_value = document
@@ -578,6 +579,88 @@ def test_data_file_already_indexed_object_id_provided_hash_match(
 
     # check that the acl and uploader fields have been updated in indexd
     assert update_acl_uploader_indexd.called
+
+
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+)
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+)
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
+@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._update_acl_uploader_for_file"
+)
+def test_data_file_already_indexed_object_id_provided_hash_match_populated_acl(
+    update_acl_uploader_indexd,
+    create_alias,
+    create_index,
+    get_index_uuid,
+    get_index_hash,
+    client,
+    pg_driver,
+    submitter,
+    submitter_name,
+    cgci_blgsp,
+):
+    """
+    Test submitting when the file is already indexed in the index client,
+    an id is provided in the submission, and the size and hash match those
+    of the indexed file.
+
+    The submission should succeed but no new index should be created. Because
+    the acl field in the corresponding indexd record is already populated, the
+    authz field should not be updated during submission.
+    """
+    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
+
+    file = copy.deepcopy(DEFAULT_METADATA_FILE)
+    # provide the object_id of an existing indexed file
+    file["object_id"] = "14fd1746-61bb-401a-96d2-342cfaf70000"
+
+    document = MagicMock()
+    document.did = file["object_id"]
+    document.size = file["file_size"]
+    document.hashes = {"md5": file["md5sum"], "other": "abc123"}
+    document.acl = ["admin"]
+    document.authz = []
+    document.uploader = submitter_name
+    get_index_uuid.return_value = document
+    get_index_hash.return_value = document
+
+    # only return the correct document by uuid IF the uuid provided is
+    # the one from above
+    def get_index_by_uuid(uuid):
+        if uuid == document.did:
+            return document
+        else:
+            return None
+
+    get_index_uuid.side_effect = get_index_by_uuid
+
+    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp, data=file)
+
+    # no index or alias creation
+    assert not create_index.called
+    assert not create_alias.called
+
+    # response
+    assert_positive_response(resp)
+    entity = assert_single_entity_from_response(resp)
+    assert entity["action"] == "create"
+
+    path = "/v0/submission/CGCI/BLGSP/export/?format=json&ids={nid}".format(
+        nid=entity["id"]
+    )
+    r = client.get(path, headers=submitter)
+
+    data = r.json
+    assert data and len(data) == 1
+    assert data[0]["object_id"] == file["object_id"]
+
+    # check that the authz field has not been updated in indexd
+    assert not document.authz
 
 
 """ ----- TESTS THAT SHOULD RESULT IN SUBMISSION FAILURES ARE BELOW  ----- """
@@ -943,6 +1026,7 @@ def test_data_file_already_indexed_object_id_provided_hash_no_match(
     document.size = file["file_size"] + 10  # change hash/size
     document.hashes = {"md5": file["md5sum"]}
     document.acl = []
+    document.authz = []
     document.uploader = DEFAULT_SUBMITTER_ID
     get_index_uuid.return_value = document
     get_index_hash.return_value = document
@@ -1011,6 +1095,7 @@ def test_data_file_already_indexed_object_id_provided_no_hash(
     document.size = None
     document.hashes = None
     document.acl = []
+    document.authz = []
     document.uploader = DEFAULT_SUBMITTER_ID
     get_index_uuid.return_value = document
     get_index_hash.return_value = document
