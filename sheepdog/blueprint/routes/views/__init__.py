@@ -80,7 +80,7 @@ def root_create():
 
     Args:
         body (schema_program): input body
-    
+
     Responses:
         200: Registered successfully.
         403: Unauthorized request.
@@ -149,13 +149,13 @@ def root_create():
 def get_dictionary():
     """
     Return links to the JSON schema definitions.
-    
+
     Summary:
         Get the dictionary schema
 
     Tags:
         dictionary
-    
+
     Responses:
         200 (schema_links): Success
         403: Unauthorized request.
@@ -193,10 +193,10 @@ def get_templates():
 
     Summary:
         Get templates for all entity types
-    
+
     Tags:
         dictionary
-    
+
     Query Args:
         format (str): output format, ``csv`` or ``tsv``, default is tsv
         categories (str): list of entities' categories to include in the template
