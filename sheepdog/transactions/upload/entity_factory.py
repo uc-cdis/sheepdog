@@ -38,7 +38,7 @@ class UploadEntityFactory:
         node_type = doc.get("type")
         node_category = get_node_category(node_type)
 
-        if node_category in UploadEntity.DATA_FILE_CATEGORIES:
+        if node_category.endswith("_file"):
             return FileUploadEntity(transaction, config)
         else:
             return NonFileUploadEntity(transaction, config)
