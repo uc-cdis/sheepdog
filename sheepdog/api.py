@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 from flask import Flask, jsonify
 from psqlgraph import PsqlGraphDriver
@@ -162,6 +163,9 @@ app = Flask(__name__)
 
 
 # Setup logger
+app.logger.setLevel(
+    logging.DEBUG if (os.environ.get("GEN3_DEBUG") == "True") else logging.WARNING
+)
 app.logger.addHandler(get_handler())
 
 setup_default_handlers(app)
