@@ -166,6 +166,9 @@ app = Flask(__name__)
 app.logger.setLevel(
     logging.DEBUG if (os.environ.get("GEN3_DEBUG") == "True") else logging.WARNING
 )
+app.logger.propagate = False
+while app.logger.handlers:
+    app.logger.removeHandler(app.logger.handlers[0])
 app.logger.addHandler(get_handler())
 
 setup_default_handlers(app)
