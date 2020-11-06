@@ -51,8 +51,6 @@ class UploadEntity(EntityBase):
     session.
     """
 
-    DATA_FILE_CATEGORIES = ["data_file", "metadata_file", "index_file"]
-
     def __init__(self, transaction, config=None):
         """
         Args:
