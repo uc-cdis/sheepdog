@@ -647,9 +647,7 @@ class FileUploadEntity(UploadEntity):
             self.file_by_uuid._load()  # to sync new rev from server
         except requests.HTTPError as e:
             self.record_error(
-                "Failed to update acl and uploader fields in indexd: {}".format(
-                    e.message
-                )
+                "Failed to update acl and uploader fields in indexd: {}".format(e)
             )
 
     def get_file_from_index_by_hash(self):
@@ -673,7 +671,7 @@ class FileUploadEntity(UploadEntity):
                 raise UserError(
                     code=e.response.status_code,
                     message="Fail to register the data node in indexd. Detail {}".format(
-                        e.message
+                        e
                     ),
                 )
 
