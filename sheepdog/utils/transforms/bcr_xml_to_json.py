@@ -264,9 +264,7 @@ class BcrXmlToJsonParser(object):
             self.save_entity(entity_id, entity_type, props)
 
     def save_entity(self, entity_id, label, properties):
-        """Adds a entity to the graph
-
-        """
+        """Adds a entity to the graph"""
 
         if label == "file":
             raise ParsingError("This endpoint is not built to handle file entities")

@@ -225,13 +225,13 @@ def delete_program(program):
 
     Summary:
         Delete a program
-        
+
     Tags:
         program
 
     Args:
         program (str): |program_id|
-    
+
     Responses:
         204: Success.
         400: User error.
