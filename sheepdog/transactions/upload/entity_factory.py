@@ -38,7 +38,13 @@ class UploadEntityFactory:
         node_type = doc.get("type")
         node_category = get_node_category(node_type)
 
-        if node_category in UploadEntity.DATA_FILE_CATEGORIES:
+        if node_category.endswith("_file"):
+            transaction.logger.debug(
+                "Identified %s node as a data file node", node_type
+            )
             return FileUploadEntity(transaction, config)
         else:
+            transaction.logger.debug(
+                "Identified %s node as a non-data file node", node_type
+            )
             return NonFileUploadEntity(transaction, config)
