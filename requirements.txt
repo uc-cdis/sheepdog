@@ -11,7 +11,7 @@ fuzzywuzzy==0.6.1
 gen3authz==0.2.1
 graphene==2.0.1
 jsonschema==3.2
-lxml==4.4.2
+lxml==4.6.2
 pbr==2.0.0
 psycopg2==2.8.4
 python-keystoneclient==1.8.1
