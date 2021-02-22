@@ -31,9 +31,9 @@ env:
   global:
     - REPOSITORY="uc-cdis/sheepdog" PR_NUMBER="$TRAVIS_PULL_REQUEST"
     - GDC_ES_HOST=localhost
-    - CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 install:
+  - export CRYPTOGRAPHY_DONT_BUILD_RUST=1
   - pip install -r requirements.txt
   - python setup.py develop
   - pip install -r dev-requirements.txt
