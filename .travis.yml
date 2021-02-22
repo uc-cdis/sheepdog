@@ -33,6 +33,7 @@ env:
     - GDC_ES_HOST=localhost
 
 install:
+  - pip install --upgrade pip
   - export CRYPTOGRAPHY_DONT_BUILD_RUST=1
   - pip install -r requirements.txt
   - python setup.py develop
