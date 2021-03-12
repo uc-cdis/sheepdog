@@ -181,7 +181,7 @@ def check_resource_access(program, project, nodes):
             subject_submitter_ids.append({"id": node.node_id, "submitter_id": node.props.get("submitter_id", None)})
         else:
             for link in node._pg_links:  
-                tmp_dad = getattr(node, link)
+                tmp_dad = getattr(node, link)[0]
                 nodeType = link
                 path_tmp = nodeType
                 tmp = node._pg_links[link]["dst_type"] 
@@ -194,7 +194,7 @@ def check_resource_access(program, project, nodes):
                     tmp_dad = getattr(tmp_dad, nodeType)[0]
 
                 if tmp.label == stop_node:
-                    subject_submitter_ids.append({"id": tmp_dad[0].node_id, "submitter_id": tmp_dad[0].props.get("submitter_id", None)})
+                    subject_submitter_ids.append({"id": tmp_dad.node_id, "submitter_id": tmp_dad.props.get("submitter_id", None)})
                 else: 
                     logger.warn("resource not found " + node.label)
                     logger.warn(node)
