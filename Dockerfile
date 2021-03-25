@@ -11,6 +11,7 @@ RUN apk update \
 COPY . /sheepdog
 COPY ./deployment/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
 WORKDIR /sheepdog
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 RUN python -m pip install --upgrade pip \
     && python -m pip install --upgrade setuptools \
