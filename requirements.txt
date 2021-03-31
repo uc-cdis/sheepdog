@@ -28,7 +28,7 @@ cdis_oauth2client==1.0.0
 cdispyutils==1.0.4
 datamodelutils==1.0.0
 # required for gen3datamodel, not required for sheepdog
-psqlgraph==3.0.0
+psqlgraph==3.0.1
 cdiserrors==0.1.2
 cdislogging==1.0.0
 git+https://git@github.com/NCI-GDC/cdisutils.git@f54e393c89939b2200dfae45c6235cbe2bae1206#egg=cdisutils
