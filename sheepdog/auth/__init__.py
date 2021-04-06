@@ -140,7 +140,16 @@ def create_resource(program, project=None, data=None):
     if project:
         resource += "/projects/{}".format(project)
 
+    if type(data) is list:
+        for d in data:
+            get_and_create_resource_values(resource, d)
+    else:
+        get_and_create_resource_values(resource, data)
 
+    
+
+
+def get_and_create_resource_values(resource, data):
     stop_node = flask.current_app.node_authz_entity
     person_node = flask.current_app.subject_entity
     if data and data["type"] == person_node.label:
