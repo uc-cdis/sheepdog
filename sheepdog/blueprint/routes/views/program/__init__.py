@@ -140,7 +140,11 @@ def create_project(program):
     res = None
     doc = utils.parse.parse_request_json()
     if not isinstance(doc, dict):
-        raise UserError("Program endpoint only supports single documents")
+        raise UserError(
+            "The project creation endpoint only supports single documents (dict). Received data of type {}".format(
+                type(doc)
+            )
+        )
     if doc.get("type") and doc.get("type") not in ["project"]:
         raise UserError(
             "Invalid post to program endpoint with type='{}'".format(doc.get("type"))
