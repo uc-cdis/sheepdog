@@ -116,7 +116,11 @@ def root_create():
     node_id = None
     doc = parse.parse_request_json()
     if not isinstance(doc, dict):
-        raise UserError("Root endpoint only supports single documents")
+        raise UserError(
+            "The program creation endpoint only supports single documents (dict). Received data of type {}".format(
+                type(doc)
+            )
+        )
     if doc.get("type") != "program":
         raise UserError("Invalid type in key type='{}'".format(doc.get("type")))
     phsid = doc.get("dbgap_accession_number")

@@ -111,13 +111,13 @@ def require_sheepdog_project_admin(func):
     return authorize_and_call
 
 
-def authorize(program, project, roles, resources_tmp=None):
+def authorize(program, project, roles, resource_list=None):
     resource = "/programs/{}/projects/{}".format(program, project)
 
     resources = []
-    if resources_tmp:
-        for resource_tmp in resources_tmp:
-            resources.append(resource + resource_tmp)
+    if resource_list:
+        for res in resource_list:
+            resources.append(resource + res)
     else:
         resources = [resource]
 
@@ -131,16 +131,19 @@ def authorize(program, project, roles, resources_tmp=None):
 
 
 def create_resource(program, project=None, data=None):
-    logger.warn("LUCA RESOURCE ATTENTION")
-    logger.warn(data)   # {'type': 'subject', 'persons': [{'submitter_id': 'lavefrrg'}], 'submitter_id': 'test_sub_1', 'state': 'validated'}
-    
-
     resource = "/programs/{}".format(program)
 
     if project:
         resource += "/projects/{}".format(project)
 
+    if type(data) is list:
+        for d in data:
+            get_and_create_resource_values(resource, d)
+    else:
+        get_and_create_resource_values(resource, data)
 
+
+def get_and_create_resource_values(resource, data):
     stop_node = flask.current_app.node_authz_entity
     person_node = flask.current_app.subject_entity
     if data and data["type"] == person_node.label:
