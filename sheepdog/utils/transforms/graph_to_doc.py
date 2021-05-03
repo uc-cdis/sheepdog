@@ -159,7 +159,7 @@ def list_to_comma_string(val, file_format):
         return ""
 
     if isinstance(val, list):
-        val = ",".join(val)
+        val = ",".join((str(x) for x in val))
     return val
 
 
