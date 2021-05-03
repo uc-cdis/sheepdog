@@ -33,11 +33,18 @@ def parse_bool_from_string(value):
 def parse_list_from_string(value):
     """
     Handle array fields by converting them to a list.
+    Try to cast to float to handle arrays of numbers.
 
     Example:
-        1,2,3 -> ['1','2','3']
+        a,b,c -> ['a','b','c']
+        1,2,3 -> [1,2,3]
     """
-    return [x.strip() for x in value.split(",")]
+    items = [x.strip() for x in value.split(",")]
+    try:
+        items = [float(x) for x in items]
+    except ValueError:
+        pass  # not an array of numbers
+    return items
 
 
 def set_row_type(row):
