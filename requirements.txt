@@ -11,11 +11,11 @@ fuzzywuzzy==0.6.1
 gen3authz==0.2.1
 graphene==2.0.1
 jsonschema==3.2
-lxml==4.4.2
+lxml==4.6.3
 pbr==2.0.0
 psycopg2==2.8.4
 python-keystoneclient==1.8.1
-PyYAML==5.1
+PyYAML==5.4
 requests==2.22.0
 setuptools==40.3.0
 six==1.12.0
@@ -33,6 +33,6 @@ cdiserrors==0.1.2
 cdislogging==1.0.0
 git+https://git@github.com/NCI-GDC/cdisutils.git@f54e393c89939b2200dfae45c6235cbe2bae1206#egg=cdisutils
 gen3dictionary==2.0.1
-gen3datamodel==3.0.2
+gen3datamodel==3.0.3
 git+https://git@github.com/uc-cdis/indexclient.git@2.0.0#egg=indexclient
 git+https://git@github.com/uc-cdis/storage-client.git@1.0.0#egg=storageclient
