@@ -285,7 +285,7 @@ def get_entities_by_id(program, project, entity_id_string):
         if missing_entities:
             raise UserError(
                 "Not found: {}".format(", ".join(missing_entities), code=404)
-            )     
+            )
         return flask.jsonify({"entities": utils.create_entity_list(entities.values())})
 
 
