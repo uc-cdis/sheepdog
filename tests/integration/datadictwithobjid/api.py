@@ -7,6 +7,8 @@ Complimentary to conftest.py it sets up certain functionality
 
 import sqlite3
 import sys
+import os
+import importlib
 
 import cdis_oauth2client
 from cdis_oauth2client import OAuth2Client, OAuth2Error
