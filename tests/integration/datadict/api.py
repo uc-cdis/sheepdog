@@ -20,6 +20,7 @@ from indexd.index.drivers.alchemy import SQLAlchemyIndexDriver
 from indexd.alias.drivers.alchemy import SQLAlchemyAliasDriver
 from indexd.auth.drivers.alchemy import SQLAlchemyAuthDriver
 from psqlgraph import PsqlGraphDriver
+from datamodelutils import models, validators, postgres_admin
 
 import sheepdog
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
