@@ -136,7 +136,7 @@ def create_resource(program, project=None, data=None):
     if project:
         resource += "/projects/{}".format(project)
 
-    if type(data) is list:
+    if isinstance(data, list):
         for d in data:
             get_and_create_resource_values(resource, d)
     else:
@@ -183,22 +183,22 @@ def check_resource_access(program, project, nodes):
         if node.label == stop_node:
             subject_submitter_ids.append({"id": node.node_id, "submitter_id": node.props.get("submitter_id", None)})
         else:
-            for link in node._pg_links:  
+            for link in node._pg_links:
                 tmp_dad = getattr(node, link)[0]
                 nodeType = link
                 path_tmp = nodeType
-                tmp = node._pg_links[link]["dst_type"] 
+                tmp = node._pg_links[link]["dst_type"]
                 while tmp.label != stop_node and tmp.label != "program":
                     # assuming ony one parents
                     nodeType = list(tmp._pg_links.keys())[0]
-                    path_tmp = path_tmp + "." + nodeType 
+                    path_tmp = path_tmp + "." + nodeType
                     tmp = tmp._pg_links[nodeType]["dst_type"]
                     # TODO double check this with deeper relationship > 2 nodes under project
                     tmp_dad = getattr(tmp_dad, nodeType)[0]
 
                 if tmp.label == stop_node:
                     subject_submitter_ids.append({"id": tmp_dad.node_id, "submitter_id": tmp_dad.props.get("submitter_id", None)})
-                else: 
+                else:
                     logger.warn("resource not found " + node.label)
                     logger.warn(node)
 
@@ -225,7 +225,7 @@ def get_authorized_ids(program, project):
     base_resource_path = "/programs/{}/projects/{}".format(program, project)
     result = [resource_path for resource_path, permissions in mapping.items() if base_resource_path in resource_path]
     ids = []
-    
+
     for path in result:
         parts = path.strip("/").split("/")
         if path != "/" and parts[0] != "programs":
@@ -236,7 +236,6 @@ def get_authorized_ids(program, project):
 
         if len(parts) <  6:
             return(None)
-            break
         else:
             ids.append(parts[5])
 

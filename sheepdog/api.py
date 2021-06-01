@@ -174,7 +174,7 @@ def app_init(app):
             if i.lower() == app.node_authz_entity_name.lower():
                 attribute = getattr(mymodule, i)
                 app.node_authz_entity = attribute
-    
+
 
 
 app = Flask(__name__)

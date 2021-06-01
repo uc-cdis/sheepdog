@@ -7,6 +7,8 @@ Complimentary to conftest.py it sets up certain functionality
 
 import sqlite3
 import sys
+import os
+import importlib
 
 import cdis_oauth2client
 from cdis_oauth2client import OAuth2Client, OAuth2Error
@@ -18,6 +20,7 @@ from indexd.index.drivers.alchemy import SQLAlchemyIndexDriver
 from indexd.alias.drivers.alchemy import SQLAlchemyAliasDriver
 from indexd.auth.drivers.alchemy import SQLAlchemyAuthDriver
 from psqlgraph import PsqlGraphDriver
+from datamodelutils import models, validators, postgres_admin
 
 import sheepdog
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
@@ -82,6 +85,21 @@ def app_init(app):
         app.register_blueprint(sheepdog_blueprint, url_prefix="/v0/submission")
     except AssertionError:
         app.logger.info("Blueprint is already registered!!!")
+
+    app.node_authz_entity_name = os.environ.get("AUTHZ_ENTITY_NAME", None)
+    app.node_authz_entity = None
+    app.subject_entity  = None
+    if app.node_authz_entity_name:
+        full_module_name = "datamodelutils.models"
+        mymodule = importlib.import_module(full_module_name)
+        for i in dir(mymodule):
+            app.logger.warn(i)
+            if i.lower() == "person":
+                attribute = getattr(mymodule, i)
+                app.subject_entity  = attribute
+            if i.lower() == app.node_authz_entity_name.lower():
+                attribute = getattr(mymodule, i)
+                app.node_authz_entity = attribute
 
 
 app = Flask(__name__)
