@@ -4,7 +4,6 @@ import logging
 
 from flask import Flask, jsonify
 from psqlgraph import PsqlGraphDriver
-from sqlalchemy import MetaData, Table
 
 from authutils.oauth2 import client as oauth2_client
 from authutils.oauth2.client import blueprint as oauth2_blueprint
@@ -18,12 +17,10 @@ from gen3authz.client.arborist.client import ArboristClient
 
 
 import sheepdog
-from sheepdog.errors import (
+from sheepdog.errors import (  # noqa: F401
     APIError,
     setup_default_handlers,
     UnhealthyCheck,
-    NotFoundError,
-    InternalError,
 )
 from sheepdog.version_data import VERSION, COMMIT
 from sheepdog.globals import dictionary_version, dictionary_commit
@@ -44,7 +41,9 @@ def app_register_blueprints(app):
         url = app.config["DICTIONARY_URL"]
         datadictionary = DataDictionary(url=url)
     elif "PATH_TO_SCHEMA_DIR" in app.config:
-        datadictionary = DataDictionary(root_dir=app.config["PATH_TO_SCHEMA_DIR"])
+        datadictionary = DataDictionary(
+            root_dir=app.config["PATH_TO_SCHEMA_DIR"]
+        )  # noqa: E501
     else:
         import gdcdictionary
 
@@ -61,18 +60,27 @@ def app_register_blueprints(app):
     v0 = "/v0"
     app.register_blueprint(sheepdog_blueprint, url_prefix=v0 + "/submission")
     app.register_blueprint(sheepdog_blueprint, url_prefix="/submission")
-    app.register_blueprint(oauth2_blueprint.blueprint, url_prefix=v0 + "/oauth2")
+    app.register_blueprint(
+        oauth2_blueprint.blueprint, url_prefix=v0 + "/oauth2"
+    )  # noqa: E501
     app.register_blueprint(oauth2_blueprint.blueprint, url_prefix="/oauth2")
 
 
 def db_init(app):
     app.logger.info("Initializing PsqlGraph driver")
+    connect_args = {}
+    if app.config.get("PSQLGRAPH") and app.config["PSQLGRAPH"].get("sslmode"):
+        connect_args["sslmode"] = app.config["PSQLGRAPH"]["sslmode"]
     app.db = PsqlGraphDriver(
         host=app.config["PSQLGRAPH"]["host"],
         user=app.config["PSQLGRAPH"]["user"],
         password=app.config["PSQLGRAPH"]["password"],
         database=app.config["PSQLGRAPH"]["database"],
         set_flush_timestamps=True,
+        connect_args=connect_args,
+        isolation_level=app.config["PSQLGRAPH"].get(
+            "isolation_level", "READ_COMMITTED"
+        ),
     )
     if app.config.get("AUTO_MIGRATE_DATABASE"):
         migrate_database(app)
@@ -102,14 +110,19 @@ def migrate_database(app):
         else:
             # if the version is already up to date, that means there is
             # another migration wins, so silently exit
-            app.logger.info("The database version matches up. No need to do migration")
+            app.logger.info(
+                "The database version matches up. No need to do migration"
+            )  # noqa: E501
             return
     # check if such role exists
+    # does this need to have a session?
     with app.db.session_scope() as session:
+        session.connection(execution_options={"isolation_level": "READ COMMITTED"})
+        # TODO: address B608
         r = [
             i
             for i in session.execute(
-                "SELECT 1 FROM pg_roles WHERE rolname='{}'".format(read_role)
+                "SELECT 1 FROM pg_roles WHERE rolname='{}'".format(read_role)  # nosec
             )
         ]
     if len(r) != 0:
@@ -130,7 +143,9 @@ def app_init(app):
     app.config["IS_GDC"] = False
 
     # default settings
-    app.config["AUTO_MIGRATE_DATABASE"] = app.config.get("AUTO_MIGRATE_DATABASE", True)
+    app.config["AUTO_MIGRATE_DATABASE"] = app.config.get(
+        "AUTO_MIGRATE_DATABASE", True
+    )  # noqa: E501
     app.config["REQUIRE_FILE_INDEX_EXISTS"] = (
         # If True, enforce indexd record exists before file node registration
         app.config.get("REQUIRE_FILE_INDEX_EXISTS", False)
@@ -139,7 +154,9 @@ def app_init(app):
     if app.config.get("USE_USER_HARAKIRI", True):
         setup_user_harakiri(app)
 
-    app.config["AUTH_NAMESPACE"] = "/" + os.getenv("AUTH_NAMESPACE", "").strip("/")
+    app.config["AUTH_NAMESPACE"] = "/" + os.getenv("AUTH_NAMESPACE", "").strip(
+        "/"
+    )  # noqa: E501
 
     app_register_blueprints(app)
     db_init(app)
@@ -148,7 +165,9 @@ def app_init(app):
     try:
         app.secret_key = app.config["FLASK_SECRET_KEY"]
     except KeyError:
-        app.logger.error("Secret key not set in config! Authentication will not work")
+        app.logger.error(
+            "Secret key not set in config! Authentication will not work"
+        )  # noqa: E501
 
     # ARBORIST deprecated, replaced by ARBORIST_URL
     arborist_url = os.environ.get("ARBORIST_URL", os.environ.get("ARBORIST"))
@@ -164,7 +183,9 @@ app = Flask(__name__)
 
 # Setup logger
 app.logger.setLevel(
-    logging.DEBUG if (os.environ.get("GEN3_DEBUG") == "True") else logging.WARNING
+    logging.DEBUG
+    if (os.environ.get("GEN3_DEBUG") == "True")
+    else logging.WARNING  # noqa: E501
 )
 app.logger.propagate = False
 while app.logger.handlers:
@@ -189,6 +210,7 @@ def health_check():
     """
     with app.db.session_scope() as session:
         try:
+            session.connection(execution_options={"isolation_level": "READ COMMITTED"})
             session.execute("SELECT 1")
         except Exception:
             raise UnhealthyCheck("Unhealthy")
@@ -240,7 +262,9 @@ def _log_and_jsonify_exception(e):
 
 app.register_error_handler(APIError, _log_and_jsonify_exception)
 
-app.register_error_handler(sheepdog.errors.APIError, _log_and_jsonify_exception)
+app.register_error_handler(
+    sheepdog.errors.APIError, _log_and_jsonify_exception
+)  # noqa: E501
 app.register_error_handler(AuthError, _log_and_jsonify_exception)
 
 
@@ -258,5 +282,7 @@ def run_for_development(**kwargs):
     try:
         app_init(app)
     except Exception:
-        app.logger.exception("Couldn't initialize application, continuing anyway")
+        app.logger.exception(
+            "Couldn't initialize application, continuing anyway"
+        )  # noqa: E501
     app.run(**kwargs)

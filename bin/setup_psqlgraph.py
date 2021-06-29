@@ -7,15 +7,31 @@ from gdcdatamodel.models import *
 from psqlgraph import create_all, Node, Edge
 
 
-def try_drop_test_data(user, database, root_user="postgres", host="", root_password=""):
+def try_drop_test_data(  # nosec
+    user,
+    database="postgres",
+    root_user="postgres",
+    host="",
+    port="5432",
+    root_password="",
+    default_database="postgres",
+    use_ssl=False,
+):
     print("Dropping old test data")
-    connect_str = "postgres://{user}@{host}/postgres".format(user=root_user, host=host)
-    if root_password:
-        connect_str = "postgres://{user}:{password}@{host}/postgres".format(
-            user=root_user, password=root_password, host=host
-        )
+    connect_str = _get_connection_string(
+        user=root_user,
+        password=root_password,
+        host=host,
+        port=port,
+        database=default_database,
+    )
 
-    engine = create_engine(connect_str)
+    # added in for Postgresql SSL testing.
+    connect_args = {}
+    if use_ssl:
+        connect_args["sslmode"] = "require"
+
+    engine = create_engine(connect_str, connect_args=connect_args)
 
     conn = engine.connect()
     conn.execute("commit")
@@ -29,15 +45,33 @@ def try_drop_test_data(user, database, root_user="postgres", host="", root_passw
     conn.close()
 
 
-def setup_database(
+def _get_connection_string(user, password, host, port, database):
+    connect_str = "postgres://{user}@{host}:{port}/{database}".format(
+        user=user, host=host, port=port, database=database
+    )
+    if password:
+        connect_str = "postgres://{user}:{password}@{host}:{port}/{database}".format(
+            user=user,
+            password=password,
+            host=host,
+            port=port,
+            database=database,
+        )
+    return connect_str
+
+
+def setup_database(  # nosec
     user,
     password,
     database,
     root_user="postgres",
     host="",
+    port="5432",
     no_drop=False,
     no_user=False,
     root_password="",
+    default_database="postgres",
+    use_ssl=False,
 ):
     """
     setup the user and database
@@ -45,18 +79,35 @@ def setup_database(
     print("Setting up test database")
 
     if not no_drop:
-        try_drop_test_data(user, database, root_user, host, root_password)
-
-    connect_str = "postgres://{user}@{host}/postgres".format(user=root_user, host=host)
-    if password:
-        connect_str = "postgres://{user}:{password}@{host}/postgres".format(
-            user=root_user, password=root_password, host=host
+        try_drop_test_data(
+            user=user,
+            database=database,
+            root_user=root_user,
+            host=host,
+            port=port,
+            root_password=root_password,
+            default_database=default_database,
+            use_ssl=use_ssl,
         )
 
-    engine = create_engine(connect_str)
+    connect_str = _get_connection_string(
+        user=root_user,
+        password=root_password,
+        host=host,
+        port=port,
+        database=default_database,
+    )
+
+    # added in for Postgresql SSL testing.
+    connect_args = {}
+    if use_ssl:
+        connect_args["sslmode"] = "require"
+
+    engine = create_engine(connect_str, connect_args=connect_args)
     conn = engine.connect()
     conn.execute("commit")
 
+    # Use default db connection to set up schema
     create_stmt = 'CREATE DATABASE "{database}"'.format(database=database)
     try:
         conn.execute(create_stmt)
@@ -65,8 +116,9 @@ def setup_database(
 
     if not no_user:
         try:
+            user_no_host = user if "@" not in user else user.split("@")[0]
             user_stmt = "CREATE USER {user} WITH PASSWORD '{password}'".format(
-                user=user, password=password
+                user=user_no_host, password=password
             )
             conn.execute(user_stmt)
         except Exception as msg:
@@ -74,8 +126,8 @@ def setup_database(
         # User may already exist - GRANT privs on new db
         try:
             perm_stmt = (
-                "GRANT ALL PRIVILEGES ON DATABASE {database} to {password}"
-                "".format(database=database, password=password)
+                "GRANT ALL PRIVILEGES ON DATABASE {database} to {user}"
+                "".format(database=database, user=user_no_host)
             )
             conn.execute(perm_stmt)
             conn.execute("commit")
@@ -84,27 +136,40 @@ def setup_database(
     conn.close()
 
 
-def create_tables(host, user, password, database):
+def create_tables(host, port, user, password, database, use_ssl=False):
     """
     create a table
     """
     print("Creating tables in test database")
 
+    # added for Postgresql SSL
+    connect_args = {}
+    if use_ssl:
+        connect_args["sslmode"] = "require"
+
     engine = create_engine(
-        "postgres://{user}:{pwd}@{host}/{db}".format(
-            user=user, host=host, pwd=password, db=database
-        )
+        _get_connection_string(
+            user=user, password=password, host=host, port=port, database=database
+        ),
+        connect_args=connect_args,
     )
     create_all(engine)
     versioned_nodes.Base.metadata.create_all(engine)
 
 
-def create_indexes(host, user, password, database):
+def create_indexes(host, port, user, password, database, use_ssl=False):
     print("Creating indexes")
+
+    # added for Postgresql SSL
+    connect_args = {}
+    if use_ssl:
+        connect_args["sslmode"] = "require"
+
     engine = create_engine(
-        "postgres://{user}:{pwd}@{host}/{db}".format(
-            user=user, host=host, pwd=password, db=database
-        )
+        _get_connection_string(
+            user=user, password=password, host=host, port=port, database=database
+        ),
+        connect_args=connect_args,
     )
     index = lambda t, c: ["CREATE INDEX ON {} ({})".format(t, x) for x in c]
     for scls in Node.get_subclasses():
@@ -136,6 +201,9 @@ if __name__ == "__main__":
         "--host", type=str, action="store", default="localhost", help="psql-server host"
     )
     parser.add_argument(
+        "--port", type=str, action="store", default="5432", help="psql-server port"
+    )
+    parser.add_argument(
         "--user", type=str, action="store", default="test", help="psql test user"
     )
     parser.add_argument(
@@ -153,10 +221,20 @@ if __name__ == "__main__":
         help="psql test database",
     )
     parser.add_argument(
+        "--default-database",
+        type=str,
+        action="store",
+        default="postgres",
+        help="psql test database for root user",
+    )
+    parser.add_argument(
         "--no-drop", action="store_true", default=False, help="do not drop any data"
     )
     parser.add_argument(
         "--no-user", action="store_true", default=False, help="do not create user"
+    )
+    parser.add_argument(
+        "--use-ssl", type=bool, action="store", default=False, help="Use Psql SSL"
     )
 
     args = parser.parse_args()
@@ -164,8 +242,25 @@ if __name__ == "__main__":
         args.user,
         args.password,
         args.database,
+        port=args.port,
         no_drop=args.no_drop,
         no_user=args.no_user,
+        default_database=args.default_database,
+        use_ssl=args.use_ssl,
     )
-    create_tables(args.host, args.user, args.password, args.database)
-    create_indexes(args.host, args.user, args.password, args.database)
+    create_tables(
+        args.host,
+        args.port,
+        args.user,
+        args.password,
+        args.database,
+        use_ssl=args.use_ssl,
+    )
+    create_indexes(
+        args.host,
+        args.port,
+        args.user,
+        args.password,
+        args.database,
+        use_ssl=args.use_ssl,
+    )

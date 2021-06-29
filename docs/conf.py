@@ -12,9 +12,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
-import os
-import shlex
+import sys  # pylint: disable=W0611
+import os  # pylint: disable=W0611
+import shlex  # pylint: disable=W0611
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -54,7 +54,7 @@ master_doc = "contents"
 
 # General information about the project.
 project = "sheepdog"
-copyright = "2017, Center for Data Intensive Science"
+copyright = "2017, Center for Data Intensive Science"  # pylint: disable=W0622
 author = "Center for Data Intensive Science"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -148,7 +148,7 @@ html_theme_options = {}
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
+# html_static_path = ["_static"]
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied

@@ -15,7 +15,7 @@ import boto
 from datamodelutils import models as md
 from flask import g
 from moto import mock_s3
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 from sheepdog.globals import ROLES
 from sheepdog.transactions.upload import UploadTransaction
@@ -62,7 +62,11 @@ def put_cgci(client, auth=None):
     path = "/v0/submission"
     headers = auth
     data = json.dumps(
-        {"name": "CGCI", "type": "program", "dbgap_accession_number": "phs000235"}
+        {
+            "name": "CGCI",
+            "type": "program",
+            "dbgap_accession_number": "phs000235",
+        }  # noqa: E501
     )
     r = client.put(path, headers=headers, data=data)
     return r
@@ -92,7 +96,11 @@ def put_cgci_blgsp(client, auth=None):
 def put_tcga_brca(client, submitter):
     headers = submitter
     data = json.dumps(
-        {"name": "TCGA", "type": "program", "dbgap_accession_number": "phs000178"}
+        {
+            "name": "TCGA",
+            "type": "program",
+            "dbgap_accession_number": "phs000178",
+        }  # noqa: E501
     )
     r = client.put("/v0/submission/", headers=headers, data=data)
     assert r.status_code == 200, r.data
@@ -114,12 +122,16 @@ def put_tcga_brca(client, submitter):
 
 def add_and_get_new_experimental_metadata_count(pg_driver):
     with pg_driver.session_scope() as s:
-        experimental_metadata = pg_driver.nodes(md.ExperimentalMetadata).first()
+        experimental_metadata = pg_driver.nodes(
+            md.ExperimentalMetadata
+        ).first()  # noqa: E501
         new_experimental_metadata = md.ExperimentalMetadata(str(uuid.uuid4()))
         new_experimental_metadata.props = experimental_metadata.props
         new_experimental_metadata.submitter_id = "case-2"
         s.add(new_experimental_metadata)
-        experimental_metadata_count = pg_driver.nodes(md.ExperimentalMetadata).count()
+        experimental_metadata_count = pg_driver.nodes(
+            md.ExperimentalMetadata
+        ).count()  # noqa: E501
     return experimental_metadata_count
 
 
@@ -129,7 +141,8 @@ def test_program_creation_endpoint(client, pg_driver, submitter):
     assert resp.status_code == 200, resp.data
     print(resp.data)
     resp = client.get("/v0/submission/")
-    assert resp.json["links"] == ["/v0/submission/CGCI"], resp.json
+    condition_to_check = "/v0/submission/CGCI" in resp.json["links"] and resp.json
+    assert condition_to_check, resp.json
 
 
 def test_program_creation_unauthorized(
@@ -160,7 +173,12 @@ def test_project_creation_endpoint(client, pg_driver, submitter):
     resp = client.get("/v0/submission/CGCI/")
     with pg_driver.session_scope():
         assert pg_driver.nodes(md.Project).count() == 1
-        n_cgci = pg_driver.nodes(md.Project).path("programs").props(name="CGCI").count()
+        n_cgci = (
+            pg_driver.nodes(md.Project)
+            .path("programs")
+            .props(name="CGCI")
+            .count()  # noqa: E501
+        )
         assert n_cgci == 1
     assert resp.json["links"] == ["/v0/submission/CGCI/BLGSP"], resp.json
 
@@ -236,7 +254,9 @@ def test_unauthorized_post(
     assert resp.status_code == 403
 
 
-def test_put_valid_entity_missing_target(client, pg_driver, cgci_blgsp, submitter):
+def test_put_valid_entity_missing_target(
+    client, pg_driver, cgci_blgsp, submitter
+):  # noqa: E501
     with open(os.path.join(DATA_DIR, "sample.json"), "r") as f:
         sample = json.loads(f.read())
         sample["cases"] = {"submitter_id": "missing-case"}
@@ -246,9 +266,13 @@ def test_put_valid_entity_missing_target(client, pg_driver, cgci_blgsp, submitte
     print(r.data)
     assert r.status_code == 400, r.data
     assert r.status_code == r.json["code"]
-    assert r.json["entities"][0]["errors"][0]["keys"] == ["cases"], r.json["entities"][
+    assert r.json["entities"][0]["errors"][0]["keys"] == ["cases"], r.json[
+        "entities"
+    ][  # noqa: E501
         0
-    ]["errors"]
+    ][
+        "errors"
+    ]
     assert r.json["entities"][0]["errors"][0]["type"] == "INVALID_LINK"
     assert (
         "[{'project_id': 'CGCI-BLGSP', 'submitter_id': 'missing-case'}]"
@@ -256,7 +280,9 @@ def test_put_valid_entity_missing_target(client, pg_driver, cgci_blgsp, submitte
     )
 
 
-def test_put_valid_entity_invalid_type(client, pg_driver, cgci_blgsp, submitter):
+def test_put_valid_entity_invalid_type(
+    client, pg_driver, cgci_blgsp, submitter
+):  # noqa: E501
     r = client.put(
         BLGSP_PATH,
         headers=submitter,
@@ -289,16 +315,28 @@ def test_put_valid_entity_invalid_type(client, pg_driver, cgci_blgsp, submitter)
     print(r.json)
     assert r.status_code == 400, r.data
     assert r.status_code == r.json["code"]
-    assert r.json["entities"][2]["errors"][0]["keys"] == ["year_of_birth"], r.data
-    assert r.json["entities"][2]["errors"][0]["type"] == "INVALID_VALUE", r.data
+    assert r.json["entities"][2]["errors"][0]["keys"] == [
+        "year_of_birth"
+    ], r.data  # noqa: E501
+    assert (
+        r.json["entities"][2]["errors"][0]["type"] == "INVALID_VALUE"
+    ), r.data  # noqa: E501
 
 
 def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
     path = BLGSP_PATH
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), "r") as f:
-            resp = client.post(path, headers=submitter, data=f.read())
-            assert resp.status_code == 201, resp.data
+            data = json.loads(f.read())
+            resp = client.post(path, headers=submitter, data=json.dumps(data))
+            resp_data = json.loads(resp.data)
+            # could already exist in the DB.
+            condition_to_check = (resp.status_code == 201 and resp.data) or (
+                resp.status_code == 400
+                and "already exists in the DB"
+                in resp_data["entities"][0]["errors"][0]["message"]
+            )
+            assert condition_to_check, resp.data
 
 
 def post_example_entities_together(client, submitter, data_fnames2=None):
@@ -322,22 +360,34 @@ def put_example_entities_together(client, headers):
     return client.put(path, headers=headers, data=json.dumps(data))
 
 
-def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
+def test_post_example_entities_together(
+    client, pg_driver, cgci_blgsp, submitter
+):  # noqa: E501
     with open(os.path.join(DATA_DIR, "case.json"), "r") as f:
         case_sid = json.loads(f.read())["submitter_id"]
+        print(case_sid)
     resp = post_example_entities_together(client, submitter)
     print(resp.data)
-    assert resp.status_code == 201, resp.data
+    resp_data = json.loads(resp.data)
+    # could already exist in the DB.
+    condition_to_check = (resp.status_code == 201 and resp.data) or (
+        resp.status_code == 400
+        and "already exists in the DB"
+        in resp_data["entities"][0]["errors"][0]["message"]
+    )
+    assert condition_to_check, resp.data
 
 
 def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get("/v0/submission/CGCI/BLGSP/_dictionary")
     print(resp.data)
     assert (
-        "/v0/submission/CGCI/BLGSP/_dictionary/slide" in json.loads(resp.data)["links"]
+        "/v0/submission/CGCI/BLGSP/_dictionary/slide"
+        in json.loads(resp.data)["links"]  # noqa: E501
     )
     assert (
-        "/v0/submission/CGCI/BLGSP/_dictionary/case" in json.loads(resp.data)["links"]
+        "/v0/submission/CGCI/BLGSP/_dictionary/case"
+        in json.loads(resp.data)["links"]  # noqa: E501
     )
     assert (
         "/v0/submission/CGCI/BLGSP/_dictionary/aliquot"
@@ -345,12 +395,16 @@ def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
     )
 
 
-def test_top_level_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
+def test_top_level_dictionary_list_entries(
+    client, pg_driver, cgci_blgsp, submitter
+):  # noqa: E501
     resp = client.get("/v0/submission/_dictionary")
     print(resp.data)
     assert "/v0/submission/_dictionary/slide" in json.loads(resp.data)["links"]
     assert "/v0/submission/_dictionary/case" in json.loads(resp.data)["links"]
-    assert "/v0/submission/_dictionary/aliquot" in json.loads(resp.data)["links"]
+    assert (
+        "/v0/submission/_dictionary/aliquot" in json.loads(resp.data)["links"]
+    )  # noqa: E501
 
 
 def test_dictionary_get_entries(client, pg_driver, cgci_blgsp, submitter):
@@ -358,7 +412,9 @@ def test_dictionary_get_entries(client, pg_driver, cgci_blgsp, submitter):
     assert json.loads(resp.data)["id"] == "aliquot"
 
 
-def test_top_level_dictionary_get_entries(client, pg_driver, cgci_blgsp, submitter):
+def test_top_level_dictionary_get_entries(
+    client, pg_driver, cgci_blgsp, submitter
+):  # noqa: E501
     resp = client.get("/v0/submission/_dictionary/aliquot")
     assert json.loads(resp.data)["id"] == "aliquot"
 
@@ -418,7 +474,9 @@ def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter):
     assert resp_json["code"] == 400
     assert resp_json["entity_error_count"] == 1
     assert resp_json["created_entity_count"] == 0
-    assert resp_json["entities"][0]["errors"][0]["type"] == "INVALID_PERMISSIONS"
+    assert (
+        resp_json["entities"][0]["errors"][0]["type"] == "INVALID_PERMISSIONS"
+    )  # noqa: E501
 
 
 def test_insert_multiple_parents_and_export_by_ids(
@@ -434,7 +492,8 @@ def test_insert_multiple_parents_and_export_by_ids(
     data = json.loads(resp.data)
     submitted_id = data["entities"][0]["id"]
     resp = client.get(
-        "/v0/submission/CGCI/BLGSP/export/?ids={}".format(submitted_id), headers=headers
+        "/v0/submission/CGCI/BLGSP/export/?ids={}".format(submitted_id),
+        headers=headers,  # noqa: E501
     )
     str_data = str(resp.data)
     assert "BLGSP-71-experiment-01" in str_data
@@ -451,7 +510,9 @@ def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
         assert ct is not None, case.props
 
 
-def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, submitter):
+def test_disallow_cross_project_references(
+    client, pg_driver, cgci_blgsp, submitter
+):  # noqa: E501
     put_tcga_brca(client, submitter)
     data = {
         "progression_or_recurrence": "unknown",
@@ -497,7 +558,9 @@ def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
 
-def test_catch_internal_errors(monkeypatch, client, pg_driver, cgci_blgsp, submitter):
+def test_catch_internal_errors(
+    monkeypatch, client, pg_driver, cgci_blgsp, submitter
+):  # noqa: E501
     """
     Monkey patch an essential function to just raise an error and assert that
     this error is caught and recorded as a transactional_error.
@@ -506,11 +569,13 @@ def test_catch_internal_errors(monkeypatch, client, pg_driver, cgci_blgsp, submi
     def just_raise_exception(self):
         raise Exception("test")
 
-    monkeypatch.setattr(UploadTransaction, "pre_validate", just_raise_exception)
+    monkeypatch.setattr(
+        UploadTransaction, "pre_validate", just_raise_exception
+    )  # noqa: E501
     try:
         r = put_example_entities_together(client, submitter)
         assert len(r.json["transactional_errors"]) == 1, r.data
-    except:
+    except:  # noqa: E722
         raise
 
 
@@ -555,13 +620,17 @@ def test_get_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     post_example_entities_together(client, submitter)
     with pg_driver.session_scope():
         case_id = pg_driver.nodes(md.Case).first().node_id
-    path = "/v0/submission/CGCI/BLGSP/entities/{case_id}".format(case_id=case_id)
+    path = "/v0/submission/CGCI/BLGSP/entities/{case_id}".format(
+        case_id=case_id
+    )  # noqa: E501
     r = client.get(path, headers=submitter)
     assert r.status_code == 200, r.data
     assert r.json["entities"][0]["properties"]["id"] == case_id, r.data
 
 
-def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter):
+def test_invalid_file_index(
+    monkeypatch, client, pg_driver, cgci_blgsp, submitter
+):  # noqa: E501
     """
     Test that submitting an invalid data file doesn't create an index and an
     alias.
@@ -574,17 +643,25 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
     # file is invalid, change the ``create`` and ``create_alias`` methods to
     # raise an error.
     monkeypatch.setattr(
-        UploadTransaction, "index_client.create", fail_index_test, raising=False
+        UploadTransaction,
+        "index_client.create",
+        fail_index_test,
+        raising=False,  # noqa: E501
     )
     monkeypatch.setattr(
-        UploadTransaction, "index_client.create_alias", fail_index_test, raising=False
+        UploadTransaction,
+        "index_client.create_alias",
+        fail_index_test,
+        raising=False,  # noqa: E501
     )
     # Attempt to post the invalid entities.
     test_fnames = data_fnames + [
         "read_group.json",
         "submitted_unaligned_reads_invalid.json",
     ]
-    resp = post_example_entities_together(client, submitter, data_fnames2=test_fnames)
+    resp = post_example_entities_together(
+        client, submitter, data_fnames2=test_fnames
+    )  # noqa: E501
     print(resp)
 
 
@@ -605,8 +682,13 @@ def test_valid_file_index(
     # called.
 
     # Attempt to post the valid entities.
-    test_fnames = data_fnames + ["read_group.json", "submitted_unaligned_reads.json"]
-    resp = post_example_entities_together(client, submitter, data_fnames2=test_fnames)
+    test_fnames = data_fnames + [
+        "read_group.json",
+        "submitted_unaligned_reads.json",
+    ]  # noqa: E501
+    resp = post_example_entities_together(
+        client, submitter, data_fnames2=test_fnames
+    )  # noqa: E501
     assert resp.status_code == 201, resp.data
 
     # this is a node that will have an indexd entry
@@ -685,7 +767,9 @@ def test_submit_valid_csv(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
 
-def test_can_submit_with_asterisk_json(client, pg_driver, cgci_blgsp, submitter):
+def test_can_submit_with_asterisk_json(
+    client, pg_driver, cgci_blgsp, submitter
+):  # noqa: E501
     """
     Test that we can submit when some fields have asterisks prepended
     """
@@ -702,7 +786,9 @@ def test_can_submit_with_asterisk_json(client, pg_driver, cgci_blgsp, submitter)
     assert resp.status_code == 200, resp.data
 
 
-def test_can_submit_with_asterisk_tsv(client, pg_driver, cgci_blgsp, submitter):
+def test_can_submit_with_asterisk_tsv(
+    client, pg_driver, cgci_blgsp, submitter
+):  # noqa: E501
     """
     Test that we can submit when some fields have asterisks prepended
     """
@@ -740,7 +826,9 @@ def test_export_entity_by_id(
     post_example_entities_together(client, submitter, extended_data_fnames)
     with pg_driver.session_scope():
         case_id = pg_driver.nodes(md.Case).first().node_id
-    path = "/v0/submission/CGCI/BLGSP/export/?ids={case_id}".format(case_id=case_id)
+    path = "/v0/submission/CGCI/BLGSP/export/?ids={case_id}".format(
+        case_id=case_id
+    )  # noqa: E501
     r = client.get(path, headers=submitter)
     assert r.status_code == 200, r.data
     assert r.headers["Content-Disposition"].endswith("tsv")
@@ -754,13 +842,18 @@ def test_export_entity_by_id(
 
 def do_test_export(client, pg_driver, submitter, node_type, format_type):
     post_example_entities_together(client, submitter, extended_data_fnames)
-    experimental_metadata_count = add_and_get_new_experimental_metadata_count(pg_driver)
+    experimental_metadata_count = add_and_get_new_experimental_metadata_count(
+        pg_driver
+    )  # noqa: E501
     r = get_export_data(client, submitter, node_type, format_type, False)
     assert r.status_code == 200, r.data
     assert r.headers["Content-Disposition"].endswith(format_type)
     if format_type == "tsv":
         str_data = str(r.data, "utf-8")
-        assert len(str_data.strip().split("\n")) == experimental_metadata_count + 1
+        assert (
+            len(str_data.strip().split("\n"))
+            == experimental_metadata_count + 1  # noqa: E501
+        )
         return str_data
     else:
         js_data = json.loads(r.data)
@@ -781,7 +874,9 @@ def get_export_data(client, submitter, node_type, format_type, without_id):
 def test_export_all_node_types(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
-    do_test_export(client, pg_driver, submitter, "experimental_metadata", "tsv")
+    do_test_export(
+        client, pg_driver, submitter, "experimental_metadata", "tsv"
+    )  # noqa: E501
 
 
 def test_export_all_node_types_and_resubmit_json(
@@ -791,7 +886,9 @@ def test_export_all_node_types_and_resubmit_json(
         client, pg_driver, submitter, "experimental_metadata", "json"
     )
     js_data = json.loads(
-        get_export_data(client, submitter, "experimental_metadata", "json", True).data
+        get_export_data(
+            client, submitter, "experimental_metadata", "json", True
+        ).data  # noqa: E501
     )
 
     for o in js_id_data.get("data"):
@@ -801,7 +898,9 @@ def test_export_all_node_types_and_resubmit_json(
         assert resp.status_code == 200, resp.data
 
     headers = submitter
-    resp = client.post(BLGSP_PATH, headers=headers, data=json.dumps(js_data["data"]))
+    resp = client.post(
+        BLGSP_PATH, headers=headers, data=json.dumps(js_data["data"])
+    )  # noqa: E501
     assert resp.status_code == 201, resp.data
 
 
@@ -812,7 +911,9 @@ def test_export_all_node_types_and_resubmit_tsv(
         client, pg_driver, submitter, "experimental_metadata", "tsv"
     )
     str_data = str(
-        get_export_data(client, submitter, "experimental_metadata", "tsv", True).data,
+        get_export_data(
+            client, submitter, "experimental_metadata", "tsv", True
+        ).data,  # noqa: E501
         "utf-8",
     )
 
@@ -834,10 +935,13 @@ def test_export_all_node_types_and_resubmit_json_with_empty_field(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
     """
-    Test that we can export an entity with empty fields (as json) then resubmit it.
+    Test we can export an entity with empty fields (as json) then resubmit it.
     The exported entity should have the empty fields omitted.
     """
-    js_id_data = do_test_export(client, pg_driver, submitter, "experiment", "json")
+    js_id_data = do_test_export(  # noqa: F841
+        client, pg_driver, submitter, "experiment", "json"  # noqa: E501
+    )
+    assert js_id_data
     js_data = json.loads(
         get_export_data(client, submitter, "experiment", "json", True).data
     )
@@ -848,7 +952,9 @@ def test_export_all_node_types_and_resubmit_json_with_empty_field(
             assert key in nonempty
 
     headers = submitter
-    resp = client.put(BLGSP_PATH, headers=headers, data=json.dumps(js_data["data"]))
+    resp = client.put(
+        BLGSP_PATH, headers=headers, data=json.dumps(js_data["data"])
+    )  # noqa: E501
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 200, resp.data
 
@@ -857,14 +963,21 @@ def test_export_all_node_types_and_resubmit_tsv_with_empty_field(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
     """
-    Test that we can export an entity with empty fields (as tsv) then resubmit it. The empty values
-    of the exported entity should be empty strings.
+    Test we can export an entity with empty fields (as tsv) then resubmit it.
+    The empty values of the exported entity should be empty strings.
     """
-    str_id_data = do_test_export(client, pg_driver, submitter, "experiment", "tsv")
-    str_data = get_export_data(client, submitter, "experiment", "tsv", True).data
+    str_id_data = do_test_export(  # noqa: F841
+        client, pg_driver, submitter, "experiment", "tsv"  # noqa: E501
+    )
+    assert str_id_data
+    str_data = get_export_data(
+        client, submitter, "experiment", "tsv", True
+    ).data  # noqa: E501
 
     nonempty = ["project_id", "submitter_id", "projects.code", "type"]
-    tsv_output = csv.DictReader(StringIO(str_data.decode("utf-8")), delimiter="\t")
+    tsv_output = csv.DictReader(
+        StringIO(str_data.decode("utf-8")), delimiter="\t"
+    )  # noqa: E501
     for row in tsv_output:
         for k, v in row.items():
             if k not in nonempty:
@@ -898,7 +1011,7 @@ def test_export_all_node_types_json(
 
 
 def test_submit_export_encoding(client, pg_driver, cgci_blgsp, submitter):
-    """Test that we can submit and export non-ascii characters without errors"""
+    """Test that we can submit and export non-ascii characters without errors"""  # noqa: E501
     # submit metadata containing non-ascii characters
     headers = submitter
     data = json.dumps(
@@ -918,7 +1031,9 @@ def test_submit_export_encoding(client, pg_driver, cgci_blgsp, submitter):
     r = client.get(path, headers=submitter)
     assert r.status_code == 200, r.data
     assert r.headers["Content-Disposition"].endswith("tsv")
-    tsv_output = csv.DictReader(StringIO(r.data.decode("utf-8")), delimiter="\t")
+    tsv_output = csv.DictReader(
+        StringIO(r.data.decode("utf-8")), delimiter="\t"
+    )  # noqa: E501
     row = next(tsv_output)
     assert row["submitter_id"] == "BLGSP-submitter-ü"
 
@@ -932,7 +1047,9 @@ def test_submit_export_encoding(client, pg_driver, cgci_blgsp, submitter):
     r = client.get(path, headers=submitter)
     assert r.status_code == 200, r.data
     assert r.headers["Content-Disposition"].endswith("tsv")
-    tsv_output = csv.DictReader(StringIO(r.data.decode("utf-8")), delimiter="\t")
+    tsv_output = csv.DictReader(
+        StringIO(r.data.decode("utf-8")), delimiter="\t"
+    )  # noqa: E501
     row = next(tsv_output)
     assert row["submitter_id"] == "BLGSP-submitter-ü"
 
@@ -946,7 +1063,6 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
     """
     Make sure that concurrent transactions don't cause duplicate submission.
     """
-
     data = {
         "type": "experiment",
         "submitter_id": "BLGSP-71-06-00019",
@@ -1010,12 +1126,17 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
                 s1.rollback()
                 utx1.integrity_check()
                 response = utx1.json
+            # OperationalError in the case of SERIALIZABLE isolation_level
+            except OperationalError:
+                s1.rollback()
+                utx1.integrity_check()
+                response = utx1.json
 
     assert response["entity_error_count"] == 1
     assert response["code"] == 400
     assert (
         response["entities"][0]["errors"][0]["message"]
-        == "experiment with {'project_id': 'CGCI-BLGSP', 'submitter_id': 'BLGSP-71-06-00019'} already exists in the DB"
+        == "experiment with {'project_id': 'CGCI-BLGSP', 'submitter_id': 'BLGSP-71-06-00019'} already exists in the DB"  # noqa: E501
     )
 
     with pg_driver.session_scope():
@@ -1099,7 +1220,7 @@ def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 200, resp.data
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",  # noqa: E501
         headers=headers,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
@@ -1119,22 +1240,25 @@ def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",  # noqa: E501
         headers=headers,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
-        json.loads(resp.data)["entities"][0]["properties"]["experimental_description"]
-        == None
+        json.loads(resp.data)["entities"][0]["properties"][
+            "experimental_description"
+        ]  # noqa: E501
+        is None
     )
     assert (
         json.loads(resp.data)["entities"][0]["properties"][
             "number_samples_per_experimental_group"
         ]
-        == None
+        is None
     )
     assert (
-        json.loads(resp.data)["entities"][0]["properties"]["indels_identified"] == None
+        json.loads(resp.data)["entities"][0]["properties"]["indels_identified"]
+        is None  # noqa: E501
     )
 
 
@@ -1152,7 +1276,7 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
     )
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 200, resp.data
-    id = json.loads(resp.data)["entities"][0]["id"]
+    entity_id = json.loads(resp.data)["entities"][0]["id"]
 
     data = json.dumps({"submitter_id": None})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
@@ -1166,14 +1290,19 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 400, resp.data
 
-    resp = client.get(f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers)
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{entity_id}", headers=headers
+    )  # noqa: E501
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
         json.loads(resp.data)["entities"][0]["properties"]["submitter_id"]
         == "BLGSP-71-06-00019"
     )
-    assert json.loads(resp.data)["entities"][0]["properties"]["type"] == "experiment"
-    assert json.loads(resp.data)["entities"][0]["properties"]["id"] == id
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"]["type"]
+        == "experiment"  # noqa: E501
+    )
+    assert json.loads(resp.data)["entities"][0]["properties"]["id"] == entity_id
 
 
 def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
@@ -1196,7 +1325,7 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 200, resp.data
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",  # noqa: E501
         headers=headers,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
@@ -1233,19 +1362,21 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",  # noqa: E501
         headers=headers,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
-        json.loads(resp.data)["entities"][0]["properties"]["experimental_description"]
-        == None
+        json.loads(resp.data)["entities"][0]["properties"][
+            "experimental_description"
+        ]  # noqa: E501
+        is None
     )
     assert (
         json.loads(resp.data)["entities"][0]["properties"][
             "number_samples_per_experimental_group"
         ]
-        == None
+        is None
     )
 
 
@@ -1266,7 +1397,7 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     headers = submitter
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 200, resp.data
-    id = json.loads(resp.data)["entities"][0]["id"]
+    entity_id = json.loads(resp.data)["entities"][0]["id"]
 
     data = {
         "type": "experiment",
@@ -1297,13 +1428,15 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 400, resp.data
 
-    resp = client.get(f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers)
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{entity_id}", headers=headers
+    )  # noqa: E501
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
         json.loads(resp.data)["entities"][0]["properties"]["submitter_id"]
         == "BLGSP-71-06-00019"
     )
-    assert json.loads(resp.data)["entities"][0]["properties"]["id"] == id
+    assert json.loads(resp.data)["entities"][0]["properties"]["id"] == entity_id
 
 
 def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
@@ -1323,7 +1456,7 @@ def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 200, resp.data
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",  # noqa: E501
         headers=headers,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
@@ -1341,14 +1474,19 @@ def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",  # noqa: E501
         headers=headers,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
-    assert json.loads(resp.data)["entities"][0]["properties"]["type_of_data"] == None
+    assert (
+        json.loads(resp.data)["entities"][0]["properties"]["type_of_data"]
+        is None  # noqa: E501
+    )
 
 
-def test_update_to_null_link(client, cgci_blgsp, submitter, require_index_exists_off):
+def test_update_to_null_link(
+    client, cgci_blgsp, submitter, require_index_exists_off
+):  # noqa: E501
     """
     Test that updating a non required link to null works correctly
     """
@@ -1357,13 +1495,12 @@ def test_update_to_null_link(client, cgci_blgsp, submitter, require_index_exists
     experiement_submitter_id = "BLGSP-71-06-00019"
     experimental_metadata = {
         "type": "experimental_metadata",
-        "submitter_id": "experimental_metadata_001",
         "experiments": {"submitter_id": experiement_submitter_id},
         "data_type": "Experimental Metadata",
         "file_name": "CGCI-file-b.bam",
         "md5sum": "35b39360cc41a7b635980159aef265ba",
         "data_format": "some_format",
-        "submitter_id": "BLGSP-71-experimental-01-b",
+        "submitter_id": "BLGSP-71-experimental-01-b",  # noqa: F601
         "data_category": "data_file",
         "file_size": 42,
     }
@@ -1384,7 +1521,7 @@ def test_update_to_null_link(client, cgci_blgsp, submitter, require_index_exists
     assert resp.status_code == 200, json.dumps(json.loads(resp.data), indent=2)
 
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][1]['id']}",
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][1]['id']}",  # noqa: E501
         headers=headers,
     )
     entity = json.loads(resp.data)["entities"][0]
@@ -1398,13 +1535,13 @@ def test_update_to_null_link(client, cgci_blgsp, submitter, require_index_exists
     resp = client.put(
         BLGSP_PATH, headers=headers, data=json.dumps(experimental_metadata)
     )
-    assert resp.status_code == 200, json.dumps(json.loads(resp.data), indent=2)
+    assert resp.status_code == 400, json.dumps(json.loads(resp.data), indent=2)
 
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",  # noqa: E501
         headers=headers,
     )
-    entity = json.loads(resp.data)["entities"][0]
+    entity = json.loads(resp.data)
     assert "experiments" not in entity, json.dumps(entity, indent=2)
 
 

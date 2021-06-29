@@ -67,13 +67,17 @@ def submit_metadata_file(client, pg_driver, submitter, cgci_blgsp, data=None):
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_data_file_not_indexed(
     create_alias,
     create_index,
@@ -120,17 +124,21 @@ def test_data_file_not_indexed(
 
     data = r.json
     assert data and len(data) == 1
-    assert did == None
+    assert did is None
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_data_file_not_indexed_id_provided(
     create_alias,
     create_index,
@@ -153,11 +161,13 @@ def test_data_file_not_indexed_id_provided(
 
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
     file["object_id"] = DEFAULT_UUID
-    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp, data=file)
+    resp = submit_metadata_file(
+        client, pg_driver, submitter, cgci_blgsp, data=file
+    )  # noqa: E501
 
     # index creation
     assert create_index.call_count == 1
-    args, kwargs = create_index.call_args_list[0]
+    args, kwargs = create_index.call_args_list[0]  # pylint: disable=W0612
     assert "did" in kwargs
     did = kwargs["did"]
     assert "hashes" in kwargs
@@ -181,13 +191,17 @@ def test_data_file_not_indexed_id_provided(
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_data_file_already_indexed(
     create_alias,
     create_index,
@@ -242,13 +256,17 @@ def test_data_file_already_indexed(
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_data_file_already_indexed_id_provided(
     create_alias,
     create_index,
@@ -282,7 +300,9 @@ def test_data_file_already_indexed_id_provided(
 
     file = copy.deepcopy(DEFAULT_METADATA_FILE)
     file["id"] = document.did
-    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp, data=file)
+    resp = submit_metadata_file(
+        client, pg_driver, submitter, cgci_blgsp, data=file
+    )  # noqa: E501
 
     # no index or alias creation
     assert not create_index.called
@@ -300,13 +320,17 @@ def test_data_file_already_indexed_id_provided(
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_data_file_update_url(
     create_alias,
     create_index,
@@ -365,13 +389,17 @@ def test_data_file_update_url(
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_data_file_update_multiple_urls(
     create_alias,
     create_index,
@@ -420,7 +448,8 @@ def test_data_file_update_multiple_urls(
     assert not create_index.called
     assert not create_alias.called
 
-    # make sure original url and new url are in the document and patch gets called
+    # make sure original url and new url are in the document
+    # and patch gets called
     assert DEFAULT_URL in document.urls
     assert new_url in document.urls
     assert another_new_url in document.urls
@@ -436,13 +465,17 @@ def test_data_file_update_multiple_urls(
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_data_file_update_url_id_provided(
     create_alias,
     create_index,
@@ -481,6 +514,7 @@ def test_data_file_update_url_id_provided(
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
     updated_file["object_id"] = "14fd1746-61bb-401a-96d2-342cfaf70000"
     updated_file["urls"] = new_url
+
     resp = submit_metadata_file(
         client, pg_driver, submitter, cgci_blgsp, data=updated_file
     )
@@ -500,15 +534,19 @@ def test_data_file_update_url_id_provided(
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._update_acl_uploader_for_file"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._update_acl_uploader_for_file"  # noqa: E501
 )
 def test_data_file_already_indexed_object_id_provided_hash_match(
     update_acl_uploader_indexd,
@@ -557,7 +595,9 @@ def test_data_file_already_indexed_object_id_provided_hash_match(
 
     get_index_uuid.side_effect = get_index_by_uuid
 
-    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp, data=file)
+    resp = submit_metadata_file(
+        client, pg_driver, submitter, cgci_blgsp, data=file
+    )  # noqa: E501
 
     # no index or alias creation
     assert not create_index.called
@@ -582,15 +622,19 @@ def test_data_file_already_indexed_object_id_provided_hash_match(
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._update_acl_uploader_for_file"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._update_acl_uploader_for_file"  # noqa: E501
 )
 def test_data_file_already_indexed_object_id_provided_hash_match_populated_acl(
     update_acl_uploader_indexd,
@@ -639,7 +683,9 @@ def test_data_file_already_indexed_object_id_provided_hash_match_populated_acl(
 
     get_index_uuid.side_effect = get_index_by_uuid
 
-    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp, data=file)
+    resp = submit_metadata_file(
+        client, pg_driver, submitter, cgci_blgsp, data=file
+    )  # noqa: E501
 
     # no index or alias creation
     assert not create_index.called
@@ -663,17 +709,21 @@ def test_data_file_already_indexed_object_id_provided_hash_match_populated_acl(
     assert not document.authz
 
 
-""" ----- TESTS THAT SHOULD RESULT IN SUBMISSION FAILURES ARE BELOW  ----- """
+# ----- TESTS THAT SHOULD RESULT IN SUBMISSION FAILURES ARE BELOW  -----
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_data_file_update_url_invalid_id(
     create_alias,
     create_index,
@@ -727,13 +777,17 @@ def test_data_file_update_url_invalid_id(
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_data_file_update_url_id_provided_different_file_not_indexed(
     create_alias,
     create_index,
@@ -795,13 +849,17 @@ def test_data_file_update_url_id_provided_different_file_not_indexed(
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_data_file_update_url_different_file_not_indexed(
     create_alias,
     create_index,
@@ -840,7 +898,7 @@ def test_data_file_update_url_different_file_not_indexed(
 
     resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
 
-    entity = assert_single_entity_from_response(resp)
+    assert_single_entity_from_response(resp)
 
     # now submit again but change url
     new_url = "some/new/url/location/to/add"
@@ -867,13 +925,17 @@ def test_data_file_update_url_different_file_not_indexed(
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_data_file_update_url_id_provided_different_file_already_indexed(
     create_alias,
     create_index,
@@ -903,7 +965,9 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
     document_with_id.urls = [DEFAULT_URL]
 
     different_file_matching_hash_and_size = MagicMock()
-    different_file_matching_hash_and_size.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
+    different_file_matching_hash_and_size.did = (
+        "14fd1746-61bb-401a-96d2-342cfaf70000"  # noqa: E501
+    )
     different_file_matching_hash_and_size.urls = [DEFAULT_URL]
 
     get_index_uuid.return_value = document_with_id
@@ -938,13 +1002,17 @@ def test_data_file_update_url_id_provided_different_file_already_indexed(
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_create_file_no_required_index(
     create_alias,
     create_index,
@@ -958,7 +1026,8 @@ def test_create_file_no_required_index(
 ):
     """
     With REQUIRE_FILE_INDEX_EXISTS = True.
-    Test submitting a data file that does not exist in indexd (should raise an error and should not create an index or an alias).
+    Test submitting a data file that does not exist in indexd
+    (should raise an error and should not create an index or an alias).
     """
     submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
@@ -989,13 +1058,17 @@ def test_create_file_no_required_index(
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_data_file_already_indexed_object_id_provided_hash_no_match(
     create_alias,
     create_index,
@@ -1041,7 +1114,9 @@ def test_data_file_already_indexed_object_id_provided_hash_no_match(
 
     get_index_uuid.side_effect = get_index_by_uuid
 
-    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp, data=file)
+    resp = submit_metadata_file(
+        client, pg_driver, submitter, cgci_blgsp, data=file
+    )  # noqa: E501
 
     # no index or alias creation
     assert not create_index.called
@@ -1050,6 +1125,7 @@ def test_data_file_already_indexed_object_id_provided_hash_no_match(
     # response
     assert_negative_response(resp)
     entity = assert_single_entity_from_response(resp)
+    assert entity
 
     # check that the acl and uploader fields have NOT been updated in indexd
     assert not document.acl
@@ -1057,13 +1133,17 @@ def test_data_file_already_indexed_object_id_provided_hash_no_match(
 
 
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_hash"  # noqa: E501
 )
 @patch(
-    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity.get_file_from_index_by_uuid"  # noqa: E501
 )
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index")
-@patch("sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias")
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_index"
+)  # noqa: E501
+@patch(
+    "sheepdog.transactions.upload.sub_entities.FileUploadEntity._create_alias"
+)  # noqa: E501
 def test_data_file_already_indexed_object_id_provided_no_hash(
     create_alias,
     create_index,
@@ -1110,7 +1190,9 @@ def test_data_file_already_indexed_object_id_provided_no_hash(
 
     get_index_uuid.side_effect = get_index_by_uuid
 
-    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp, data=file)
+    resp = submit_metadata_file(
+        client, pg_driver, submitter, cgci_blgsp, data=file
+    )  # noqa: E501
 
     # no index or alias creation
     assert not create_index.called
@@ -1118,7 +1200,7 @@ def test_data_file_already_indexed_object_id_provided_no_hash(
 
     # response
     assert_negative_response(resp)
-    entity = assert_single_entity_from_response(resp)
+    assert_single_entity_from_response(resp)
 
     # check that the acl and uploader fields have NOT been updated in indexd
     assert not document.acl
