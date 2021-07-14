@@ -20,6 +20,9 @@ if __name__ == "__main__":
         "--host", type=str, action="store", default="localhost", help="psql-server host"
     )
     parser.add_argument(
+        "--port", type=str, action="store", default="5432", help="psql-server port"
+    )
+    parser.add_argument(
         "--user", type=str, action="store", default="test", help="psql test user"
     )
     parser.add_argument(
@@ -28,6 +31,13 @@ if __name__ == "__main__":
         action="store",
         default="test",
         help="psql test password",
+    )
+    parser.add_argument(
+        "--root_user",
+        type=str,
+        action="store",
+        default="postgres",
+        help="psql root (postgres) user name",
     )
     parser.add_argument(
         "--root_password",
@@ -49,17 +59,44 @@ if __name__ == "__main__":
     parser.add_argument(
         "--no-user", action="store_true", default=False, help="do not create user"
     )
+    parser.add_argument(
+        "--use-ssl", type=bool, action="store", default=False, help="Use Psql SSL"
+    )
 
     args = parser.parse_args()
     setup_database(
-        args.user,
-        args.password,
-        args.database,
+        user=args.user,
+        password=args.password,
+        database=args.database,
+        root_user=args.root_user,
         host=args.host,
+        port=args.port,
         root_password=args.root_password,
         no_drop=args.no_drop,
         no_user=args.no_user,
+        use_ssl=args.use_ssl,
     )
-    create_tables(args.host, args.user, args.password, args.database)
-    create_indexes(args.host, args.user, args.password, args.database)
-    create_transaction_logs_table(args.host, args.user, args.password, args.database)
+    create_tables(
+        args.host,
+        args.port,
+        args.user,
+        args.password,
+        args.database,
+        use_ssl=args.use_ssl,
+    )
+    create_indexes(
+        args.host,
+        args.port,
+        args.user,
+        args.password,
+        args.database,
+        use_ssl=args.use_ssl,
+    )
+    create_transaction_logs_table(
+        args.host,
+        args.port,
+        args.user,
+        args.password,
+        args.database,
+        use_ssl=args.use_ssl,
+    )

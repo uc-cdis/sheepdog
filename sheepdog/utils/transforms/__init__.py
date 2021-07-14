@@ -18,9 +18,9 @@ from sheepdog.globals import SUB_DELIMITERS
 
 def parse_bool_from_string(value):
     """
-    Return a boolean given a string value *iff* :param:`value` is a valid
+    Return a boolean given a string value *iff* :param:` value` is a valid
     string representation of a boolean, otherwise return the original
-    :param:`value` to be handled by later type checking.
+    :param: `value` to be handled by later type checking.
 
     ..note:
         ``bool('maybe') is True``, this is undesirable, but
@@ -34,7 +34,6 @@ def parse_list_from_string(value):
     """
     Handle array fields by converting them to a list.
     Try to cast to float to handle arrays of numbers.
-
     Example:
         a,b,c -> ['a','b','c']
         1,2,3 -> [1,2,3]
@@ -132,7 +131,7 @@ class DelimitedConverter(object):
 
     def add_row(self, row):
         """
-        Add a canonical JSON entity for given a :param:`row`.
+        Add a canonical JSON entity for given a :param: `row`.
 
         Args:
             row (dict): column, value for a given row in delimited file

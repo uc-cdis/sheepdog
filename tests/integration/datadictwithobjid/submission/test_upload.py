@@ -120,7 +120,7 @@ def test_data_file_not_indexed(
 
     data = r.json
     assert data and len(data) == 1
-    assert did == None
+    assert did is None
 
 
 @patch(
@@ -214,8 +214,7 @@ def test_data_file_already_indexed(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -275,8 +274,7 @@ def test_data_file_already_indexed_id_provided(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -333,8 +331,7 @@ def test_data_file_update_url(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -398,8 +395,7 @@ def test_data_file_update_multiple_urls(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -420,7 +416,8 @@ def test_data_file_update_multiple_urls(
     assert not create_index.called
     assert not create_alias.called
 
-    # make sure original url and new url are in the document and patch gets called
+    # make sure original url and new url are in the document
+    # and patch gets called
     assert DEFAULT_URL in document.urls
     assert new_url in document.urls
     assert another_new_url in document.urls
@@ -469,8 +466,7 @@ def test_data_file_update_url_id_provided(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -481,6 +477,7 @@ def test_data_file_update_url_id_provided(
     updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
     updated_file["object_id"] = "14fd1746-61bb-401a-96d2-342cfaf70000"
     updated_file["urls"] = new_url
+
     resp = submit_metadata_file(
         client, pg_driver, submitter, cgci_blgsp, data=updated_file
     )
@@ -634,8 +631,7 @@ def test_data_file_already_indexed_object_id_provided_hash_match_populated_acl(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -663,7 +659,7 @@ def test_data_file_already_indexed_object_id_provided_hash_match_populated_acl(
     assert not document.authz
 
 
-""" ----- TESTS THAT SHOULD RESULT IN SUBMISSION FAILURES ARE BELOW  ----- """
+# ----- TESTS THAT SHOULD RESULT IN SUBMISSION FAILURES ARE BELOW  -----
 
 
 @patch(
@@ -840,7 +836,7 @@ def test_data_file_update_url_different_file_not_indexed(
 
     resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
 
-    entity = assert_single_entity_from_response(resp)
+    assert_single_entity_from_response(resp)
 
     # now submit again but change url
     new_url = "some/new/url/location/to/add"
@@ -958,7 +954,8 @@ def test_create_file_no_required_index(
 ):
     """
     With REQUIRE_FILE_INDEX_EXISTS = True.
-    Test submitting a data file that does not exist in indexd (should raise an error and should not create an index or an alias).
+    Test submitting a data file that does not exist in indexd
+    (should raise an error and should not create an index or an alias).
     """
     submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
@@ -1036,8 +1033,7 @@ def test_data_file_already_indexed_object_id_provided_hash_no_match(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -1050,6 +1046,7 @@ def test_data_file_already_indexed_object_id_provided_hash_no_match(
     # response
     assert_negative_response(resp)
     entity = assert_single_entity_from_response(resp)
+    assert entity
 
     # check that the acl and uploader fields have NOT been updated in indexd
     assert not document.acl
@@ -1105,8 +1102,7 @@ def test_data_file_already_indexed_object_id_provided_no_hash(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -1118,7 +1114,7 @@ def test_data_file_already_indexed_object_id_provided_no_hash(
 
     # response
     assert_negative_response(resp)
-    entity = assert_single_entity_from_response(resp)
+    assert_single_entity_from_response(resp)
 
     # check that the acl and uploader fields have NOT been updated in indexd
     assert not document.acl
