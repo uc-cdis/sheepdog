@@ -122,7 +122,7 @@ success.
             'message': string,
         }
 
-For a listing of the types of errors, see :ref:`label-error-types`.
+For a listing of the types of errors, see :ref: `label-error-types`.
 
 **created_entitiy_count**
     The number of entities created by the transaction.
@@ -170,4 +170,4 @@ API responses will contain a status for each entity specified in the request:
     validation or an internal error occured when attempting to complete
     the transaction. The ``error`` state will be accompanied by a list
     of errors recorded about the entity (see
-    :ref:`label-error-messages`).
+    :ref: `label-error-messages`).
