@@ -64,7 +64,7 @@ def get_programs():
 
 
 @auth.require_sheepdog_program_admin
-def root_create():
+def create_program():
     """
     Register a program.
 
@@ -112,13 +112,22 @@ def root_create():
             "dbgap_accession_number": "phs000178"
         }
     """
-    message = None
-    node_id = None
-    doc = parse.parse_request_json()
+    input_doc = flask.request.get_data().decode("utf-8")
+    content_type = flask.request.headers.get("Content-Type", "").lower()
+    if content_type == "text/csv":
+        doc, _ = utils.transforms.CSVToJSONConverter().convert(input_doc)
+    elif content_type in ["text/tab-separated-values", "text/tsv"]:
+        doc, _ = utils.transforms.TSVToJSONConverter().convert(input_doc)
+    else:
+        doc = utils.parse.parse_request_json()
+
+    if isinstance(doc, list) and len(doc) == 1:
+        # handle TSV/CSV submissions that are parsed as lists of 1 element
+        doc = doc[0]
     if not isinstance(doc, dict):
         raise UserError(
-            "The program creation endpoint only supports single documents (dict). Received data of type {}".format(
-                type(doc)
+            "The program creation endpoint only supports single documents (dict). Received data of type {}: {}".format(
+                type(doc), doc
             )
         )
     if doc.get("type") != "program":
@@ -129,6 +138,8 @@ def root_create():
         raise UserError("No program specified in key 'name'")
 
     # create the resource in sheepdog DB
+    message = None
+    node_id = None
     with current_app.db.session_scope(can_inherit=False) as session:
         node = current_app.db.nodes(models.Program).props(name=program).scalar()
         if node:
