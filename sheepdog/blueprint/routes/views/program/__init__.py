@@ -2,20 +2,15 @@
 View functions for routes in the blueprint for '/<program>' paths.
 """
 
-import json
+import flask
 import uuid
 
-import flask
-import sqlalchemy
-
 from sheepdog import auth
-from sheepdog import dictionary
 from sheepdog import models
-from sheepdog import utils
 from sheepdog.blueprint.routes.views.program import project
-from sheepdog.errors import APINotImplemented, AuthError, NotFoundError, UserError
-from sheepdog.globals import PERMISSIONS, PROJECT_SEED, ROLES, STATES_COMITTABLE_DRY_RUN
-from sheepdog.transactions import upload
+from sheepdog import utils
+from sheepdog.errors import NotFoundError, UserError
+from sheepdog.globals import PROJECT_SEED, ROLES
 from sheepdog.transactions.upload.entity_factory import UploadEntityFactory
 from sheepdog.transactions.upload.transaction import UploadTransaction
 
@@ -139,12 +134,16 @@ def create_project(program):
     """
     input_doc = flask.request.get_data().decode("utf-8")
     content_type = flask.request.headers.get("Content-Type", "").lower()
+    errors = None
     if content_type == "text/csv":
-        doc, _ = utils.transforms.CSVToJSONConverter().convert(input_doc)
+        doc, errors = utils.transforms.CSVToJSONConverter().convert(input_doc)
     elif content_type in ["text/tab-separated-values", "text/tsv"]:
-        doc, _ = utils.transforms.TSVToJSONConverter().convert(input_doc)
+        doc, errors = utils.transforms.TSVToJSONConverter().convert(input_doc)
     else:
         doc = utils.parse.parse_request_json()
+
+    if errors:
+        raise UserError("Unable to parse doc '{}': {}".format(input_doc, errors))
 
     if isinstance(doc, list) and len(doc) == 1:
         # handle TSV/CSV submissions that are parsed as lists of 1 element

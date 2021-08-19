@@ -2,17 +2,15 @@
 Provide view functions for routes in the blueprint.
 """
 
-import uuid
-
 import flask
 from flask import current_app
-import requests
+import uuid
 
 from sheepdog import auth, dictionary, models, utils
 from sheepdog.utils import manifest, parse
 from sheepdog.blueprint.routes.views import program
-from sheepdog.errors import AuthError, NotFoundError, UserError
-from sheepdog.globals import PROGRAM_SEED, ROLES
+from sheepdog.errors import UserError
+from sheepdog.globals import PROGRAM_SEED
 
 
 def get_programs():
@@ -114,12 +112,16 @@ def create_program():
     """
     input_doc = flask.request.get_data().decode("utf-8")
     content_type = flask.request.headers.get("Content-Type", "").lower()
+    errors = None
     if content_type == "text/csv":
-        doc, _ = utils.transforms.CSVToJSONConverter().convert(input_doc)
+        doc, errors = utils.transforms.CSVToJSONConverter().convert(input_doc)
     elif content_type in ["text/tab-separated-values", "text/tsv"]:
-        doc, _ = utils.transforms.TSVToJSONConverter().convert(input_doc)
+        doc, errors = utils.transforms.TSVToJSONConverter().convert(input_doc)
     else:
         doc = utils.parse.parse_request_json()
+
+    if errors:
+        raise UserError("Unable to parse doc '{}': {}".format(input_doc, errors))
 
     if isinstance(doc, list) and len(doc) == 1:
         # handle TSV/CSV submissions that are parsed as lists of 1 element

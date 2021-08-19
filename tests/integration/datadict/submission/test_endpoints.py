@@ -970,7 +970,8 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
     assert data
 
     program, project = BLGSP_PATH.split("/")[3:5]
-    tsv_data = TSVToJSONConverter().convert(data)[0]
+    tsv_data, errors = TSVToJSONConverter().convert(data)
+    assert not errors
     doc_args = [None, "tsv", data, tsv_data]
     utx1, utx2 = [
         UploadTransaction(
