@@ -50,7 +50,7 @@ def new_route(
 
 routes = [
     new_route("/", views.get_programs, methods=["GET"]),
-    new_route("/", views.root_create, methods=["PUT", "POST", "PATCH"]),
+    new_route("/", views.create_program, methods=["PUT", "POST", "PATCH"]),
     new_route("/_dictionary", views.get_dictionary, methods=["GET"]),
     new_route(
         "/_dictionary/<entry>",

@@ -2,20 +2,15 @@
 View functions for routes in the blueprint for '/<program>' paths.
 """
 
-import json
+import flask
 import uuid
 
-import flask
-import sqlalchemy
-
 from sheepdog import auth
-from sheepdog import dictionary
 from sheepdog import models
-from sheepdog import utils
 from sheepdog.blueprint.routes.views.program import project
-from sheepdog.errors import APINotImplemented, AuthError, NotFoundError, UserError
-from sheepdog.globals import PERMISSIONS, PROJECT_SEED, ROLES, STATES_COMITTABLE_DRY_RUN
-from sheepdog.transactions import upload
+from sheepdog import utils
+from sheepdog.errors import NotFoundError, UserError
+from sheepdog.globals import PROJECT_SEED, ROLES
 from sheepdog.transactions.upload.entity_factory import UploadEntityFactory
 from sheepdog.transactions.upload.transaction import UploadTransaction
 
@@ -137,12 +132,26 @@ def create_project(program):
                 "state": "active"
             }
     """
-    res = None
-    doc = utils.parse.parse_request_json()
+    input_doc = flask.request.get_data().decode("utf-8")
+    content_type = flask.request.headers.get("Content-Type", "").lower()
+    errors = None
+    if content_type == "text/csv":
+        doc, errors = utils.transforms.CSVToJSONConverter().convert(input_doc)
+    elif content_type in ["text/tab-separated-values", "text/tsv"]:
+        doc, errors = utils.transforms.TSVToJSONConverter().convert(input_doc)
+    else:
+        doc = utils.parse.parse_request_json()
+
+    if errors:
+        raise UserError("Unable to parse doc '{}': {}".format(input_doc, errors))
+
+    if isinstance(doc, list) and len(doc) == 1:
+        # handle TSV/CSV submissions that are parsed as lists of 1 element
+        doc = doc[0]
     if not isinstance(doc, dict):
         raise UserError(
-            "The project creation endpoint only supports single documents (dict). Received data of type {}".format(
-                type(doc)
+            "The project creation endpoint only supports single documents (dict). Received data of type {}: {}".format(
+                type(doc), doc
             )
         )
     if doc.get("type") and doc.get("type") not in ["project"]:
@@ -159,7 +168,7 @@ def create_project(program):
         raise UserError("No dbGaP accesion number specified.")
 
     # Create base JSON document.
-    base_doc = utils.parse.parse_request_json()
+    res = None
     with flask.current_app.db.session_scope() as session:
         program_node = utils.lookup_program(flask.current_app.db, program)
         if not program_node:
@@ -182,14 +191,14 @@ def create_project(program):
             action = "update"
 
         # silently drop system_properties
-        base_doc.pop("type", None)
-        base_doc.pop("state", None)
-        base_doc.pop("released", None)
+        doc.pop("type", None)
+        doc.pop("state", None)
+        doc.pop("released", None)
 
-        node.props.update(base_doc)
+        node.props.update(doc)
 
-        doc = dict(
-            {"type": "project", "programs": {"id": program_node.node_id}}, **base_doc
+        res_doc = dict(
+            {"type": "project", "programs": {"id": program_node.node_id}}, **doc
         )
 
         # Create transaction
@@ -206,7 +215,7 @@ def create_project(program):
                 trans, doc=None, config=flask.current_app.config
             )
             entity.action = action
-            entity.doc = doc
+            entity.doc = res_doc
             entity.entity_type = "project"
             entity.unique_keys = node._secondary_keys_dicts
             entity.node = node
