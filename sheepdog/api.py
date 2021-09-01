@@ -4,7 +4,6 @@ import logging
 
 from flask import Flask, jsonify
 from psqlgraph import PsqlGraphDriver
-from sqlalchemy import MetaData, Table
 
 from authutils.oauth2 import client as oauth2_client
 from authutils.oauth2.client import blueprint as oauth2_blueprint
@@ -22,8 +21,6 @@ from sheepdog.errors import (
     APIError,
     setup_default_handlers,
     UnhealthyCheck,
-    NotFoundError,
-    InternalError,
 )
 from sheepdog.version_data import VERSION, COMMIT
 from sheepdog.globals import dictionary_version, dictionary_commit
@@ -67,12 +64,19 @@ def app_register_blueprints(app):
 
 def db_init(app):
     app.logger.info("Initializing PsqlGraph driver")
+    connect_args = {}
+    if app.config.get("PSQLGRAPH") and app.config["PSQLGRAPH"].get("sslmode"):
+        connect_args["sslmode"] = app.config["PSQLGRAPH"]["sslmode"]
     app.db = PsqlGraphDriver(
         host=app.config["PSQLGRAPH"]["host"],
         user=app.config["PSQLGRAPH"]["user"],
         password=app.config["PSQLGRAPH"]["password"],
         database=app.config["PSQLGRAPH"]["database"],
         set_flush_timestamps=True,
+        connect_args=connect_args,
+        isolation_level=app.config["PSQLGRAPH"].get(
+            "isolation_level", "READ_COMMITTED"
+        ),
     )
     if app.config.get("AUTO_MIGRATE_DATABASE"):
         migrate_database(app)
@@ -105,11 +109,14 @@ def migrate_database(app):
             app.logger.info("The database version matches up. No need to do migration")
             return
     # check if such role exists
+    # does this need to have a session?
     with app.db.session_scope() as session:
+        session.connection(execution_options={"isolation_level": "READ COMMITTED"})
+        # TODO: address B608
         r = [
             i
             for i in session.execute(
-                "SELECT 1 FROM pg_roles WHERE rolname='{}'".format(read_role)
+                "SELECT 1 FROM pg_roles WHERE rolname='{}'".format(read_role)  # nosec
             )
         ]
     if len(r) != 0:
@@ -189,6 +196,7 @@ def health_check():
     """
     with app.db.session_scope() as session:
         try:
+            session.connection(execution_options={"isolation_level": "READ COMMITTED"})
             session.execute("SELECT 1")
         except Exception:
             raise UnhealthyCheck("Unhealthy")

@@ -1,0 +1,1 @@
+CREATE DATABASE sheepdog_automated_test;
