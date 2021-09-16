@@ -321,10 +321,18 @@ def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
     path = BLGSP_PATH
     with open(os.path.join(DATA_DIR, "case.json"), "r") as f:
         case_sid = json.loads(f.read())["submitter_id"]
+        assert case_sid
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), "r") as f:
             resp = client.post(path, headers=submitter, data=f.read())
-            assert resp.status_code == 201, resp.data
+            resp_data = json.loads(resp.data)
+            # could already exist in the DB.
+            condition_to_check = (resp.status_code == 201 and resp.data) or (
+                resp.status_code == 400
+                and "already exists in the DB"
+                in resp_data["entities"][0]["errors"][0]["message"]
+            )
+            assert condition_to_check, resp.data
 
 
 def post_example_entities_together(client, submitter, data_fnames2=None):
@@ -350,9 +358,17 @@ def put_example_entities_together(client, headers):
 def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
     with open(os.path.join(DATA_DIR, "case.json"), "r") as f:
         case_sid = json.loads(f.read())["submitter_id"]
+        assert case_sid
     resp = post_example_entities_together(client, submitter)
     print(resp.data)
-    assert resp.status_code == 201, resp.data
+    resp_data = json.loads(resp.data)
+    # could already exist in the DB.
+    condition_to_check = (resp.status_code == 201 and resp.data) or (
+        resp.status_code == 400
+        and "already exists in the DB"
+        in resp_data["entities"][0]["errors"][0]["message"]
+    )
+    assert condition_to_check, resp.data
 
 
 def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
@@ -409,7 +425,10 @@ def test_put_dry_run(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
     resp_json = json.loads(resp.data)
     assert resp_json["entity_error_count"] == 0
-    assert resp_json["created_entity_count"] == 1
+    condition_to_check = (
+        resp_json["created_entity_count"] == 1 or resp_json["updated_entity_count"] == 1
+    )
+    assert condition_to_check
     with pg_driver.session_scope():
         assert not pg_driver.nodes(md.Experiment).first()
 
@@ -455,15 +474,33 @@ def test_insert_multiple_parents_and_export_by_ids(
         headers = submitter
         headers["Content-Type"] = "text/tsv"
         resp = client.post(path, headers=headers, data=f.read())
-        assert resp.status_code == 201, resp.data
-    data = json.loads(resp.data)
-    submitted_id = data["entities"][0]["id"]
+        resp_data = json.loads(resp.data)
+        # could already exist in the DB.
+        condition_to_check = (resp.status_code == 201 and resp.data) or (
+            resp.status_code == 400
+            and "already exists in the DB"
+            in resp_data["entities"][0]["errors"][0]["message"]
+        )
+        assert condition_to_check, resp.data
+
+    # check db for matching experimental metadata
+    with pg_driver.session_scope():
+        filtered = (
+            pg_driver.nodes(md.ExperimentalMetadata)
+            .prop_in(
+                "submitter_id",
+                ["BLGSP-71-experimental-01-c", "BLGSP-71-experimental-01-a"],
+            )
+            .all()
+        )
+    submitted_ids = ",".join([node.node_id for node in filtered])
     resp = client.get(
-        "/v0/submission/CGCI/BLGSP/export/?ids={}".format(submitted_id), headers=headers
+        "/v0/submission/CGCI/BLGSP/export/?ids={}".format(submitted_ids),
+        headers=headers,
     )
     str_data = str(resp.data)
-    assert "BLGSP-71-experiment-01" in str_data
-    assert "BLGSP-71-experiment-02" in str_data
+    assert "BLGSP-71-experimental-01-a" in str_data
+    assert "BLGSP-71-experimental-01-c" in str_data
     assert "experiments.submitter_id" in str_data
 
 

@@ -16,7 +16,9 @@ from uuid import uuid5, UUID
 
 from cdislogging import get_logger
 import flask
-from lxml import etree
+
+# TODO: consider switching lxml to https://pypi.org/project/defusedxml/#defusedxml-sax
+from lxml import etree  # nosec
 import requests
 import yaml
 
@@ -75,7 +77,8 @@ def validated_parse(xml):
     Parse an XML document or fragment from a string and return the root node.
     """
     try:
-        root = etree.fromstring(xml)
+        # TODO: consider switching lxml to https://pypi.org/project/defusedxml/#defusedxml-sax
+        root = etree.fromstring(xml)  # nosec
         # note(pyt): return the document without doing schema validation
         # until we are clear about how to handle the xsd
         return root
@@ -228,6 +231,7 @@ class BcrXmlToJsonParser(object):
 
     @property
     def json(self):
+        """Return list of entities values."""
         return list(self.entities.values())
 
     def parse_entity(self, entity_type, params):
@@ -505,25 +509,6 @@ class BcrXmlToJsonParser(object):
             return edges
         return edges
 
-        for edge_type, dst_params in params.edges_by_property.items():
-            for dst_label, dst_kv in dst_params.items():
-                dst_matches = {
-                    key: self.xpath(
-                        val,
-                        root,
-                        expected=False,
-                        text=True,
-                        single=True,
-                        label="{}: {}".format(entity_type, entity_id),
-                    )
-                    for key, val in dst_kv.items()
-                }
-                # TODO: fix
-                dsts = []
-                for dst in dsts:
-                    edges[dst.entity_id] = (dst.label, edge_type)
-        return edges
-
     def get_entity_edge_properties(self, root, edge_type, params, entity_id=""):
         if (
             "edge_properties" not in params
@@ -597,6 +582,7 @@ class BcrClinicalXmlToJsonParser(object):
 
     @property
     def json(self):
+        """Return list of docs."""
         return self.docs
 
     def get_xml_roots(self, root, path, namespaces, nullable=False):
@@ -716,7 +702,7 @@ class BcrClinicalXmlToJsonParser(object):
                     suffix=props.get("suffix", ""),
                 )
                 _type = props["type"]
-                is_nan = type(value) == float and math.isnan(value)
+                is_nan = isinstance(value, float) and math.isnan(value)
                 if value is None or is_nan:
                     if key not in doc:
                         key_type = schema["properties"][key].get("type", [])
