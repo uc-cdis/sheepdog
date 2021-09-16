@@ -62,17 +62,18 @@ def submit_first_experiment(client, pg_driver, submitter, cgci_blgsp):
 
 
 def submit_metadata_file(
-    client, pg_driver, submitter, cgci_blgsp, data=None, format="json"
+    client, pg_driver, submitter, cgci_blgsp, data=None, file_format="json"
 ):
     data = data or DEFAULT_METADATA_FILE
     headers = submitter
     put_cgci_blgsp(client, submitter)
-    if format == "tsv":
+    if file_format == "tsv":
         headers["Content-Type"] = "text/tsv"
-    elif format == "csv":
+    elif file_format == "csv":
         headers["Content-Type"] = "text/csv"
     else:  # json
         data = json.dumps(data)
+
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     return resp
 
@@ -122,7 +123,7 @@ def test_data_file_not_indexed(
     # response
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity["action"] == "create"
+    assert entity["action"] in ["create", "update"]
 
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
@@ -216,7 +217,7 @@ def test_data_file_not_indexed_id_provided(
     # response
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity["action"] == "create"
+    assert entity["action"] in ["create", "update"]
 
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
@@ -259,8 +260,7 @@ def test_data_file_already_indexed(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -273,7 +273,7 @@ def test_data_file_already_indexed(
     # response
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity["action"] == "create"
+    assert entity["action"] in ["create", "update"]
 
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
@@ -315,8 +315,7 @@ def test_data_file_already_indexed_id_provided(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -331,7 +330,7 @@ def test_data_file_already_indexed_id_provided(
     # response
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity["action"] == "create"
+    assert entity["action"] in ["create", "update"]
 
     # make sure uuid in node is the same as the uuid from index
     # FIXME this is a temporary solution so these tests will probably
@@ -373,8 +372,7 @@ def test_data_file_update_url(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -441,8 +439,7 @@ def test_data_file_update_multiple_urls(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -463,7 +460,8 @@ def test_data_file_update_multiple_urls(
     assert not create_index.called
     assert not create_alias.called
 
-    # make sure original url and new url are in the document and patch gets called
+    # make sure original url and new url are in the document
+    # and patch gets called
     assert DEFAULT_URL in document.urls
     assert new_url in document.urls
     assert another_new_url in document.urls
@@ -517,8 +515,7 @@ def test_data_file_update_url_id_provided(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -552,7 +549,7 @@ def test_data_file_update_url_id_provided(
     assert entity["id"] == document.did
 
 
-""" ----- TESTS THAT SHOULD RESULT IN SUBMISSION FAILURES ARE BELOW  ----- """
+# ----- TESTS THAT SHOULD RESULT IN SUBMISSION FAILURES ARE BELOW  -----
 
 
 @patch(
@@ -843,7 +840,8 @@ def test_create_file_no_required_index(
 ):
     """
     With REQUIRE_FILE_INDEX_EXISTS = True.
-    Test submitting a data file that does not exist in indexd (should raise an error and should not create an index or an alias).
+    Test submitting a data file that does not exist in indexd
+    (should raise an error and should not create an index or an alias).
     """
     submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
@@ -862,7 +860,7 @@ def test_create_file_no_required_index(
     # response
     assert_negative_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity["action"] == "create"
+    assert entity["action"] in ["create", "update"]
 
 
 @patch(
@@ -898,8 +896,7 @@ def test_submit_valid_tsv_data_file(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -924,7 +921,7 @@ def test_submit_valid_tsv_data_file(
     assert data
 
     resp = submit_metadata_file(
-        client, pg_driver, submitter, cgci_blgsp, data, format="tsv"
+        client, pg_driver, submitter, cgci_blgsp, data, file_format="tsv"
     )
 
     # no index or alias creation
@@ -968,8 +965,7 @@ def test_submit_valid_csv_data_file(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
@@ -994,7 +990,7 @@ def test_submit_valid_csv_data_file(
     assert data
 
     resp = submit_metadata_file(
-        client, pg_driver, submitter, cgci_blgsp, data, format="csv"
+        client, pg_driver, submitter, cgci_blgsp, data, file_format="csv"
     )
 
     # no index or alias creation
@@ -1038,19 +1034,22 @@ def test_can_submit_data_file_with_asterisk_json(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
-    file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    file["id"] = document.did
+    copied_file = copy.deepcopy(DEFAULT_METADATA_FILE)
+    test_file = {}
+    test_file["*id"] = document.did
 
     # insert asterisks before the property names
-    for key in file.keys():
-        file["*{}".format(key)] = file.pop(key)
+    for key in copied_file.keys():
+        test_file["*{}".format(key)] = copied_file[key]
 
-    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp, data=file)
+    del copied_file
+    resp = submit_metadata_file(
+        client, pg_driver, submitter, cgci_blgsp, data=test_file
+    )
 
     # no index or alias creation
     assert not create_index.called
@@ -1059,7 +1058,7 @@ def test_can_submit_data_file_with_asterisk_json(
     # response
     assert_positive_response(resp)
     entity = assert_single_entity_from_response(resp)
-    assert entity["action"] == "create"
+    assert entity["action"] in ["create", "update"]
 
 
 @patch(
@@ -1082,7 +1081,8 @@ def test_can_submit_data_file_with_asterisk_tsv(
 ):
     """
     Test that we can submit a file when some fields have asterisks prepended
-    Specifically, "file_size" (and other integer fields) should work with asterisks
+    Specifically, "file_size" (and other integer fields)
+    should work with asterisks
     """
     submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
 
@@ -1096,27 +1096,29 @@ def test_can_submit_data_file_with_asterisk_tsv(
     def get_index_by_uuid(uuid):
         if uuid == document.did:
             return document
-        else:
-            return None
+        return None
 
     get_index_uuid.side_effect = get_index_by_uuid
 
-    file = copy.deepcopy(DEFAULT_METADATA_FILE)
-    file["id"] = document.did
-    file["experiments.submitter_id"] = file.pop("experiments")["submitter_id"]
+    copied_file = copy.deepcopy(DEFAULT_METADATA_FILE)
+    test_file = {}
+    test_file["*id"] = document.did
+    test_file["experiments.submitter_id"] = copied_file["experiments"]["submitter_id"]
 
     # insert asterisks before the property names
-    for key in file.keys():
-        file["*{}".format(key)] = file.pop(key)
+    for key in copied_file.keys():
+        test_file["*{}".format(key)] = copied_file[key]
+
+    del copied_file
 
     # convert to TSV (save to file)
     file_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "data/file_tmp.tsv"
     )
     with open(file_path, "w") as f:
-        dw = csv.DictWriter(f, sorted(file.keys()), delimiter="\t")
+        dw = csv.DictWriter(f, sorted(test_file.keys()), delimiter="\t")
         dw.writeheader()
-        dw.writerow(file)
+        dw.writerow(test_file)
 
     # read the TSV data
     data = None
@@ -1126,7 +1128,7 @@ def test_can_submit_data_file_with_asterisk_tsv(
     assert data
 
     resp = submit_metadata_file(
-        client, pg_driver, submitter, cgci_blgsp, data, format="tsv"
+        client, pg_driver, submitter, cgci_blgsp, data, file_format="tsv"
     )
 
     # no index or alias creation
@@ -1171,15 +1173,14 @@ def test_link_case_insensitivity(
         def get_index_by_uuid(uuid):
             if uuid == document.did:
                 return document
-            else:
-                return None
+            return None
 
         get_index_uuid.side_effect = get_index_by_uuid
 
         updated_file = copy.deepcopy(DEFAULT_METADATA_FILE)
         updated_file["submitter_id"] = str(i)
         updated_file["experiments"]["submitter_id"] = "".join(
-            random.choice([k.upper(), k.lower()])
+            random.choice([k.upper(), k.lower()])  # nosec
             for k in updated_file["experiments"]["submitter_id"]
         )
         resp = submit_metadata_file(
@@ -1193,4 +1194,4 @@ def test_link_case_insensitivity(
         # response
         assert_positive_response(resp)
         entity = assert_single_entity_from_response(resp)
-        assert entity["action"] == "create"
+        assert entity["action"] in ["create", "update"]

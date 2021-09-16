@@ -5,14 +5,11 @@ Pylint ``no-member`` error disabled because of false positives with
 ``lxml.etree``.
 """
 
-import uuid
-
 import flask
 import lxml
+import uuid
 
-import psqlgraph
 from sqlalchemy.exc import IntegrityError
-from gdcdictionary import gdcdictionary
 
 from sheepdog import auth
 from sheepdog import utils
@@ -102,6 +99,7 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
     """
     doc = flask.request.get_data().decode("utf-8")
     content_type = flask.request.headers.get("Content-Type", "").lower()
+    errors = None
     if content_type == "text/csv":
         doc_format = "csv"
         data, errors = utils.transforms.CSVToJSONConverter().convert(doc)
@@ -111,8 +109,10 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
     else:
         doc_format = "json"
         data = utils.parse.parse_request_json()
-        errors = None
-    # TODO: use errors value?
+
+    if errors:
+        raise UserError("Unable to parse doc '{}': {}".format(doc, errors))
+
     name = flask.request.headers.get("X-Document-Name", None)
     doc_args = [name, doc_format, doc, data]
     is_async = tx_kwargs.pop("is_async", utils.is_flag_set(FLAG_IS_ASYNC))
@@ -172,6 +172,7 @@ def _add_wrapper_to_bulk_transaction(transaction, wrapper, index):
 
     # Parse doc
     doc_format = wrapper["doc_format"].lower()
+    errors = None
     if doc_format == "json":
         try:
             data = utils.parse.parse_json(doc)
@@ -183,6 +184,9 @@ def _add_wrapper_to_bulk_transaction(transaction, wrapper, index):
         data, errors = utils.transforms.CSVToJSONConverter().convert(doc)
     else:
         raise UnsupportedError(doc_format)
+
+    if errors:
+        raise UserError("Unable to parse doc '{}': {}".format(doc, errors))
 
     # Add doc to transaction
     transaction.add_doc(name, doc_format, doc, data)
