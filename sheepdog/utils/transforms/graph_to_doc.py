@@ -16,7 +16,12 @@ import flask
 import psqlgraph
 
 from sheepdog import dictionary
-from sheepdog.errors import InternalError, NotFoundError, UnsupportedError, UserError
+from sheepdog.errors import (
+    InternalError,
+    NotFoundError,
+    UnsupportedError,
+    UserError,
+)
 from sheepdog.globals import DELIMITERS, SUB_DELIMITERS, SUPPORTED_FORMATS
 
 
@@ -138,6 +143,9 @@ def get_node_non_link_json(node, props):
             entity[key] = node.label
         elif key == "id":
             entity[key] = node.node_id
+        elif key in node._props:
+            # objectid is in _props per integration test
+            entity[key] = node._props[key]
         else:
             entity[key] = node[key]
 
@@ -153,18 +161,18 @@ def list_to_comma_string(val, file_format):
     """
 
     if val is None:
-        """If a field is empty we must replace it with an empty string for tsv/csv exports and leave it as None for json exports"""
+        # If a field is empty we must replace it with an empty string for tsv/csv exports and leave it as None for json exports
         if file_format == "json":
             return val
         return ""
 
     if isinstance(val, list):
-        val = ",".join((str(x) for x in val))
+        val = ",".join(val)
     return val
 
 
 def get_tsv_dicts(entities, non_link_titles, link_titles):
-    """Return a generator of tsv_dicts given iterable :param:`entities`."""
+    """Return a generator of tsv_dicts given iterable :param: `entities`."""
     for entity in entities:
         yield dict_props_to_list(entity, non_link_titles, link_titles, "tsv")
 
@@ -209,7 +217,7 @@ def get_json_template(entity_types):
 
 
 def get_delimited_template(entity_types, file_format, filename=TEMPLATE_NAME):
-    """Return :param:`file_format` (TSV or CSV) template for entity types."""
+    """Return :param: `file_format` (TSV or CSV) template for entity types."""
     tar_obj = io.StringIO()
     tar = tarfile.open(filename, mode="w|gz", fileobj=tar_obj)
 
@@ -502,7 +510,7 @@ class ExportFile(object):
 
     def get_entity_tree(self, node, visited):
         """
-        Accumulate child nodes in :param:`visited`.
+        Accumulate child nodes in :param: `visited`.
 
         Walk down spanning tree of graph, traversing to edges_in and filtering
         by self.category.
@@ -559,7 +567,7 @@ class ExportFile(object):
 
     def _get_sha(self):
         """Return a unique hash for this export."""
-        sha = hashlib.sha1(str(time.time()))
+        sha = hashlib.sha512(str(time.time()))  # TODO: Address B303
         for node in self.nodes:
             sha.update(node.node_id)
         return sha.hexdigest()
@@ -858,9 +866,13 @@ def export_all(node_label, project_id, file_format, db, without_id):
                 current_obj = new_obj
             current_obj = append_links_to_obj(result, current_obj, titles_linked)
 
-        if current_obj != None:
+        if current_obj is not None:
             yield from yield_result(
-                current_obj, js_list_separator, props, titles_linked, file_format
+                current_obj,
+                js_list_separator,
+                props,
+                titles_linked,
+                file_format,
             )
 
         if file_format == "json":
@@ -897,7 +909,10 @@ def dict_props_to_list(obj, props, titles_linked, file_format):
             list(
                 filter(
                     lambda x: x != "",
-                    map(lambda x: str(x.get(link_prop, "")), obj.get(link_name, [])),
+                    map(
+                        lambda x: str(x.get(link_prop, "")),
+                        obj.get(link_name, []),
+                    ),
                 )
             )
         )

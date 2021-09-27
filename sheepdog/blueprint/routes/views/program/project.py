@@ -16,8 +16,8 @@ from sheepdog import dictionary
 from sheepdog import models
 from sheepdog import transactions
 from sheepdog import utils
-from sheepdog.errors import AuthError, NotFoundError, UserError
-from sheepdog.globals import PERMISSIONS, ROLES, STATES_COMITTABLE_DRY_RUN
+from sheepdog.errors import NotFoundError, UserError
+from sheepdog.globals import ROLES, STATES_COMITTABLE_DRY_RUN
 
 
 def create_viewer(method, bulk=False, dry_run=False):
@@ -238,7 +238,7 @@ def get_entities_by_id(program, project, entity_id_string):
     """
     Retrieve existing GDC entities by ID.
 
-    The return type of a :http:method:`get` on this endpoint is a JSON array
+    The return type of a HTTP `get` on this endpoint is a JSON array
     containing JSON object elements, each corresponding to a provided ID.
     Return results are unordered.
 

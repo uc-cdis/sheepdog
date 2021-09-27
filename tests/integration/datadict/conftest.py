@@ -8,19 +8,13 @@ import pytest
 import requests
 import requests_mock
 from mock import patch
-from flask.testing import make_test_environ_builder
 from psqlgraph import PsqlGraphDriver
-from datamodelutils import models
-from cdispyutils.hmac4 import get_auth
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
 from gen3authz.client.arborist.client import ArboristClient
 
-import sheepdog
+
 from sheepdog.test_settings import (
-    Fernet,
-    HMAC_ENCRYPTION_KEY,
-    JWT_KEYPAIR_FILES,
     INDEX_CLIENT,
 )
 
@@ -40,13 +34,29 @@ PATH_TO_SCHEMA_DIR = (
     + "/datadict/schemas"
 )
 
-
-def pg_config():
-    test_host = "localhost"
+# update these settings if you want to point to another db
+def pg_config(use_ssl=False, isolation_level=None):
+    test_host = (
+        "localhost:" + str(os.environ.get("PGPORT"))
+        if os.environ.get("PGPORT") is not None
+        else "localhost"
+    )
     test_user = "test"
-    test_pass = "test"
+    test_pass = "test"  # nosec
     test_db = "sheepdog_automated_test"
-    return dict(host=test_host, user=test_user, password=test_pass, database=test_db)
+    ret_val = dict(host=test_host, user=test_user, password=test_pass, database=test_db)
+
+    # set sslmode if it's given, otherwise use the default
+    if use_ssl:
+        connect_args = {}
+        connect_args["sslmode"] = "require"
+        ret_val["connect_args"] = connect_args
+
+    # set isolation_level if it's given, otherwise use the default
+    if isolation_level:
+        ret_val["isolation_level"] = isolation_level
+
+    return ret_val
 
 
 @pytest.fixture
@@ -141,18 +151,32 @@ def app(tmpdir, request):
     return _app
 
 
+@pytest.fixture(params=[False, True, None])
+def use_ssl(request):
+    # return False, True, None
+    return request.param
+
+
+@pytest.fixture(params=("READ_COMMITTED", "REPEATABLE_READ", "SERIALIZABLE", None))
+def isolation_level(request):
+    # return 'READ_COMMITTED', 'REPEATABLE_READ', 'SERIALIZABLE', None
+    return request.param
+
+
 @pytest.fixture
-def pg_driver(request, client):
-    pg_driver = PsqlGraphDriver(**pg_config())
+def pg_driver(request, client, use_ssl, isolation_level):
+    pg_driver = PsqlGraphDriver(
+        **pg_config(use_ssl=use_ssl, isolation_level=isolation_level)
+    )
 
     def tearDown():
         with pg_driver.engine.begin() as conn:
             for table in models.Node().get_subclass_table_names():
                 if table != models.Node.__tablename__:
-                    conn.execute("delete from {}".format(table))
+                    conn.execute("delete from {}".format(table))  # nosec
             for table in models.Edge().get_subclass_table_names():
                 if table != models.Edge.__tablename__:
-                    conn.execute("delete from {}".format(table))
+                    conn.execute("delete from {}".format(table))  # nosec
             conn.execute("delete from versioned_nodes")
             conn.execute("delete from _voided_nodes")
             conn.execute("delete from _voided_edges")
