@@ -1,7 +1,7 @@
 # To run: docker run -v /path/to/wsgi.py:/var/www/sheepdog/wsgi.py --name=sheepdog -p 81:80 sheepdog
 # To check running container: docker exec -it sheepdog /bin/bash
 
-FROM quay.io/cdis/python:python3.6-buster
+FROM quay.io/cdis/python:pybase3-2.0.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libffi-dev musl-dev gcc libxml2-dev libxslt-dev \
