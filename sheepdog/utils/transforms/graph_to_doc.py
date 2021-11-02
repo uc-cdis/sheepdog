@@ -157,7 +157,7 @@ def list_to_comma_string(val, file_format):
     Handle array fields by converting them to a comma-separated string.
 
     Example:
-        ['1','2','3'] -> 1,2,3
+        ['1','2','3'] -> '1,2,3'
     """
 
     if val is None:
@@ -167,7 +167,7 @@ def list_to_comma_string(val, file_format):
         return ""
 
     if isinstance(val, list):
-        val = ",".join(val)
+        val = ",".join((str(x) for x in val))
     return val
 
 
