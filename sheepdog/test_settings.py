@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from .config import LEGACY_MODE
 
 INDEX_CLIENT = {
     "host": "http://localhost:8000",
@@ -23,6 +22,7 @@ STORAGE = {"s3": {"keys": {}, "kwargs": {}}}
 STORAGE["s3"]["keys"]["host"] = {"access_key": "fake", "secret_key": "sooper_sekrit"}
 STORAGE["s3"]["kwargs"]["host"] = {}
 
+# Update these test settings for the appropriate db
 PSQLGRAPH = {
     "host": "localhost",
     "user": "test",
@@ -36,7 +36,7 @@ SHEEPDOG_PORT = "443"
 # Slicing settings
 SLICING = {"host": "localhost", "gencode": "REPLACEME"}
 
-FLASK_SECRET_KEY = "flask_test_key"
+FLASK_SECRET_KEY = "flask_test_key"  # nosec
 
 from cryptography.fernet import Fernet
 
