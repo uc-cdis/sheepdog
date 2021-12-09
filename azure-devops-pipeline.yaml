@@ -1,0 +1,147 @@
+trigger:
+  branches:
+    include:
+      - master
+variables:
+  - name: SP_CLIENT_ID
+    value: "MY_AZ_SP_CLIENT_ID"
+  - name: SP_CLIENT_PASS
+    value: "MY_AZ_SP_CLIENT_PASS"
+  - name: TENANT_ID
+    value: "MY_AZ_TENANT_ID"
+  - name: ACR_NAME
+    value: "myacrname"
+  - name: LOCAL_TEST_POSTGRESQL_USERNAME
+    value: test
+  - name: LOCAL_TEST_POSTGRESQL_PASSWORD
+    value: test
+  - name: LOCAL_POSTGRESQL_USERNAME
+    value: postgres
+  - name: LOCAL_POSTGRESQL_PASSWORD
+    value: test
+  - name: LOCAL_POSTGRESQL_PORT
+    value: 5433
+stages:
+  - stage: build
+    jobs:
+      - job: run_build_push_acr
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - script: |-
+              sudo apt-get update
+              sudo apt-get install python3
+            displayName: Install Python 3
+
+          - script: |-
+              python3 -m venv py38-venv
+            displayName: Create Python Virtual Environment
+
+          - script: |-
+              # install psql
+              sudo apt install postgresql-client-common
+              sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+              wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+              sudo apt-get update
+              sudo apt-get install postgresql-12
+              sudo pg_ctlcluster 12 main start
+
+              # wait for psql to be ready
+              tail /var/log/postgresql/postgresql-12-main.log | sed '/^database system is ready to accept connections$/ q'
+
+              # run psql scripts to initialize db
+              curDir=$(pwd)
+              ls "${curDir}/deployment/scripts/postgresql/postgresql_test_init.sql"
+              sudo -u postgres psql -f "${curDir}/deployment/scripts/postgresql/postgresql_test_init.sql" -p "$(LOCAL_POSTGRESQL_PORT)"
+
+              # setup root user
+              sudo -u postgres psql -c "ALTER USER $(LOCAL_POSTGRESQL_USERNAME) WITH PASSWORD '$(LOCAL_POSTGRESQL_PASSWORD)';" -p "$(LOCAL_POSTGRESQL_PORT)"
+            displayName: Setup Local Postgresql for Testing
+
+          - script: |-
+              . py38-venv/bin/activate
+              python3 -m pip install --upgrade pip
+
+              export CRYPTOGRAPHY_DONT_BUILD_RUST=1
+              python3 -m pip install -r requirements.txt
+              python3 setup.py develop
+              python3 -m pip install -r dev-requirements.txt
+              
+              # if you make changes in the /bin scripts then make sure to re-install
+              python3 setup.py build
+              python3 setup.py install
+            displayName: Install Sheepdog Dependencies
+
+          - script: |-
+              . py38-venv/bin/activate
+              
+              python3 bin/setup_test_database.py --database "sheepdog_automated_test" --root_user $(LOCAL_POSTGRESQL_USERNAME) --root_password $(LOCAL_POSTGRESQL_PASSWORD) --user $(LOCAL_TEST_POSTGRESQL_USERNAME) --password $(LOCAL_TEST_POSTGRESQL_PASSWORD) --port $(LOCAL_POSTGRESQL_PORT)
+              mkdir -p tests/integration/resources/keys; cd tests/integration/resources/keys; openssl genrsa -out test_private_key.pem 2048; openssl rsa -in test_private_key.pem -pubout -out test_public_key.pem; cd -
+            displayName: Setup Test Environment
+
+          - script: |-
+              . py38-venv/bin/activate
+              py.test -vv --cov=sheepdog --cov-report xml --junitxml="test-results-datadict.xml" tests/integration/datadict
+              py.test -vv --cov=sheepdog --cov-report xml --cov-append --junitxml="test-results-datadictwithobjid.xml" tests/integration/datadictwithobjid
+              py.test -vv --cov=sheepdog --cov-report xml --cov-append --junitxml="test-results-unit.xml" tests/unit
+            displayName: Run Sheepdog Test Suite
+            env:
+              PGPORT: $(LOCAL_POSTGRESQL_PORT)
+
+          - script: |-
+              . py38-venv/bin/activate
+              python3 -m pip install junitparser
+
+              # Use script to merge together test results
+              # https://pypi.org/project/junitparser/
+              eval $(python 2> /dev/null <<EOM
+              from junitparser import JUnitXml
+
+              xml_data_dict = JUnitXml.fromfile('test-results-datadict.xml')
+              xml_data_dict_with_objid =JUnitXml.fromfile('test-results-datadictwithobjid.xml')
+              xml_unit = JUnitXml.fromfile('test-results-unit.xml')
+
+              xml_combined = xml_data_dict + xml_data_dict_with_objid + xml_unit
+
+              xml_combined.write('test-results.xml')
+              EOM
+              )
+            displayName: Combine Test Results
+
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFiles: '**/test-*.xml'
+              testRunTitle: 'Publish test results for Python $(python.version)'
+
+          - task: PublishCodeCoverageResults@1
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+              reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+
+          - script: |-
+              set -e
+              echo "az login --service-principal --username $(SP_CLIENT_ID) --password $(SP_CLIENT_PASS) --tenant $(TENANT_ID)"
+              az login --service-principal --username "$(SP_CLIENT_ID)" --password "$(SP_CLIENT_PASS)" --tenant "$(TENANT_ID)"
+            displayName: Azure Login
+          
+          - script: |-
+              set -e
+              echo "PWD:"
+              pwd
+              ls -a
+              export BUILD_REPO_NAME=$(echo $(Build.Repository.Name) | tr '[:upper:]' '[:lower:]')
+              export IMAGE_TAG=$(echo $(Build.SourceBranchName) | tr / - | tr . - | tr _ - )-$(Build.BuildNumber)
+              export IMAGE_NAME=$BUILD_REPO_NAME:$IMAGE_TAG
+              echo "Image Name: $IMAGE_NAME"
+              ACR_BUILD_COMMAND="az acr build -r $(ACR_NAME) --image $IMAGE_NAME ."
+
+              cd ./
+              echo "PWD:"
+              pwd
+              ls -a
+              echo "ACR BUILD COMMAND: $ACR_BUILD_COMMAND"
+              $ACR_BUILD_COMMAND
+            displayName: ACR Build and Publish
+ 
