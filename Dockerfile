@@ -1,12 +1,11 @@
 # To run: docker run -v /path/to/wsgi.py:/var/www/sheepdog/wsgi.py --name=sheepdog -p 81:80 sheepdog
 # To check running container: docker exec -it sheepdog /bin/bash
 
-FROM quay.io/cdis/python-nginx:pybase3-1.6.2
+FROM quay.io/cdis/python:python3.6-buster-pybase3-3.0.2
 
-RUN apk update \
-    && apk add postgresql-libs postgresql-dev libffi-dev libressl-dev \
-    && apk add linux-headers musl-dev gcc libxml2-dev libxslt-dev \
-    && apk add curl bash git vim
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential libffi-dev musl-dev gcc libxml2-dev libxslt-dev \
+    curl bash git vim
 
 COPY . /sheepdog
 COPY ./deployment/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
