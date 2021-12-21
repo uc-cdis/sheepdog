@@ -3706,7 +3706,8 @@
                 "term": {
                     "$ref": "_terms.yaml#/time_between_clamping_and_freezing"
                 },
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
             },
             "shortest_dimension": {
                 "term": {

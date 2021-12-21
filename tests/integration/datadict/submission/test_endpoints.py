@@ -564,6 +564,49 @@ def test_validator_error_types(client, pg_driver, cgci_blgsp, submitter):
     assert errors["longest_dimension"] == "INVALID_VALUE"
 
 
+def test_validator_format(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that validator errors are returned for invalid formats.
+    The `time_between_clamping_and_freezing` schema is defined as:
+    { "type": "string", "format": "date-time" }
+    """
+    assert put_example_entities_together(client, submitter).status_code == 200
+
+    # Test that a string that is not a valid date-time is rejected
+    r = client.put(
+        BLGSP_PATH,
+        headers=submitter,
+        data=json.dumps(
+            {
+                "type": "sample",
+                "cases": {"submitter_id": "BLGSP-71-06-00019"},
+                "sample_type": "Blood Derived Normal",
+                "submitter_id": "BLGSP-71-06-00019",
+                "time_between_clamping_and_freezing": "not-a-date",
+            }
+        ),
+    )
+    errors = {e["keys"][0]: e["type"] for e in r.json["entities"][0]["errors"]}
+    assert r.status_code == 400, r.data
+    assert errors["time_between_clamping_and_freezing"] == "ERROR"
+
+    # Test that a string that is a valid date-time is accepted
+    r = client.put(
+        BLGSP_PATH,
+        headers=submitter,
+        data=json.dumps(
+            {
+                "type": "sample",
+                "cases": {"submitter_id": "BLGSP-71-06-00019"},
+                "sample_type": "Blood Derived Normal",
+                "submitter_id": "BLGSP-71-06-00019",
+                "time_between_clamping_and_freezing": "2018-11-13T20:20:39+00:00",
+            }
+        ),
+    )
+    assert r.status_code == 200, r.data
+
+
 def test_invalid_json(client, pg_driver, cgci_blgsp, submitter):
     resp = client.put(
         BLGSP_PATH,
