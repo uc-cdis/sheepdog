@@ -710,9 +710,7 @@ def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -792,9 +790,7 @@ def test_can_submit_with_asterisk_tsv(client, pg_driver, cgci_blgsp, submitter):
         "*projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
     }
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -1038,9 +1034,7 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -1149,9 +1143,7 @@ def test_zero_decimal_float(client, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -1302,9 +1294,7 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -1368,9 +1358,7 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
