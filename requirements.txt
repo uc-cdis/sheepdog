@@ -6,7 +6,7 @@ datamodelutils==1.0.0
 dictionaryutils==3.2.0
 envelopes==0.4
 Flask==1.1.1
-flask-cors==3.0.3
+flask-cors==3.0.9
 Flask-SQLAlchemy-Session==1.1
 fuzzywuzzy==0.6.1
 gen3authz==0.4.0
@@ -17,7 +17,7 @@ pbr==2.0.0
 psycopg2==2.8.4
 python-keystoneclient==1.8.1
 PyYAML==5.4
-requests==2.22.0
+requests>=2.22.0,<3.0.0
 setuptools==40.3.0
 six>=1.15.0
 simplejson==3.8.1
@@ -39,5 +39,5 @@ gen3datamodel==3.1.0
 git+https://git@github.com/uc-cdis/indexclient.git@2.0.0#egg=indexclient
 git+https://git@github.com/uc-cdis/storage-client.git@1.0.0#egg=storageclient
 -e git+https://github.com/technige/py2neo.git@py2neo-2.0#egg=py2neo
-
+urllib3>=1.26.5
 
