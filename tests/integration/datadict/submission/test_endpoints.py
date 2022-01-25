@@ -21,6 +21,7 @@ from sheepdog.globals import ROLES
 from sheepdog.transactions.upload import UploadTransaction
 from sheepdog.utils import get_external_proxies
 from sheepdog.utils.transforms import TSVToJSONConverter
+from sheepdog.utils.transforms.graph_to_doc import list_to_comma_string
 from tests.integration.datadict.submission.utils import (
     data_fnames,
     extended_data_fnames,
@@ -817,6 +818,10 @@ def test_export_all_node_types(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
     do_test_export(client, pg_driver, submitter, "experimental_metadata", "tsv")
+
+
+def test_export_non_string_array_values():
+    assert list_to_comma_string(["string", 1, 0.5, True], "tsv") == "string,1,0.5,True"
 
 
 def test_export_all_node_types_and_resubmit_json(
