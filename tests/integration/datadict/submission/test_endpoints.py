@@ -340,7 +340,7 @@ def put_example_entities_together(client, headers):
     return client.put(path, headers=headers, data=json.dumps(data))
 
 
-def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
+def do_test_post_example_entities_together(client, submitter):
     with open(os.path.join(DATA_DIR, "case.json"), "r") as f:
         case_sid = json.loads(f.read())["submitter_id"]
         print(case_sid)
@@ -354,6 +354,10 @@ def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter
         in resp_data["entities"][0]["errors"][0]["message"]
     )
     assert condition_to_check, resp.data
+
+
+def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
+    do_test_post_example_entities_together(client, submitter)
 
 
 def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
@@ -505,7 +509,7 @@ def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, submit
     assert resp.status_code == 400, resp.data
 
 
-def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
+def do_test_delete_entity(client, submitter):
     resp = client.put(
         BLGSP_PATH,
         headers=submitter,
@@ -522,6 +526,10 @@ def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
     path = BLGSP_PATH + "entities/" + did
     resp = client.delete(path, headers=submitter)
     assert resp.status_code == 200, resp.data
+
+
+def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
+    do_test_delete_entity(client, submitter)
 
 
 def test_catch_internal_errors(monkeypatch, client, pg_driver, cgci_blgsp, submitter):
@@ -698,7 +706,7 @@ def test_valid_file_index(
     assert index_client.get(sur_entity["id"]), "No indexd document created"
 
 
-def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
+def do_test_submit_valid_tsv(client, submitter):
     """
     Test that we can submit a valid TSV file
     """
@@ -727,6 +735,10 @@ def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     headers["Content-Type"] = "text/tsv"
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 200, resp.data
+
+
+def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
+    do_test_submit_valid_tsv(client, submitter)
 
 
 def test_submit_valid_csv(client, pg_driver, cgci_blgsp, submitter):
