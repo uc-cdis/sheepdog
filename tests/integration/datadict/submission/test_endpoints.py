@@ -340,7 +340,7 @@ def put_example_entities_together(client, headers):
     return client.put(path, headers=headers, data=json.dumps(data))
 
 
-def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
+def do_test_post_example_entities_together(client, submitter):
     with open(os.path.join(DATA_DIR, "case.json"), "r") as f:
         case_sid = json.loads(f.read())["submitter_id"]
         print(case_sid)
@@ -354,6 +354,10 @@ def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter
         in resp_data["entities"][0]["errors"][0]["message"]
     )
     assert condition_to_check, resp.data
+
+
+def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
+    do_test_post_example_entities_together(client, submitter)
 
 
 def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
@@ -505,7 +509,7 @@ def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, submit
     assert resp.status_code == 400, resp.data
 
 
-def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
+def do_test_delete_entity(client, submitter):
     resp = client.put(
         BLGSP_PATH,
         headers=submitter,
@@ -522,6 +526,10 @@ def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
     path = BLGSP_PATH + "entities/" + did
     resp = client.delete(path, headers=submitter)
     assert resp.status_code == 200, resp.data
+
+
+def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
+    do_test_delete_entity(client, submitter)
 
 
 def test_catch_internal_errors(monkeypatch, client, pg_driver, cgci_blgsp, submitter):
@@ -698,7 +706,7 @@ def test_valid_file_index(
     assert index_client.get(sur_entity["id"]), "No indexd document created"
 
 
-def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
+def do_test_submit_valid_tsv(client, submitter):
     """
     Test that we can submit a valid TSV file
     """
@@ -710,9 +718,7 @@ def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -729,6 +735,10 @@ def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     headers["Content-Type"] = "text/tsv"
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 200, resp.data
+
+
+def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
+    do_test_submit_valid_tsv(client, submitter)
 
 
 def test_submit_valid_csv(client, pg_driver, cgci_blgsp, submitter):
@@ -792,9 +802,7 @@ def test_can_submit_with_asterisk_tsv(client, pg_driver, cgci_blgsp, submitter):
         "*projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
     }
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -1038,9 +1046,7 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -1149,9 +1155,7 @@ def test_zero_decimal_float(client, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -1302,9 +1306,7 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -1368,9 +1370,7 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
