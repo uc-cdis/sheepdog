@@ -841,7 +841,7 @@ def export_all(node_label, project_id, file_format, db, without_id):
                 # edges = psqlgraph.Edge.get_subclasses()
                 # edge = psqlgraph.Edge.get_subclass("timingpartoftiming")
                 # edge = psqlgraph.Edge.get_subclass(link["edge_out"])
-                edge = get_unique_subclass("timing", "part_of", "timing")
+                edge = psqlgraph.Edge.get_unique_subclass("timing", "part_of", "timing")
                 # print(edge)
 
                 node_timing_dst = aliased(link["dst_type"])
