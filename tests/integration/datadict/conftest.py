@@ -151,16 +151,22 @@ def app(tmpdir, request):
     return _app
 
 
-@pytest.fixture(params=[False, True, None])
+@pytest.fixture()
 def use_ssl(request):
-    # return False, True, None
-    return request.param
+    try:
+        # one of [False, True, None]
+        return request.param
+    except:
+        return None
 
 
-@pytest.fixture(params=("READ_COMMITTED", "REPEATABLE_READ", "SERIALIZABLE", None))
+@pytest.fixture()
 def isolation_level(request):
-    # return 'READ_COMMITTED', 'REPEATABLE_READ', 'SERIALIZABLE', None
-    return request.param
+    try:
+        # one of ["READ_COMMITTED", "REPEATABLE_READ", "SERIALIZABLE", None]
+        return request.param
+    except:
+        return None
 
 
 @pytest.fixture

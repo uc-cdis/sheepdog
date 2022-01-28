@@ -14,8 +14,12 @@ from flask import g
 from moto import mock_s3
 from datamodelutils import models as md
 from sheepdog.transactions.upload import UploadTransaction
+
 from tests.integration.datadict.submission.utils import data_fnames
 from tests.integration.datadictwithobjid.submission.utils import extended_data_fnames
+from tests.integration.datadict.submission.test_endpoints import (
+    do_test_export,
+)
 
 BLGSP_PATH = "/v0/submission/CGCI/BLGSP/"
 BRCA_PATH = "/v0/submission/TCGA/BRCA/"
@@ -355,7 +359,7 @@ def put_example_entities_together(client, headers):
     return client.put(path, headers=headers, data=json.dumps(data))
 
 
-def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
+def do_test_post_example_entities_together(client, submitter):
     with open(os.path.join(DATA_DIR, "case.json"), "r") as f:
         case_sid = json.loads(f.read())["submitter_id"]
         assert case_sid
@@ -369,6 +373,10 @@ def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter
         in resp_data["entities"][0]["errors"][0]["message"]
     )
     assert condition_to_check, resp.data
+
+
+def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
+    do_test_post_example_entities_together(client, submitter)
 
 
 def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
@@ -706,22 +714,6 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     data = r.json
     assert data and len(data) == 1
     assert data[0]["id"] == case_id
-
-
-def do_test_export(client, pg_driver, submitter, node_type, format_type):
-    post_example_entities_together(client, submitter, extended_data_fnames)
-    experimental_metadata_count = add_and_get_new_experimental_metadata_count(pg_driver)
-    r = get_export_data(client, submitter, node_type, format_type, False)
-    assert r.status_code == 200, r.data
-    assert r.headers["Content-Disposition"].endswith(format_type)
-    if format_type == "tsv":
-        str_data = str(r.data, "utf-8")
-        assert len(str_data.strip().split("\n")) == experimental_metadata_count + 1
-        return str_data
-    else:
-        js_data = json.loads(r.data)
-        assert len(js_data["data"]) == experimental_metadata_count
-        return js_data
 
 
 def get_export_data(client, submitter, node_type, format_type, without_id):
