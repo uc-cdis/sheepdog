@@ -15,6 +15,8 @@ from cdislogging import get_logger
 import flask
 import psqlgraph
 
+from sqlalchemy.orm import aliased
+
 from sheepdog import auth
 from sheepdog import dictionary
 from sheepdog.errors import (
@@ -829,11 +831,31 @@ def export_all(node_label, project_id, file_format, db, without_id):
 
         # Join the related node tables using the links.
         for link in cls._pg_links.values():
-            query = (
-                query.outerjoin(link["edge_out"])
-                .outerjoin(link["dst_type"])
-                .order_by("src_id")
-            )
+            if link["edge_out"] != "_TimingPartOfTiming_out":
+                query = (
+                    query.outerjoin(link["edge_out"])
+                    .outerjoin(link["dst_type"])
+                    .order_by("src_id")
+                )
+            else:
+                # edges = psqlgraph.Edge.get_subclasses()
+                # edge = psqlgraph.Edge.get_subclass("timingpartoftiming")
+                # edge = psqlgraph.Edge.get_subclass(link["edge_out"])
+                edge = psqlgraph.Edge.get_unique_subclass("timing", "part_of", "timing")
+                # print(edge)
+
+                node_timing_dst = aliased(link["dst_type"])
+                # userSkillI = aliased(UserSkill)
+
+                # join(userSkillF, User.skills).\
+                # join(userSkillI, User.skills).\
+
+                query = (
+                    query.outerjoin(edge, cls.node_id==edge.src_id)
+                    .outerjoin(node_timing_dst, node_timing_dst.node_id==edge.dst_id)
+                    .order_by("src_id")
+                )
+
         # The result from the query should look like this (header just for
         # example):
         #
