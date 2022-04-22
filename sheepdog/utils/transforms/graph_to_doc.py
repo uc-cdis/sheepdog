@@ -802,6 +802,9 @@ def export_all(node_label, project_id, file_format, db, without_id):
     # class).
 
     titles_non_linked, titles_linked = get_all_titles(node_label, without_id)
+    print("MARCOOOOOOO 1")
+    print(titles_non_linked)
+    print(titles_linked)
     with db.session_scope() as session:
         # ``linked_props`` is a list of attributes belonging to linked classes
         # (for example, ``Experiment.node_id``).
@@ -818,8 +821,9 @@ def export_all(node_label, project_id, file_format, db, without_id):
         # Now, fill out the properties lists from the titles.
         cls = psqlgraph.Node.get_subclass(node_label)
         linked_props = make_linked_props(cls, titles_linked)
+        print("MARCOOOOOOO 2")
 
-        # Bui ld up the query. The query will contain, firstly, the node class,
+        # Build up the query. The query will contain, firstly, the node class,
         # and secondly, all the relevant properties in linked nodes.
         query_args = [cls] + linked_props
         query = session.query(*query_args).prop("project_id", project_id)
@@ -829,15 +833,22 @@ def export_all(node_label, project_id, file_format, db, without_id):
         if auth_ids:
             query = query.prop_in('submitter_id', auth_ids)
 
+        print("MARCOOOOOOO 3")
+        print(query)
+        print(cls._pg_links.values())
+
         # Join the related node tables using the links.
         for link in cls._pg_links.values():
+            print(link)
             if link["edge_out"] != "_TimingPartOfTiming_out":
+                print("INSIDE MARCOOOOOOO")
                 query = (
                     query.outerjoin(link["edge_out"])
                     .outerjoin(link["dst_type"])
                     .order_by("src_id")
                 )
             else:
+                print("OUTSIDE MARCOOOOOOO")
                 # edges = psqlgraph.Edge.get_subclasses()
                 # edge = psqlgraph.Edge.get_subclass("timingpartoftiming")
                 # edge = psqlgraph.Edge.get_subclass(link["edge_out"])
