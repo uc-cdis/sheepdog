@@ -184,23 +184,28 @@ def check_resource_access(program, project, nodes):
             subject_submitter_ids.append({"id": node.node_id, "submitter_id": node.props.get("submitter_id", None)})
         else:
             for link in node._pg_links:
-                tmp_dad = getattr(node, link)[0]
-                nodeType = link
-                path_tmp = nodeType
-                tmp = node._pg_links[link]["dst_type"]
-                while tmp.label != stop_node and tmp.label != "program":
-                    # assuming ony one parents
-                    nodeType = list(tmp._pg_links.keys())[0]
-                    path_tmp = path_tmp + "." + nodeType
-                    tmp = tmp._pg_links[nodeType]["dst_type"]
-                    # TODO double check this with deeper relationship > 2 nodes under project
-                    tmp_dad = getattr(tmp_dad, nodeType)[0]
+                print(link)                                                                                         
+                print(node)
+                tmp_dads = getattr(node, link, None)
+                print(tmp_dads)
+                if tmp_dads:
+                    tmp_dad = tmp_dads[0]
+                    nodeType = link
+                    path_tmp = nodeType
+                    tmp = node._pg_links[link]["dst_type"]
+                    while tmp.label != stop_node and tmp.label != "program":
+                        # assuming ony one parents
+                        nodeType = list(tmp._pg_links.keys())[0]
+                        path_tmp = path_tmp + "." + nodeType
+                        tmp = tmp._pg_links[nodeType]["dst_type"]
+                        # TODO double check this with deeper relationship > 2 nodes under project
+                        tmp_dad = getattr(tmp_dad, nodeType)[0]
 
-                if tmp.label == stop_node:
-                    subject_submitter_ids.append({"id": tmp_dad.node_id, "submitter_id": tmp_dad.props.get("submitter_id", None)})
-                else:
-                    logger.warn("resource not found " + node.label)
-                    logger.warn(node)
+                    if tmp.label == stop_node:
+                        subject_submitter_ids.append({"id": tmp_dad.node_id, "submitter_id": tmp_dad.props.get("submitter_id", None)})
+                    else:
+                        logger.warn("resource not found " + node.label)
+                        logger.warn(node)
 
     try:
         resources = [
@@ -216,7 +221,7 @@ def check_resource_access(program, project, nodes):
 def get_authorized_ids(program, project):
     try:
         mapping = flask.current_app.auth.auth_mapping(current_user.username)
-    except ArboristError as e:
+    except AuthZError as e:
         logger.warn(
             "Unable to retrieve auth mapping for user `{}`: {}".format(current_user.username, e)
         )
