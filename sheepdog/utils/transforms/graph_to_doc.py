@@ -802,9 +802,6 @@ def export_all(node_label, project_id, file_format, db, without_id):
     # class).
 
     titles_non_linked, titles_linked = get_all_titles(node_label, without_id)
-    print("MARCOOOOOOO 1")
-    print(titles_non_linked)
-    print(titles_linked)
     with db.session_scope() as session:
         # ``linked_props`` is a list of attributes belonging to linked classes
         # (for example, ``Experiment.node_id``).
@@ -821,7 +818,6 @@ def export_all(node_label, project_id, file_format, db, without_id):
         # Now, fill out the properties lists from the titles.
         cls = psqlgraph.Node.get_subclass(node_label)
         linked_props = make_linked_props(cls, titles_linked)
-        print("MARCOOOOOOO 2")
 
         # Build up the query. The query will contain, firstly, the node class,
         # and secondly, all the relevant properties in linked nodes.
@@ -834,8 +830,6 @@ def export_all(node_label, project_id, file_format, db, without_id):
             query = query.prop_in('submitter_id', auth_ids)
 
         print("MARCOOOOOOO 3")
-        print(query)
-        print(cls._pg_links.values())
 
         # Join the related node tables using the links.
         for link in cls._pg_links.values():
@@ -853,7 +847,8 @@ def export_all(node_label, project_id, file_format, db, without_id):
                 # edge = psqlgraph.Edge.get_subclass("timingpartoftiming")
                 # edge = psqlgraph.Edge.get_subclass(link["edge_out"])
                 edge = psqlgraph.Edge.get_unique_subclass("timing", "part_of", "timing")
-                # print(edge)
+                print(edge)
+                
 
                 node_timing_dst = aliased(link["dst_type"])
                 # userSkillI = aliased(UserSkill)
@@ -866,6 +861,9 @@ def export_all(node_label, project_id, file_format, db, without_id):
                     .outerjoin(node_timing_dst, node_timing_dst.node_id==edge.dst_id)
                     .order_by("src_id")
                 )
+
+        print("MARCOOOOOOO 4")
+        print(query)
 
         # The result from the query should look like this (header just for
         # example):
