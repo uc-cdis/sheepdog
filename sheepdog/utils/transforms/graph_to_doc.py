@@ -821,6 +821,8 @@ def export_all(node_label, project_id, file_format, db, without_id):
 
         # Build up the query. The query will contain, firstly, the node class,
         # and secondly, all the relevant properties in linked nodes.
+        print("MARCOOOOOO linked")
+        print(linked_props)
         query_args = [cls] + linked_props
         query = session.query(*query_args).prop("project_id", project_id)
 
