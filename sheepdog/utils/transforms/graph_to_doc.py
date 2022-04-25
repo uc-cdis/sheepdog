@@ -829,26 +829,21 @@ def export_all(node_label, project_id, file_format, db, without_id):
         if auth_ids:
             query = query.prop_in('submitter_id', auth_ids)
 
-        print("MARCOOOOOOO 3")
-
         # Join the related node tables using the links.
         for link in cls._pg_links.values():
             print(link)
             if link["edge_out"] != "_TimingPartOfTiming_out":
-                print("INSIDE MARCOOOOOOO")
                 query = (
                     query.outerjoin(link["edge_out"])
                     .outerjoin(link["dst_type"])
                     .order_by("src_id")
                 )
             else:
-                print("OUTSIDE MARCOOOOOOO")
                 # edges = psqlgraph.Edge.get_subclasses()
                 # edge = psqlgraph.Edge.get_subclass("timingpartoftiming")
                 # edge = psqlgraph.Edge.get_subclass(link["edge_out"])
                 edge = psqlgraph.Edge.get_unique_subclass("timing", "part_of", "timing")
-                print(edge)
-                
+                # print(edge)
 
                 node_timing_dst = aliased(link["dst_type"])
                 # userSkillI = aliased(UserSkill)
@@ -862,8 +857,6 @@ def export_all(node_label, project_id, file_format, db, without_id):
                     .order_by("src_id")
                 )
 
-        print("MARCOOOOOOO 4")
-        print(query)
 
         # The result from the query should look like this (header just for
         # example):
@@ -884,7 +877,10 @@ def export_all(node_label, project_id, file_format, db, without_id):
         js_list_separator = ""
         last_id = None
         current_obj = None
-        for result in query.yield_per(1000):
+        partial_results = query.yield_per(1000)
+        print("MARCOOOOOO 2000")
+        print(partial_results[0])
+        for result in partial_results:
             node = result[0]
             node_id = node["node_id"]
             if node_id != last_id:
@@ -892,6 +888,8 @@ def export_all(node_label, project_id, file_format, db, without_id):
                     prop: list_to_comma_string(node[prop], file_format)
                     for prop in props
                 }
+                print("MARCOOOOOO 203")
+                print(new_obj)
                 if current_obj != None:
                     yield from yield_result(
                         current_obj,
@@ -904,6 +902,8 @@ def export_all(node_label, project_id, file_format, db, without_id):
                 last_id = node_id
                 current_obj = new_obj
             current_obj = append_links_to_obj(result, current_obj, titles_linked)
+            print("MARCOOOOOO 205")
+            print(current_obj)
 
         if current_obj is not None:
             yield from yield_result(
@@ -967,6 +967,11 @@ def result_to_delimited_file(props_values, file_format):
 def append_links_to_obj(result, current_obj, titles_linked):
     link_props_split = list(map(format_linked_prop, titles_linked))
     linked_fields = defaultdict(defaultdict)
+
+    print("MARCOOOOOO link")
+    print(link_props_split)
+    print(linked_fields)
+    print(result)
     for idx, (link_name, link_prop) in enumerate(link_props_split):
         if result[idx + 1] is None:
             continue
