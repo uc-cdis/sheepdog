@@ -825,36 +825,26 @@ def export_all(node_label, project_id, file_format, db, without_id):
         for link in cls._pg_links.values():
             if link["edge_out"] == recursive_node:
                 titles_linked = [a for a in titles_linked if 'timings.' not in a]
-
                 edge = psqlgraph.Edge.get_unique_subclass("timing", "part_of", "timing")
                 # node_timing_dst = aliased(link["dst_type"])
+                # edges = psqlgraph.Edge.get_subclasses()
+                # edge = psqlgraph.Edge.get_subclass("timingpartoftiming")
+                # edge = psqlgraph.Edge.get_subclass(link["edge_out"])
+                # edge = psqlgraph.Edge.get_unique_subclass("timing", "part_of", "timing")
+                # print(edge)
+                # node_timing_dst = aliased(link["dst_type"])
+                # userSkillI = aliased(UserSkill)
+                # join(userSkillF, User.skills).\
+                # join(userSkillI, User.skills).\
                 node_timing_dst = aliased(link["dst_type"], name='node_timing_1')
-
-        print("MARCOOOOOO 5555556")
-        print(titles_linked)
-        print(cls)
-        print(map(format_linked_prop, titles_linked))
-        print(list(map(format_linked_prop, titles_linked)))
-        print([ getattr(cls._pg_links[link_name]["dst_type"], link_prop) for (link_name, link_prop) in list(map(format_linked_prop, titles_linked))])
-        print(getattr(node_timing_dst, 'id'))
-        print(getattr(node_timing_dst, 'node_id'))
-        print(getattr(node_timing_dst, 'submitter_id'))
-        print("END")
-        
-
 
         linked_props = make_linked_props(cls, titles_linked)
         
 
-
         # Build up the query. The query will contain, firstly, the node class,
         # and secondly, all the relevant properties in linked nodes.
         query_args = [cls] + linked_props
-        print("MARCOOOOOO 5555")
-        # ['subjects.id', 'subjects.submitter_id', 'timings.id', 'timings.submitter_id']
-        print(query_args)
         query_args.extend([getattr(node_timing_dst, 'node_id'), getattr(node_timing_dst, 'submitter_id')] if node_timing_dst is not None else [])
-        print(query_args)
         query = session.query(*query_args).prop("project_id", project_id)
 
         #add filter by id the user is authorized to access
@@ -871,18 +861,6 @@ def export_all(node_label, project_id, file_format, db, without_id):
                     .order_by("src_id")
                 )
             else:
-                # edges = psqlgraph.Edge.get_subclasses()
-                # edge = psqlgraph.Edge.get_subclass("timingpartoftiming")
-                # edge = psqlgraph.Edge.get_subclass(link["edge_out"])
-                # edge = psqlgraph.Edge.get_unique_subclass("timing", "part_of", "timing")
-                # print(edge)
-
-                # node_timing_dst = aliased(link["dst_type"])
-                # userSkillI = aliased(UserSkill)
-
-                # join(userSkillF, User.skills).\
-                # join(userSkillI, User.skills).\
-
                 query = (
                     query.outerjoin(edge, cls.node_id==edge.src_id)
                     .outerjoin(node_timing_dst, node_timing_dst.node_id==edge.dst_id)
@@ -906,14 +884,10 @@ def export_all(node_label, project_id, file_format, db, without_id):
             # Yield the lines of the file.
             yield "{}\n".format("\t".join(titles_non_linked + titles_linked))
 
-        print("MARCOOOOOO 4555")
-        print(query)
         js_list_separator = ""
         last_id = None
         current_obj = None
         partial_results = query.yield_per(1000)
-        print("MARCOOOOOO 2000")
-        print(partial_results[0])
         for result in partial_results:
             node = result[0]
             node_id = node["node_id"]
@@ -922,8 +896,6 @@ def export_all(node_label, project_id, file_format, db, without_id):
                     prop: list_to_comma_string(node[prop], file_format)
                     for prop in props
                 }
-                print("MARCOOOOOO 203")
-                print(new_obj)
                 if current_obj != None:
                     yield from yield_result(
                         current_obj,
@@ -936,8 +908,6 @@ def export_all(node_label, project_id, file_format, db, without_id):
                 last_id = node_id
                 current_obj = new_obj
             current_obj = append_links_to_obj(result, current_obj, titles_linked)
-            print("MARCOOOOOO 205")
-            print(current_obj)
 
         if current_obj is not None:
             yield from yield_result(
@@ -1002,10 +972,6 @@ def append_links_to_obj(result, current_obj, titles_linked):
     link_props_split = list(map(format_linked_prop, titles_linked))
     linked_fields = defaultdict(defaultdict)
 
-    print("MARCOOOOOO link")
-    print(link_props_split)
-    print(linked_fields.items())
-    print(result)
     for idx, (link_name, link_prop) in enumerate(link_props_split):
         if result[idx + 1] is None:
             continue
