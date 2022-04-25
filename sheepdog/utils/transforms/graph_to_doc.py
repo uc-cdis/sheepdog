@@ -874,6 +874,8 @@ def export_all(node_label, project_id, file_format, db, without_id):
             # Yield the lines of the file.
             yield "{}\n".format("\t".join(titles_non_linked + titles_linked))
 
+        print("MARCOOOOOO 4555")
+        print(query)
         js_list_separator = ""
         last_id = None
         current_obj = None
@@ -970,7 +972,7 @@ def append_links_to_obj(result, current_obj, titles_linked):
 
     print("MARCOOOOOO link")
     print(link_props_split)
-    print(linked_fields)
+    print(linked_fields.items())
     print(result)
     for idx, (link_name, link_prop) in enumerate(link_props_split):
         if result[idx + 1] is None:
