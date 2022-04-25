@@ -823,6 +823,20 @@ def export_all(node_label, project_id, file_format, db, without_id):
         # and secondly, all the relevant properties in linked nodes.
         print("MARCOOOOOO linked")
         print(linked_props)
+        print(titles_linked)
+
+
+
+        # # Create alias if joining on itself
+        # edge = None
+        # node_timing_dst = None
+        # for link in cls._pg_links.values():
+        #     if link["edge_out"] == "_TimingPartOfTiming_out":
+        #         edge = psqlgraph.Edge.get_unique_subclass("timing", "part_of", "timing")
+        #         node_timing_dst = aliased(link["dst_type"])
+
+
+
         query_args = [cls] + linked_props
         query = session.query(*query_args).prop("project_id", project_id)
 
