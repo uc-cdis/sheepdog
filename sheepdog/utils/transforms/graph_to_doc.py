@@ -836,6 +836,9 @@ def export_all(node_label, project_id, file_format, db, without_id):
         print(map(format_linked_prop, titles_linked))
         print(list(map(format_linked_prop, titles_linked)))
         print([ getattr(cls._pg_links[link_name]["dst_type"], link_prop) for (link_name, link_prop) in list(map(format_linked_prop, titles_linked))])
+        print(getattr(node_timing_dst, 'id'))
+        print(getattr(node_timing_dst, 'node_id'))
+        print(getattr(node_timing_dst, 'submitter_id'))
         print("END")
         
 
@@ -850,7 +853,7 @@ def export_all(node_label, project_id, file_format, db, without_id):
         print("MARCOOOOOO 5555")
         # ['subjects.id', 'subjects.submitter_id', 'timings.id', 'timings.submitter_id']
         print(query_args)
-        query_args.extend([getattr(node_timing_dst, 'id'), getattr(node_timing_dst, 'submitter_id')] if node_timing_dst is not None else [])
+        query_args.extend([getattr(node_timing_dst, 'node_id'), getattr(node_timing_dst, 'submitter_id')] if node_timing_dst is not None else [])
         print(query_args)
         query = session.query(*query_args).prop("project_id", project_id)
 
