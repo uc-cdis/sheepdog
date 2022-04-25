@@ -834,7 +834,11 @@ def export_all(node_label, project_id, file_format, db, without_id):
 
         # Build up the query. The query will contain, firstly, the node class,
         # and secondly, all the relevant properties in linked nodes.
-        query_args = [cls] + linked_props + ([node_timing_dst.id, node_timing_dst.submitter_id] if node_timing_dst is not None else [])
+        query_args = [cls] + linked_props
+        print("MARCOOOOOO 5555")
+        print(query_args)
+        query_args.extend([node_timing_dst.id, node_timing_dst.submitter_id] if node_timing_dst is not None else [])
+        print(query_args)
         query = session.query(*query_args).prop("project_id", project_id)
 
         #add filter by id the user is authorized to access
