@@ -827,17 +827,30 @@ def export_all(node_label, project_id, file_format, db, without_id):
                 titles_linked = [a for a in titles_linked if 'timings.' not in a]
 
                 edge = psqlgraph.Edge.get_unique_subclass("timing", "part_of", "timing")
-                node_timing_dst = aliased(link["dst_type"])
+                # node_timing_dst = aliased(link["dst_type"])
+                node_timing_dst = aliased(link["dst_type"], name='node_timing_1')
+
+        print("MARCOOOOOO 5555556")
+        print(titles_linked)
+        print(cls)
+        print(map(format_linked_prop, titles_linked))
+        print(list(map(format_linked_prop, titles_linked)))
+        print([ getattr(cls._pg_links[link_name]["dst_type"], link_prop) for (link_name, link_prop) in list(map(format_linked_prop, titles_linked))])
+        print("END")
+        
 
 
         linked_props = make_linked_props(cls, titles_linked)
+        
+
 
         # Build up the query. The query will contain, firstly, the node class,
         # and secondly, all the relevant properties in linked nodes.
         query_args = [cls] + linked_props
         print("MARCOOOOOO 5555")
+        # ['subjects.id', 'subjects.submitter_id', 'timings.id', 'timings.submitter_id']
         print(query_args)
-        query_args.extend([node_timing_dst.id, node_timing_dst.submitter_id] if node_timing_dst is not None else [])
+        # query_args.extend([node_timing_dst.id, node_timing_dst.submitter_id] if node_timing_dst is not None else [])
         print(query_args)
         query = session.query(*query_args).prop("project_id", project_id)
 
