@@ -867,7 +867,6 @@ def export_all(node_label, project_id, file_format, db, without_id):
                     .order_by("src_id")
                 )
 
-
         # The result from the query should look like this (header just for
         # example):
         #
@@ -887,8 +886,7 @@ def export_all(node_label, project_id, file_format, db, without_id):
         js_list_separator = ""
         last_id = None
         current_obj = None
-        partial_results = query.yield_per(1000)
-        for result in partial_results:
+        for result in query.yield_per(1000):
             node = result[0]
             node_id = node["node_id"]
             if node_id != last_id:
@@ -971,7 +969,6 @@ def result_to_delimited_file(props_values, file_format):
 def append_links_to_obj(result, current_obj, titles_linked):
     link_props_split = list(map(format_linked_prop, titles_linked))
     linked_fields = defaultdict(defaultdict)
-
     for idx, (link_name, link_prop) in enumerate(link_props_split):
         if result[idx + 1] is None:
             continue

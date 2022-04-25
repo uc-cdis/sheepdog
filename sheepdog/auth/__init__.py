@@ -184,10 +184,7 @@ def check_resource_access(program, project, nodes):
             subject_submitter_ids.append({"id": node.node_id, "submitter_id": node.props.get("submitter_id", None)})
         else:
             for link in node._pg_links:
-                print(link)                                                                                         
-                print(node)
                 tmp_dads = getattr(node, link, None)
-                print(tmp_dads)
                 if tmp_dads:
                     tmp_dad = tmp_dads[0]
                     nodeType = link
