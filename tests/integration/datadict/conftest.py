@@ -156,7 +156,7 @@ def use_ssl(request):
     try:
         # one of [False, True, None]
         return request.param
-    except:
+    except Exception:
         return None
 
 
@@ -165,7 +165,7 @@ def isolation_level(request):
     try:
         # one of ["READ_COMMITTED", "REPEATABLE_READ", "SERIALIZABLE", None]
         return request.param
-    except:
+    except Exception:
         return None
 
 

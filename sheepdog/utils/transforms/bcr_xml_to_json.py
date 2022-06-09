@@ -178,7 +178,7 @@ class BcrXmlToJsonParser(object):
             result = root.xpath(path, namespaces=self.namespaces)
         except etree.XPathEvalError:
             result = []
-        except:
+        except Exception:
             raise
         rlen = len(result)
         if rlen < 1 and expected:

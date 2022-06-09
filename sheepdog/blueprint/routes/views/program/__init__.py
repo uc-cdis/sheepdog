@@ -195,7 +195,10 @@ def create_project(program):
         doc.pop("state", None)
         doc.pop("released", None)
 
-        node.props.update(doc)
+        try:
+            node.props.update(doc)
+        except AttributeError as e:
+            raise UserError(f"ERROR: {e}")
 
         res_doc = dict(
             {"type": "project", "programs": {"id": program_node.node_id}}, **doc
