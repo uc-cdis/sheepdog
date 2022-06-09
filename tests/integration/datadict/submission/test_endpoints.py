@@ -545,7 +545,7 @@ def test_catch_internal_errors(monkeypatch, client, pg_driver, cgci_blgsp, submi
     try:
         r = put_example_entities_together(client, submitter)
         assert len(r.json["transactional_errors"]) == 1, r.data
-    except:
+    except Exception:
         raise
 
 

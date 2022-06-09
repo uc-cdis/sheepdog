@@ -311,7 +311,7 @@ def get_suggestion(value, choices):
             message = " Did you mean '{}'?".format(suggestion)
         else:
             message = ""
-    except:  # pylint: disable=bare-except
+    except Exception:
         pass
     return message
 
