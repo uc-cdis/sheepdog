@@ -233,13 +233,13 @@ class DelimitedConverter(object):
 
     @staticmethod
     def get_converted_type_from_list(cls, prop_name, value):
-        current_app.logger.debug(f"cls.__pg_properties__:{cls.__pg_properties__}")
+        current_app.logger.warning(f"cls.__pg_properties__:{cls.__pg_properties__}")
         types = cls.__pg_properties__.get(prop_name, (str,))
-        current_app.logger.debug(f"types:{types}")
+        current_app.logger.warning(f"types:{types}")
         value_type = types[0]
 
         property_list = cls.get_property_list()
-        current_app.logger.debug(f"property_list:{property_list}")
+        current_app.logger.warning(f"property_list:{property_list}")
 
         # TODO: list_type is not used b/c for some reason it's always
         #       str even if the dictionary says it's an array of ints
@@ -247,9 +247,9 @@ class DelimitedConverter(object):
         if len(types) > 1:
             list_type = types[1]
 
-        current_app.logger.debug(f"prop_name:{prop_name}")
-        current_app.logger.debug(f"value:{value}")
-        current_app.logger.debug(f"value_type:{value_type}")
+        current_app.logger.warning(f"prop_name:{prop_name}")
+        current_app.logger.warning(f"value:{value}")
+        current_app.logger.warning(f"value_type:{value_type}")
 
         try:
             if value_type == bool:
