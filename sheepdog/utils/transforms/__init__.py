@@ -207,15 +207,14 @@ class DelimitedConverter(object):
 
     @staticmethod
     def get_converted_type_from_list(cls, prop_name, value):
+        current_app.logger.error(f"cls.__pg_properties__:{cls.__pg_properties__}")
         types = cls.__pg_properties__.get(prop_name, (str,))
+        current_app.logger.error(f"types:{types}")
         value_type = types[0]
 
         current_app.logger.error(f"prop_name:{prop_name}")
-        print(f"prop_name:{prop_name}")
         current_app.logger.error(f"value:{value}")
-        print(f"value:{value}")
         current_app.logger.error(f"value_type:{value_type}")
-        print(f"value_type:{value_type}")
 
         try:
             if value_type == bool:
