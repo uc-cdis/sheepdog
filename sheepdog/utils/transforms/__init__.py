@@ -30,17 +30,17 @@ def parse_bool_from_string(value):
     return mapping.get(strip(value).lower(), value)
 
 
-def parse_list_from_string(value):
+def parse_list_from_string(value, list_type=float):
     """
     Handle array fields by converting them to a list.
-    Try to cast to float to handle arrays of numbers.
+    Try to cast to list_type to handle arrays of numbers.
     Example:
         a,b,c -> ['a','b','c']
         1,2,3 -> [1,2,3]
     """
     items = [x.strip() for x in value.split(",")]
     try:
-        items = [float(x) for x in items]
+        items = [list_type(x) for x in items]
     except ValueError:
         pass  # not an array of numbers
     return items
@@ -212,6 +212,12 @@ class DelimitedConverter(object):
         current_app.logger.error(f"types:{types}")
         value_type = types[0]
 
+        # assume list of floats by default to maintain backwards-compatible
+        # behavior when type is not present
+        list_type = float
+        if len(types) > 1:
+            list_type = types[1]
+
         current_app.logger.error(f"prop_name:{prop_name}")
         current_app.logger.error(f"value:{value}")
         current_app.logger.error(f"value_type:{value_type}")
@@ -220,7 +226,7 @@ class DelimitedConverter(object):
             if value_type == bool:
                 return parse_bool_from_string(value)
             elif value_type == list:
-                return parse_list_from_string(value)
+                return parse_list_from_string(value, list_type=list_type)
             elif value_type == float:
                 if float(value).is_integer():
                     return int(float(value))
