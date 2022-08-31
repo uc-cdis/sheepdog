@@ -30,20 +30,37 @@ def parse_bool_from_string(value):
     return mapping.get(strip(value).lower(), value)
 
 
-def parse_list_from_string(value, list_type=float):
+def parse_list_from_string(value, list_type=None):
     """
     Handle array fields by converting them to a list.
-    Try to cast to list_type to handle arrays of numbers.
+    Try to cast to float to handle arrays of numbers.
     Example:
         a,b,c -> ['a','b','c']
         1,2,3 -> [1,2,3]
     """
     items = [x.strip() for x in value.split(",")]
     try:
-        items = [list_type(x) for x in items]
+        # TODO: Actually pass in and use list_type as the expected type
+        #       and don't try to infer it this way.
+        all_ints = True
+        for item in items:
+            if not float(value).is_integer():
+                all_ints = False
+                break
+
+        if all_ints:
+            current_app.logger.warning(
+                f"list of values {items} could all be integers, so we are ASSUMING they "
+                "are instead of defaulting to float."
+            )
+            # all can be ints, infer `int` as correct type
+            items = [int(item) for item in items]
+        else:
+            # default to float for backwards compatibility
+            items = [float(item) for item in items]
     except ValueError:
         pass  # not an array of numbers
-    return items
+    return new_items
 
 
 def set_row_type(row):
@@ -207,31 +224,23 @@ class DelimitedConverter(object):
 
     @staticmethod
     def get_converted_type_from_list(cls, prop_name, value):
-        current_app.logger.error(f"cls.__pg_properties__:{cls.__pg_properties__}")
+        current_app.logger.debug(f"cls.__pg_properties__:{cls.__pg_properties__}")
         types = cls.__pg_properties__.get(prop_name, (str,))
-        current_app.logger.error(f"types:{types}")
+        current_app.logger.debug(f"types:{types}")
         value_type = types[0]
 
-        try:
-            property_list = cls.get_property_list()
-            current_app.logger.error(f"property_list:{property_list}")
+        property_list = cls.get_property_list()
+        current_app.logger.debug(f"property_list:{property_list}")
 
-            node_prop = cls._get_property(key=prop_name)
-            current_app.logger.error(f"node_prop:{node_prop}")
-            current_app.logger.error(f"node_prop.__dict__:{node_prop.__dict__}")
-        except Exception as exc:
-            print(exc)
-            pass
-
-        # assume list of floats by default to maintain backwards-compatible
-        # behavior when type is not present
-        list_type = float
+        # TODO: list_type is not used b/c for some reason it's always
+        #       str even if the dictionary says it's an array of ints
+        list_type = None
         if len(types) > 1:
             list_type = types[1]
 
-        current_app.logger.error(f"prop_name:{prop_name}")
-        current_app.logger.error(f"value:{value}")
-        current_app.logger.error(f"value_type:{value_type}")
+        current_app.logger.debug(f"prop_name:{prop_name}")
+        current_app.logger.debug(f"value:{value}")
+        current_app.logger.debug(f"value_type:{value_type}")
 
         try:
             if value_type == bool:
