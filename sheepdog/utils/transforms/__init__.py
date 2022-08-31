@@ -210,9 +210,9 @@ class DelimitedConverter(object):
         types = cls.__pg_properties__.get(prop_name, (str,))
         value_type = types[0]
 
-        current_app.logger.info(f"prop_name:{prop_name}")
-        current_app.logger.info(f"value:{value}")
-        current_app.logger.info(f"value_type:{value_type}")
+        current_app.logger.error(f"prop_name:{prop_name}")
+        current_app.logger.error(f"value:{value}")
+        current_app.logger.error(f"value_type:{value_type}")
 
         try:
             if value_type == bool:
