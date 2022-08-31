@@ -211,8 +211,11 @@ class DelimitedConverter(object):
         value_type = types[0]
 
         current_app.logger.error(f"prop_name:{prop_name}")
+        print(f"prop_name:{prop_name}")
         current_app.logger.error(f"value:{value}")
+        print(f"value:{value}")
         current_app.logger.error(f"value_type:{value_type}")
+        print(f"value_type:{value_type}")
 
         try:
             if value_type == bool:
