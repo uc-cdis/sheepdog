@@ -216,7 +216,7 @@ class DelimitedConverter(object):
             property_list = cls.get_property_list()
             current_app.logger.error(f"property_list:{property_list}")
 
-            node_prop = cls._get_property(prop_name)
+            node_prop = cls._get_property(key=prop_name)
             current_app.logger.error(f"node_prop:{node_prop}")
             current_app.logger.error(f"node_prop.__dict__:{node_prop.__dict__}")
         except Exception as exc:
