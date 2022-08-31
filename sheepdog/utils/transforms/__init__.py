@@ -54,7 +54,7 @@ def parse_list_from_string(value, list_type=None):
                 "are instead of defaulting to float."
             )
             # all can be ints, infer `int` as correct type
-            items = [int(item) for item in items]
+            items = [int(float(value)) for item in items]
         else:
             # default to float for backwards compatibility
             items = [float(item) for item in items]
