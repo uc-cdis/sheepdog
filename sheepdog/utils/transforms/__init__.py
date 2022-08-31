@@ -54,10 +54,16 @@ def parse_list_from_string(value, list_type=None):
                 "are instead of defaulting to float."
             )
             # all can be ints, infer `int` as correct type
-            items = [int(float(item)) for item in items]
+            new_items = [int(float(item)) for item in items]
         else:
+            current_app.logger.warning(
+                f"list of values {items} are NOT all integers, so we are ASSUMING they "
+                "they are all float by default."
+            )
             # default to float for backwards compatibility
-            items = [float(item) for item in items]
+            new_items = [float(item) for item in items]
+
+        return new_items
     except ValueError:
         pass  # not an array of numbers
     return items
