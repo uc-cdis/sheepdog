@@ -64,7 +64,10 @@ def parse_list_from_string(value, list_type=None):
             new_items = [float(item) for item in items]
 
         return new_items
-    except ValueError:
+    except ValueError as exc:
+        current_app.logger.info(
+            f"list of values {items} are likely NOT ints or floats. Exception: {exc}"
+        )
         pass  # not an array of numbers
     return items
 
