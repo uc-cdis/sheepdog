@@ -45,7 +45,7 @@ def parse_list_from_string(value, list_type=None):
         # TODO: Actually pass in and use list_type as the expected type
         #       and don't try to infer it this way.
         for item in items:
-            if not float(value).is_integer():
+            if not float(item).is_integer():
                 all_ints = False
                 break
 
