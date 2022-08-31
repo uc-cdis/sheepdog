@@ -212,6 +212,13 @@ class DelimitedConverter(object):
         current_app.logger.error(f"types:{types}")
         value_type = types[0]
 
+        try:
+            property_list = cls.get_property_list()
+            current_app.logger.error(f"property_list:{property_list}")
+        except Exception as exc:
+            print(exc)
+            pass
+
         # assume list of floats by default to maintain backwards-compatible
         # behavior when type is not present
         list_type = float
