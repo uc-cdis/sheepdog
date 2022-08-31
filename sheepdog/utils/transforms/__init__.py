@@ -39,37 +39,38 @@ def parse_list_from_string(value, list_type=None):
         1,2,3 -> [1,2,3]
     """
     items = [x.strip() for x in value.split(",")]
+
+    all_ints = True
     try:
         # TODO: Actually pass in and use list_type as the expected type
         #       and don't try to infer it this way.
-        all_ints = True
         for item in items:
             if not float(value).is_integer():
                 all_ints = False
                 break
 
-        if all_ints:
-            current_app.logger.warning(
-                f"list of values {items} could all be integers, so we are ASSUMING they "
-                "are instead of defaulting to float."
-            )
-            # all can be ints, infer `int` as correct type
-            new_items = [int(float(item)) for item in items]
-        else:
-            current_app.logger.warning(
-                f"list of values {items} are NOT all integers, so we are ASSUMING they "
-                "they are all float by default."
-            )
-            # default to float for backwards compatibility
-            new_items = [float(item) for item in items]
-
-        return new_items
     except ValueError as exc:
         current_app.logger.warning(
             f"list of values {items} are likely NOT ints or floats. Exception: {exc}"
         )
-        pass  # not an array of numbers
-    return items
+        return items
+
+    if all_ints:
+        current_app.logger.warning(
+            f"list of values {items} could all be integers, so we are ASSUMING they "
+            "are instead of defaulting to float."
+        )
+        # all can be ints, infer `int` as correct type
+        new_items = [int(float(item)) for item in items]
+    else:
+        current_app.logger.warning(
+            f"list of values {items} are NOT all integers, so we are ASSUMING they "
+            "they are all float by default."
+        )
+        # default to float for backwards compatibility
+        new_items = [float(item) for item in items]
+
+    return new_items
 
 
 def set_row_type(row):
@@ -255,7 +256,12 @@ class DelimitedConverter(object):
             if value_type == bool:
                 return parse_bool_from_string(value)
             elif value_type == list:
-                return parse_list_from_string(value, list_type=list_type)
+                current_app.logger.warning(
+                    f"attempting parse_list_from_string({value})"
+                )
+                list_from_string = parse_list_from_string(value, list_type=list_type)
+                current_app.logger.warning(f"list_from_string:{list_from_string}")
+                return list_from_string
             elif value_type == float:
                 if float(value).is_integer():
                     return int(float(value))
@@ -266,6 +272,7 @@ class DelimitedConverter(object):
             else:
                 return value_type(value)
         except Exception as exception:  # pylint: disable=broad-except
+            current_app.logger.warning(f"exception:{exception}")
             current_app.logger.exception(exception)
             return value
 
