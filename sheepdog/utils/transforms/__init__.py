@@ -60,7 +60,7 @@ def parse_list_from_string(value, list_type=None):
             items = [float(item) for item in items]
     except ValueError:
         pass  # not an array of numbers
-    return new_items
+    return items
 
 
 def set_row_type(row):
