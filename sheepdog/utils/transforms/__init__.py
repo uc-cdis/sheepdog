@@ -48,10 +48,10 @@ def parse_list_from_string(value, list_type=None):
             if not float(item).is_integer():
                 all_ints = False
                 break
-
     except ValueError as exc:
         current_app.logger.warning(
-            f"list of values {items} are likely NOT ints or floats. Exception: {exc}"
+            f"list of values {items} are likely NOT ints or floats so we're leaving "
+            f"them as-is. Exception: {exc}"
         )
         return items
 
@@ -234,13 +234,13 @@ class DelimitedConverter(object):
 
     @staticmethod
     def get_converted_type_from_list(cls, prop_name, value):
-        current_app.logger.warning(f"cls.__pg_properties__:{cls.__pg_properties__}")
+        current_app.logger.debug(f"cls.__pg_properties__:{cls.__pg_properties__}")
         types = cls.__pg_properties__.get(prop_name, (str,))
-        current_app.logger.warning(f"types:{types}")
+        current_app.logger.debug(f"types:{types}")
         value_type = types[0]
 
         property_list = cls.get_property_list()
-        current_app.logger.warning(f"property_list:{property_list}")
+        current_app.logger.debug(f"property_list:{property_list}")
 
         # TODO: list_type is not used b/c for some reason it's always
         #       str even if the dictionary says it's an array of ints
@@ -248,20 +248,15 @@ class DelimitedConverter(object):
         if len(types) > 1:
             list_type = types[1]
 
-        current_app.logger.warning(f"prop_name:{prop_name}")
-        current_app.logger.warning(f"value:{value}")
-        current_app.logger.warning(f"value_type:{value_type}")
+        current_app.logger.debug(f"prop_name:{prop_name}")
+        current_app.logger.debug(f"value:{value}")
+        current_app.logger.debug(f"value_type:{value_type}")
 
         try:
             if value_type == bool:
                 return parse_bool_from_string(value)
             elif value_type == list:
-                current_app.logger.warning(
-                    f"attempting parse_list_from_string({value})"
-                )
-                list_from_string = parse_list_from_string(value, list_type=list_type)
-                current_app.logger.warning(f"list_from_string:{list_from_string}")
-                return list_from_string
+                return parse_list_from_string(value, list_type=list_type)
             elif value_type == float:
                 if float(value).is_integer():
                     return int(float(value))
@@ -272,7 +267,6 @@ class DelimitedConverter(object):
             else:
                 return value_type(value)
         except Exception as exception:  # pylint: disable=broad-except
-            current_app.logger.warning(f"exception:{exception}")
             current_app.logger.exception(exception)
             return value
 
