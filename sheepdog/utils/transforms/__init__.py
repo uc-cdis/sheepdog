@@ -65,7 +65,7 @@ def parse_list_from_string(value, list_type=None):
 
         return new_items
     except ValueError as exc:
-        current_app.logger.info(
+        current_app.logger.warning(
             f"list of values {items} are likely NOT ints or floats. Exception: {exc}"
         )
         pass  # not an array of numbers
