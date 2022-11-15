@@ -27,7 +27,7 @@ jobs:
 
   unit_test:
     name: python unit test
-    uses: uc-cdis/.github/.github/workflows/python_unit_test.yaml@feat_reusuable-unit-test
+    uses: uc-cdis/.github/.github/workflows/python_unit_test.yaml@feat/reusable-unit-test
     with:
       python-version: '3.6'
       postgres-needed: true
