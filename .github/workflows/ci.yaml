@@ -31,3 +31,4 @@ jobs:
     with:
       python-version: '3.6'
       postgres-needed: true
+    secrets: inherit
