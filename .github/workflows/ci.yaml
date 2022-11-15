@@ -30,5 +30,5 @@ jobs:
     uses: uc-cdis/.github/.github/workflows/python_unit_test.yaml@feat/reusable-unit-tests
     with:
       python-version: '3.6'
-      postgres-needed: true
+      postgres-needed: 'true'
     secrets: inherit
