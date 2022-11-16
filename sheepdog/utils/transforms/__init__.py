@@ -30,7 +30,7 @@ def parse_bool_from_string(value):
     return mapping.get(strip(value).lower(), value)
 
 
-def parse_list_from_string(value):
+def parse_list_from_string(value, list_type=None):
     """
     Handle array fields by converting them to a list.
     Try to cast to float to handle arrays of numbers.
@@ -39,11 +39,38 @@ def parse_list_from_string(value):
         1,2,3 -> [1,2,3]
     """
     items = [x.strip() for x in value.split(",")]
+
+    all_ints = True
     try:
-        items = [float(x) for x in items]
-    except ValueError:
-        pass  # not an array of numbers
-    return items
+        # TODO: Actually pass in and use list_type as the expected type
+        #       and don't try to infer it this way.
+        for item in items:
+            if not float(item).is_integer():
+                all_ints = False
+                break
+    except ValueError as exc:
+        current_app.logger.warning(
+            f"list of values {items} are likely NOT ints or floats so we're leaving "
+            f"them as-is. Exception: {exc}"
+        )
+        return items
+
+    if all_ints:
+        current_app.logger.warning(
+            f"list of values {items} could all be integers, so we are ASSUMING they "
+            "are instead of defaulting to float."
+        )
+        # all can be ints, infer `int` as correct type
+        new_items = [int(float(item)) for item in items]
+    else:
+        current_app.logger.warning(
+            f"list of values {items} are NOT all integers, so we are ASSUMING they "
+            "they are all float by default."
+        )
+        # default to float for backwards compatibility
+        new_items = [float(item) for item in items]
+
+    return new_items
 
 
 def set_row_type(row):
@@ -207,13 +234,29 @@ class DelimitedConverter(object):
 
     @staticmethod
     def get_converted_type_from_list(cls, prop_name, value):
+        current_app.logger.debug(f"cls.__pg_properties__:{cls.__pg_properties__}")
         types = cls.__pg_properties__.get(prop_name, (str,))
+        current_app.logger.debug(f"types:{types}")
         value_type = types[0]
+
+        property_list = cls.get_property_list()
+        current_app.logger.debug(f"property_list:{property_list}")
+
+        # TODO: list_type is not used b/c for some reason it's always
+        #       str even if the dictionary says it's an array of ints
+        list_type = None
+        if len(types) > 1:
+            list_type = types[1]
+
+        current_app.logger.debug(f"prop_name:{prop_name}")
+        current_app.logger.debug(f"value:{value}")
+        current_app.logger.debug(f"value_type:{value_type}")
+
         try:
             if value_type == bool:
                 return parse_bool_from_string(value)
             elif value_type == list:
-                return parse_list_from_string(value)
+                return parse_list_from_string(value, list_type=list_type)
             elif value_type == float:
                 if float(value).is_integer():
                     return int(float(value))
