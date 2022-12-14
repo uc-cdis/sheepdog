@@ -1,6 +1,6 @@
 authlib==0.14.2
 authutils==4.0.0
-boto==2.36.0
+boto==2.39.0
 cryptography==2.8
 datamodelutils==1.0.0
 dictionaryutils==3.2.0
