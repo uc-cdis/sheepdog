@@ -22,3 +22,4 @@ gen3rbac==0.1.2
 -e git+https://git@github.com/uc-cdis/dosclient.git@1.0.0#egg=dosclient
 -e git+https://github.com/uc-cdis/hsclient.git@1.0.0#egg=hsclient
 
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
