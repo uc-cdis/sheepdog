@@ -5,7 +5,7 @@ group: deprecated-2017Q2
 language: python
 
 python:
-  - "3.6"
+  - "3.9"
 
 sudo: false
 
@@ -35,10 +35,9 @@ env:
 install:
   - pip install --upgrade pip
   - export CRYPTOGRAPHY_DONT_BUILD_RUST=1
-  - pip install -r requirements.txt
-  - python setup.py develop
-  - pip install -r dev-requirements.txt
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then pip install -e git+https://git@github.com/uc-cdis/wool.git#egg=wool; fi
+  - pip install poetry
+  - poetry install -vv
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.9 ]]; then pip install -e git+https://git@github.com/uc-cdis/wool.git#egg=wool; fi
 
 before_script:
   - pip freeze
@@ -49,10 +48,10 @@ before_script:
 script:
   # datadict and datadictwithobjid tests must run separately to allow
   # loading different datamodels
-- py.test -vv --cov=sheepdog --cov-report xml tests/integration/datadict
-- py.test -vv --cov=sheepdog --cov-report xml --cov-append tests/integration/datadictwithobjid
-- py.test -vv --cov=sheepdog --cov-report xml --cov-append tests/unit
+- pytest -vv --cov=sheepdog --cov-report xml tests/integration/datadict
+- pytest -vv --cov=sheepdog --cov-report xml --cov-append tests/integration/datadictwithobjid
+- pytest -vv --cov=sheepdog --cov-report xml --cov-append tests/unit
 
 after_script:
 - python-codacy-coverage -r coverage.xml
-- if [[ $TRAVIS_PYTHON_VERSION == 3.6 && $PR_NUMBER != false ]]; then wool; fi
+- if [[ $TRAVIS_PYTHON_VERSION == 3.9 && $PR_NUMBER != false ]]; then wool; fi
