@@ -1,3 +1,4 @@
+# sample usage
 import datamodelutils
 from dictionaryutils import dictionary
 from gdcdictionary import gdcdictionary
