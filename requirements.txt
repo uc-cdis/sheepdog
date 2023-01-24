@@ -18,7 +18,7 @@ psycopg2==2.8.4
 python-keystoneclient==1.8.1
 PyYAML==5.4
 requests>=2.22.0,<3.0.0
-setuptools==40.3.0
+setuptools==65.5.1
 six>=1.15.0
 simplejson==3.8.1
 sqlalchemy==1.3.5
