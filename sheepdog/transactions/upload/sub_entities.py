@@ -711,8 +711,10 @@ class FileUploadEntity(UploadEntity):
             return self.doc.get("file_size")
         return None
 
+    # TODO fix - it's not hitting the right indexd endpoint
     def _create_alias(self, alias, did):
-        return self.transaction.index_client.add_alias_for_did(alias, did)
+        pass
+        # return self.transaction.index_client.add_alias_for_did(alias, did)
 
     def _create_index(self, **kwargs):
         return self.transaction.index_client.create(**kwargs)

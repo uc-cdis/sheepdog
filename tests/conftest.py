@@ -84,7 +84,7 @@ def submitter_name():
     return SUBMITTER_USERNAME
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def client(app):
     """
     Overriding the `client` fixture from pytest_flask to fix this bug:

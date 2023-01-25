@@ -1,13 +1,4 @@
-sudo service postgresql stop
-sudo service postgresql start 9.4
-sudo -u postgres createuser -s -p 5432 travis
-sudo -u postgres createdb -O travis -p 5432 travis
-sudo -u postgres createuser -s -p 5433 travis
-sudo -u postgres createdb -O travis -p 5433 travis
-
-source ~/virtualenv/python2.7/bin/activate
-
-python setup.py develop
+poetry install
 
 psql -c "create database sheepdog_automated_test" -U postgres
 pip freeze

@@ -1,7 +1,7 @@
 import os
 import json
 import importlib
-from multiprocessing import Process
+import multiprocessing
 
 from indexd import default_settings, get_app as get_indexd_app
 from indexclient.client import IndexClient
@@ -19,6 +19,9 @@ from sheepdog.test_settings import INDEX_CLIENT
 from tests.integration.datadictwithobjid.api import app as _app, app_init, indexd_init
 from tests.integration.datadictwithobjid.submission.test_endpoints import put_cgci_blgsp
 from tests import utils
+
+
+multiprocessing.set_start_method("fork")
 
 
 def get_parent(path):
@@ -103,7 +106,7 @@ def app(tmpdir, request):
     indexd_app = get_indexd_app()
 
     indexd_init(*INDEX_CLIENT["auth"])
-    indexd = Process(target=indexd_app.run, args=["localhost", port])
+    indexd = multiprocessing.Process(target=indexd_app.run, args=["localhost", port])
     indexd.start()
     wait_for_indexd_alive(port)
 

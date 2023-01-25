@@ -53,13 +53,14 @@ def app_register_blueprints(app):
 
     models.init(md)
     validators.init(vd)
-    sheepdog_blueprint = sheepdog.create_blueprint("submission")
 
     v0 = "/v0"
-    app.register_blueprint(sheepdog_blueprint, url_prefix=v0 + "/submission")
-    app.register_blueprint(sheepdog_blueprint, url_prefix="/submission")
+    app.register_blueprint(
+        sheepdog.create_blueprint("submission"), url_prefix=v0 + "/submission"
+    )
+    # app.register_blueprint(sheepdog.create_blueprint("submission"), url_prefix="/submission")
     app.register_blueprint(oauth2_blueprint.blueprint, url_prefix=v0 + "/oauth2")
-    app.register_blueprint(oauth2_blueprint.blueprint, url_prefix="/oauth2")
+    # app.register_blueprint(oauth2_blueprint.blueprint, url_prefix="/oauth2")
 
 
 def db_init(app):

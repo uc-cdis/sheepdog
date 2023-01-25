@@ -1,7 +1,3 @@
-dist: trusty
-
-group: deprecated-2017Q2
-
 language: python
 
 python:
@@ -10,22 +6,10 @@ python:
 sudo: false
 
 cache:
-  # pip: true  # We have overridden the default install step, caching manually
-  # ref: <https://docs.travis-ci.com/user/caching/#Arbitrary-directories>
-  - directories:
-      - /home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages
-      - $HOME/.pip-cache
-  - apt
+  - pip
 
 addons:
-  postgresql: '9.4'
-  # fix for scipy inside SurvivalPy
-  apt:
-    packages:
-    - libatlas-dev
-    - libatlas-base-dev
-    - liblapack-dev
-    - gfortran
+  postgresql: '9.6'
 
 env:
   global:
@@ -48,9 +32,9 @@ before_script:
 script:
   # datadict and datadictwithobjid tests must run separately to allow
   # loading different datamodels
-- pytest -vv --cov=sheepdog --cov-report xml tests/integration/datadict
-- pytest -vv --cov=sheepdog --cov-report xml --cov-append tests/integration/datadictwithobjid
-- pytest -vv --cov=sheepdog --cov-report xml --cov-append tests/unit
+  - pytest -vv --cov=sheepdog --cov-report xml tests/integration/datadict
+  - pytest -vv --cov=sheepdog --cov-report xml --cov-append tests/integration/datadictwithobjid
+  - pytest -vv --cov=sheepdog --cov-report xml --cov-append tests/unit
 
 after_script:
 - python-codacy-coverage -r coverage.xml
