@@ -21,4 +21,4 @@
 
 .. |resheader_Content-Type| replace::
     Will be ``application/json`` or ``application/xml`` depending on
-    :mailheader:`Accept` header.
+    :mailheader: `Accept` header.
