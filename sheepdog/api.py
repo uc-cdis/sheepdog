@@ -60,7 +60,9 @@ def app_register_blueprints(app):
     )
     # app.register_blueprint(sheepdog.create_blueprint("submission"), url_prefix="/submission")
     app.register_blueprint(oauth2_blueprint.blueprint, url_prefix=v0 + "/oauth2")
-    # app.register_blueprint(oauth2_blueprint.blueprint, url_prefix="/oauth2")
+    # bp2 = oauth2_blueprint.blueprint
+    # bp2.name = "two"
+    # app.register_blueprint(bp2, url_prefix="/oauth2")
 
 
 def db_init(app):

@@ -61,7 +61,7 @@ requests_mock = "1.4.0"
 #httmock = "1.2.3"
 #lockfile = "0.12.2"
 coverage = "5.3.0"
-#cdis_oauth2client = "1.0.0"
+#cdis_oauth2client = "1.0.0" # TODO merge feat/3.9 PR and pin
 cdis_oauth2client = {git = "https://github.com/uc-cdis/cdis_oauth2client", rev = "feat/3.9"}
 #cryptography = "2.8"  # TODO dev dep?
 mock = "1.0.1"

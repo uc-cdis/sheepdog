@@ -15,6 +15,7 @@ from moto import mock_s3
 from datamodelutils import models as md
 from sheepdog.transactions.upload import UploadTransaction
 
+from tests.integration.utils import put_cgci, put_cgci2, put_cgci_blgsp, put_tcga_brca
 from tests.integration.datadict.submission.utils import data_fnames
 from tests.integration.datadictwithobjid.submission.utils import extended_data_fnames
 from tests.integration.datadict.submission.test_endpoints import (
@@ -51,79 +52,6 @@ def mock_request(f):
         return result
 
     return wrapper
-
-
-def put_cgci(client, auth=None):
-    path = "/v0/submission"
-    headers = auth
-    data = json.dumps(
-        {"name": "CGCI", "type": "program", "dbgap_accession_number": "phs000235"}
-    )
-    r = client.put(path, headers=headers, data=data)
-    return r
-
-
-def put_cgci2(client, auth=None):
-    path = "/v0/submission"
-    headers = auth
-    data = json.dumps(
-        {"name": "CGCI2", "type": "program", "dbgap_accession_number": "phs0002352"}
-    )
-    r = client.put(path, headers=headers, data=data)
-    return r
-
-
-def put_cgci_blgsp(client, auth=None):
-    put_cgci(client, auth=auth)
-    path = "/v0/submission/CGCI/"
-    headers = auth
-    data = json.dumps(
-        {
-            "type": "project",
-            "code": "BLGSP",
-            "dbgap_accession_number": "phs000527",
-            "name": "Burkitt Lymphoma Genome Sequencing Project",
-            "state": "open",
-        }
-    )
-    r = client.put(path, headers=headers, data=data)
-    assert r.status_code == 200, r.data
-    del g.user
-    return r
-
-
-def put_tcga_brca(client, submitter):
-    headers = submitter
-    data = json.dumps(
-        {"name": "TCGA", "type": "program", "dbgap_accession_number": "phs000178"}
-    )
-    r = client.put("/v0/submission/", headers=headers, data=data)
-    assert r.status_code == 200, r.data
-    headers = submitter
-    data = json.dumps(
-        {
-            "type": "project",
-            "code": "BRCA",
-            "name": "TEST",
-            "dbgap_accession_number": "phs000178",
-            "state": "open",
-        }
-    )
-    r = client.put("/v0/submission/TCGA/", headers=headers, data=data)
-    assert r.status_code == 200, r.data
-    del g.user
-    return r
-
-
-def add_and_get_new_experimental_metadata_count(pg_driver):
-    with pg_driver.session_scope() as s:
-        experimental_metadata = pg_driver.nodes(md.ExperimentalMetadata).first()
-        new_experimental_metadata = md.ExperimentalMetadata(str(uuid.uuid4()))
-        new_experimental_metadata.props = experimental_metadata.props
-        new_experimental_metadata.submitter_id = "case-2"
-        s.add(new_experimental_metadata)
-        experimental_metadata_count = pg_driver.nodes(md.ExperimentalMetadata).count()
-    return experimental_metadata_count
 
 
 def test_program_creation_endpoint(client, pg_driver, submitter):

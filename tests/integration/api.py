@@ -29,16 +29,6 @@ sys.setrecursionlimit(10000)
 DEFAULT_ASYNC_WORKERS = 8
 
 
-# def app_register_blueprints(app):
-#     # TODO: (jsm) deprecate the index endpoints on the root path,
-#     # these are currently duplicated under /index (the ultimate
-#     # path) for migration
-#     v0 = "/v0"
-#     app.url_map.strict_slashes = False
-
-#     app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0 + "/oauth2")
-
-
 def db_init(app):
     app.logger.info("Initializing PsqlGraph driver")
     app.db = PsqlGraphDriver(
@@ -60,7 +50,8 @@ def db_init(app):
 
 
 def app_init(app):
-    # TODO just use the real app init?
+    # TODO can we just use the real app init?
+
     # Register duplicates only at runtime
     app.logger.info("Initializing app")
 
@@ -70,10 +61,7 @@ def app_init(app):
     )
 
     app.url_map.strict_slashes = False
-    # app_register_blueprints(app)
     db_init(app)
-    # exclude es init as it's not used yet
-    # es_init(app)
     try:
         app.secret_key = app.config["FLASK_SECRET_KEY"]
     except KeyError:
@@ -135,7 +123,6 @@ OLD_SQLITE = sqlite3.sqlite_version_info < (3, 7, 16)
 
 INDEX_HOST = "index.sq3"
 ALIAS_HOST = "alias.sq3"
-
 
 INDEX_TABLES = {
     "index_record": [
