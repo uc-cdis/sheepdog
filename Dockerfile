@@ -15,9 +15,8 @@
 #   "oauth2_client_id": "",
 #   "oauth2_client_secret": ""
 # }
-# - Create `wsgi.py` and `config_helper.py` (see `cloud-automation` repo, `apis_configs/` dir
-# `sheepdog_settings.py` and `config_helper.py` respectively).
-# - Build the image and run: `docker run -v /full/path/to/wsgi.py:/var/www/sheepdog/wsgi.py -v /full/path/to/config_helper.py:/var/www/sheepdog/config_helper.py -v /full/path/to/creds.json:/var/www/sheepdog/creds.json -p 81:80 sheepdog`
+# - Build the image: `docker build . -t sheepdog -f Dockerfile`
+# - Run: `docker run -v /full/path/to/creds.json:/var/www/sheepdog/creds.json -p 81:80 sheepdog`
 # To check running container: `docker exec -it sheepdog /bin/bash`
 
 FROM quay.io/cdis/python:python3.9-buster-2.0.0
@@ -51,6 +50,8 @@ RUN poetry config virtualenvs.create false \
 # copy source code ONLY after installing dependencies
 COPY . /$appname
 COPY ./deployment/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
+COPY ./bin/settings.py /var/www/sheepdog/settings.py
+COPY ./bin/confighelper.py /var/www/sheepdog/confighelper.py
 
 # install indexd
 RUN poetry config virtualenvs.create false \
