@@ -67,9 +67,12 @@ def app_init(app):
     except KeyError:
         app.logger.error("Secret key not set in config! Authentication will not work")
 
+    v0 = "/v0"
     try:
         sheepdog_blueprint = sheepdog.create_blueprint("submission")
-        app.register_blueprint(sheepdog_blueprint, url_prefix="/v0/submission")
+        app.register_blueprint(sheepdog_blueprint, url_prefix=v0 + "/submission")
+        sheepdog_blueprint.name += "_legacy"
+        app.register_blueprint(sheepdog_blueprint, url_prefix="/submission")
     except (ValueError, AssertionError):
         app.logger.info("Blueprint is already registered!!!")
 
