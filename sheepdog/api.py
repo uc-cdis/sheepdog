@@ -129,7 +129,7 @@ def migrate_database(app):
         try:
             postgres_admin.grant_read_permissions_to_graph(app.db, read_role)
         except Exception:
-            app.logger.warn("Fail to grant read permission, continuing anyway")
+            app.logger.warning("Fail to grant read permission, continuing anyway")
             return
 
 
