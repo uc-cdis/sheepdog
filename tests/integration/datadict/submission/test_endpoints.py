@@ -1430,13 +1430,13 @@ def test_update_to_null_link(client, cgci_blgsp, submitter, require_index_exists
     resp = client.put(
         BLGSP_PATH, headers=headers, data=json.dumps(experimental_metadata)
     )
-    assert resp.status_code == 400, json.dumps(json.loads(resp.data), indent=2)
+    assert resp.status_code == 200, json.dumps(json.loads(resp.data), indent=2)
 
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
     )
-    entity = json.loads(resp.data)
+    entity = json.loads(resp.data)["entities"][0]
     assert "experiments" not in entity, json.dumps(entity, indent=2)
 
 
