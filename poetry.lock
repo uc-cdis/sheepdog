@@ -1082,13 +1082,13 @@ testing = ["flake8 (<5)", "flufl.flake8", "importlib-resources (>=1.3)", "packag
 
 [[package]]
 name = "indexclient"
-version = "2.1.0"
+version = "2.1.1"
 description = ""
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "indexclient-2.1.0.tar.gz", hash = "sha256:777476eb97febfcd663b7f9454fba5151dee4d17254bfa0dfb5ff040c59b8532"},
+    {file = "indexclient-2.1.1.tar.gz", hash = "sha256:03f0ef104d14e0e4117063892da0747d5db3c0e952143d3408f611797d909b2e"},
 ]
 
 [package.dependencies]
@@ -1449,14 +1449,14 @@ PyOpenSSL = "*"
 
 [[package]]
 name = "openpyxl"
-version = "3.0.10"
+version = "3.1.0"
 description = "A Python library to read/write Excel 2010 xlsx/xlsm files"
 category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "openpyxl-3.0.10-py2.py3-none-any.whl", hash = "sha256:0ab6d25d01799f97a9464630abacbb34aafecdcaa0ef3cba6d6b3499867d0355"},
-    {file = "openpyxl-3.0.10.tar.gz", hash = "sha256:e47805627aebcf860edb4edf7987b1309c1b3632f3750538ed962bbcc3bd7449"},
+    {file = "openpyxl-3.1.0-py2.py3-none-any.whl", hash = "sha256:24d7d361025d186ba91eff58135d50855cf035a84371b891e58fb6eb5125660f"},
+    {file = "openpyxl-3.1.0.tar.gz", hash = "sha256:eccedbe1cdd8b2494057e73959b496821141038dbb7eb9266ea59e3f34208231"},
 ]
 
 [package.dependencies]
@@ -2480,4 +2480,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "3.9.*"
-content-hash = "c8cc978feec9f1dfbb9b62110cb65b27f0a0b196bb2f8d15e170760330b1740e"
+content-hash = "302a4a12b8b58c4c8a79dd00f00341f73bd305449ba728e82f44883367832546"
