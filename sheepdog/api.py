@@ -53,12 +53,18 @@ def app_register_blueprints(app):
 
     models.init(md)
     validators.init(vd)
-    sheepdog_blueprint = sheepdog.create_blueprint("submission")
 
+    # register each blueprint twice (at `/` and at `/v0/`). Flask requires the
+    # blueprint names to be unique, so rename them before registering the 2nd time
     v0 = "/v0"
+
+    sheepdog_blueprint = sheepdog.create_blueprint("submission")
     app.register_blueprint(sheepdog_blueprint, url_prefix=v0 + "/submission")
+    sheepdog_blueprint.name += "_legacy"
     app.register_blueprint(sheepdog_blueprint, url_prefix="/submission")
+
     app.register_blueprint(oauth2_blueprint.blueprint, url_prefix=v0 + "/oauth2")
+    oauth2_blueprint.blueprint.name += "_legacy"
     app.register_blueprint(oauth2_blueprint.blueprint, url_prefix="/oauth2")
 
 
@@ -123,7 +129,7 @@ def migrate_database(app):
         try:
             postgres_admin.grant_read_permissions_to_graph(app.db, read_role)
         except Exception:
-            app.logger.warn("Fail to grant read permission, continuing anyway")
+            app.logger.warning("Fail to grant read permission, continuing anyway")
             return
 
 
