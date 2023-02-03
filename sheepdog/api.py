@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import traceback
 
 from flask import Flask, jsonify
 from psqlgraph import PsqlGraphDriver
@@ -129,7 +130,10 @@ def migrate_database(app):
         try:
             postgres_admin.grant_read_permissions_to_graph(app.db, read_role)
         except Exception:
-            app.logger.warning("Fail to grant read permission, continuing anyway")
+            app.logger.warning(
+                "Fail to grant read permission, continuing anyway. Details:"
+            )
+            traceback.print_exc()
             return
 
 

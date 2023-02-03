@@ -88,7 +88,7 @@ def generate_signed_access_token(
 
     claims = {
         "pur": "access",
-        "aud": [iss],  # scopes,
+        "aud": [iss],
         "sub": sub,
         "iss": iss,
         "iat": iat,
