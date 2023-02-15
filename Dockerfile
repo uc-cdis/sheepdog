@@ -50,10 +50,10 @@ RUN poetry config virtualenvs.create false \
 # copy source code ONLY after installing dependencies
 COPY . /$appname
 COPY ./deployment/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
-COPY ./bin/settings.py /var/www/sheepdog/settings.py
-COPY ./bin/confighelper.py /var/www/sheepdog/confighelper.py
+COPY ./bin/settings.py /var/www/$appname/settings.py
+COPY ./bin/confighelper.py /var/www/$appname/confighelper.py
 
-# install indexd
+# install sheepdog
 RUN poetry config virtualenvs.create false \
     && poetry install -vv --no-dev --no-interaction \
     && poetry show -v
