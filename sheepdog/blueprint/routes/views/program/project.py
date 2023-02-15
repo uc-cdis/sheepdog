@@ -5,6 +5,7 @@
 View functions for routes in the blueprint for '/<program>/<project>' paths.
 """
 
+import html
 import json
 
 import flask
@@ -617,7 +618,7 @@ def get_manifest(program, project):
         raise UserError(
             "No ids specified. Use query parameter 'ids', e.g." " 'ids=id1,id2'."
         )
-    requested_ids = id_string.split(",")
+    requested_ids = html.escape(id_string).split(",")
     docs = utils.manifest.get_manifest(program, project, requested_ids)
     response = flask.make_response(
         yaml.safe_dump({"files": docs}, default_flow_style=False)
@@ -817,7 +818,7 @@ def get_project_templates(program, project):
         file_format,
         program=program,
         project=project,
-        categories=flask.request.args.get("categories"),
+        categories=html.escape(flask.request.args.get("categories")),
         exclude=flask.request.args.get("exclude"),
     )
     response = flask.make_response(template)
