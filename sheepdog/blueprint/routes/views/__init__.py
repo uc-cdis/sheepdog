@@ -232,8 +232,8 @@ def get_templates():
     response = flask.make_response(
         utils.get_all_template(
             file_format,
-            categories=flask.request.args.get("categories"),
-            exclude=flask.request.args.get("exclude"),
+            categories=html.escape(flask.request.args.get("categories")),
+            exclude=html.escape(flask.request.args.get("exclude")),
         )
     )
     suffix = "json" if file_format == "json" else "tar.gz"
@@ -259,7 +259,7 @@ def get_template(entity):
     Responses:
         200: Success.
     """
-    file_format = flask.request.args.get("format", "tsv")
+    file_format = html.escape(flask.request.args.get("format", "tsv"))
     filename = "submission_{}_template.{}".format(entity, file_format)
     template = utils.entity_to_template_str(entity, file_format)
     response = flask.make_response(template)
