@@ -2,6 +2,8 @@
 Provide view functions for routes in the blueprint.
 """
 
+import html
+
 import flask
 from flask import current_app
 import uuid
@@ -226,7 +228,7 @@ def get_templates():
     Responses:
         200: Success.
     """
-    file_format = flask.request.args.get("format", "tsv")
+    file_format = html.escape(flask.request.args.get("format", "tsv"))
     response = flask.make_response(
         utils.get_all_template(
             file_format,

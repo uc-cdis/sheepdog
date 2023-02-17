@@ -8,6 +8,7 @@ from contextlib import contextmanager
 import copy
 import csv
 import functools
+import html
 import json
 import os
 import io
@@ -451,7 +452,9 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
 
         update_file_record_url(file_record, s3_url=new_url)
         update_state(node, SUCCESS_STATE)
-        message = "URL successfully reassigned. New url: {}".format(new_url)
+        message = "URL successfully reassigned. New url: {}".format(
+            html.escape(new_url)
+        )
         return flask.Response(json.dumps({"message": message}), status=200)
 
     resp = s3.make_s3_request(project_id, uuid, data, args, headers, method, action)
