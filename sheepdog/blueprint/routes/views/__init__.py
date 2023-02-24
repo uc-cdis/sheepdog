@@ -230,10 +230,10 @@ def get_templates():
     """
     file_format = html.escape(flask.request.args.get("format", "tsv"))
     response = flask.make_response(
-        utils.get_all_template(
+        utils.transforms.graph_to_doc.get_all_template(
             file_format,
-            categories=html.escape(flask.request.args.get("categories")),
-            exclude=html.escape(flask.request.args.get("exclude")),
+            categories=html.escape(flask.request.args.get("categories", "")),
+            exclude=html.escape(flask.request.args.get("exclude", "")),
         )
     )
     suffix = "json" if file_format == "json" else "tar.gz"

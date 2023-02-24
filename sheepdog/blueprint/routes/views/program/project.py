@@ -818,8 +818,8 @@ def get_project_templates(program, project):
         file_format,
         program=program,
         project=project,
-        categories=html.escape(flask.request.args.get("categories")),
-        exclude=html.escape(flask.request.args.get("exclude")),
+        categories=html.escape(flask.request.args.get("categories", "")),
+        exclude=html.escape(flask.request.args.get("exclude", "")),
     )
     response = flask.make_response(template)
     suffix = "json" if file_format == "json" else "tar.gz"
