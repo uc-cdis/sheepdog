@@ -813,13 +813,13 @@ def get_project_templates(program, project):
         200: Success
         404: Resource not found.
     """
-    file_format = flask.request.args.get("format", "tsv")
+    file_format = html.escape(flask.request.args.get("format", "tsv"))
     template = utils.transforms.graph_to_doc.get_all_template(
         file_format,
         program=program,
         project=project,
-        categories=html.escape(flask.request.args.get("categories")),
-        exclude=flask.request.args.get("exclude"),
+        categories=html.escape(flask.request.args.get("categories", "")),
+        exclude=html.escape(flask.request.args.get("exclude", "")),
     )
     response = flask.make_response(template)
     suffix = "json" if file_format == "json" else "tar.gz"
@@ -857,7 +857,7 @@ def get_project_template(program, project, entity):
         200: Success
         404: Entity type is not found
     """
-    file_format = flask.request.args.get("format", "tsv")
+    file_format = html.escape(flask.request.args.get("format", "tsv"))
     template = utils.entity_to_template_str(
         entity, file_format, program=program, project=project
     )
