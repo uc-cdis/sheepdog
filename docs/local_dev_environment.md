@@ -14,9 +14,9 @@ git clone https://github.com/uc-cdis/sheepdog.git
 
 Navigate to the cloned repository directory.
 
-## Set up Python 3
+## Set up Python 3.9
 
-The environment was tested with python 3.8 on WSL1.  You can use `bash` to install python 3 if it's not already available.
+You can use `bash` to install python 3 if it's not already available.
 
 ```console
 sudo apt-get update
@@ -108,37 +108,19 @@ ALTER USER postgres WITH PASSWORD 'test';
 
 ## Installation
 
-### Install for General Usage
+### Install Poetry
 
-To install sheepdog for use with other Gen3 services, running these commands is sufficient.
-
-```console
-python3 setup.py build
-python3 setup.py install
-```
-
-### Install for Development
-
-Check the [dev-requirements.txt](https://github.com/uc-cdis/sheepdog/blob/master/dev-requirements.txt) and make sure the requirements includes the following dependencies:
-
-```
-coverage==5.3.0
-codacy-coverage==1.3.11
-```
-
-Install the development requirements with the following commands:
+You can install Poetry.  Make sure the virtual environment is activated.
 
 ```console
-python3 -m pip install -r dev-requirements.txt
-python3 setup.py develop
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+source $HOME/.poetry/env
 ```
 
-Install requirements with pip.
-
-> One of the requirements `dictionaryutils==3.4.0` may not be available through pip, so you can try with a lower available version.  In this case, update [requirements.txt](https://github.com/uc-cdis/sheepdog/blob/master/requirements.txt) to use `dictionaryutils==3.2.0`.  You may also need to update the requirement for `gen3authz==0.2.1` to `gen3authz==0.4.0`.
+You can install python dependencies using Poetry:
 
 ```console
-python3 -m pip install -r requirements.txt
+poetry install -vv --no-interaction && poetry show -v
 ```
 
 ### Validate Installation

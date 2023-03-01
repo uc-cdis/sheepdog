@@ -31,16 +31,6 @@ sys.setrecursionlimit(10000)
 DEFAULT_ASYNC_WORKERS = 8
 
 
-def app_register_blueprints(app):
-    # TODO: (jsm) deprecate the index endpoints on the root path,
-    # these are currently duplicated under /index (the ultimate
-    # path) for migration
-    v0 = "/v0"
-    app.url_map.strict_slashes = False
-
-    app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0 + "/oauth2")
-
-
 def db_init(app):
     app.logger.info("Initializing PsqlGraph driver")
     app.db = PsqlGraphDriver(
@@ -62,6 +52,8 @@ def db_init(app):
 
 
 def app_init(app):
+    # TODO can we just use the real app init?
+
     # Register duplicates only at runtime
     app.logger.info("Initializing app")
 
@@ -70,19 +62,20 @@ def app_init(app):
         app.config.get("REQUIRE_FILE_INDEX_EXISTS", False)
     )
 
-    app_register_blueprints(app)
+    app.url_map.strict_slashes = False
     db_init(app)
-    # exclude es init as it's not used yet
-    # es_init(app)
     try:
         app.secret_key = app.config["FLASK_SECRET_KEY"]
     except KeyError:
         app.logger.error("Secret key not set in config! Authentication will not work")
-    sheepdog_blueprint = sheepdog.create_blueprint("submission")
 
+    v0 = "/v0"
     try:
-        app.register_blueprint(sheepdog_blueprint, url_prefix="/v0/submission")
-    except AssertionError:
+        sheepdog_blueprint = sheepdog.create_blueprint("submission")
+        app.register_blueprint(sheepdog_blueprint, url_prefix=v0 + "/submission")
+        sheepdog_blueprint.name += "_legacy"
+        app.register_blueprint(sheepdog_blueprint, url_prefix="/submission")
+    except (ValueError, AssertionError):
         app.logger.info("Blueprint is already registered!!!")
 
     app.node_authz_entity_name = os.environ.get("AUTHZ_ENTITY_NAME", None)

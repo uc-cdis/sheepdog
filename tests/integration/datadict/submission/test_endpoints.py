@@ -26,6 +26,7 @@ from tests.integration.datadict.submission.utils import (
     data_fnames,
     extended_data_fnames,
 )
+from tests.integration.utils import put_cgci, put_cgci_blgsp, put_tcga_brca
 
 BLGSP_PATH = "/v0/submission/CGCI/BLGSP/"
 BRCA_PATH = "/v0/submission/TCGA/BRCA/"
@@ -57,68 +58,6 @@ def mock_request(f):
         return result
 
     return wrapper
-
-
-def put_cgci(client, auth=None):
-    path = "/v0/submission"
-    headers = auth
-    data = json.dumps(
-        {
-            "name": "CGCI",
-            "type": "program",
-            "dbgap_accession_number": "phs000235",
-        }
-    )
-    r = client.put(path, headers=headers, data=data)
-    return r
-
-
-def put_cgci_blgsp(client, auth=None):
-    r = put_cgci(client, auth=auth)
-    assert r.status_code == 200, r.data
-
-    path = "/v0/submission/CGCI/"
-    headers = auth
-    data = json.dumps(
-        {
-            "type": "project",
-            "code": "BLGSP",
-            "dbgap_accession_number": "phs000527",
-            "name": "Burkitt Lymphoma Genome Sequencing Project",
-            "state": "open",
-        }
-    )
-    r = client.put(path, headers=headers, data=data)
-    assert r.status_code == 200, r.data
-    del g.user
-    return r
-
-
-def put_tcga_brca(client, submitter):
-    headers = submitter
-    data = json.dumps(
-        {
-            "name": "TCGA",
-            "type": "program",
-            "dbgap_accession_number": "phs000178",
-        }
-    )
-    r = client.put("/v0/submission/", headers=headers, data=data)
-    assert r.status_code == 200, r.data
-    headers = submitter
-    data = json.dumps(
-        {
-            "type": "project",
-            "code": "BRCA",
-            "name": "TEST",
-            "dbgap_accession_number": "phs000178",
-            "state": "open",
-        }
-    )
-    r = client.put("/v0/submission/TCGA/", headers=headers, data=data)
-    assert r.status_code == 200, r.data
-    del g.user
-    return r
 
 
 def add_and_get_new_experimental_metadata_count(pg_driver):
@@ -1491,13 +1430,13 @@ def test_update_to_null_link(client, cgci_blgsp, submitter, require_index_exists
     resp = client.put(
         BLGSP_PATH, headers=headers, data=json.dumps(experimental_metadata)
     )
-    assert resp.status_code == 400, json.dumps(json.loads(resp.data), indent=2)
+    assert resp.status_code == 200, json.dumps(json.loads(resp.data), indent=2)
 
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
     )
-    entity = json.loads(resp.data)
+    entity = json.loads(resp.data)["entities"][0]
     assert "experiments" not in entity, json.dumps(entity, indent=2)
 
 

@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 
-from authutils import ROLES as all_roles
 from collections import defaultdict
-from mock import patch, PropertyMock
 import os
 
-import requests
-
+from authutils import ROLES as all_roles
 from flask import current_app
+from mock import patch, PropertyMock
 from psqlgraph import PolyNode as Node
+import requests
 
 from sheepdog.api import run_for_development
 
