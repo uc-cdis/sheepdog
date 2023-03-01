@@ -77,7 +77,7 @@ class TransactionBase(object):
         #: database during claim_transaction_log()
         self.transaction_id = kwargs.pop("transaction_id", None)
         if kwargs:
-            self.logger.warn("Unused arguments: %s", list(kwargs.keys()))
+            self.logger.warning("Unused arguments: %s", list(kwargs.keys()))
 
         self.graph_validator = validators.GDCGraphValidator()
         self.transactional_errors = []

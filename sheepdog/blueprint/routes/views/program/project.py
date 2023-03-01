@@ -132,7 +132,11 @@ def get_project_dictionary(program=None, project=None):
         403: Unauthorized request.
     """
     if flask.current_app.config.get("AUTH_SUBMISSION_LIST", True) is True:
-        auth.validate_request(aud={"openid"}, purpose=None)
+        auth.validate_request(
+            scope={"openid"},
+            audience=flask.current_app.config.get("USER_API"),
+            purpose=None,
+        )
     keys = list(dictionary.schema.keys()) + ["_all"]
     links = [
         flask.url_for(
@@ -228,7 +232,11 @@ def get_project_dictionary_entry(program, project, entry):
         403: Unauthorized request.
     """
     if flask.current_app.config.get("AUTH_SUBMISSION_LIST", True) is True:
-        auth.validate_request(aud={"openid"}, purpose=None)
+        auth.validate_request(
+            scope={"openid"},
+            audience=flask.current_app.config.get("USER_API"),
+            purpose=None,
+        )
     return get_dictionary_entry(entry)
 
 
