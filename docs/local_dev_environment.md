@@ -158,6 +158,11 @@ You can also store your images in a local registry. Kind and Minikube are popula
 - https://kind.sigs.k8s.io/docs/user/local-registry/
 - https://minikube.sigs.k8s.io/docs/handbook/registry/#enabling-insecure-registries
 
+Dependencies:
+Please review the "Quick Start with Helm" guides to deploy these two services.
+- [Indexd](https://github.com/uc-cdis/indexd)
+- [Fence](https://github.com/uc-cdis/fence)
+
 ## Installation
 
 ### Install Poetry
