@@ -112,7 +112,7 @@ def setup_database(  # nosec
     try:
         conn.execute(create_stmt)
     except Exception as msg:
-        logging.warn("Unable to create database: {}".format(msg))
+        logging.warning("Unable to create database: {}".format(msg))
 
     if not no_user:
         try:
@@ -122,7 +122,7 @@ def setup_database(  # nosec
             )
             conn.execute(user_stmt)
         except Exception as msg:
-            logging.warn("Unable to add user:" + str(msg))
+            logging.warning("Unable to add user:" + str(msg))
         # User may already exist - GRANT privs on new db
         try:
             perm_stmt = (
@@ -132,7 +132,7 @@ def setup_database(  # nosec
             conn.execute(perm_stmt)
             conn.execute("commit")
         except Exception as msg:
-            logging.warn("Unable to GRANT privs to user:" + str(msg))
+            logging.warning("Unable to GRANT privs to user:" + str(msg))
     conn.close()
 
 
