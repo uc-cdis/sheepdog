@@ -37,8 +37,8 @@ def try_drop_test_data(  # nosec
     conn.execute("commit")
 
     try:
-        create_stmt = 'DROP DATABASE "{database}"'.format(database=database)
-        conn.execute(create_stmt)
+        drop_stmt = 'DROP DATABASE "?"'
+        conn.execute(drop_stmt, database)
     except Exception as msg:
         logging.warning("Unable to drop test data:" + str(msg))
 
@@ -108,28 +108,23 @@ def setup_database(  # nosec
     conn.execute("commit")
 
     # Use default db connection to set up schema
-    create_stmt = 'CREATE DATABASE "{database}"'.format(database=database)
+    create_stmt = 'CREATE DATABASE "?"'
     try:
-        conn.execute(create_stmt)
+        conn.execute(create_stmt, database)
     except Exception as msg:
         logging.warning("Unable to create database: {}".format(msg))
 
     if not no_user:
         try:
             user_no_host = user if "@" not in user else user.split("@")[0]
-            user_stmt = "CREATE USER {user} WITH PASSWORD '{password}'".format(
-                user=user_no_host, password=password
-            )
-            conn.execute(user_stmt)
+            user_stmt = "CREATE USER ? WITH PASSWORD '?'"
+            conn.execute(user_stmt, user_no_host, password)
         except Exception as msg:
             logging.warning("Unable to add user:" + str(msg))
         # User may already exist - GRANT privs on new db
         try:
-            perm_stmt = (
-                "GRANT ALL PRIVILEGES ON DATABASE {database} to {user}"
-                "".format(database=database, user=user_no_host)
-            )
-            conn.execute(perm_stmt)
+            perm_stmt = "GRANT ALL PRIVILEGES ON DATABASE ? to ?"
+            conn.execute(perm_stmt, database, user_no_host)
             conn.execute("commit")
         except Exception as msg:
             logging.warning("Unable to GRANT privs to user:" + str(msg))
