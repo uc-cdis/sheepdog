@@ -666,6 +666,8 @@ def test_export_node_with_array_json(
     post_example_entities_together(client, submitter, extended_data_fnames)
     with pg_driver.session_scope() as s:
         case = pg_driver.nodes(md.Case).first()
+        print("LUCAAAAAA datadictwithout")
+        print(case)
         consent_codes = case.props.get("consent_codes", [])
     path = "/v0/submission/CGCI/BLGSP/export/?node_label=case&format=json"
     r = client.get(path, headers=submitter)
