@@ -5,6 +5,7 @@
 View functions for routes in the blueprint for '/<program>/<project>' paths.
 """
 
+import html
 import json
 
 import flask
@@ -16,8 +17,8 @@ from sheepdog import dictionary
 from sheepdog import models
 from sheepdog import transactions
 from sheepdog import utils
-from sheepdog.errors import AuthError, NotFoundError, UserError
-from sheepdog.globals import PERMISSIONS, ROLES, STATES_COMITTABLE_DRY_RUN
+from sheepdog.errors import NotFoundError, UserError
+from sheepdog.globals import ROLES, STATES_COMITTABLE_DRY_RUN
 
 
 def create_viewer(method, bulk=False, dry_run=False):
@@ -132,7 +133,11 @@ def get_project_dictionary(program=None, project=None):
         403: Unauthorized request.
     """
     if flask.current_app.config.get("AUTH_SUBMISSION_LIST", True) is True:
-        auth.validate_request(aud={"openid"}, purpose=None)
+        auth.validate_request(
+            scope={"openid"},
+            audience=flask.current_app.config.get("USER_API"),
+            purpose=None,
+        )
     keys = list(dictionary.schema.keys()) + ["_all"]
     links = [
         flask.url_for(
@@ -228,7 +233,11 @@ def get_project_dictionary_entry(program, project, entry):
         403: Unauthorized request.
     """
     if flask.current_app.config.get("AUTH_SUBMISSION_LIST", True) is True:
-        auth.validate_request(aud={"openid"}, purpose=None)
+        auth.validate_request(
+            scope={"openid"},
+            audience=flask.current_app.config.get("USER_API"),
+            purpose=None,
+        )
     return get_dictionary_entry(entry)
 
 
@@ -238,7 +247,7 @@ def get_entities_by_id(program, project, entity_id_string):
     """
     Retrieve existing GDC entities by ID.
 
-    The return type of a :http:method:`get` on this endpoint is a JSON array
+    The return type of a HTTP `get` on this endpoint is a JSON array
     containing JSON object elements, each corresponding to a provided ID.
     Return results are unordered.
 
@@ -609,7 +618,7 @@ def get_manifest(program, project):
         raise UserError(
             "No ids specified. Use query parameter 'ids', e.g." " 'ids=id1,id2'."
         )
-    requested_ids = id_string.split(",")
+    requested_ids = html.escape(id_string).split(",")
     docs = utils.manifest.get_manifest(program, project, requested_ids)
     response = flask.make_response(
         yaml.safe_dump({"files": docs}, default_flow_style=False)
@@ -804,13 +813,13 @@ def get_project_templates(program, project):
         200: Success
         404: Resource not found.
     """
-    file_format = flask.request.args.get("format", "tsv")
+    file_format = html.escape(flask.request.args.get("format", "tsv"))
     template = utils.transforms.graph_to_doc.get_all_template(
         file_format,
         program=program,
         project=project,
-        categories=flask.request.args.get("categories"),
-        exclude=flask.request.args.get("exclude"),
+        categories=html.escape(flask.request.args.get("categories", "")),
+        exclude=html.escape(flask.request.args.get("exclude", "")),
     )
     response = flask.make_response(template)
     suffix = "json" if file_format == "json" else "tar.gz"
@@ -848,7 +857,7 @@ def get_project_template(program, project, entity):
         200: Success
         404: Entity type is not found
     """
-    file_format = flask.request.args.get("format", "tsv")
+    file_format = html.escape(flask.request.args.get("format", "tsv"))
     template = utils.entity_to_template_str(
         entity, file_format, program=program, project=project
     )

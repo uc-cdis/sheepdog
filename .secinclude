@@ -1,6 +1,0 @@
-bin/*
-dev-requirements.txt
-requirements.txt
-run.py
-setup.py
-sheepdog/*

@@ -1,7 +1,7 @@
 import os
 import json
 import importlib
-from multiprocessing import Process
+import multiprocessing
 
 from indexd import default_settings, get_app as get_indexd_app
 from indexclient.client import IndexClient
@@ -9,25 +9,23 @@ import pytest
 import requests
 import requests_mock
 from mock import patch
-from flask.testing import make_test_environ_builder
 from psqlgraph import PsqlGraphDriver
-from datamodelutils import models
-from cdispyutils.hmac4 import get_auth
 from dictionaryutils import DataDictionary, dictionary
 from datamodelutils import models, validators
 from gen3authz.client.arborist.client import ArboristClient
 
-import sheepdog
 
 from sheepdog.test_settings import INDEX_CLIENT
-from tests.integration.datadictwithobjid.api import app as _app, app_init, indexd_init
-from tests.integration.datadictwithobjid.submission.test_endpoints import put_cgci_blgsp
+from tests.integration.utils import (
+    get_parent,
+    wait_for_indexd_alive,
+    wait_for_indexd_not_alive,
+)
+from tests.integration.api import app as _app, app_init, indexd_init
 from tests import utils
 
 
-def get_parent(path):
-    print(path)
-    return path[0 : path.rfind("/")]
+multiprocessing.set_start_method("fork")
 
 
 PATH_TO_SCHEMA_DIR = (
@@ -36,42 +34,29 @@ PATH_TO_SCHEMA_DIR = (
 )
 
 
-def pg_config():
-    test_host = "localhost"
+# update these settings if you want to point to another db
+def pg_config(use_ssl=False, isolation_level=None):
+    test_host = (
+        "localhost:" + str(os.environ.get("PGPORT"))
+        if os.environ.get("PGPORT") is not None
+        else "localhost"
+    )
     test_user = "test"
-    test_pass = "test"
+    test_pass = "test"  # nosec
     test_db = "sheepdog_automated_test"
-    return dict(host=test_host, user=test_user, password=test_pass, database=test_db)
+    ret_val = dict(host=test_host, user=test_user, password=test_pass, database=test_db)
 
+    # set sslmode if it's given, otherwise use the default
+    if use_ssl:
+        connect_args = {}
+        connect_args["sslmode"] = "require"
+        ret_val["connect_args"] = connect_args
 
-@pytest.fixture
-def require_index_exists_on(app, monkeypatch):
-    monkeypatch.setitem(app.config, "REQUIRE_FILE_INDEX_EXISTS", True)
+    # set isolation_level if it's given, otherwise use the default
+    if isolation_level:
+        ret_val["isolation_level"] = isolation_level
 
-
-@pytest.fixture
-def require_index_exists_off(app, monkeypatch):
-    monkeypatch.setitem(app.config, "REQUIRE_FILE_INDEX_EXISTS", False)
-
-
-def wait_for_indexd_alive(port):
-    url = "http://localhost:{}/_status".format(port)
-    try:
-        requests.get(url)
-    except requests.ConnectionError:
-        return wait_for_indexd_alive(port)
-    else:
-        return
-
-
-def wait_for_indexd_not_alive(port):
-    url = "http://localhost:{}/_status".format(port)
-    try:
-        requests.get(url)
-    except requests.ConnectionError:
-        return
-    else:
-        return wait_for_indexd_not_alive(port)
+    return ret_val
 
 
 @pytest.fixture
@@ -90,7 +75,7 @@ def app(tmpdir, request):
     indexd_app = get_indexd_app()
 
     indexd_init(*INDEX_CLIENT["auth"])
-    indexd = Process(target=indexd_app.run, args=["localhost", port])
+    indexd = multiprocessing.Process(target=indexd_app.run, args=["localhost", port])
     indexd.start()
     wait_for_indexd_alive(port)
 
@@ -137,17 +122,19 @@ def app(tmpdir, request):
 
 
 @pytest.fixture
-def pg_driver(request, client):
-    pg_driver = PsqlGraphDriver(**pg_config())
+def pg_driver(request, client, use_ssl, isolation_level):
+    pg_driver = PsqlGraphDriver(
+        **pg_config(use_ssl=use_ssl, isolation_level=isolation_level)
+    )
 
     def tearDown():
         with pg_driver.engine.begin() as conn:
             for table in models.Node().get_subclass_table_names():
                 if table != models.Node.__tablename__:
-                    conn.execute("delete from {}".format(table))
+                    conn.execute("delete from {}".format(table))  # nosec
             for table in models.Edge().get_subclass_table_names():
                 if table != models.Edge.__tablename__:
-                    conn.execute("delete from {}".format(table))
+                    conn.execute("delete from {}".format(table))  # nosec
             conn.execute("delete from versioned_nodes")
             conn.execute("delete from _voided_nodes")
             conn.execute("delete from _voided_edges")
@@ -158,11 +145,6 @@ def pg_driver(request, client):
     tearDown()
     request.addfinalizer(tearDown)
     return pg_driver
-
-
-@pytest.fixture()
-def cgci_blgsp(client, submitter):
-    put_cgci_blgsp(client, submitter)
 
 
 @pytest.fixture()

@@ -1,9 +1,10 @@
 import os
 import sys
+import logging
+import traceback
 
 from flask import Flask, jsonify
 from psqlgraph import PsqlGraphDriver
-from sqlalchemy import MetaData, Table
 
 from authutils.oauth2 import client as oauth2_client
 from authutils.oauth2.client import blueprint as oauth2_blueprint
@@ -21,8 +22,6 @@ from sheepdog.errors import (
     APIError,
     setup_default_handlers,
     UnhealthyCheck,
-    NotFoundError,
-    InternalError,
 )
 from sheepdog.version_data import VERSION, COMMIT
 from sheepdog.globals import dictionary_version, dictionary_commit
@@ -55,23 +54,36 @@ def app_register_blueprints(app):
 
     models.init(md)
     validators.init(vd)
-    sheepdog_blueprint = sheepdog.create_blueprint("submission")
 
+    # register each blueprint twice (at `/` and at `/v0/`). Flask requires the
+    # blueprint names to be unique, so rename them before registering the 2nd time
     v0 = "/v0"
+
+    sheepdog_blueprint = sheepdog.create_blueprint("submission")
     app.register_blueprint(sheepdog_blueprint, url_prefix=v0 + "/submission")
+    sheepdog_blueprint.name += "_legacy"
     app.register_blueprint(sheepdog_blueprint, url_prefix="/submission")
+
     app.register_blueprint(oauth2_blueprint.blueprint, url_prefix=v0 + "/oauth2")
+    oauth2_blueprint.blueprint.name += "_legacy"
     app.register_blueprint(oauth2_blueprint.blueprint, url_prefix="/oauth2")
 
 
 def db_init(app):
     app.logger.info("Initializing PsqlGraph driver")
+    connect_args = {}
+    if app.config.get("PSQLGRAPH") and app.config["PSQLGRAPH"].get("sslmode"):
+        connect_args["sslmode"] = app.config["PSQLGRAPH"]["sslmode"]
     app.db = PsqlGraphDriver(
         host=app.config["PSQLGRAPH"]["host"],
         user=app.config["PSQLGRAPH"]["user"],
         password=app.config["PSQLGRAPH"]["password"],
         database=app.config["PSQLGRAPH"]["database"],
         set_flush_timestamps=True,
+        connect_args=connect_args,
+        isolation_level=app.config["PSQLGRAPH"].get(
+            "isolation_level", "READ_COMMITTED"
+        ),
     )
     if app.config.get("AUTO_MIGRATE_DATABASE"):
         migrate_database(app)
@@ -104,18 +116,24 @@ def migrate_database(app):
             app.logger.info("The database version matches up. No need to do migration")
             return
     # check if such role exists
+    # does this need to have a session?
     with app.db.session_scope() as session:
+        session.connection(execution_options={"isolation_level": "READ COMMITTED"})
+        # TODO: address B608
         r = [
             i
             for i in session.execute(
-                "SELECT 1 FROM pg_roles WHERE rolname='{}'".format(read_role)
+                "SELECT 1 FROM pg_roles WHERE rolname='{}'".format(read_role)  # nosec
             )
         ]
     if len(r) != 0:
         try:
             postgres_admin.grant_read_permissions_to_graph(app.db, read_role)
         except Exception:
-            app.logger.warn("Fail to grant read permission, continuing anyway")
+            app.logger.warning(
+                "Fail to grant read permission, continuing anyway. Details:"
+            )
+            traceback.print_exc()
             return
 
 
@@ -162,6 +180,12 @@ app = Flask(__name__)
 
 
 # Setup logger
+app.logger.setLevel(
+    logging.DEBUG if (os.environ.get("GEN3_DEBUG") == "True") else logging.WARNING
+)
+app.logger.propagate = False
+while app.logger.handlers:
+    app.logger.removeHandler(app.logger.handlers[0])
 app.logger.addHandler(get_handler())
 
 setup_default_handlers(app)
@@ -182,6 +206,7 @@ def health_check():
     """
     with app.db.session_scope() as session:
         try:
+            session.connection(execution_options={"isolation_level": "READ COMMITTED"})
             session.execute("SELECT 1")
         except Exception:
             raise UnhealthyCheck("Unhealthy")

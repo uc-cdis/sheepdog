@@ -3,12 +3,16 @@ TODO
 """
 
 from collections import Counter
+import flask
 import simplejson
 import yaml
 
-import flask
+from cdislogging import get_logger
 
 from sheepdog.errors import UserError
+
+
+logger = get_logger(__name__)
 
 
 def oph_raise_for_duplicates(object_pairs):
@@ -43,6 +47,7 @@ def parse_json(raw):
     try:
         return simplejson.loads(raw, object_pairs_hook=oph_raise_for_duplicates)
     except Exception as e:
+        logger.error("Unable to parse this data to json: {}\n{}".format(raw, e))
         raise UserError("Unable to parse json: {}".format(e))
 
 

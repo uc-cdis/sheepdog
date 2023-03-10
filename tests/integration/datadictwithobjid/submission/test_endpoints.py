@@ -14,8 +14,13 @@ from flask import g
 from moto import mock_s3
 from datamodelutils import models as md
 from sheepdog.transactions.upload import UploadTransaction
+
+from tests.integration.utils import put_cgci, put_cgci2, put_cgci_blgsp, put_tcga_brca
 from tests.integration.datadict.submission.utils import data_fnames
 from tests.integration.datadictwithobjid.submission.utils import extended_data_fnames
+from tests.integration.datadict.submission.test_endpoints import (
+    do_test_export,
+)
 
 BLGSP_PATH = "/v0/submission/CGCI/BLGSP/"
 BRCA_PATH = "/v0/submission/TCGA/BRCA/"
@@ -47,79 +52,6 @@ def mock_request(f):
         return result
 
     return wrapper
-
-
-def put_cgci(client, auth=None):
-    path = "/v0/submission"
-    headers = auth
-    data = json.dumps(
-        {"name": "CGCI", "type": "program", "dbgap_accession_number": "phs000235"}
-    )
-    r = client.put(path, headers=headers, data=data)
-    return r
-
-
-def put_cgci2(client, auth=None):
-    path = "/v0/submission"
-    headers = auth
-    data = json.dumps(
-        {"name": "CGCI2", "type": "program", "dbgap_accession_number": "phs0002352"}
-    )
-    r = client.put(path, headers=headers, data=data)
-    return r
-
-
-def put_cgci_blgsp(client, auth=None):
-    put_cgci(client, auth=auth)
-    path = "/v0/submission/CGCI/"
-    headers = auth
-    data = json.dumps(
-        {
-            "type": "project",
-            "code": "BLGSP",
-            "dbgap_accession_number": "phs000527",
-            "name": "Burkitt Lymphoma Genome Sequencing Project",
-            "state": "open",
-        }
-    )
-    r = client.put(path, headers=headers, data=data)
-    assert r.status_code == 200, r.data
-    del g.user
-    return r
-
-
-def put_tcga_brca(client, submitter):
-    headers = submitter
-    data = json.dumps(
-        {"name": "TCGA", "type": "program", "dbgap_accession_number": "phs000178"}
-    )
-    r = client.put("/v0/submission/", headers=headers, data=data)
-    assert r.status_code == 200, r.data
-    headers = submitter
-    data = json.dumps(
-        {
-            "type": "project",
-            "code": "BRCA",
-            "name": "TEST",
-            "dbgap_accession_number": "phs000178",
-            "state": "open",
-        }
-    )
-    r = client.put("/v0/submission/TCGA/", headers=headers, data=data)
-    assert r.status_code == 200, r.data
-    del g.user
-    return r
-
-
-def add_and_get_new_experimental_metadata_count(pg_driver):
-    with pg_driver.session_scope() as s:
-        experimental_metadata = pg_driver.nodes(md.ExperimentalMetadata).first()
-        new_experimental_metadata = md.ExperimentalMetadata(str(uuid.uuid4()))
-        new_experimental_metadata.props = experimental_metadata.props
-        new_experimental_metadata.submitter_id = "case-2"
-        s.add(new_experimental_metadata)
-        experimental_metadata_count = pg_driver.nodes(md.ExperimentalMetadata).count()
-    return experimental_metadata_count
 
 
 def test_program_creation_endpoint(client, pg_driver, submitter):
@@ -321,10 +253,18 @@ def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
     path = BLGSP_PATH
     with open(os.path.join(DATA_DIR, "case.json"), "r") as f:
         case_sid = json.loads(f.read())["submitter_id"]
+        assert case_sid
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), "r") as f:
             resp = client.post(path, headers=submitter, data=f.read())
-            assert resp.status_code == 201, resp.data
+            resp_data = json.loads(resp.data)
+            # could already exist in the DB.
+            condition_to_check = (resp.status_code == 201 and resp.data) or (
+                resp.status_code == 400
+                and "already exists in the DB"
+                in resp_data["entities"][0]["errors"][0]["message"]
+            )
+            assert condition_to_check, resp.data
 
 
 def post_example_entities_together(client, submitter, data_fnames2=None):
@@ -347,12 +287,24 @@ def put_example_entities_together(client, headers):
     return client.put(path, headers=headers, data=json.dumps(data))
 
 
-def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
+def do_test_post_example_entities_together(client, submitter):
     with open(os.path.join(DATA_DIR, "case.json"), "r") as f:
         case_sid = json.loads(f.read())["submitter_id"]
+        assert case_sid
     resp = post_example_entities_together(client, submitter)
     print(resp.data)
-    assert resp.status_code == 201, resp.data
+    resp_data = json.loads(resp.data)
+    # could already exist in the DB.
+    condition_to_check = (resp.status_code == 201 and resp.data) or (
+        resp.status_code == 400
+        and "already exists in the DB"
+        in resp_data["entities"][0]["errors"][0]["message"]
+    )
+    assert condition_to_check, resp.data
+
+
+def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
+    do_test_post_example_entities_together(client, submitter)
 
 
 def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
@@ -409,7 +361,10 @@ def test_put_dry_run(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
     resp_json = json.loads(resp.data)
     assert resp_json["entity_error_count"] == 0
-    assert resp_json["created_entity_count"] == 1
+    condition_to_check = (
+        resp_json["created_entity_count"] == 1 or resp_json["updated_entity_count"] == 1
+    )
+    assert condition_to_check
     with pg_driver.session_scope():
         assert not pg_driver.nodes(md.Experiment).first()
 
@@ -455,15 +410,33 @@ def test_insert_multiple_parents_and_export_by_ids(
         headers = submitter
         headers["Content-Type"] = "text/tsv"
         resp = client.post(path, headers=headers, data=f.read())
-        assert resp.status_code == 201, resp.data
-    data = json.loads(resp.data)
-    submitted_id = data["entities"][0]["id"]
+        resp_data = json.loads(resp.data)
+        # could already exist in the DB.
+        condition_to_check = (resp.status_code == 201 and resp.data) or (
+            resp.status_code == 400
+            and "already exists in the DB"
+            in resp_data["entities"][0]["errors"][0]["message"]
+        )
+        assert condition_to_check, resp.data
+
+    # check db for matching experimental metadata
+    with pg_driver.session_scope():
+        filtered = (
+            pg_driver.nodes(md.ExperimentalMetadata)
+            .prop_in(
+                "submitter_id",
+                ["BLGSP-71-experimental-01-c", "BLGSP-71-experimental-01-a"],
+            )
+            .all()
+        )
+    submitted_ids = ",".join([node.node_id for node in filtered])
     resp = client.get(
-        "/v0/submission/CGCI/BLGSP/export/?ids={}".format(submitted_id), headers=headers
+        "/v0/submission/CGCI/BLGSP/export/?ids={}".format(submitted_ids),
+        headers=headers,
     )
     str_data = str(resp.data)
-    assert "BLGSP-71-experiment-01" in str_data
-    assert "BLGSP-71-experiment-02" in str_data
+    assert "BLGSP-71-experimental-01-a" in str_data
+    assert "BLGSP-71-experimental-01-c" in str_data
     assert "experiments.submitter_id" in str_data
 
 
@@ -535,7 +508,7 @@ def test_catch_internal_errors(monkeypatch, client, pg_driver, cgci_blgsp, submi
     try:
         r = put_example_entities_together(client, submitter)
         assert len(r.json["transactional_errors"]) == 1, r.data
-    except:
+    except Exception:
         raise
 
 
@@ -669,22 +642,6 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     data = r.json
     assert data and len(data) == 1
     assert data[0]["id"] == case_id
-
-
-def do_test_export(client, pg_driver, submitter, node_type, format_type):
-    post_example_entities_together(client, submitter, extended_data_fnames)
-    experimental_metadata_count = add_and_get_new_experimental_metadata_count(pg_driver)
-    r = get_export_data(client, submitter, node_type, format_type, False)
-    assert r.status_code == 200, r.data
-    assert r.headers["Content-Disposition"].endswith(format_type)
-    if format_type == "tsv":
-        str_data = str(r.data, "utf-8")
-        assert len(str_data.strip().split("\n")) == experimental_metadata_count + 1
-        return str_data
-    else:
-        js_data = json.loads(r.data)
-        assert len(js_data["data"]) == experimental_metadata_count
-        return js_data
 
 
 def get_export_data(client, submitter, node_type, format_type, without_id):

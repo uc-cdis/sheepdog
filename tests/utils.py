@@ -88,7 +88,7 @@ def generate_signed_access_token(
 
     claims = {
         "pur": "access",
-        "aud": scopes,
+        "aud": [iss],
         "sub": sub,
         "iss": iss,
         "iat": iat,
@@ -101,6 +101,7 @@ def generate_signed_access_token(
             }
         },
         "azp": client_id or "",
+        "scope": ["openid", "user"],
     }
 
     # only add google linkage information if provided

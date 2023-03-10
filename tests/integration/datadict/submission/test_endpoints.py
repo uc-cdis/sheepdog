@@ -15,16 +15,18 @@ import boto
 from datamodelutils import models as md
 from flask import g
 from moto import mock_s3
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 from sheepdog.globals import ROLES
 from sheepdog.transactions.upload import UploadTransaction
 from sheepdog.utils import get_external_proxies
 from sheepdog.utils.transforms import TSVToJSONConverter
+from sheepdog.utils.transforms.graph_to_doc import list_to_comma_string
 from tests.integration.datadict.submission.utils import (
     data_fnames,
     extended_data_fnames,
 )
+from tests.integration.utils import put_cgci, put_cgci_blgsp, put_tcga_brca
 
 BLGSP_PATH = "/v0/submission/CGCI/BLGSP/"
 BRCA_PATH = "/v0/submission/TCGA/BRCA/"
@@ -58,60 +60,6 @@ def mock_request(f):
     return wrapper
 
 
-def put_cgci(client, auth=None):
-    path = "/v0/submission"
-    headers = auth
-    data = json.dumps(
-        {"name": "CGCI", "type": "program", "dbgap_accession_number": "phs000235"}
-    )
-    r = client.put(path, headers=headers, data=data)
-    return r
-
-
-def put_cgci_blgsp(client, auth=None):
-    r = put_cgci(client, auth=auth)
-    assert r.status_code == 200, r.data
-
-    path = "/v0/submission/CGCI/"
-    headers = auth
-    data = json.dumps(
-        {
-            "type": "project",
-            "code": "BLGSP",
-            "dbgap_accession_number": "phs000527",
-            "name": "Burkitt Lymphoma Genome Sequencing Project",
-            "state": "open",
-        }
-    )
-    r = client.put(path, headers=headers, data=data)
-    assert r.status_code == 200, r.data
-    del g.user
-    return r
-
-
-def put_tcga_brca(client, submitter):
-    headers = submitter
-    data = json.dumps(
-        {"name": "TCGA", "type": "program", "dbgap_accession_number": "phs000178"}
-    )
-    r = client.put("/v0/submission/", headers=headers, data=data)
-    assert r.status_code == 200, r.data
-    headers = submitter
-    data = json.dumps(
-        {
-            "type": "project",
-            "code": "BRCA",
-            "name": "TEST",
-            "dbgap_accession_number": "phs000178",
-            "state": "open",
-        }
-    )
-    r = client.put("/v0/submission/TCGA/", headers=headers, data=data)
-    assert r.status_code == 200, r.data
-    del g.user
-    return r
-
-
 def add_and_get_new_experimental_metadata_count(pg_driver):
     with pg_driver.session_scope() as s:
         experimental_metadata = pg_driver.nodes(md.ExperimentalMetadata).first()
@@ -129,7 +77,8 @@ def test_program_creation_endpoint(client, pg_driver, submitter):
     assert resp.status_code == 200, resp.data
     print(resp.data)
     resp = client.get("/v0/submission/")
-    assert resp.json["links"] == ["/v0/submission/CGCI"], resp.json
+    condition_to_check = "/v0/submission/CGCI" in resp.json["links"] and resp.json
+    assert condition_to_check, resp.json
 
 
 def test_program_creation_unauthorized(
@@ -297,8 +246,16 @@ def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
     path = BLGSP_PATH
     for fname in data_fnames:
         with open(os.path.join(DATA_DIR, fname), "r") as f:
-            resp = client.post(path, headers=submitter, data=f.read())
-            assert resp.status_code == 201, resp.data
+            data = json.loads(f.read())
+            resp = client.post(path, headers=submitter, data=json.dumps(data))
+            resp_data = json.loads(resp.data)
+            # could already exist in the DB.
+            condition_to_check = (resp.status_code == 201 and resp.data) or (
+                resp.status_code == 400
+                and "already exists in the DB"
+                in resp_data["entities"][0]["errors"][0]["message"]
+            )
+            assert condition_to_check, resp.data
 
 
 def post_example_entities_together(client, submitter, data_fnames2=None):
@@ -322,12 +279,24 @@ def put_example_entities_together(client, headers):
     return client.put(path, headers=headers, data=json.dumps(data))
 
 
-def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
+def do_test_post_example_entities_together(client, submitter):
     with open(os.path.join(DATA_DIR, "case.json"), "r") as f:
         case_sid = json.loads(f.read())["submitter_id"]
+        print(case_sid)
     resp = post_example_entities_together(client, submitter)
     print(resp.data)
-    assert resp.status_code == 201, resp.data
+    resp_data = json.loads(resp.data)
+    # could already exist in the DB.
+    condition_to_check = (resp.status_code == 201 and resp.data) or (
+        resp.status_code == 400
+        and "already exists in the DB"
+        in resp_data["entities"][0]["errors"][0]["message"]
+    )
+    assert condition_to_check, resp.data
+
+
+def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
+    do_test_post_example_entities_together(client, submitter)
 
 
 def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
@@ -434,7 +403,8 @@ def test_insert_multiple_parents_and_export_by_ids(
     data = json.loads(resp.data)
     submitted_id = data["entities"][0]["id"]
     resp = client.get(
-        "/v0/submission/CGCI/BLGSP/export/?ids={}".format(submitted_id), headers=headers
+        "/v0/submission/CGCI/BLGSP/export/?ids={}".format(submitted_id),
+        headers=headers,
     )
     str_data = str(resp.data)
     assert "BLGSP-71-experiment-01" in str_data
@@ -478,7 +448,7 @@ def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, submit
     assert resp.status_code == 400, resp.data
 
 
-def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
+def do_test_delete_entity(client, submitter):
     resp = client.put(
         BLGSP_PATH,
         headers=submitter,
@@ -497,6 +467,10 @@ def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
 
+def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
+    do_test_delete_entity(client, submitter)
+
+
 def test_catch_internal_errors(monkeypatch, client, pg_driver, cgci_blgsp, submitter):
     """
     Monkey patch an essential function to just raise an error and assert that
@@ -510,7 +484,7 @@ def test_catch_internal_errors(monkeypatch, client, pg_driver, cgci_blgsp, submi
     try:
         r = put_example_entities_together(client, submitter)
         assert len(r.json["transactional_errors"]) == 1, r.data
-    except:
+    except Exception:
         raise
 
 
@@ -535,6 +509,49 @@ def test_validator_error_types(client, pg_driver, cgci_blgsp, submitter):
     assert r.status_code == 400, r.data
     assert errors["is_ffpe"] == "INVALID_VALUE"
     assert errors["longest_dimension"] == "INVALID_VALUE"
+
+
+def test_validator_format(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Test that validator errors are returned for invalid formats.
+    The `time_between_clamping_and_freezing` schema is defined as:
+    { "type": "string", "format": "date-time" }
+    """
+    assert put_example_entities_together(client, submitter).status_code == 200
+
+    # Test that a string that is not a valid date-time is rejected
+    r = client.put(
+        BLGSP_PATH,
+        headers=submitter,
+        data=json.dumps(
+            {
+                "type": "sample",
+                "cases": {"submitter_id": "BLGSP-71-06-00019"},
+                "sample_type": "Blood Derived Normal",
+                "submitter_id": "BLGSP-71-06-00019",
+                "time_between_clamping_and_freezing": "not-a-date",
+            }
+        ),
+    )
+    errors = {e["keys"][0]: e["type"] for e in r.json["entities"][0]["errors"]}
+    assert r.status_code == 400, r.data
+    assert errors["time_between_clamping_and_freezing"] == "ERROR"
+
+    # Test that a string that is a valid date-time is accepted
+    r = client.put(
+        BLGSP_PATH,
+        headers=submitter,
+        data=json.dumps(
+            {
+                "type": "sample",
+                "cases": {"submitter_id": "BLGSP-71-06-00019"},
+                "sample_type": "Blood Derived Normal",
+                "submitter_id": "BLGSP-71-06-00019",
+                "time_between_clamping_and_freezing": "2018-11-13T20:20:39+00:00",
+            }
+        ),
+    )
+    assert r.status_code == 200, r.data
 
 
 def test_invalid_json(client, pg_driver, cgci_blgsp, submitter):
@@ -574,10 +591,16 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
     # file is invalid, change the ``create`` and ``create_alias`` methods to
     # raise an error.
     monkeypatch.setattr(
-        UploadTransaction, "index_client.create", fail_index_test, raising=False
+        UploadTransaction,
+        "index_client.create",
+        fail_index_test,
+        raising=False,
     )
     monkeypatch.setattr(
-        UploadTransaction, "index_client.create_alias", fail_index_test, raising=False
+        UploadTransaction,
+        "index_client.create_alias",
+        fail_index_test,
+        raising=False,
     )
     # Attempt to post the invalid entities.
     test_fnames = data_fnames + [
@@ -605,7 +628,10 @@ def test_valid_file_index(
     # called.
 
     # Attempt to post the valid entities.
-    test_fnames = data_fnames + ["read_group.json", "submitted_unaligned_reads.json"]
+    test_fnames = data_fnames + [
+        "read_group.json",
+        "submitted_unaligned_reads.json",
+    ]
     resp = post_example_entities_together(client, submitter, data_fnames2=test_fnames)
     assert resp.status_code == 201, resp.data
 
@@ -619,7 +645,7 @@ def test_valid_file_index(
     assert index_client.get(sur_entity["id"]), "No indexd document created"
 
 
-def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
+def do_test_submit_valid_tsv(client, submitter):
     """
     Test that we can submit a valid TSV file
     """
@@ -631,9 +657,7 @@ def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -650,6 +674,10 @@ def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     headers["Content-Type"] = "text/tsv"
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 200, resp.data
+
+
+def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
+    do_test_submit_valid_tsv(client, submitter)
 
 
 def test_submit_valid_csv(client, pg_driver, cgci_blgsp, submitter):
@@ -713,9 +741,7 @@ def test_can_submit_with_asterisk_tsv(client, pg_driver, cgci_blgsp, submitter):
         "*projects.id": "daa208a7-f57a-562c-a04a-7a7c77542c98",
     }
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -784,6 +810,10 @@ def test_export_all_node_types(
     do_test_export(client, pg_driver, submitter, "experimental_metadata", "tsv")
 
 
+def test_export_non_string_array_values():
+    assert list_to_comma_string(["string", 1, 0.5, True], "tsv") == "string,1,0.5,True"
+
+
 def test_export_all_node_types_and_resubmit_json(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
@@ -834,10 +864,11 @@ def test_export_all_node_types_and_resubmit_json_with_empty_field(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
     """
-    Test that we can export an entity with empty fields (as json) then resubmit it. 
-    The exported entity should have the empty fields omitted. 
+    Test we can export an entity with empty fields (as json) then resubmit it.
+    The exported entity should have the empty fields omitted.
     """
     js_id_data = do_test_export(client, pg_driver, submitter, "experiment", "json")
+    assert js_id_data
     js_data = json.loads(
         get_export_data(client, submitter, "experiment", "json", True).data
     )
@@ -857,10 +888,11 @@ def test_export_all_node_types_and_resubmit_tsv_with_empty_field(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
     """
-    Test that we can export an entity with empty fields (as tsv) then resubmit it. The empty values 
-    of the exported entity should be empty strings.
+    Test we can export an entity with empty fields (as tsv) then resubmit it.
+    The empty values of the exported entity should be empty strings.
     """
     str_id_data = do_test_export(client, pg_driver, submitter, "experiment", "tsv")
+    assert str_id_data
     str_data = get_export_data(client, submitter, "experiment", "tsv", True).data
 
     nonempty = ["project_id", "submitter_id", "projects.code", "type"]
@@ -946,7 +978,6 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
     """
     Make sure that concurrent transactions don't cause duplicate submission.
     """
-
     data = {
         "type": "experiment",
         "submitter_id": "BLGSP-71-06-00019",
@@ -954,9 +985,7 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -970,7 +999,8 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
     assert data
 
     program, project = BLGSP_PATH.split("/")[3:5]
-    tsv_data = TSVToJSONConverter().convert(data)[0]
+    tsv_data, errors = TSVToJSONConverter().convert(data)
+    assert not errors
     doc_args = [None, "tsv", data, tsv_data]
     utx1, utx2 = [
         UploadTransaction(
@@ -1010,6 +1040,11 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
                 s1.rollback()
                 utx1.integrity_check()
                 response = utx1.json
+            # OperationalError in the case of SERIALIZABLE isolation_level
+            except OperationalError:
+                s1.rollback()
+                utx1.integrity_check()
+                response = utx1.json
 
     assert response["entity_error_count"] == 1
     assert response["code"] == 400
@@ -1025,9 +1060,9 @@ def test_duplicate_submission(app, pg_driver, cgci_blgsp, submitter):
 def test_zero_decimal_float(client, pg_driver, cgci_blgsp, submitter):
     """
     Test that float values with a zero decimal are accepted by Sheepdog
-    for properites of type "number" even if they look like integers. 
-    We are testing with TSV because the str values from TSV are cast 
-    to the proper type by Sheepdog.  
+    for properites of type "number" even if they look like integers.
+    We are testing with TSV because the str values from TSV are cast
+    to the proper type by Sheepdog.
     """
     resp = client.put(
         BLGSP_PATH,
@@ -1059,9 +1094,7 @@ def test_zero_decimal_float(client, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -1083,7 +1116,7 @@ def test_zero_decimal_float(client, pg_driver, cgci_blgsp, submitter):
 
 def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
     """
-    Test that updating a non required field to null works correclty 
+    Test that updating a non required field to null works correctly
     """
     headers = submitter
     data = json.dumps(
@@ -1101,7 +1134,6 @@ def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
-        data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
 
@@ -1122,21 +1154,20 @@ def test_update_to_null_valid(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
-        data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
         json.loads(resp.data)["entities"][0]["properties"]["experimental_description"]
-        == None
+        is None
     )
     assert (
         json.loads(resp.data)["entities"][0]["properties"][
             "number_samples_per_experimental_group"
         ]
-        == None
+        is None
     )
     assert (
-        json.loads(resp.data)["entities"][0]["properties"]["indels_identified"] == None
+        json.loads(resp.data)["entities"][0]["properties"]["indels_identified"] is None
     )
 
 
@@ -1154,7 +1185,7 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
     )
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 200, resp.data
-    id = json.loads(resp.data)["entities"][0]["id"]
+    entity_id = json.loads(resp.data)["entities"][0]["id"]
 
     data = json.dumps({"submitter_id": None})
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
@@ -1169,7 +1200,7 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 400, resp.data
 
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers, data=data
+        f"/v0/submission/CGCI/BLGSP/entities/{entity_id}", headers=headers
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
@@ -1177,7 +1208,7 @@ def test_update_to_null_invalid(client, pg_driver, cgci_blgsp, submitter):
         == "BLGSP-71-06-00019"
     )
     assert json.loads(resp.data)["entities"][0]["properties"]["type"] == "experiment"
-    assert json.loads(resp.data)["entities"][0]["properties"]["id"] == id
+    assert json.loads(resp.data)["entities"][0]["properties"]["id"] == entity_id
 
 
 def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
@@ -1202,7 +1233,6 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
-        data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
 
@@ -1215,9 +1245,7 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -1240,18 +1268,17 @@ def test_update_to_null_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
-        data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
         json.loads(resp.data)["entities"][0]["properties"]["experimental_description"]
-        == None
+        is None
     )
     assert (
         json.loads(resp.data)["entities"][0]["properties"][
             "number_samples_per_experimental_group"
         ]
-        == None
+        is None
     )
 
 
@@ -1272,7 +1299,7 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     headers = submitter
     resp = client.put(BLGSP_PATH, headers=headers, data=data)
     assert resp.status_code == 200, resp.data
-    id = json.loads(resp.data)["entities"][0]["id"]
+    entity_id = json.loads(resp.data)["entities"][0]["id"]
 
     data = {
         "type": "experiment",
@@ -1282,9 +1309,7 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     }
 
     # convert to TSV (save to file)
-    file_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "data/experiment_tmp.tsv"
-    )
+    file_path = os.path.join(DATA_DIR, "experiment_tmp.tsv")
     with open(file_path, "w") as f:
         dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
         dw.writeheader()
@@ -1304,19 +1329,19 @@ def test_update_to_null_invalid_tsv(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 400, resp.data
 
     resp = client.get(
-        f"/v0/submission/CGCI/BLGSP/entities/{id}", headers=headers, data=data
+        f"/v0/submission/CGCI/BLGSP/entities/{entity_id}", headers=headers
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert (
         json.loads(resp.data)["entities"][0]["properties"]["submitter_id"]
         == "BLGSP-71-06-00019"
     )
-    assert json.loads(resp.data)["entities"][0]["properties"]["id"] == id
+    assert json.loads(resp.data)["entities"][0]["properties"]["id"] == entity_id
 
 
 def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
     """
-    Test that updating a non required enum field to null works correclty 
+    Test that updating a non required enum field to null works correctly
     """
     headers = submitter
     data = json.dumps(
@@ -1333,7 +1358,6 @@ def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
-        data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
 
@@ -1352,7 +1376,107 @@ def test_update_to_null_enum(client, pg_driver, cgci_blgsp, submitter):
     resp = client.get(
         f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
         headers=headers,
-        data=data,
     )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
-    assert json.loads(resp.data)["entities"][0]["properties"]["type_of_data"] == None
+    assert json.loads(resp.data)["entities"][0]["properties"]["type_of_data"] is None
+
+
+def test_update_to_null_link(client, cgci_blgsp, submitter, require_index_exists_off):
+    """
+    Test that updating a non required link to null works correctly
+    """
+    # create an entity with a link
+    headers = submitter
+    experiement_submitter_id = "BLGSP-71-06-00019"
+    experimental_metadata = {
+        "type": "experimental_metadata",
+        "experiments": {"submitter_id": experiement_submitter_id},
+        "data_type": "Experimental Metadata",
+        "file_name": "CGCI-file-b.bam",
+        "md5sum": "35b39360cc41a7b635980159aef265ba",
+        "data_format": "some_format",
+        "submitter_id": "BLGSP-71-experimental-01-b",
+        "data_category": "data_file",
+        "file_size": 42,
+    }
+    resp = client.put(
+        BLGSP_PATH,
+        headers=submitter,
+        data=json.dumps(
+            [
+                {
+                    "type": "experiment",
+                    "submitter_id": experiement_submitter_id,
+                    "projects": {"code": "BLGSP"},
+                },
+                experimental_metadata,
+            ]
+        ),
+    )
+    assert resp.status_code == 200, json.dumps(json.loads(resp.data), indent=2)
+
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][1]['id']}",
+        headers=headers,
+    )
+    entity = json.loads(resp.data)["entities"][0]
+    assert (
+        entity["properties"]["experiments"][0]["submitter_id"]
+        == experiement_submitter_id
+    ), json.dumps(entity, indent=2)
+
+    # update the entity by explicitly removing the link
+    experimental_metadata["experiments"] = None
+    resp = client.put(
+        BLGSP_PATH, headers=headers, data=json.dumps(experimental_metadata)
+    )
+    assert resp.status_code == 200, json.dumps(json.loads(resp.data), indent=2)
+
+    resp = client.get(
+        f"/v0/submission/CGCI/BLGSP/entities/{json.loads(resp.data)['entities'][0]['id']}",
+        headers=headers,
+    )
+    entity = json.loads(resp.data)["entities"][0]
+    assert "experiments" not in entity, json.dumps(entity, indent=2)
+
+
+def test_submit_blank_link(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    """
+    Test that a TSV can be submitted with an empty link column,
+    when the link is not required.
+    """
+    data = {
+        "type": "experimental_metadata",
+        "experiments.submitter_id": "",  # TSV link format
+        "data_type": "Experimental Metadata",
+        "file_name": "CGCI-file-b.bam",
+        "md5sum": "35b39360cc41a7b635980159aef265ba",
+        "data_format": "some_format",
+        "submitter_id": "BLGSP-71-experimental-01-b",
+        "data_category": "data_file",
+        "file_size": 42,
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "data/experimental_metadata_tmp.tsv",
+    )
+    with open(file_path, "w") as f:
+        dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+        dw.writeheader()
+        dw.writerow(data)
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    resp = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 200, resp.data

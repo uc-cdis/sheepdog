@@ -1,32 +1,67 @@
-# To run: docker run -v /path/to/wsgi.py:/var/www/sheepdog/wsgi.py --name=sheepdog -p 81:80 sheepdog
-# To check running container: docker exec -it sheepdog /bin/bash
+# To run:
+# - Create and fill out `creds.json`:
+# {
+#   "fence_host": "",
+#   "fence_username": "",
+#   "fence_password": "",
+#   "fence_database": "",
+#   "db_host": "",
+#   "db_username": "",
+#   "db_password": "",
+#   "db_database": "",
+#   "gdcapi_secret_key": "",
+#   "indexd_password": "",
+#   "hostname": "",
+#   "oauth2_client_id": "",
+#   "oauth2_client_secret": ""
+# }
+# - Build the image: `docker build . -t sheepdog -f Dockerfile`
+# - Run: `docker run -v /full/path/to/creds.json:/var/www/sheepdog/creds.json -p 81:80 sheepdog`
+# To check running container: `docker exec -it sheepdog /bin/bash`
 
-FROM quay.io/cdis/python-nginx:pybase3-1.1.0
+FROM quay.io/cdis/python:python3.9-buster-2.0.0
 
-RUN apk update \
-    && apk add postgresql-libs postgresql-dev libffi-dev libressl-dev \
-    && apk add linux-headers musl-dev gcc libxml2-dev libxslt-dev \
-    && apk add curl bash git vim
+ENV appname=sheepdog
 
-COPY . /sheepdog
-COPY ./deployment/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
-WORKDIR /sheepdog
+RUN pip install --upgrade pip poetry
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential libffi-dev musl-dev gcc libxml2-dev libxslt-dev \
+    curl bash git vim
 
-RUN python -m pip install --upgrade pip \
-    && python -m pip install --upgrade setuptools \
-    && pip --version \
-    && pip install -r requirements.txt
-
-RUN mkdir -p /var/www/sheepdog \
-    && mkdir /run/ngnix/ \
-    && chown nginx /var/www/sheepdog
+RUN mkdir -p /var/www/$appname \
+    && mkdir -p /var/www/.cache/Python-Eggs/ \
+    && mkdir /run/nginx/ \
+    && ln -sf /dev/stdout /var/log/nginx/access.log \
+    && ln -sf /dev/stderr /var/log/nginx/error.log \
+    && chown nginx -R /var/www/.cache/Python-Eggs/ \
+    && chown nginx /var/www/$appname
 
 EXPOSE 80
 
-RUN COMMIT=`git rev-parse HEAD` && echo "COMMIT=\"${COMMIT}\"" >sheepdog/version_data.py \
-    && VERSION=`git describe --always --tags` && echo "VERSION=\"${VERSION}\"" >>sheepdog/version_data.py \
-    && python setup.py install
+WORKDIR /$appname
 
-WORKDIR /var/www/sheepdog
+# copy ONLY poetry artifact, install the dependencies but not indexd
+# this will make sure than the dependencies is cached
+COPY poetry.lock pyproject.toml /$appname/
+RUN poetry config virtualenvs.create false \
+    && poetry install -vv --no-root --no-dev --no-interaction \
+    && poetry show -v
 
+# copy source code ONLY after installing dependencies
+COPY . /$appname
+COPY ./deployment/uwsgi/uwsgi.ini /etc/uwsgi/uwsgi.ini
+COPY ./bin/settings.py /var/www/$appname/settings.py
+COPY ./bin/confighelper.py /var/www/$appname/confighelper.py
+
+# install sheepdog
+RUN poetry config virtualenvs.create false \
+    && poetry install -vv --no-dev --no-interaction \
+    && poetry show -v
+
+RUN COMMIT=`git rev-parse HEAD` && echo "COMMIT=\"${COMMIT}\"" >$appname/version_data.py \
+    && VERSION=`git describe --always --tags` && echo "VERSION=\"${VERSION}\"" >>$appname/version_data.py
+
+WORKDIR /var/www/$appname
+
+RUN ls
 CMD /dockerrun.sh

@@ -58,7 +58,7 @@ class FileUploadEntity(UploadEntity):
            index service
         2) If an id is provided in the submission we can look up that uuid in
            index service
-        2) The hash/file_size combo provided should be unique in the index
+        3) The hash/file_size combo provided should be unique in the index
            service for each file
 
     Handling Relationship Between Graph Node and Indexed File:
@@ -112,7 +112,7 @@ class FileUploadEntity(UploadEntity):
         self.file_by_hash = None
         self.object_id = None
         self.urls = []
-        self.should_update_acl_uploader = False
+        self.should_update_acl_and_authz = False
 
     def parse(self, doc):
         """
@@ -147,8 +147,12 @@ class FileUploadEntity(UploadEntity):
 
         # file already indexed and object_id provided: data upload flow
         if self.use_object_id(self.entity_type) and self.object_id and self.file_exists:
-            if self._is_valid_hash_size_for_file():
-                self.should_update_acl_uploader = True
+            if (
+                self._is_valid_hash_size_for_file()
+                and not getattr(self.file_by_uuid, "acl", None)
+                and not getattr(self.file_by_uuid, "authz", None)
+            ):
+                self.should_update_acl_and_authz = True
         else:
             self._set_node_and_file_ids()
 
@@ -226,7 +230,7 @@ class FileUploadEntity(UploadEntity):
         try:
             if role == "create":
                 # data upload flow: update the blank record in indexd
-                if self.should_update_acl_uploader:
+                if self.should_update_acl_and_authz:
                     self._update_acl_uploader_for_file()
 
                     # Temporary fix to update authz field in index record
@@ -643,9 +647,7 @@ class FileUploadEntity(UploadEntity):
             self.file_by_uuid._load()  # to sync new rev from server
         except requests.HTTPError as e:
             self.record_error(
-                "Failed to update acl and uploader fields in indexd: {}".format(
-                    e.message
-                )
+                "Failed to update acl and uploader fields in indexd: {}".format(e)
             )
 
     def get_file_from_index_by_hash(self):
@@ -669,7 +671,7 @@ class FileUploadEntity(UploadEntity):
                 raise UserError(
                     code=e.response.status_code,
                     message="Fail to register the data node in indexd. Detail {}".format(
-                        e.message
+                        e
                     ),
                 )
 

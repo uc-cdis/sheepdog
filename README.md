@@ -7,23 +7,11 @@
 
 ### For General Usage
 
-To install sheepdog for use with other Gen3 services, running these commands is sufficient.
+To install sheepdog, ensure you have poetry installed and run:
 
 ```bash
-python setup.py build
-python setup.py install
+poetry install
 ```
-
-### For Development
-
-```bash
-pip install -r dev-requirements.txt
-python setup.py develop
-```
-
-(`dev-requirements.txt` contains requirements for testing and doc generation.
-Installing with `python setup.py develop` avoids literally installing anything
-but creates an egg link to the source code.)
 
 ## Minimal Usage Example
 

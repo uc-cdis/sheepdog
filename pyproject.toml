@@ -1,0 +1,63 @@
+[tool.poetry]
+name = "sheepdog"
+version = "5.1.0"
+description = "Gen3 Submission Service"
+authors = ["CTDS UChicago <cdis@uchicago.edu>"]
+license = "Apache-2.0"
+repository = "https://github.com/uc-cdis/sheepdog"
+include = [
+  "NOTICE",
+]
+
+[tool.poetry.dependencies]
+python = "3.9.*"
+authlib = "*" # let authutils decide which version we're using
+authutils = ">=6.0.0"
+boto = ">=2.39.0"
+datamodelutils = ">=1.0.0"
+dictionaryutils = ">=3.2.0"
+envelopes = ">=0.4"
+# flask 2.2.0 removes `RequestContext.preserved` which we use in a workaround in `conftest.client`
+Flask = ">=1.1.1,<2.2.0"
+Flask-SQLAlchemy-Session = ">=1.1"
+fuzzywuzzy = ">=0.6.1"
+gen3authz = ">=1.0.4"
+graphene = ">=2.0.1"
+jsonschema = ">=3.2"
+lxml = ">=4.6.5"
+psycopg2 = ">=2.8.4"
+PyYAML = ">=5.4"
+requests = ">=2.22.0,<3.0.0"
+simplejson = ">=3.8.1"
+sqlalchemy = ">=1.3.*"
+cdispyutils = ">=2.0.1"
+psqlgraph = ">=3.0.1"
+cdiserrors = ">=1.0.0"
+cdislogging = ">=1.0.0"
+gen3dictionary = ">=2.0.1"
+gen3datamodel = ">=3.1.0"
+indexclient = ">=2.1.1"
+
+[tool.poetry.dev-dependencies]
+pytest = ">=4.6.5"
+pytest-cov = ">=2.5.1"
+requests_mock = ">=1.4.0"
+coverage = ">=5.3.0"
+cdis_oauth2client = ">=1.1.0"
+cryptography = ">=39.0.0"
+mock = ">=1.0.1"
+pytest-flask = ">=1.2.0"
+moto = ">=0.4.5"
+sphinxcontrib-httpdomain = ">=1.3.0"
+codacy-coverage = ">=1.3.11"
+Sphinx = ">=1.6.5"
+sphinx_rtd_theme = "*"
+flasgger = ">=0.9.1"
+indexd = {git = "https://github.com/uc-cdis/indexd", rev = "4.0.2"}
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+[tool.pytest.ini_options]
+markers = ["ssl"]

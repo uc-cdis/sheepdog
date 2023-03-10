@@ -51,8 +51,6 @@ class UploadEntity(EntityBase):
     session.
     """
 
-    DATA_FILE_CATEGORIES = ["data_file", "metadata_file", "index_file"]
-
     def __init__(self, transaction, config=None):
         """
         Args:
@@ -406,6 +404,12 @@ class UploadEntity(EntityBase):
 
             doc_sk, doc_ids = set(), set()
             doc_links = self.doc.get(name, [])
+
+            if doc_links is None:
+                # If links are explicitly set to None,
+                # remove all the links from the database
+                setattr(node, name, [])
+                continue
 
             # Munge to a list
             if isinstance(doc_links, dict):
