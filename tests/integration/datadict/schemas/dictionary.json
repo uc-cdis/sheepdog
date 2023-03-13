@@ -6177,6 +6177,7 @@
         "id": "case",
         "$schema": "http://json-schema.org/draft-04/schema#",
         "properties": {
+            "consent_codes": {"type": "array", "description": "", "items": {"type": "string"}},
             "disease_type": {
                 "type": "string",
                 "description": "Name of the disease for the case."

@@ -909,6 +909,20 @@ def test_export_all_node_types_and_resubmit_tsv_with_empty_field(
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 200, resp.data
 
+def test_export_node_with_array_json(
+    client, pg_driver, cgci_blgsp, require_index_exists_off, submitter
+):
+    post_example_entities_together(client, submitter, extended_data_fnames)
+    with pg_driver.session_scope() as s:
+        case = pg_driver.nodes(md.Case).first()
+        consent_codes = case.props.get("consent_codes", [])
+    path = "/v0/submission/CGCI/BLGSP/export/?node_label=case&format=json"
+    r = client.get(path, headers=submitter)
+    assert r.status_code == 200, r.data
+    assert r.headers["Content-Disposition"].endswith("json")
+    js_data = json.loads(r.data)
+    assert isinstance(js_data["data"][0]["consent_codes"], list)
+    assert len(js_data["data"][0]["consent_codes"]) == len(consent_codes)
 
 def test_export_all_node_types_json(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
