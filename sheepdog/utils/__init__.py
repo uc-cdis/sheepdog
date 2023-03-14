@@ -8,6 +8,7 @@ from contextlib import contextmanager
 import copy
 import csv
 import functools
+import html
 import json
 import os
 import io
@@ -191,53 +192,6 @@ def create_entity_list(nodes):
                 ]
         docs.append({"program": program, "project": project, "properties": props})
     return docs
-
-
-def get_all_template(file_format, categories=None, exclude=None, **kwargs):
-    """
-    Return template in format `file_format` for given categories.
-
-    ..note: kwargs absorbs `project`, `program` intended for future use
-    """
-    categories = categories.split(",") if categories else []
-    exclude = exclude.split(",") if exclude else []
-    entity_types = [
-        entity_type
-        for entity_type, schema in dictionary.schema.items()
-        if "project_id" in schema.get("properties", {})
-        and (not categories or schema["category"] in categories)
-        and (not exclude or entity_type not in exclude)
-    ]
-    if file_format == "json":
-        return get_json_template(entity_types)
-    else:
-        return get_delimited_template(entity_types, file_format)
-
-
-def get_delimited_template(entity_types, file_format, filename=TEMPLATE_NAME):
-    """
-    TODO
-
-    Args:
-        entity_types: TODO
-        file_format: TODO
-        filename: TODO
-
-    Return:
-        ``file_format`` (TSV or CSV) template for entity types.
-    """
-    tar_obj = io.StringIO()
-    tar = tarfile.open(filename, mode="w|gz", fileobj=tar_obj)
-
-    for entity_type in entity_types:
-        content = entity_to_template_str(entity_type, file_format=file_format)
-        partname = "{}.{}".format(entity_type, file_format)
-        tarinfo = tarfile.TarInfo(name=partname)
-        tarinfo.size = len(content)
-        tar.addfile(tarinfo, io.StringIO(content))
-
-    tar.close()
-    return tar_obj.getvalue()
 
 
 def get_external_proxies():
@@ -451,7 +405,9 @@ def proxy_request(project_id, uuid, data, args, headers, method, action, dry_run
 
         update_file_record_url(file_record, s3_url=new_url)
         update_state(node, SUCCESS_STATE)
-        message = "URL successfully reassigned. New url: {}".format(new_url)
+        message = "URL successfully reassigned. New url: {}".format(
+            html.escape(new_url)
+        )
         return flask.Response(json.dumps({"message": message}), status=200)
 
     resp = s3.make_s3_request(project_id, uuid, data, args, headers, method, action)
