@@ -123,6 +123,7 @@ helm upgrade --install gen3/sheepdog
 These commands will add the Gen3 helm chart repo and install the sheepdog service to your Kubernetes cluster. 
 
 Deploying sheepdog this way will use the defaults that are defined in this [values.yaml file](https://github.com/uc-cdis/gen3-helm/blob/master/helm/sheepdog/values.yaml)
+
 You can learn more about these values by accessing the sheepdog [README.md](https://github.com/uc-cdis/gen3-helm/blob/master/helm/sheepdog/README.md)
 
 If you would like to override any of the default values, simply copy the above values.yaml file into a local file and make any changes needed. 
