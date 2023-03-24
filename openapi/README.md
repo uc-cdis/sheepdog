@@ -110,5 +110,3 @@ new_route(
     }
 )
 ```
-
-**Note that the current automation is temporary: the way sheepdog handles endpoint registration will be updated and documentation generation will be made easier.**

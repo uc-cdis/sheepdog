@@ -187,7 +187,7 @@ def build_swag_doc():
             spec["parameters"].extend(new_params)
             spec.update(route["swagger"])
 
-        path = route["rule"]  # OR? '/v0/submission' + route['rule']
+        path = f"/v0/submission{route['rule']}"  # add blueprint prefix
 
         # methods: GET, PUT, POST, DELETE
         for method in route["options"].get("methods", []):
