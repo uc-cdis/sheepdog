@@ -51,3 +51,6 @@ which by default will output the `index.html` page to
 The YAML file comtaining the OpenAPI documentation is in the `openapi` folder;
 see the README in that folder for more details.
 
+## Gen3 graph data flow
+
+<img src="docs/Gen3 graph data flow.png" width="70%">
