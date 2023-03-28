@@ -64,6 +64,7 @@ def app_register_blueprints(app):
     sheepdog_blueprint.name += "_legacy"
     app.register_blueprint(sheepdog_blueprint, url_prefix="/submission")
 
+    # TODO we may be able to deprecate the oauth2 endpoints?
     app.register_blueprint(oauth2_blueprint.blueprint, url_prefix=v0 + "/oauth2")
     oauth2_blueprint.blueprint.name += "_legacy"
     app.register_blueprint(oauth2_blueprint.blueprint, url_prefix="/oauth2")
