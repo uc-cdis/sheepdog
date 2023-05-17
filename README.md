@@ -35,8 +35,7 @@ app.register_blueprint(blueprint)
 
 ### Sphinx
 
-Auto-documentation is set up using
-[Sphinx](http://www.sphinx-doc.org/en/stable/). To build it, run
+Auto-documentation is set up using [Sphinx](http://www.sphinx-doc.org/en/stable/). To build it, run
 ```bash
 cd docs
 make html
@@ -48,6 +47,9 @@ which by default will output the `index.html` page to
 
 [OpenAPI documentation available here.](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/uc-cdis/sheepdog/master/openapi/swagger.yml)
 
-The YAML file comtaining the OpenAPI documentation is in the `openapi` folder;
+The YAML file containing the OpenAPI documentation is in the `openapi` folder;
 see the README in that folder for more details.
 
+## Gen3 graph data flow
+
+<img src="docs/Gen3 graph data flow.png" width="70%">

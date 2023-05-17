@@ -76,7 +76,25 @@ info:
   title: Sheepdog OpenAPI Specification
   version: '1.0'
 paths:
-  /:
+  /_status:
+    get:
+      responses:
+        '200':
+          description: Healthy
+        default:
+          description: Unhealthy
+      summary: Health check endpoint
+      tags:
+      - system
+  /_version:
+    get:
+      responses:
+        '200':
+          description: successful operation
+      summary: Returns the version of Sheepdog
+      tags:
+      - system
+  /v0/submission/:
     get:
       description: Return the available resources at the top level above programs
         i.e. registered programs.
@@ -145,7 +163,7 @@ paths:
       summary: Create a program
       tags:
       - program
-  /<program>:
+  /v0/submission/<program>:
     delete:
       description: Delete a program given program name. If the program is not empty
         raise an appropriate exception
@@ -274,7 +292,7 @@ paths:
       summary: Create a project
       tags:
       - project
-  /<program>/<project>:
+  /v0/submission/<program>/<project>:
     delete:
       description: Delete project under a specific program
       parameters:
@@ -342,10 +360,7 @@ paths:
     put:
       description: Create or update any valid entities specified in the request body.
         To associate an entity with an existing, already indexed data file, specify
-        the `object_id` in the body of the entity. To remove a non-required property 
-        of an existing entity (set it to `Null`) you must set that property's value to
-        `null` (in JSON submissions) or an empty value (in TSV/CSV submissions)
-        in the request body. 
+        the `object_id` in the body of the entity.
       parameters:
       - description: The program to which the submitter belongs and in which the entities
           will be created. The `program` is the human-readable name, e.g. TCGA.
@@ -379,7 +394,7 @@ paths:
       summary: Update entities
       tags:
       - entity
-  /<program>/<project>/_dictionary:
+  /v0/submission/<program>/<project>/_dictionary:
     get:
       description: Return links to the project level JSON schema definitions.
       parameters:
@@ -405,7 +420,7 @@ paths:
       summary: Get the dictionary schema for entities of a project
       tags:
       - dictionary
-  /<program>/<project>/_dictionary/<entry>:
+  /v0/submission/<program>/<project>/_dictionary/<entry>:
     get:
       description: Get the dictionary entry for a specific project.
       parameters:
@@ -438,7 +453,7 @@ paths:
       summary: Get the dictionary schema for an entity of a project
       tags:
       - dictionary
-  /<program>/<project>/_dry_run:
+  /v0/submission/<program>/<project>/_dry_run:
     post:
       description: Create or update any valid entities specified in the request body.
         To associate an entity with an existing, already indexed data file, specify
@@ -513,7 +528,7 @@ paths:
       summary: Update entities
       tags:
       - dry run
-  /<program>/<project>/bulk:
+  /v0/submission/<program>/<project>/bulk:
     post:
       description: Handle bulk transaction instead of single transaction.
       parameters:
@@ -574,7 +589,7 @@ paths:
       summary: Update entities in bulk
       tags:
       - entity
-  /<program>/<project>/bulk/_dry_run:
+  /v0/submission/<program>/<project>/bulk/_dry_run:
     post:
       description: Handle bulk transaction instead of single transaction.
       parameters:
@@ -635,12 +650,13 @@ paths:
       summary: Update entities in bulk
       tags:
       - dry run
-  /<program>/<project>/entities/<entity_id_string>:
+  /v0/submission/<program>/<project>/entities/<entity_id_string>:
     get:
-      description: Retrieve existing GDC entities by ID. The return type of a :http:method:`get`
-        on this endpoint is a JSON array containing JSON object elements, each corresponding
-        to a provided ID. Return results are unordered. If any ID is not found in
-        the database, a status code of 404 is returned with the missing IDs.
+      description: Retrieve existing GDC entities by ID. The return type of a HTTP
+        `get` on this endpoint is a JSON array containing JSON object elements, each
+        corresponding to a provided ID. Return results are unordered. If any ID is
+        not found in the database, a status code of 404 is returned with the missing
+        IDs.
       parameters:
       - description: The program to which the submitter belongs and in which the entities
           will be created. The `program` is the human-readable name, e.g. TCGA.
@@ -673,7 +689,7 @@ paths:
       summary: Get entities by ID
       tags:
       - entity
-  /<program>/<project>/entities/<ids>:
+  /v0/submission/<program>/<project>/entities/<ids>:
     delete:
       description: Delete existing GDC entities. Using the :http:method:`delete` on
         a project's endpoint will *completely delete* an entity. The GDC does not
@@ -719,7 +735,7 @@ paths:
       summary: Delete entities
       tags:
       - entity
-  /<program>/<project>/entities/_dry_run/<ids>:
+  /v0/submission/<program>/<project>/entities/_dry_run/<ids>:
     delete:
       description: Delete existing GDC entities. Using the :http:method:`delete` on
         a project's endpoint will *completely delete* an entity. The GDC does not
@@ -765,7 +781,7 @@ paths:
       summary: Delete entities
       tags:
       - dry run
-  /<program>/<project>/export:
+  /v0/submission/<program>/<project>/export:
     get:
       description: 'Return a file with the requested entities as an attachment. Either
         ``ids`` or ``node_label`` must be provided in the parameters. When both are
@@ -890,7 +906,7 @@ paths:
       summary: Export entities
       tags:
       - export
-  /<program>/<project>/files/<file_uuid>:
+  /v0/submission/<program>/<project>/files/<file_uuid>:
     delete:
       description: Delete molecular data from object storage.
       parameters:
@@ -1052,7 +1068,7 @@ paths:
       summary: Upload a data file
       tags:
       - file
-  /<program>/<project>/files/<file_uuid>/_dry_run:
+  /v0/submission/<program>/<project>/files/<file_uuid>/_dry_run:
     delete:
       description: Delete molecular data from object storage.
       parameters:
@@ -1214,7 +1230,7 @@ paths:
       summary: Upload a data file
       tags:
       - dry run
-  /<program>/<project>/manifest:
+  /v0/submission/<program>/<project>/manifest:
     get:
       description: Create a json manifest of the files.
       parameters:
@@ -1242,7 +1258,7 @@ paths:
       summary: Get a manifest of data files
       tags:
       - file
-  /<program>/<project>/open:
+  /v0/submission/<program>/<project>/open:
     post:
       description: Mark a project ``open``. Opening a project means uploads, deletions,
         etc. are allowed.
@@ -1295,7 +1311,7 @@ paths:
       summary: Open a project
       tags:
       - project
-  /<program>/<project>/open/_dry_run:
+  /v0/submission/<program>/<project>/open/_dry_run:
     post:
       description: Mark a project ``open``. Opening a project means uploads, deletions,
         etc. are allowed.
@@ -1348,7 +1364,7 @@ paths:
       summary: Open a project
       tags:
       - dry run
-  /<program>/<project>/release:
+  /v0/submission/<program>/<project>/release:
     post:
       description: Release a project.
       parameters:
@@ -1399,7 +1415,7 @@ paths:
       summary: Release a project
       tags:
       - project
-  /<program>/<project>/release/_dry_run:
+  /v0/submission/<program>/<project>/release/_dry_run:
     post:
       description: Release a project.
       parameters:
@@ -1450,7 +1466,7 @@ paths:
       summary: Release a project
       tags:
       - dry run
-  /<program>/<project>/review:
+  /v0/submission/<program>/<project>/review:
     post:
       description: Mark a project project for review. Reviewing a project means uploads
         are locked. An ``open`` or ``submit`` action must be taken after ``review``.
@@ -1503,7 +1519,7 @@ paths:
       summary: Review a project
       tags:
       - project
-  /<program>/<project>/review/_dry_run:
+  /v0/submission/<program>/<project>/review/_dry_run:
     post:
       description: Mark a project project for review. Reviewing a project means uploads
         are locked. An ``open`` or ``submit`` action must be taken after ``review``.
@@ -1556,7 +1572,7 @@ paths:
       summary: Review a project
       tags:
       - dry run
-  /<program>/<project>/submit:
+  /v0/submission/<program>/<project>/submit:
     post:
       description: Submit a project. Submitting a project means that the GDC can make
         all metadata that *currently* exists in the project public in every GDC index
@@ -1611,7 +1627,7 @@ paths:
       summary: Submit a project
       tags:
       - project
-  /<program>/<project>/submit/_dry_run:
+  /v0/submission/<program>/<project>/submit/_dry_run:
     post:
       description: Submit a project. Submitting a project means that the GDC can make
         all metadata that *currently* exists in the project public in every GDC index
@@ -1666,7 +1682,7 @@ paths:
       summary: Submit a project
       tags:
       - dry run
-  /<program>/<project>/template:
+  /v0/submission/<program>/<project>/template:
     get:
       description: Get templates for all entity types. In the template, Links are
         represented as {link_type}.{link_unique_key} for one_to_one  and many_to_one
@@ -1705,7 +1721,7 @@ paths:
       summary: Get templates for all entity types of a project
       tags:
       - dictionary
-  /<program>/<project>/template/<entity>:
+  /v0/submission/<program>/<project>/template/<entity>:
     get:
       description: Return TSV template of an entity type. In the template, links are
         represented as {link_type}.{link_unique_key} for one_to_one and many_to_one
@@ -1741,7 +1757,7 @@ paths:
       summary: Get a template for an entity type of a project
       tags:
       - dictionary
-  /<program>/<project>/transactions/<int:transaction_id>/close:
+  /v0/submission/<program>/<project>/transactions/<int:transaction_id>/close:
     post:
       description: Close a transaction. The transaction is prevented from being committed
         in the future.
@@ -1804,7 +1820,7 @@ paths:
       summary: Close a transaction
       tags:
       - dry run
-  /<program>/<project>/transactions/<int:transaction_id>/commit:
+  /v0/submission/<program>/<project>/transactions/<int:transaction_id>/commit:
     post:
       description: 'Commit a dry run transaction. This call should only succeed if:
         1. transaction_id points to a dry_run transaction; 2. transaction_id points
@@ -1871,7 +1887,7 @@ paths:
       summary: Commit a dry run transaction
       tags:
       - dry run
-  /<program>/<project>/upload_manifest:
+  /v0/submission/<program>/<project>/upload_manifest:
     get:
       description: Create a json manifest of the files.
       parameters:
@@ -1899,7 +1915,7 @@ paths:
       summary: Get a manifest of data files
       tags:
       - file
-  /<program>/<project>/xml/biospecimen/bcr:
+  /v0/submission/<program>/<project>/xml/biospecimen/bcr:
     put:
       consumes:
       - multipart/form-data
@@ -1933,7 +1949,7 @@ paths:
       summary: Update Biospecimen Supplement entities
       tags:
       - entity
-  /<program>/<project>/xml/biospecimen/bcr/_dry_run:
+  /v0/submission/<program>/<project>/xml/biospecimen/bcr/_dry_run:
     put:
       consumes:
       - multipart/form-data
@@ -1967,7 +1983,7 @@ paths:
       summary: Update Biospecimen Supplement entities
       tags:
       - dry run
-  /<program>/<project>/xml/clinical/bcr:
+  /v0/submission/<program>/<project>/xml/clinical/bcr:
     put:
       consumes:
       - multipart/form-data
@@ -2001,7 +2017,7 @@ paths:
       summary: Update Clinical Supplement entities
       tags:
       - entity
-  /<program>/<project>/xml/clinical/bcr/_dry_run:
+  /v0/submission/<program>/<project>/xml/clinical/bcr/_dry_run:
     put:
       consumes:
       - multipart/form-data
@@ -2035,7 +2051,7 @@ paths:
       summary: Update Clinical Supplement entities
       tags:
       - dry run
-  /_dictionary:
+  /v0/submission/_dictionary:
     get:
       description: Return links to the JSON schema definitions.
       parameters: []
@@ -2049,7 +2065,7 @@ paths:
       summary: Get the dictionary schema
       tags:
       - dictionary
-  /_dictionary/<entry>:
+  /v0/submission/_dictionary/<entry>:
     get:
       description: Return the project level JSON schema definition for a given entity
         type.
@@ -2071,25 +2087,7 @@ paths:
       summary: Get the dictionary schema for an entity
       tags:
       - dictionary
-  /_status:
-    get:
-      responses:
-        '200':
-          description: Healthy
-        default:
-          description: Unhealthy
-      summary: Health check endpoint
-      tags:
-      - system
-  /_version:
-    get:
-      responses:
-        '200':
-          description: successful operation
-      summary: Returns the version of Sheepdog
-      tags:
-      - system
-  /admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>:
+  /v0/submission/admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>:
     delete:
       description: Delete existing GDC entities. Using the :http:method:`delete` on
         a project's endpoint will *completely delete* an entity. The GDC does not
@@ -2135,7 +2133,7 @@ paths:
       summary: Delete entities
       tags:
       - entity
-  /admin/<program>/<project>/files/<file_uuid>/reassign:
+  /v0/submission/admin/<program>/<project>/files/<file_uuid>/reassign:
     put:
       description: Manually (re)assign the S3 url for a given node.
       parameters:
@@ -2170,7 +2168,7 @@ paths:
       summary: Reassign the S3 URL of a data file
       tags:
       - file
-  /template:
+  /v0/submission/template:
     get:
       description: Get templates for all entity types.
       parameters:
@@ -2192,7 +2190,7 @@ paths:
       summary: Get templates for all entity types
       tags:
       - dictionary
-  /template/<entity>:
+  /v0/submission/template/<entity>:
     get:
       description: Get a template for an entity type.
       parameters:
@@ -2207,7 +2205,7 @@ paths:
       summary: Get a template for an entity type
       tags:
       - dictionary
-  /validation/upload_manifest:
+  /v0/submission/validation/upload_manifest:
     post:
       description: Generate a list of errors found in JSON Schema validation.
       parameters: []
