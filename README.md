@@ -53,3 +53,6 @@ see the README in that folder for more details.
 ## Gen3 graph data flow
 
 <img src="docs/Gen3 graph data flow.png" width="70%">
+
+## Submitter ID
+Sheepdog requires the `submitter_id` to be unique per node per project. It means that, the `submitter_id` of all `case` nodes must be unique per project. This constraint was technically enforced by the unique index of `(project_id, submitter_id)` in every node table.
