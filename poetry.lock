@@ -663,13 +663,12 @@ psqlgraph = ">=3.0.0"
 
 [[package]]
 name = "dictionaryutils"
-version = "3.4.5"
+version = "3.4.6"
 description = "Python wrapper and metaschema for datadictionary."
-category = "main"
 optional = false
 python-versions = ">=3.6,<3.10"
 files = [
-    {file = "dictionaryutils-3.4.5.tar.gz", hash = "sha256:3348b369a67a68690e020adb9add358c40327c97ec4917f460cf3ba5cd263696"},
+    {file = "dictionaryutils-3.4.6.tar.gz", hash = "sha256:b834bbb802d930fefae99ad155a0b07eef1a07f87c0b3aaef220dc20dda73a9c"},
 ]
 
 [package.dependencies]
