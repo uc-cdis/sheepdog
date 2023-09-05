@@ -43,6 +43,7 @@ cdislogging = ">=1.0.0"
 gen3dictionary = ">=2.0.1"
 gen3datamodel = ">=3.1.0"
 indexclient = ">=2.1.1"
+urllib3 = "<2.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=4.6.5"
