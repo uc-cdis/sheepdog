@@ -73,7 +73,6 @@ DICTIONARY_URL = os.environ.get(
     "https://s3.amazonaws.com/dictionary-artifacts/datadictionary/develop/schema.json",
 )
 
-HMAC_ENCRYPTION_KEY = os.environ.get("CDIS_HMAC_ENCRYPTION_KEY", "")
 USER_API = "http://localhost/user/"
 OIDC_ISSUER = "http://localhost"
 OAUTH2 = {
