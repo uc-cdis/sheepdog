@@ -23,7 +23,7 @@ install:
   - pip list
 
   # 2.0.0 causes issues b/c it relies on openssl >1.1.1 which isn't on this VM
-  - pip uninstall urllib3
+  - pip uninstall urllib3 --no-input
   - pip install urllib3<2.0.0
 
   - if [[ $TRAVIS_PYTHON_VERSION == 3.9 ]]; then pip install -e git+https://git@github.com/uc-cdis/wool.git#egg=wool; fi
