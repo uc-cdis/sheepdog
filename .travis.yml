@@ -20,8 +20,11 @@ install:
   - pip install --upgrade pip
   - export CRYPTOGRAPHY_DONT_BUILD_RUST=1
   - pip install poetry
+  - pip list
+  - brew install openssl@1.1
   - poetry install -vv
   - if [[ $TRAVIS_PYTHON_VERSION == 3.9 ]]; then pip install -e git+https://git@github.com/uc-cdis/wool.git#egg=wool; fi
+  - pip list
 
 before_script:
   - pip freeze
