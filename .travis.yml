@@ -1,3 +1,4 @@
+dist: jammy
 language: python
 
 python:
@@ -21,11 +22,6 @@ install:
   - export CRYPTOGRAPHY_DONT_BUILD_RUST=1
   - pip install poetry
   - pip list
-
-  # 2.0.0 causes issues b/c it relies on openssl >1.1.1 which isn't on this VM
-  - "'yes' | pip uninstall urllib3"
-  - pip install urllib3==1.26.16 --ignore-installed
-
   - if [[ $TRAVIS_PYTHON_VERSION == 3.9 ]]; then pip install -e git+https://git@github.com/uc-cdis/wool.git#egg=wool; fi
   - poetry install -vv
   - pip list
