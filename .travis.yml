@@ -11,12 +11,17 @@ cache:
 
 addons:
   postgresql: '9.6'
-
+  apt:
+    packages:
+    - postgresql-9.6
+    - postgresql-client-9.6
 env:
   global:
     - REPOSITORY="uc-cdis/sheepdog" PR_NUMBER="$TRAVIS_PULL_REQUEST"
     - GDC_ES_HOST=localhost
-
+    - PGPORT=5433
+    - PGUSER=travis
+  
 install:
   - pip install --upgrade pip
   - export CRYPTOGRAPHY_DONT_BUILD_RUST=1
