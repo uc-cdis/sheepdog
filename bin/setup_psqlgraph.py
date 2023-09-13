@@ -144,9 +144,7 @@ def setup_database(  # nosec
         conn.execute(perm_stmt)
         conn.execute("commit")
 
-        perm_stmt = "GRANT CREATE ON SCHEMA public TO {root_user}".format(
-            user=root_user
-        )
+        perm_stmt = "GRANT CREATE ON SCHEMA public TO {user}".format(user=root_user)
         conn.execute(perm_stmt)
         conn.execute("commit")
     except Exception as msg:
