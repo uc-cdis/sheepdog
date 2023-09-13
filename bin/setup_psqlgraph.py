@@ -133,6 +133,20 @@ def setup_database(  # nosec
             conn.execute("commit")
         except Exception as msg:
             logging.warning("Unable to GRANT privs to user:" + str(msg))
+
+        # PostgreSQL 15 revokes the previously defaulted CREATE permission
+        # from all users
+        # except a database owner from the public (or default) schema.
+        # This is required for db setup for testing, so grant
+        # that permission to the user as well.
+        try:
+            perm_stmt = "GRANT CREATE ON SCHEMA public TO {user}".format(
+                user=user_no_host
+            )
+            conn.execute(perm_stmt)
+            conn.execute("commit")
+        except Exception as msg:
+            logging.warning("Unable to GRANT privs to user:" + str(msg))
     conn.close()
 
 
@@ -195,7 +209,6 @@ def create_indexes(host, port, user, password, database, use_ssl=False):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--host", type=str, action="store", default="localhost", help="psql-server host"
