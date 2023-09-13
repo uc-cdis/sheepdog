@@ -8,14 +8,14 @@ poetry run pytest -vv --cov=sheepdog --cov-report xml tests/integration/datadict
 # so check that here and exit as necessary
 RESULT=$?
 if [ $RESULT -ne 0 ]; then
-  exit($RESULT)
+  exit 1
 fi
 
 poetry run pytest -vv --cov=sheepdog --cov-report xml --cov-append tests/integration/datadictwithobjid
 
 RESULT=$?
 if [ $RESULT -ne 0 ]; then
-  exit($RESULT)
+  exit 1
 fi
 
 poetry run pytest -vv --cov=sheepdog --cov-report xml --cov-append tests/unit
