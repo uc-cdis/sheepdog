@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-poetry run python bin/setup_test_database.py --password postgres --root_password postgres
+poetry run python bin/setup_test_database.py
 mkdir -p tests/integration/resources/keys
 cd tests/integration/resources/keys
 openssl genrsa -out test_private_key.pem 2048
