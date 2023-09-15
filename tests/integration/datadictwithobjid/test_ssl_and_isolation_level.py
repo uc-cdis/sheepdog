@@ -28,7 +28,6 @@ def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter
 @pytest.mark.ssl
 @pytest.mark.parametrize("isolation_level", ISOLATION_LEVELS, indirect=True)
 def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
-    assert False
     do_test_delete_entity(client, submitter)
 
 
