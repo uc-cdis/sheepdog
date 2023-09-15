@@ -56,3 +56,52 @@ see the README in that folder for more details.
 
 ## Submitter ID
 Sheepdog requires the `submitter_id` to be unique per node per project. It means that, the `submitter_id` of all `case` nodes must be unique per project. This constraint was technically enforced by the unique index of `(project_id, submitter_id)` in every node table.
+
+## Local Test Run Using CI Scripts
+
+If you want to locally replicate what GH Actions is doing more closely, follow
+these steps. 
+
+Ensure you've run `poetry install`. 
+
+Ensure you have Postgresql 13 set up and running.
+
+Ensure there is a postgres user `postgres` *and* `test` setup with password `test`:
+
+```
+CREATE USER postgres WITH PASSWORD 'test';
+```
+
+Then run:
+
+```bash
+bash tests/ci_setup.sh
+```
+
+If the above fails due to postgres errors, your postgresql setup may need some 
+fixing, it should finish with the following:
+
+```
+Setting up test database
+Dropping old test data
+WARNING:root:Unable to drop test data:(psycopg2.errors.InvalidCatalogName) database "sheepdog_automated_test" does not exist
+
+[SQL: DROP DATABASE "sheepdog_automated_test"]
+(Background on this error at: http://sqlalche.me/e/13/f405)
+Creating tables in test database
+Creating indexes
+writing RSA key
+```
+
+The WARNING will show up the first time you run this, it's safe to ignore.
+
+That sets up the database so if you run into postgres errors, you'll want to 
+double check your postgres setup.
+
+After that you can run unit tests with:
+
+```bash
+bash tests/ci_commands_script.sh
+```
+
+> You can see more detailed information on local dev setup in the docs/local_dev_environment.md
