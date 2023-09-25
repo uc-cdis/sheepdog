@@ -38,9 +38,6 @@ SLICING = {"host": "localhost", "gencode": "REPLACEME"}
 
 FLASK_SECRET_KEY = "flask_test_key"  # nosec
 
-from cryptography.fernet import Fernet
-
-HMAC_ENCRYPTION_KEY = Fernet.generate_key()
 OAUTH2 = {
     "client_id": "",
     "client_secret": "",

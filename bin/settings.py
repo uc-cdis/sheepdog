@@ -39,7 +39,6 @@ config["PSQLGRAPH"] = {
     "database": conf_data["db_database"],
 }
 
-config["HMAC_ENCRYPTION_KEY"] = conf_data.get("hmac_key", "{{hmac_key}}")
 config["FLASK_SECRET_KEY"] = conf_data.get("gdcapi_secret_key", "{{gdcapi_secret_key}}")
 config["PSQL_USER_DB_CONNECTION"] = "postgresql://%s:%s@%s:5432/%s" % tuple(
     [
