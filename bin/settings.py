@@ -46,25 +46,8 @@ config["PSQL_USER_DB_CONNECTION"] = "postgresql://%s:%s@%s:5432/%s" % tuple(
         for key in ["fence_username", "fence_password", "fence_host", "fence_database"]
     ]
 )
-config["OIDC_ISSUER"] = "https://%s/user" % conf_data["hostname"]
 
-config["OAUTH2"] = {
-    "client_id": conf_data.get("oauth2_client_id", "{{oauth2_client_id}}"),
-    "client_secret": conf_data.get("oauth2_client_secret", "{{oauth2_client_secret}}"),
-    "api_base_url": "https://%s/user/" % conf_data["hostname"],
-    "authorize_url": "https://%s/user/oauth2/authorize" % conf_data["hostname"],
-    "access_token_url": "https://%s/user/oauth2/token" % conf_data["hostname"],
-    "refresh_token_url": "https://%s/user/oauth2/token" % conf_data["hostname"],
-    "client_kwargs": {
-        "redirect_uri": "https://%s/api/v0/oauth2/authorize" % conf_data["hostname"],
-        "scope": "openid data user",
-    },
-    # deprecated key values, should be removed after all commons use new oidc
-    "internal_oauth_provider": "http://fence-service/oauth2/",
-    "oauth_provider": "https://%s/user/oauth2/" % conf_data["hostname"],
-    "redirect_uri": "https://%s/api/v0/oauth2/authorize" % conf_data["hostname"],
-}
-config["USER_API"] = config["OIDC_ISSUER"]  # for use by authutils
+config["USER_API"] = "https://%s/user" % conf_data["hostname"]  # for use by authutils
 # use the USER_API URL instead of the public issuer URL to accquire JWT keys
 config["FORCE_ISSUER"] = True
 config["DICTIONARY_URL"] = environ.get(

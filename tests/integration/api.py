@@ -8,8 +8,6 @@ Complimentary to conftest.py it sets up certain functionality
 import sqlite3
 import sys
 
-import cdis_oauth2client
-from cdis_oauth2client import OAuth2Client, OAuth2Error
 from cdispyutils.log import get_handler
 from flask import Flask, jsonify
 from flask_sqlalchemy_session import flask_scoped_session
@@ -38,8 +36,6 @@ def db_init(app):
         database=app.config["PSQLGRAPH"]["database"],
         set_flush_timestamps=True,
     )
-
-    app.oauth2 = OAuth2Client(**app.config["OAUTH2"])
 
     app.logger.info("Initializing Indexd driver")
     app.index_client = IndexClient(
@@ -108,8 +104,7 @@ def _log_and_jsonify_exception(e):
     """
     Log an exception and return the jsonified version along with the code.
 
-    This is the error handling mechanism for ``APIErrors`` and
-    ``OAuth2Errors``.
+    This is the error handling mechanism for ``APIErrors``.
     """
     app.logger.exception(e)
     if hasattr(e, "json") and e.json:
@@ -118,9 +113,6 @@ def _log_and_jsonify_exception(e):
 
 
 app.register_error_handler(APIError, _log_and_jsonify_exception)
-
-app.register_error_handler(APIError, _log_and_jsonify_exception)
-app.register_error_handler(OAuth2Error, _log_and_jsonify_exception)
 
 OLD_SQLITE = sqlite3.sqlite_version_info < (3, 7, 16)
 
