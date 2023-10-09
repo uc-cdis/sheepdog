@@ -11,9 +11,7 @@
 #   "db_database": "",
 #   "gdcapi_secret_key": "",
 #   "indexd_password": "",
-#   "hostname": "",
-#   "oauth2_client_id": "",
-#   "oauth2_client_secret": ""
+#   "hostname": ""
 # }
 # - Build the image: `docker build . -t sheepdog -f Dockerfile`
 # - Run: `docker run -v /full/path/to/creds.json:/var/www/sheepdog/creds.json -p 81:80 sheepdog`

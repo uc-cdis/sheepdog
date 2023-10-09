@@ -6,8 +6,6 @@ import traceback
 from flask import Flask, jsonify
 from psqlgraph import PsqlGraphDriver
 
-from authutils.oauth2 import client as oauth2_client
-from authutils.oauth2.client import blueprint as oauth2_blueprint
 from authutils import AuthError
 from cdispyutils.log import get_handler
 from cdispyutils.uwsgi import setup_user_harakiri
@@ -55,19 +53,12 @@ def app_register_blueprints(app):
     models.init(md)
     validators.init(vd)
 
-    # register each blueprint twice (at `/` and at `/v0/`). Flask requires the
-    # blueprint names to be unique, so rename them before registering the 2nd time
-    v0 = "/v0"
-
+    # register the blueprint twice (at `/` and at `/v0/`). Flask requires the
+    # blueprint names to be unique, so rename it before registering the 2nd time
     sheepdog_blueprint = sheepdog.create_blueprint("submission")
-    app.register_blueprint(sheepdog_blueprint, url_prefix=v0 + "/submission")
+    app.register_blueprint(sheepdog_blueprint, url_prefix="/v0/submission")
     sheepdog_blueprint.name += "_legacy"
     app.register_blueprint(sheepdog_blueprint, url_prefix="/submission")
-
-    # TODO we may be able to deprecate the oauth2 endpoints?
-    app.register_blueprint(oauth2_blueprint.blueprint, url_prefix=v0 + "/oauth2")
-    oauth2_blueprint.blueprint.name += "_legacy"
-    app.register_blueprint(oauth2_blueprint.blueprint, url_prefix="/oauth2")
 
 
 def db_init(app):
@@ -88,8 +79,6 @@ def db_init(app):
     )
     if app.config.get("AUTO_MIGRATE_DATABASE"):
         migrate_database(app)
-
-    app.oauth_client = oauth2_client.OAuthClient(**app.config["OAUTH2"])
 
     app.logger.info("Initializing index client")
     app.index_client = IndexClient(
