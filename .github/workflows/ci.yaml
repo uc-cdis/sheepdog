@@ -24,6 +24,7 @@ jobs:
        setup-script: 'tests/ci_setup.sh'
        test-script: 'tests/ci_commands_script.sh'
        python-version: '3.9'
+       run-coveralls: true
 
   ImageBuildAndPush:
     name: Build Image and Push
