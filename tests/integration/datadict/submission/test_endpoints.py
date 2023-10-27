@@ -771,6 +771,14 @@ def test_export_entity_by_id(
     assert r.status_code == 200, r.data
     assert r.headers["Content-Disposition"].endswith("tsv")
 
+
+def test_export_entity_by_id_json(
+    client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
+):
+    post_example_entities_together(client, submitter, extended_data_fnames)
+    with pg_driver.session_scope():
+        case_id = pg_driver.nodes(md.Case).first().node_id
+    path = "/v0/submission/CGCI/BLGSP/export/?ids={case_id}".format(case_id=case_id)
     path += "&format=json"
     r = client.get(path, headers=submitter)
     data = r.json
@@ -909,6 +917,7 @@ def test_export_all_node_types_and_resubmit_tsv_with_empty_field(
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 200, resp.data
 
+
 def test_export_node_with_array_json(
     client, pg_driver, cgci_blgsp, require_index_exists_off, submitter
 ):
@@ -923,6 +932,7 @@ def test_export_node_with_array_json(
     js_data = json.loads(r.data)
     assert isinstance(js_data["data"][0]["consent_codes"], list)
     assert len(js_data["data"][0]["consent_codes"]) == len(consent_codes)
+
 
 def test_export_all_node_types_json(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
