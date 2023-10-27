@@ -10,7 +10,7 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = "3.9.*"
+python = ">=3.9,<3.10"
 authlib = "*" # let authutils decide which version we're using
 authutils = ">=6.0.0"
 boto = ">=2.49.0"
