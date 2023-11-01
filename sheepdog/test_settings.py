@@ -38,13 +38,6 @@ SLICING = {"host": "localhost", "gencode": "REPLACEME"}
 
 FLASK_SECRET_KEY = "flask_test_key"  # nosec
 
-OAUTH2 = {
-    "client_id": "",
-    "client_secret": "",
-    "oauth_provider": "",
-    "redirect_uri": "",
-}
-
 USER_API = "localhost"
 BASE_URL = "localhost"
 

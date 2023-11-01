@@ -212,22 +212,6 @@ files = [
 ]
 
 [[package]]
-name = "cdis-oauth2client"
-version = "1.1.0"
-description = "Flask blueprint and utilities for oauth2 client"
-category = "dev"
-optional = false
-python-versions = "*"
-files = [
-    {file = "cdis_oauth2client-1.1.0.tar.gz", hash = "sha256:3c189f3f498d697c70f14a185899436a069d5423800a209c5fa2e3f13449078d"},
-]
-
-[package.dependencies]
-cdispyutils = ">=1.0.4"
-Flask = ">=1.1.1"
-requests = ">=2.5"
-
-[[package]]
 name = "cdiserrors"
 version = "1.0.0"
 description = "Gen3 shared exceptions and utilities."
