@@ -23,7 +23,6 @@ botocore = ">=1.29.71"
 datamodelutils = ">=1.0.0"
 dictionaryutils = ">=3.4.6"
 envelopes = ">=0.4"
-# flask 2.2.0 removes `RequestContext.preserved` which we use in a workaround in `conftest.client`
 Flask = ">=2.2.5"
 Flask-SQLAlchemy-Session = ">=1.1"
 fuzzywuzzy = ">=0.6.1"
