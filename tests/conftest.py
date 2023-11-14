@@ -84,24 +84,6 @@ def submitter_name():
     return SUBMITTER_USERNAME
 
 
-@pytest.fixture
-def client(app):
-    """
-    Overriding the `client` fixture from pytest_flask to fix this bug:
-    https://github.com/pytest-dev/pytest-flask/issues/42
-    Fixed in Flask 1.1.0
-    """
-    with app.test_client() as client:
-        yield client
-
-    while True:
-        top = flask._request_ctx_stack.top
-        if top is not None and top.preserved:
-            top.pop()
-        else:
-            break
-
-
 @pytest.fixture(scope="function")
 def mock_arborist_requests(request):
     """
