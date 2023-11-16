@@ -1,7 +1,8 @@
 # sheepdog
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/0069fa67707f48a7aabfe9de6b857392)](https://www.codacy.com/app/uc-cdis/sheepdog?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=uc-cdis/sheepdog&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.org/uc-cdis/sheepdog.svg?branch=master)](https://travis-ci.org/uc-cdis/sheepdog)
 [![Coverage Status](https://coveralls.io/repos/github/uc-cdis/sheepdog/badge.svg)](https://coveralls.io/github/uc-cdis/sheepdog)
+
 ## Installation
 
 ### For General Usage
