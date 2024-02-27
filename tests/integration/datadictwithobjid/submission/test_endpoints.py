@@ -637,6 +637,12 @@ def test_export_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     assert r.status_code == 200, r.data
     assert r.headers["Content-Disposition"].endswith("tsv")
 
+
+def test_export_entity_by_id_json(client, pg_driver, cgci_blgsp, submitter):
+    post_example_entities_together(client, submitter)
+    with pg_driver.session_scope():
+        case_id = pg_driver.nodes(md.Case).first().node_id
+    path = "/v0/submission/CGCI/BLGSP/export/?ids={case_id}".format(case_id=case_id)
     path += "&format=json"
     r = client.get(path, headers=submitter)
     data = r.json
