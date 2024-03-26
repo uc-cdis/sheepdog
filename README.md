@@ -13,6 +13,8 @@ To install sheepdog, ensure you have poetry installed and run:
 poetry install
 ```
 
+You will also need [Postgres](https://www.postgresql.org/) installed for psycopg2.
+
 ## Minimal Usage Example
 
 ```python
