@@ -58,4 +58,6 @@ RUN source /venv/bin/activate
 ENV PYTHONUNBUFFERED=1 \
     PYTHONIOENCODING=UTF-8
 
+WORKDIR /var/www/${appname}
+
 CMD ["gunicorn", "-c", "deployment/wsgi/gunicorn.conf.py"]
