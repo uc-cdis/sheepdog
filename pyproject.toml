@@ -12,7 +12,7 @@ include = [
 [tool.poetry.dependencies]
 python = ">=3.9,<3.10"
 authlib = "*" # let authutils decide which version we're using
-authutils = {git = "https://git@github.com/uc-cdis/authutils.git", branch = "feat/jq-testing"}
+authutils = {git = "https://git@github.com/uc-cdis/authutils.git", branch = "feat/remove_aud"}
 boto = ">=2.49.0"
 botocore = "*"
 datamodelutils = ">=1.0.0"
