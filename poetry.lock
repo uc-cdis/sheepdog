@@ -124,8 +124,8 @@ flask = ["Flask (>=0.10.1)"]
 [package.source]
 type = "git"
 url = "https://git@github.com/uc-cdis/authutils.git"
-reference = "feat/remove_aud"
-resolved_reference = "6bf7fd208ffe271ae90af78b9a329375e1922730"
+reference = "feat/jq-testing"
+resolved_reference = "06ee8045dae7a17ebce26c1db189aee4e3d848b1"
 
 [[package]]
 name = "avro"
@@ -2466,4 +2466,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.10"
-content-hash = "0edbfd124a10f4d5522f335abe82d99036c1bb75963dd42e78e9e3257c973483"
+content-hash = "149a37136f5fc5a2656fcfd1e40f561b82c34229969614652af62d9a234adba5"
