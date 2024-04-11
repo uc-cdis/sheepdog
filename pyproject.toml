@@ -40,7 +40,7 @@ psqlgraph = ">=3.0.1"
 cdiserrors = ">=1.0.0"
 cdislogging = ">=1.0.0"
 gen3dictionary = ">=2.0.3"
-gen3datamodel = ">=3.1.0"
+gen3datamodel = {git = "https://git@github.com/uc-cdis/gdcdatamodel.git", branch = "fix/fips-hashing"}
 gunicorn = ">=21.2.0"
 indexclient = ">=2.1.1"
 urllib3 = "<2.0.0"
