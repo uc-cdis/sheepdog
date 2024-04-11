@@ -135,7 +135,8 @@ def get_project_dictionary(program=None, project=None):
     if flask.current_app.config.get("AUTH_SUBMISSION_LIST", True) is True:
         auth.validate_request(
             scope={"openid"},
-            audience=flask.current_app.config.get("USER_API"),
+            audience=flask.current_app.config.get("OIDC_ISSUER")
+            or flask.current_app.config.get("USER_API"),
             purpose=None,
         )
     keys = list(dictionary.schema.keys()) + ["_all"]
@@ -235,7 +236,8 @@ def get_project_dictionary_entry(program, project, entry):
     if flask.current_app.config.get("AUTH_SUBMISSION_LIST", True) is True:
         auth.validate_request(
             scope={"openid"},
-            audience=flask.current_app.config.get("USER_API"),
+            audience=flask.current_app.config.get("OIDC_ISSUER")
+            or flask.current_app.config.get("USER_API"),
             purpose=None,
         )
     return get_dictionary_entry(entry)
