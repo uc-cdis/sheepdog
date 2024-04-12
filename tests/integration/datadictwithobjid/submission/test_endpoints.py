@@ -3,6 +3,7 @@
 # pylint: disable=superfluous-parens
 # pylint: disable=no-member
 import contextlib
+import csv
 import json
 import os
 import uuid
@@ -680,6 +681,88 @@ def test_export_node_with_array_json(
     js_data = json.loads(r.data)
     assert isinstance(js_data["data"][0]["consent_codes"], list)
     assert len(js_data["data"][0]["consent_codes"]) == len(consent_codes)
+
+"""
+for PR comment:
+in case node:
+"properties": {
+    "consent_codes": {
+        "type": "array",
+        "description": "",
+        "items": {
+            "type": "string"
+        }
+    },
+    "consent_codes_ints": {
+        "type": "array",
+        "description": "testing submission of array of ",
+        "items": {
+            "type": "integer"
+        }
+    },
+    "consent_codes_floats": {
+        "type": "array",
+        "description": "",
+        "items": {
+            "type": "number"
+        }
+    },
+"""
+
+
+# TODO update name
+def test_submit_bug(client, pg_driver, cgci_blgsp, require_index_exists_off, submitter):
+    """
+    Ensure arrays of strings with values that look like numbers can be submitted via TSV.
+    Addressing error:
+        Validation error while validating entity '{'type': 'case', 'consent_codes': [4], ...'
+        against subschema '{'type': 'string'}': 4 is not of type 'string'
+    """
+    # submit records for parent nodes
+    post_example_entities_together(client, submitter, extended_data_fnames)
+
+    with pg_driver.session_scope() as s:
+        case = pg_driver.nodes(md.Case).first()
+        case_submitter_id = case.props["submitter_id"]
+        experiment = pg_driver.nodes(md.Experiment).first()
+        experiment_submitter_id = experiment.props["submitter_id"]
+    data = {
+        "type": "case",
+        "submitter_id": case_submitter_id,
+        "experiments": {"submitter_id": experiment_submitter_id},
+        "consent_codes": ["abc", "xyz"],
+        "consent_codes_ints": [1, 70],
+        "consent_codes_floats": [1.1, 70.0],
+    }
+
+    # convert to TSV (save to file)
+    file_path = os.path.join(DATA_DIR, "case_tmp.tsv")
+    # with open(file_path, "w") as f:
+    #     dw = csv.DictWriter(f, sorted(data.keys()), delimiter="\t")
+    #     dw.writeheader()
+    #     dw.writerow(data)
+    # TODO fix TSV format for array
+
+    # read the TSV data
+    data = None
+    with open(file_path, "r") as f:
+        data = f.read()
+    # os.remove(file_path)  # clean up (delete file)
+    assert data
+
+    headers = submitter
+    headers["Content-Type"] = "text/tsv"
+    r = client.put(BLGSP_PATH, headers=headers, data=data)
+    assert r.status_code == 200, r.data
+
+    path = "/v0/submission/CGCI/BLGSP/export/?node_label=case&format=json"
+    r = client.get(path, headers=submitter)
+    assert r.status_code == 200, r.data
+    assert r.json, "Expected to receive a json body"
+    assert len(r.json.get("data", [])) == 1, f"Expected exactly 1 case but got: {r.json}"
+    # the values should be strings even though they look like ints/floats
+    assert r.json["data"][0]["consent_codes"] == ["4.0", "12"]
+    # TODO check other types here
 
 
 def test_export_all_node_types_json(

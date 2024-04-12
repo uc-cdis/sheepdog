@@ -30,7 +30,7 @@ def parse_bool_from_string(value):
     return mapping.get(strip(value).lower(), value)
 
 
-def parse_list_from_string(value, list_type=None):
+def parse_list_from_string(cls, value, list_item_type=None):
     """
     Handle array fields by converting them to a list.
     Try to cast to float to handle arrays of numbers.
@@ -40,37 +40,12 @@ def parse_list_from_string(value, list_type=None):
     """
     items = [x.strip() for x in value.split(",")]
 
-    all_ints = True
-    try:
-        # TODO: Actually pass in and use list_type as the expected type
-        #       and don't try to infer it this way.
-        for item in items:
-            if not float(item).is_integer():
-                all_ints = False
-                break
-    except ValueError as exc:
-        current_app.logger.warning(
-            f"list of values {items} are likely NOT ints or floats so we're leaving "
-            f"them as-is. Exception: {exc}"
-        )
-        return items
+    if list_item_type == int:
+        items = [int(float(item)) for item in items]
+    elif list_item_type == float:
+        items = [float(item) for item in items]
 
-    if all_ints:
-        current_app.logger.warning(
-            f"list of values {items} could all be integers, so we are ASSUMING they "
-            "are instead of defaulting to float."
-        )
-        # all can be ints, infer `int` as correct type
-        new_items = [int(float(item)) for item in items]
-    else:
-        current_app.logger.warning(
-            f"list of values {items} are NOT all integers, so we are ASSUMING they "
-            "they are all float by default."
-        )
-        # default to float for backwards compatibility
-        new_items = [float(item) for item in items]
-
-    return new_items
+    return items
 
 
 def set_row_type(row):
@@ -241,13 +216,6 @@ class DelimitedConverter(object):
 
         property_list = cls.get_property_list()
         current_app.logger.debug(f"property_list:{property_list}")
-
-        # TODO: list_type is not used b/c for some reason it's always
-        #       str even if the dictionary says it's an array of ints
-        list_type = None
-        if len(types) > 1:
-            list_type = types[1]
-
         current_app.logger.debug(f"prop_name:{prop_name}")
         current_app.logger.debug(f"value:{value}")
         current_app.logger.debug(f"value_type:{value_type}")
@@ -256,7 +224,14 @@ class DelimitedConverter(object):
             if value_type == bool:
                 return parse_bool_from_string(value)
             elif value_type == list:
-                return parse_list_from_string(value, list_type=list_type)
+                # NOTE: `cls.__pg_properties__.get(prop_name)` would be easier but the value is
+                # only `list` and does not include the item type.
+                # https://github.com/uc-cdis/gdcdatamodel/blob/190f998/gdcdatamodel/models/__init__.py#L120
+                # Setting this ^ to `list[<item type>]` may work but it breaks other code. So parse
+                # the item type from the dictionary schema.
+                from sheepdog import dictionary
+                list_item_type = dictionary.schema.get(cls.label, {}).get("properties", {}).get(prop_name, {}).get("items", {}).get("type")
+                return parse_list_from_string(cls, value, list_item_type=list_item_type)
             elif value_type == float:
                 if float(value).is_integer():
                     return int(float(value))
