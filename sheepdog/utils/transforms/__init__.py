@@ -8,6 +8,7 @@ import io
 from flask import current_app
 from psqlgraph import Node
 
+from sheepdog import dictionary
 from sheepdog.errors import UserError
 from sheepdog.utils.transforms.bcr_xml_to_json import (
     BcrXmlToJsonParser,
@@ -30,7 +31,7 @@ def parse_bool_from_string(value):
     return mapping.get(strip(value).lower(), value)
 
 
-def parse_list_from_string(cls, value, list_item_type=None):
+def parse_list_from_string(value, list_item_type=None):
     """
     Handle array fields by converting them to a list.
     Try to cast to float to handle arrays of numbers.
@@ -207,19 +208,28 @@ class DelimitedConverter(object):
                 r_values.append({prop: converted_value})
         return r_values
 
+    # TODO simplify and move to utils
+    @staticmethod
+    def types_from_str(types):
+        return [
+            a
+            for type_ in types
+            for a in {
+                "string": [str],
+                "number": [float, int],
+                "integer": [int],
+                "float": [float],
+                "null": [str],
+                "boolean": [bool],
+                "array": [list],
+                None: [str],
+            }[type_]
+        ]
+
     @staticmethod
     def get_converted_type_from_list(cls, prop_name, value):
-        current_app.logger.debug(f"cls.__pg_properties__:{cls.__pg_properties__}")
         types = cls.__pg_properties__.get(prop_name, (str,))
-        current_app.logger.debug(f"types:{types}")
         value_type = types[0]
-
-        property_list = cls.get_property_list()
-        current_app.logger.debug(f"property_list:{property_list}")
-        current_app.logger.debug(f"prop_name:{prop_name}")
-        current_app.logger.debug(f"value:{value}")
-        current_app.logger.debug(f"value_type:{value_type}")
-
         try:
             if value_type == bool:
                 return parse_bool_from_string(value)
@@ -228,10 +238,11 @@ class DelimitedConverter(object):
                 # only `list` and does not include the item type.
                 # https://github.com/uc-cdis/gdcdatamodel/blob/190f998/gdcdatamodel/models/__init__.py#L120
                 # Setting this ^ to `list[<item type>]` may work but it breaks other code. So parse
-                # the item type from the dictionary schema.
-                from sheepdog import dictionary
+                # the item type from the dictionary schema instead.
                 list_item_type = dictionary.schema.get(cls.label, {}).get("properties", {}).get(prop_name, {}).get("items", {}).get("type")
-                return parse_list_from_string(cls, value, list_item_type=list_item_type)
+                list_item_type = DelimitedConverter.types_from_str([list_item_type])[0]
+                current_app.logger.debug(f"get_converted_type_from_list: {cls.label}.{prop_name} items type is {list_item_type}")
+                return parse_list_from_string(value, list_item_type=list_item_type)
             elif value_type == float:
                 if float(value).is_integer():
                     return int(float(value))

@@ -68,7 +68,7 @@ Ensure you've run `poetry install`.
 
 Ensure you have Postgresql 13 set up and running.
 
-Ensure there is a postgres user `postgres` *and* a `test` user setup with password `test`:
+Ensure there is a postgres user `postgres`, *and* a `test` user set up with password `test`:
 
 ```
 CREATE USER postgres WITH PASSWORD 'test';
