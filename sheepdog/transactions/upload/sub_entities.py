@@ -2,6 +2,7 @@
 Subclasses for UploadEntity that handle different types of
 uploaded entites.
 """
+
 import uuid
 import requests
 import json

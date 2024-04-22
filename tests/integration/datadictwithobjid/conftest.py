@@ -167,7 +167,6 @@ def dictionary_setup(_app):
         get_mocked.return_value = resp
         datadictionary = DataDictionary(url=url)
         dictionary.init(datadictionary)
-
         from gdcdatamodel import models as md
         from gdcdatamodel import validators as vd
 

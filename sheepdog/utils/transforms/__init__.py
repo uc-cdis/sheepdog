@@ -44,9 +44,26 @@ def parse_list_from_string(value, list_item_type=None):
     if list_item_type == int:
         items = [int(float(item)) for item in items]
     elif list_item_type == float:
-        items = [float(item) for item in items]
+        items = [list_item_type(item) for item in items]
+    elif list_item_type == bool:
+        items = [e.lower() in ["true", "t", "yes", "y"] for e in items]
+    else:
+        current_app.logger.warning(
+            f"'parse_list_from_string' does not know how to handle type '{list_item_type}' so assuming string is fine... Value is '{value}'"
+        )
 
     return items
+
+
+def str_to_python_type(str_type):
+    return {
+        "string": str,
+        "integer": int,
+        "number": float,
+        "float": float,
+        "boolean": bool,
+        "array": list,
+    }.get(str_type)
 
 
 def set_row_type(row):
@@ -208,24 +225,6 @@ class DelimitedConverter(object):
                 r_values.append({prop: converted_value})
         return r_values
 
-    # TODO simplify and move to utils
-    @staticmethod
-    def types_from_str(types):
-        return [
-            a
-            for type_ in types
-            for a in {
-                "string": [str],
-                "number": [float, int],
-                "integer": [int],
-                "float": [float],
-                "null": [str],
-                "boolean": [bool],
-                "array": [list],
-                None: [str],
-            }[type_]
-        ]
-
     @staticmethod
     def get_converted_type_from_list(cls, prop_name, value):
         types = cls.__pg_properties__.get(prop_name, (str,))
@@ -239,9 +238,17 @@ class DelimitedConverter(object):
                 # https://github.com/uc-cdis/gdcdatamodel/blob/190f998/gdcdatamodel/models/__init__.py#L120
                 # Setting this ^ to `list[<item type>]` may work but it breaks other code. So parse
                 # the item type from the dictionary schema instead.
-                list_item_type = dictionary.schema.get(cls.label, {}).get("properties", {}).get(prop_name, {}).get("items", {}).get("type")
-                list_item_type = DelimitedConverter.types_from_str([list_item_type])[0]
-                current_app.logger.debug(f"get_converted_type_from_list: {cls.label}.{prop_name} items type is {list_item_type}")
+                list_item_type = (
+                    dictionary.schema.get(cls.label, {})
+                    .get("properties", {})
+                    .get(prop_name, {})
+                    .get("items", {})
+                    .get("type")
+                )
+                list_item_type = str_to_python_type(list_item_type)
+                current_app.logger.debug(
+                    f"get_converted_type_from_list: {cls.label}.{prop_name} items type is {list_item_type}"
+                )
                 return parse_list_from_string(value, list_item_type=list_item_type)
             elif value_type == float:
                 if float(value).is_integer():
