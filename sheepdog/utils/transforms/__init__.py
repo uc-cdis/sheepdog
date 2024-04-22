@@ -55,7 +55,7 @@ def parse_list_from_string(value, list_item_type=None):
     return items
 
 
-def str_to_python_type(str_type):
+def jsonschema_to_python_type(str_type):
     return {
         "string": str,
         "integer": int,
@@ -233,11 +233,11 @@ class DelimitedConverter(object):
             if value_type == bool:
                 return parse_bool_from_string(value)
             elif value_type == list:
+                # Parse the item type from the dictionary schema.
                 # NOTE: `cls.__pg_properties__.get(prop_name)` would be easier but the value is
                 # only `list` and does not include the item type.
                 # https://github.com/uc-cdis/gdcdatamodel/blob/190f998/gdcdatamodel/models/__init__.py#L120
-                # Setting this ^ to `list[<item type>]` may work but it breaks other code. So parse
-                # the item type from the dictionary schema instead.
+                # Setting this ^ to `list[<item type>]` may work but it breaks other code.
                 list_item_type = (
                     dictionary.schema.get(cls.label, {})
                     .get("properties", {})
@@ -245,7 +245,7 @@ class DelimitedConverter(object):
                     .get("items", {})
                     .get("type")
                 )
-                list_item_type = str_to_python_type(list_item_type)
+                list_item_type = jsonschema_to_python_type(list_item_type)
                 current_app.logger.debug(
                     f"get_converted_type_from_list: {cls.label}.{prop_name} items type is {list_item_type}"
                 )

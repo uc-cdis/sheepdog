@@ -728,18 +728,9 @@ def test_submit_tsv_array_type(
         ), "`post_example_entities_together` should have submitted an experiment record"
         experiment_submitter_id = experiment.props["submitter_id"]
 
-    # read the TSV data
-    data = None
-    with open(os.path.join(DATA_DIR, "test_submit_tsv_array_type.tsv"), "r") as f:
-        data = f.read()
-    assert data, "Expected to read TSV data"
-    data = data.replace("PROPERTY_NAME_PLACEHOLDER", property_name)
-    data = data.replace("PROPERTY_VALUE_PLACEHOLDER", tsv_value)
-    data = data.replace("CASE_SUB_ID_PLACEHOLDER", case_submitter_id)
-    data = data.replace("EXPERIMENT_SUB_ID_PLACEHOLDER", experiment_submitter_id)
+    # generate and submit the TSV data
+    data = f"{property_name}	submitter_id	experiments.submitter_id	type\n{tsv_value}	{case_submitter_id}	{experiment_submitter_id}	case"
     print(f"Submitting TSV data:\n{data}")
-
-    # submit the TSV data
     r = client.put(
         BLGSP_PATH, headers={**submitter, "Content-Type": "text/tsv"}, data=data
     )
