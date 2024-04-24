@@ -58,7 +58,8 @@ def get_programs():
     if flask.current_app.config.get("AUTH_SUBMISSION_LIST", True) is True:
         auth.validate_request(
             scope={"openid"},
-            audience=flask.current_app.config.get("USER_API"),
+            audience=flask.current_app.config.get("OIDC_ISSUER")
+            or flask.current_app.config.get("USER_API"),
             purpose=None,
         )
     with flask.current_app.db.session_scope():
