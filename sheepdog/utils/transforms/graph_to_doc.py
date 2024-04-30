@@ -943,7 +943,7 @@ def dict_props_to_list(obj, props, titles_linked, file_format):
 
     l_prop_values = [str(obj.get(k)) for k in props]
     link_fields = []
-    for (link_name, link_prop) in link_props_split:
+    for link_name, link_prop in link_props_split:
         s = sub_splitter.join(
             list(
                 filter(

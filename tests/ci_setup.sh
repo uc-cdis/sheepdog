@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 poetry run python bin/setup_test_database.py
 mkdir -p tests/integration/resources/keys
 cd tests/integration/resources/keys
