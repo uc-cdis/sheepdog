@@ -31,7 +31,7 @@ RUN python -m venv /venv
 
 COPY poetry.lock pyproject.toml /${appname}/
 
-RUN pip install poetry && \
+RUN pip install poetry &&  pip install --upgrade pip setuptools wheel && \
     poetry install -vv --only main --no-interaction
 
 COPY --chown=gen3:gen3 . /$appname
