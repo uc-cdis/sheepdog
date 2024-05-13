@@ -150,14 +150,14 @@
 <span id="sheepdog-models"></span><h1><code class="docutils literal"><span class="pre">sheepdog.models</span></code><a class="headerlink" href="#module-sheepdog.models" title="Permalink to this headline">¶</a></h1>
 <p>This module generalizes the data model used by the sheepdog blueprint, and
 must be initialized using another <code class="docutils literal"><span class="pre">models</span></code> module to set the attributes of
-this module. For example, using <code class="docutils literal"><span class="pre">gdcdatamodel.models</span></code> as the models:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">sheepdog</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">gdcdatamodel</span><span class="o">.</span><span class="n">models</span><span class="p">)</span>
+this module. For example, using <code class="docutils literal"><span class="pre">gen3datamodel.models</span></code> as the models:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">sheepdog</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">gen3datamodel</span><span class="o">.</span><span class="n">models</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Then this module can be imported elsewhere in <code class="docutils literal"><span class="pre">sheepdog</span></code>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sheepdog</span> <span class="kn">import</span> <span class="n">models</span>
 
-<span class="c1"># This is effectively an alias of ``gdcdatamodel.models.Project``.</span>
+<span class="c1"># This is effectively an alias of ``gen3datamodel.models.Project``.</span>
 <span class="n">models</span><span class="o">.</span><span class="n">Project</span>
 </pre></div>
 </div>

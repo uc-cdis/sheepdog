@@ -85,7 +85,7 @@ def set_user(*args, **kwargs):
 
 def run_with_fake_auth():
     def get_project_ids(role="_member_", project_ids=None):
-        from gdcdatamodel import models as md
+        from gen3datamodel import models as md
 
         if project_ids is None:
             project_ids = []

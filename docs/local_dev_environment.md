@@ -195,7 +195,7 @@ For convenience, the minimal usage looks like the following:
 import datamodelutils
 from dictionaryutils import dictionary
 from gdcdictionary import gdcdictionary
-from gdcdatamodel import models, validators
+from gen3datamodel import models, validators
 from flask import Flask
 import sheepdog
 
