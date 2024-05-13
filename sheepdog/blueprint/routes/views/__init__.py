@@ -237,9 +237,9 @@ def get_templates():
         )
     )
     suffix = "json" if file_format == "json" else "tar.gz"
-    response.headers[
-        "Content-Disposition"
-    ] = "attachment; filename=submission_templates.{}".format(suffix)
+    response.headers["Content-Disposition"] = (
+        "attachment; filename=submission_templates.{}".format(suffix)
+    )
     return response
 
 

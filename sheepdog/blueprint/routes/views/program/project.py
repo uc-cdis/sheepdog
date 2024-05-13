@@ -823,9 +823,9 @@ def get_project_templates(program, project):
     )
     response = flask.make_response(template)
     suffix = "json" if file_format == "json" else "tar.gz"
-    response.headers[
-        "Content-Disposition"
-    ] = "attachment; filename=submission_templates.{}".format(suffix)
+    response.headers["Content-Disposition"] = (
+        "attachment; filename=submission_templates.{}".format(suffix)
+    )
     return response
 
 
@@ -1144,8 +1144,8 @@ def delete_project(program, project):
         transaction_args = dict(
             program=program, project=project, flask_config=flask.current_app.config
         )
-        with (
-            transactions.deletion.transaction.DeletionTransaction(**transaction_args)
+        with transactions.deletion.transaction.DeletionTransaction(
+            **transaction_args
         ) as trans:
             session.delete(node)
             trans.claim_transaction_log()
