@@ -885,8 +885,8 @@ zipp = "==0.6.0"
 [package.source]
 type = "git"
 url = "https://git@github.com/uc-cdis/gen3datamodel.git"
-reference = "fix/fips-hashing"
-resolved_reference = "0a25907d6e202a737191a8fdc72600a02ebb045b"
+reference = "chore/update-tests"
+resolved_reference = "b3a9c648f71636e8188329a5579ca9b72c11f744"
 
 [[package]]
 name = "gen3dictionary"
@@ -2486,4 +2486,4 @@ testing = ["contextlib2", "pathlib2", "unittest2"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.10"
-content-hash = "96eeab5aae621b3d0faafd99c3a0415c0f69be8d923c04ea56b9c80c7f96e6a3"
+content-hash = "6dccb385d2a50c88d698397e71051b84bf483bce0a83c6bd2bf0289aca8171c7"
