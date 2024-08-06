@@ -5,7 +5,7 @@ Script to set up report database
 
 import argparse
 from sqlalchemy import create_engine
-from gdcdatamodel.models.submission import Base
+from gen3datamodel.models.submission import Base
 
 
 def setup(host, port, user, password, database, use_ssl=False):
