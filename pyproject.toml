@@ -36,6 +36,7 @@ cdiserrors = ">=1.0.0"
 cdislogging = ">=1.0.0"
 gen3dictionary = {git = "https://github.com/uc-cdis/datadictionary.git", branch = "chore/add-unit-tests"}
 gen3datamodel = {git = "https://github.com/uc-cdis/gen3datamodel.git", branch = "chore/update-jsonschema"}
+gunicorn = ">=21.2.0"
 indexclient = ">=2.1.1"
 urllib3 = "<2.0.0"
 
