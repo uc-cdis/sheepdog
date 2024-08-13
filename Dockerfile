@@ -54,7 +54,7 @@ COPY --from=builder /venv /venv
 COPY --from=builder /$appname /$appname
 
 # install nginx
-RUN yum install nginx -y
+RUN yum install nginx postgresql-devel -y
 
 # allow nginx to bind to port 80
 RUN setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx

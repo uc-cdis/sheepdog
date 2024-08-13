@@ -36,16 +36,16 @@ config["PSQLGRAPH"] = {
     "host": conf_data.get("db_host", os.environ.get("PGHOST", "localhost")),
     "user": conf_data.get("db_username", os.environ.get("PGUSER", "sheepdog")),
     "password": conf_data.get("db_password", os.environ.get("PGPASSWORD", "sheepdog")),
-    "database": conf_data.get("db_database", os.environ.get("PGDATABASE", "sheepdog")),
+    "database": conf_data.get("db_database", os.environ.get("PGDB", "sheepdog")),
 }
 
 config["FLASK_SECRET_KEY"] = conf_data.get("gdcapi_secret_key", "{{gdcapi_secret_key}}")
 
 fence_username = conf_data.get(
-    "fence_username", os.environ.get("FENCE_DB_USERNAME", "fence")
+    "fence_username", os.environ.get("FENCE_DB_USER", "fence")
 )
 fence_password = conf_data.get(
-    "fence_password", os.environ.get("FENCE_DB_PASSWORD", "fence")
+    "fence_password", os.environ.get("FENCE_DB_PASS", "fence")
 )
 fence_host = conf_data.get("fence_host", os.environ.get("FENCE_DB_HOST", "localhost"))
 fence_database = conf_data.get(
