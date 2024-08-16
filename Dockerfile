@@ -24,7 +24,7 @@ ENV appname=sheepdog
 RUN pip install --upgrade pip poetry
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libffi-dev musl-dev gcc libxml2-dev libxslt-dev \
-    curl bash git vim
+    curl bash git vim postgresql-client
 
 RUN mkdir -p /var/www/$appname \
     && mkdir -p /var/www/.cache/Python-Eggs/ \
