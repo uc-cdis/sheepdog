@@ -3,6 +3,6 @@
 # nginx
 gunicorn -c "/sheepdog/deployment/wsgi/gunicorn.conf.py" --daemon
 echo "gunicorn submitted"
-# sleep 60
+sleep 30
 echo "starting nginx"
-nginx
+nginx -g 'daemon off;'
