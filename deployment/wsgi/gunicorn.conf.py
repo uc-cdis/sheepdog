@@ -8,3 +8,4 @@ group = "gen3"
 timeout = 300
 keepalive = 2
 keepalive_timeout = 5
+preload_app = False
