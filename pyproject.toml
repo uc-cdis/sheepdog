@@ -15,7 +15,7 @@ authlib = "*" # let authutils decide which version we're using
 authutils = ">=6.0.0"
 boto = ">=2.49.0"
 botocore = "*"
-datamodelutils = {git = "https://github.com/uc-cdis/datamodelutils", branch = "chore/update-gen3datamodel"}
+datamodelutils = {git = "https://github.com/uc-cdis/datamodelutils", branch = "test/update-pgadmin"}
 dictionaryutils = {git = "https://github.com/uc-cdis/dictionaryutils", branch = "chore/update-jsonschema"}
 envelopes = ">=0.4"
 Flask = ">=2.2.5"
