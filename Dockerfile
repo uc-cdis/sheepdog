@@ -83,5 +83,5 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /var/www/${appname}
 
-CMD ["/sheepdog/dockerrun.bash"]
+CMD ["/bin/bash", "-c", "/sheepdog/dockerrun.bash"]
 # CMD ["gunicorn", "-c", "/sheepdog/deployment/wsgi/gunicorn.conf.py"]
