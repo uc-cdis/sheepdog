@@ -666,7 +666,7 @@ sqlalchemy = "^1.3.0, <1.4"
 type = "git"
 url = "https://github.com/uc-cdis/datamodelutils"
 reference = "test/update-pgadmin"
-resolved_reference = "99017d0814e0d20c9dc74499ad6ec00d8218b24a"
+resolved_reference = "d541bbaec87136d016aca4be6ec9f192d10e2e64"
 
 [[package]]
 name = "dictionaryutils"
