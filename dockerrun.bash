@@ -5,6 +5,6 @@
 echo "starting gunicorn"
 gunicorn -c "/sheepdog/deployment/wsgi/gunicorn.conf.py" &
 echo "gunicorn submitted"
-sleep 5
+sleep 30
 echo "starting nginx"
 nginx -g 'daemon off;'
