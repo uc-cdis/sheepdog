@@ -8,3 +8,10 @@ group = "gen3"
 timeout = 300
 keepalive = 2
 keepalive_timeout = 5
+
+import random
+import time
+
+
+def pre_fork(server, worker):
+    time.sleep(random.uniform(0, 2))

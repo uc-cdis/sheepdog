@@ -1,4 +1,5 @@
 #!/bin/bash
 
-nginx
-gunicorn -c "/sheepdog/deployment/wsgi/gunicorn.conf.py"
+gunicorn -c "/sheepdog/deployment/wsgi/gunicorn.conf.py" &
+sleep 30
+nginx -g 'daemon off;'
