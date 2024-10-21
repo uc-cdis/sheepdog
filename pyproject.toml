@@ -15,8 +15,8 @@ authlib = "*" # let authutils decide which version we're using
 authutils = ">=6.0.0"
 boto = ">=2.49.0"
 botocore = "*"
-datamodelutils = {git = "https://github.com/uc-cdis/datamodelutils", branch = "chore/update-gen3datamodel"}
-dictionaryutils = {git = "https://github.com/uc-cdis/dictionaryutils", branch = "chore/update-jsonschema"}
+datamodelutils = ">=1.1.0"
+dictionaryutils = ">=3.4.11"
 envelopes = ">=0.4"
 Flask = ">=2.2.5"
 Flask-SQLAlchemy-Session = ">=1.1"
@@ -35,7 +35,7 @@ psqlgraph = ">=3.0.1"
 cdiserrors = ">=1.0.0"
 cdislogging = ">=1.0.0"
 gen3dictionary = {git = "https://github.com/uc-cdis/datadictionary.git", branch = "chore/add-unit-tests"}
-gen3datamodel = {git = "https://github.com/uc-cdis/gen3datamodel.git", branch = "chore/update-jsonschema"}
+gen3datamodel = ">=3.2.1"
 gunicorn = ">=21.2.0"
 indexclient = ">=2.1.1"
 urllib3 = "<2.0.0"
