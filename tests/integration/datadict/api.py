@@ -10,6 +10,8 @@ import sys
 import os
 import importlib
 
+import cdis_oauth2client
+from cdis_oauth2client import OAuth2Client, OAuth2Error
 from cdispyutils.log import get_handler
 from flask import Flask, jsonify
 from flask_sqlalchemy_session import flask_scoped_session
@@ -18,6 +20,7 @@ from indexd.index.drivers.alchemy import SQLAlchemyIndexDriver
 from indexd.alias.drivers.alchemy import SQLAlchemyAliasDriver
 from indexd.auth.drivers.alchemy import SQLAlchemyAuthDriver
 from psqlgraph import PsqlGraphDriver
+from datamodelutils import models, validators, postgres_admin
 
 import sheepdog
 from sheepdog.errors import APIError, setup_default_handlers, UnhealthyCheck
@@ -27,6 +30,16 @@ from sheepdog.globals import dictionary_version, dictionary_commit
 # recursion depth is increased for complex graph traversals
 sys.setrecursionlimit(10000)
 DEFAULT_ASYNC_WORKERS = 8
+
+
+def app_register_blueprints(app):
+    # TODO: (jsm) deprecate the index endpoints on the root path,
+    # these are currently duplicated under /index (the ultimate
+    # path) for migration
+    v0 = "/v0"
+    app.url_map.strict_slashes = False
+
+    app.register_blueprint(cdis_oauth2client.blueprint, url_prefix=v0 + "/oauth2")
 
 
 def db_init(app):
@@ -39,6 +52,8 @@ def db_init(app):
         set_flush_timestamps=True,
     )
 
+    app.oauth2 = OAuth2Client(**app.config["OAUTH2"])
+
     app.logger.info("Initializing Indexd driver")
     app.index_client = IndexClient(
         app.config["INDEX_CLIENT"]["host"],
@@ -48,8 +63,6 @@ def db_init(app):
 
 
 def app_init(app):
-    # TODO can we just use the real app init?
-
     # Register duplicates only at runtime
     app.logger.info("Initializing app")
 
@@ -58,20 +71,19 @@ def app_init(app):
         app.config.get("REQUIRE_FILE_INDEX_EXISTS", False)
     )
 
-    app.url_map.strict_slashes = False
+    app_register_blueprints(app)
     db_init(app)
+    # exclude es init as it's not used yet
+    # es_init(app)
     try:
         app.secret_key = app.config["FLASK_SECRET_KEY"]
     except KeyError:
         app.logger.error("Secret key not set in config! Authentication will not work")
+    sheepdog_blueprint = sheepdog.create_blueprint("submission")
 
-    v0 = "/v0"
     try:
-        sheepdog_blueprint = sheepdog.create_blueprint("submission")
-        app.register_blueprint(sheepdog_blueprint, url_prefix=v0 + "/submission")
-        sheepdog_blueprint.name += "_legacy"
-        app.register_blueprint(sheepdog_blueprint, url_prefix="/submission")
-    except (ValueError, AssertionError):
+        app.register_blueprint(sheepdog_blueprint, url_prefix="/v0/submission")
+    except AssertionError:
         app.logger.info("Blueprint is already registered!!!")
 
     app.node_authz_entity_name = os.environ.get("AUTHZ_ENTITY_NAME", None)
@@ -121,7 +133,8 @@ def _log_and_jsonify_exception(e):
     """
     Log an exception and return the jsonified version along with the code.
 
-    This is the error handling mechanism for ``APIErrors``.
+    This is the error handling mechanism for ``APIErrors`` and
+    ``OAuth2Errors``.
     """
     app.logger.exception(e)
     if hasattr(e, "json") and e.json:
@@ -131,10 +144,14 @@ def _log_and_jsonify_exception(e):
 
 app.register_error_handler(APIError, _log_and_jsonify_exception)
 
+app.register_error_handler(APIError, _log_and_jsonify_exception)
+app.register_error_handler(OAuth2Error, _log_and_jsonify_exception)
+
 OLD_SQLITE = sqlite3.sqlite_version_info < (3, 7, 16)
 
 INDEX_HOST = "index.sq3"
 ALIAS_HOST = "alias.sq3"
+
 
 INDEX_TABLES = {
     "index_record": [
