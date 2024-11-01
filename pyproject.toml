@@ -34,7 +34,7 @@ cdispyutils = ">=2.0.1"
 psqlgraph = ">=3.0.1"
 cdiserrors = ">=1.0.0"
 cdislogging = ">=1.0.0"
-gen3dictionary = {git = "https://github.com/uc-cdis/datadictionary.git", branch = "chore/add-unit-tests"}
+gen3dictionary = ">=2.0.3"
 gen3datamodel = ">=3.2.1"
 gunicorn = ">=21.2.0"
 indexclient = ">=2.1.1"
