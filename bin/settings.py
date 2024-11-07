@@ -12,34 +12,29 @@ def load_json(file_name):
 conf_data = load_json("creds.json")
 config = app.config
 
-config["AUTH"] = "https://auth.service.consul:5000/v3/"
-config["AUTH_ADMIN_CREDS"] = None
-config["INTERNAL_AUTH"] = None
-
 # ARBORIST deprecated, replaced by ARBORIST_URL
 # ARBORIST_URL is initialized in app_init() directly
 config["ARBORIST"] = "http://arborist-service/"
 
-# Signpost: deprecated, replaced by index client.
-config["SIGNPOST"] = {
-    "host": os.environ.get("SIGNPOST_HOST", "http://indexd-service"),
-    "version": "v0",
-    "auth": ("gdcapi", conf_data.get("indexd_password", "{{indexd_password}}")),
-}
 config["INDEX_CLIENT"] = {
     "host": os.environ.get("INDEX_CLIENT_HOST") or "http://indexd-service",
     "version": "v0",
-    "auth": ("gdcapi", conf_data.get("indexd_password", "{{indexd_password}}")),
+    # The user should be "sheepdog", but for legacy reasons, we use "gdcapi" instead
+    "auth": (
+        (
+            environ.get("INDEXD_USER", "gdcapi"),
+            environ.get("INDEXD_PASS")
+            or conf_data.get("indexd_password", "{{indexd_password}}"),
+        )
+    ),
 }
-config["FAKE_AUTH"] = False
+
 config["PSQLGRAPH"] = {
     "host": conf_data.get("db_host", os.environ.get("PGHOST", "localhost")),
     "user": conf_data.get("db_username", os.environ.get("PGUSER", "sheepdog")),
     "password": conf_data.get("db_password", os.environ.get("PGPASSWORD", "sheepdog")),
     "database": conf_data.get("db_database", os.environ.get("PGDB", "sheepdog")),
 }
-
-config["FLASK_SECRET_KEY"] = conf_data.get("gdcapi_secret_key", "{{gdcapi_secret_key}}")
 
 fence_username = conf_data.get(
     "fence_username", os.environ.get("FENCE_DB_USER", "fence")
