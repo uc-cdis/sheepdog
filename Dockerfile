@@ -34,6 +34,8 @@ FROM base
 
 COPY --from=builder /$appname /$appname
 
+RUN dnf install -y python3-devel postgresql-devel
+
 # Switch to non-root user 'gen3' for the serving process
 USER gen3
 
