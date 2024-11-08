@@ -18,6 +18,8 @@ USER gen3
 
 COPY poetry.lock pyproject.toml /${appname}/
 
+RUN dnf install -y python3-devel postgresql-devel
+
 RUN poetry install -vv --without dev --no-interaction
 
 COPY --chown=gen3:gen3 . /$appname
@@ -33,8 +35,6 @@ RUN git config --global --add safe.directory /${appname} && COMMIT=`git rev-pars
 FROM base
 
 COPY --from=builder /$appname /$appname
-
-RUN dnf install -y python3-devel postgresql-devel
 
 # Switch to non-root user 'gen3' for the serving process
 USER gen3
