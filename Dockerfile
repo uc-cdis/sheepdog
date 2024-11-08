@@ -14,11 +14,11 @@ RUN chown -R gen3:gen3 /$appname
 # Builder stage
 FROM base AS builder
 
+RUN dnf install -y python3-devel postgresql-devel
+
 USER gen3
 
 COPY poetry.lock pyproject.toml /${appname}/
-
-RUN dnf install -y python3-devel postgresql-devel
 
 RUN poetry install -vv --without dev --no-interaction
 
