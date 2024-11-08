@@ -152,10 +152,6 @@ def app_init(app):
     db_init(app)
     # exclude es init as it's not used yet
     # es_init(app)
-    try:
-        app.secret_key = app.config["FLASK_SECRET_KEY"]
-    except KeyError:
-        app.logger.error("Secret key not set in config! Authentication will not work")
 
     # ARBORIST deprecated, replaced by ARBORIST_URL
     arborist_url = os.environ.get("ARBORIST_URL", os.environ.get("ARBORIST"))

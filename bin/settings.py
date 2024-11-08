@@ -1,6 +1,6 @@
 from sheepdog.api import app, app_init
 import os
-from . import confighelper
+import bin.confighelper as confighelper
 
 APP_NAME = "sheepdog"
 
