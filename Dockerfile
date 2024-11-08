@@ -14,7 +14,7 @@ RUN chown -R gen3:gen3 /$appname
 # Builder stage
 FROM base AS builder
 
-RUN dnf install -y postgresql-devel gcc
+RUN dnf install -y python3-devel gcc
 
 USER gen3
 
