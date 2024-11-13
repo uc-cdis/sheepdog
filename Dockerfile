@@ -33,6 +33,8 @@ RUN git config --global --add safe.directory /${appname} && COMMIT=`git rev-pars
 # Final stage
 FROM base
 
+RUN  yum install -y postgresql-libs
+
 COPY --from=builder /${appname} /${appname}
 
 # Switch to non-root user 'gen3' for the serving process
