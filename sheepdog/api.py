@@ -47,8 +47,8 @@ def app_register_blueprints(app):
         datadictionary = gdcdictionary.gdcdictionary
 
     dictionary.init(datadictionary)
-    from gdcdatamodel import models as md
-    from gdcdatamodel import validators as vd
+    from gen3datamodel import models as md
+    from gen3datamodel import validators as vd
 
     models.init(md)
     validators.init(vd)
@@ -152,10 +152,6 @@ def app_init(app):
     db_init(app)
     # exclude es init as it's not used yet
     # es_init(app)
-    try:
-        app.secret_key = app.config["FLASK_SECRET_KEY"]
-    except KeyError:
-        app.logger.error("Secret key not set in config! Authentication will not work")
 
     # ARBORIST deprecated, replaced by ARBORIST_URL
     arborist_url = os.environ.get("ARBORIST_URL", os.environ.get("ARBORIST"))
