@@ -47,8 +47,8 @@ def app_register_blueprints(app):
         datadictionary = gdcdictionary.gdcdictionary
 
     dictionary.init(datadictionary)
-    from gdcdatamodel import models as md
-    from gdcdatamodel import validators as vd
+    from gen3datamodel import models as md
+    from gen3datamodel import validators as vd
 
     models.init(md)
     validators.init(vd)

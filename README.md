@@ -22,7 +22,7 @@ import sheepdog
 import datamodelutils
 from dictionaryutils import dictionary
 from gdcdictionary import gdcdictionary
-from gdcdatamodel import models, validators
+from gen3datamodel import models, validators
 
 dictionary.init(gdcdictionary)
 datamodelutils.validators.init(validators)
