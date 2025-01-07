@@ -37,6 +37,7 @@ config["PSQLGRAPH"] = {
     "database": conf_data.get("db_database", os.environ.get("PGDB", "sheepdog")),
 }
 
+config["FLASK_SECRET_KEY"] = conf_data.get("gdcapi_secret_key", "{{gdcapi_secret_key}}")
 fence_username = conf_data.get(
     "fence_username", os.environ.get("FENCE_DB_USER", "fence")
 )
