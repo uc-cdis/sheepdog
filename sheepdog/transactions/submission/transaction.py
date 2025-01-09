@@ -19,7 +19,6 @@ from sheepdog.transactions.transaction_base import TransactionBase
 
 
 class SubmissionTransaction(TransactionBase):
-
     """Models a transaction to mark all nodes in a project submitted."""
 
     REQUIRED_PROJECT_STATES = ["review"]

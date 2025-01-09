@@ -2,6 +2,7 @@
 Test upload entities (mostly data file handling and communication with
 index service).
 """
+
 import json
 import copy
 
@@ -81,19 +82,23 @@ def test_data_file_not_indexed(
     get_index_hash,
     client,
     pg_driver,
-    submitter,
+    submitter_and_client_submitter,
     cgci_blgsp,
     require_index_exists_off,
 ):
     """
     Test node and data file creation when neither exist and no ID is provided.
     """
-    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
+    submit_first_experiment(
+        client, pg_driver, submitter_and_client_submitter, cgci_blgsp
+    )
 
     get_index_uuid.return_value = None
     get_index_hash.return_value = None
 
-    resp = submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
+    resp = submit_metadata_file(
+        client, pg_driver, submitter_and_client_submitter, cgci_blgsp
+    )
 
     # index creation
     assert create_index.call_count == 1
@@ -116,7 +121,7 @@ def test_data_file_not_indexed(
     path = "/v0/submission/CGCI/BLGSP/export/?format=json&ids={nid}".format(
         nid=entity["id"]
     )
-    r = client.get(path, headers=submitter)
+    r = client.get(path, headers=submitter_and_client_submitter)
 
     data = r.json
     assert data and len(data) == 1
@@ -376,14 +381,16 @@ def test_data_file_update_multiple_urls(
     get_index_hash,
     client,
     pg_driver,
-    submitter,
+    submitter_and_client_submitter,
     cgci_blgsp,
 ):
     """
     Test submitting the same data again but updating the URL field (should
     get added to the indexed file in index service).
     """
-    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
+    submit_first_experiment(
+        client, pg_driver, submitter_and_client_submitter, cgci_blgsp
+    )
 
     document = MagicMock()
     document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
@@ -399,7 +406,7 @@ def test_data_file_update_multiple_urls(
 
     get_index_uuid.side_effect = get_index_by_uuid
 
-    submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
+    submit_metadata_file(client, pg_driver, submitter_and_client_submitter, cgci_blgsp)
 
     # now submit again but change url
     new_url = "some/new/url/location/to/add"
@@ -409,7 +416,7 @@ def test_data_file_update_multiple_urls(
     # comma separated list of urls INCLUDING the url that's already there
     updated_file["urls"] = DEFAULT_URL + "," + new_url + "," + another_new_url
     resp = submit_metadata_file(
-        client, pg_driver, submitter, cgci_blgsp, data=updated_file
+        client, pg_driver, submitter_and_client_submitter, cgci_blgsp, data=updated_file
     )
 
     # no index or alias creation
@@ -677,7 +684,7 @@ def test_data_file_update_url_invalid_id(
     get_index_hash,
     client,
     pg_driver,
-    submitter,
+    submitter_and_client_submitter,
     cgci_blgsp,
 ):
     """
@@ -688,7 +695,9 @@ def test_data_file_update_url_invalid_id(
     FIXME: the 1:1 between node id and index/file id is temporary so this
            test may need to be modified in the future
     """
-    submit_first_experiment(client, pg_driver, submitter, cgci_blgsp)
+    submit_first_experiment(
+        client, pg_driver, submitter_and_client_submitter, cgci_blgsp
+    )
 
     document = MagicMock()
     document.did = "14fd1746-61bb-401a-96d2-342cfaf70000"
@@ -698,7 +707,7 @@ def test_data_file_update_url_invalid_id(
     # the uuid provided doesn't have a matching indexed file
     get_index_uuid.return_value = None
 
-    submit_metadata_file(client, pg_driver, submitter, cgci_blgsp)
+    submit_metadata_file(client, pg_driver, submitter_and_client_submitter, cgci_blgsp)
 
     # now submit again but change url
     new_url = "some/new/url/location/to/add"
@@ -706,7 +715,7 @@ def test_data_file_update_url_invalid_id(
     updated_file["urls"] = new_url
     updated_file["id"] = DEFAULT_UUID
     resp = submit_metadata_file(
-        client, pg_driver, submitter, cgci_blgsp, data=updated_file
+        client, pg_driver, submitter_and_client_submitter, cgci_blgsp, data=updated_file
     )
 
     # no index or alias creation

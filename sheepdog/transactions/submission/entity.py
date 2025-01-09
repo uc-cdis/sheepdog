@@ -13,7 +13,6 @@ from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 
 
 class SubmissionEntity(EntityBase):
-
     """Models an entity to be marked submitted."""
 
     def __init__(self, transaction, node):

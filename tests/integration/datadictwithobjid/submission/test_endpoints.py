@@ -3,6 +3,7 @@
 # pylint: disable=superfluous-parens
 # pylint: disable=no-member
 import contextlib
+import csv
 import json
 import os
 import uuid
@@ -54,9 +55,9 @@ def mock_request(f):
     return wrapper
 
 
-def test_program_creation_endpoint(client, pg_driver, submitter):
+def test_program_creation_endpoint(client, pg_driver, submitter_and_client_submitter):
     # Does not test authz.
-    resp = put_cgci(client, auth=submitter)
+    resp = put_cgci(client, auth=submitter_and_client_submitter)
     assert resp.status_code == 200, resp.data
     print(resp.data)
     resp = client.get("/v0/submission/")
@@ -84,9 +85,9 @@ def test_program_creation_endpoint_for_program_not_supported(
     assert resp.status_code == 404
 
 
-def test_project_creation_endpoint(client, pg_driver, submitter):
+def test_project_creation_endpoint(client, pg_driver, submitter_and_client_submitter):
     # Does not test authz.
-    resp = put_cgci_blgsp(client, auth=submitter)
+    resp = put_cgci_blgsp(client, auth=submitter_and_client_submitter)
     assert resp.status_code == 200
     resp = client.get("/v0/submission/CGCI/")
     with pg_driver.session_scope():
@@ -146,8 +147,10 @@ def test_project_creation_invalid_due_to_registed_project_name(
     assert resp.status_code == 400
 
 
-def test_put_entity_creation_valid(client, pg_driver, cgci_blgsp, submitter):
-    headers = submitter
+def test_put_entity_creation_valid(
+    client, pg_driver, cgci_blgsp, submitter_and_client_submitter
+):
+    headers = submitter_and_client_submitter
     data = json.dumps(
         {
             "type": "experiment",
@@ -159,7 +162,20 @@ def test_put_entity_creation_valid(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
 
-def test_unauthenticated_post(client, pg_driver, cgci_blgsp, submitter):
+def test_unauthenticated_post(client, pg_driver, cgci_blgsp):
+    headers = {}
+    data = json.dumps(
+        {
+            "type": "case",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+        }
+    )
+    resp = client.post(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 401
+
+
+def test_bad_token_post(client, pg_driver, cgci_blgsp):
     # garbage token
     headers = {"Authorization": "test"}
     data = json.dumps(
@@ -174,9 +190,13 @@ def test_unauthenticated_post(client, pg_driver, cgci_blgsp, submitter):
 
 
 def test_unauthorized_post(
-    client, pg_driver, cgci_blgsp, submitter, mock_arborist_requests
+    client,
+    pg_driver,
+    cgci_blgsp,
+    submitter_and_client_submitter,
+    mock_arborist_requests,
 ):
-    headers = submitter
+    headers = submitter_and_client_submitter
     mock_arborist_requests(authorized=False)
     resp = client.post(
         BLGSP_PATH,
@@ -303,8 +323,10 @@ def do_test_post_example_entities_together(client, submitter):
     assert condition_to_check, resp.data
 
 
-def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
-    do_test_post_example_entities_together(client, submitter)
+def test_post_example_entities_together(
+    client, pg_driver, cgci_blgsp, submitter_and_client_submitter
+):
+    do_test_post_example_entities_together(client, submitter_and_client_submitter)
 
 
 def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
@@ -476,10 +498,10 @@ def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, submit
     assert resp.status_code == 400, resp.data
 
 
-def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
+def test_delete_entity(client, pg_driver, cgci_blgsp, submitter_and_client_submitter):
     resp = client.put(
         BLGSP_PATH,
-        headers=submitter,
+        headers=submitter_and_client_submitter,
         data=json.dumps(
             {
                 "type": "experiment",
@@ -491,7 +513,7 @@ def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
     did = resp.json["entities"][0]["id"]
     path = BLGSP_PATH + "entities/" + did
-    resp = client.delete(path, headers=submitter)
+    resp = client.delete(path, headers=submitter_and_client_submitter)
     assert resp.status_code == 200, resp.data
 
 
@@ -535,10 +557,10 @@ def test_validator_error_types(client, pg_driver, cgci_blgsp, submitter):
     assert errors["longest_dimension"] == "INVALID_VALUE"
 
 
-def test_invalid_json(client, pg_driver, cgci_blgsp, submitter):
+def test_invalid_json(client, pg_driver, cgci_blgsp, submitter_and_client_submitter):
     resp = client.put(
         BLGSP_PATH,
-        headers=submitter,
+        headers=submitter_and_client_submitter,
         data="""{
     "key1": "valid value",
     "key2": not a string,
@@ -650,20 +672,32 @@ def test_export_entity_by_id_json(client, pg_driver, cgci_blgsp, submitter):
     assert data[0]["id"] == case_id
 
 
-def get_export_data(client, submitter, node_type, format_type, without_id):
+def get_export_data(
+    client, submitter_and_client_submitter, node_type, format_type, without_id
+):
     path = "/v0/submission/CGCI/BLGSP/export/?node_label={}&format={}".format(
         node_type, format_type
     )
     if without_id:
         path += "&without_id=True"
-    r = client.get(path, headers=submitter)
+    r = client.get(path, headers=submitter_and_client_submitter)
     return r
 
 
 def test_export_all_node_types(
-    client, pg_driver, cgci_blgsp, require_index_exists_off, submitter
+    client,
+    pg_driver,
+    cgci_blgsp,
+    require_index_exists_off,
+    submitter_and_client_submitter,
 ):
-    do_test_export(client, pg_driver, submitter, "experimental_metadata", "tsv")
+    do_test_export(
+        client,
+        pg_driver,
+        submitter_and_client_submitter,
+        "experimental_metadata",
+        "tsv",
+    )
 
 
 def test_export_node_with_array_json(
@@ -680,6 +714,71 @@ def test_export_node_with_array_json(
     js_data = json.loads(r.data)
     assert isinstance(js_data["data"][0]["consent_codes"], list)
     assert len(js_data["data"][0]["consent_codes"]) == len(consent_codes)
+
+
+@pytest.mark.parametrize(
+    "property_name,tsv_value,expected_value",
+    [
+        ("consent_codes", "1.1,70", ["1.1", "70"]),
+        ("consent_codes_ints", "1,70", [1, 70]),
+        ("consent_codes_floats", "1.1,70.0", [1.1, 70.0]),
+        ("consent_codes_bools", "true,false", [True, False]),
+    ],
+)
+def test_submit_tsv_array_type(
+    client,
+    pg_driver,
+    cgci_blgsp,
+    require_index_exists_off,
+    submitter,
+    property_name,
+    tsv_value,
+    expected_value,
+):
+    """
+    Ensure arrays of strings with values that look like numbers can be submitted via TSV. Also
+    test arrays of other types.
+    Test arrays of strings, ints and flots using the `case` node's `consent_codes`,
+    `consent_codes_ints`, `consent_codes_floats` and `consent_codes_bools` properties.
+
+    This is a regression test for this error:
+        Validation error while validating entity '{'type': 'case', 'consent_codes': [4], ...'
+        against subschema '{'type': 'string'}': 4 is not of type 'string'
+    """
+    # submit records for parent nodes
+    resp = post_example_entities_together(client, submitter, extended_data_fnames)
+    assert resp.status_code == 201, resp.data
+
+    with pg_driver.session_scope() as s:
+        case = pg_driver.nodes(md.Case).first()
+        assert (
+            case
+        ), "`post_example_entities_together` should have submitted a case record"
+        case_submitter_id = case.props["submitter_id"]
+        experiment = pg_driver.nodes(md.Experiment).first()
+        assert (
+            experiment
+        ), "`post_example_entities_together` should have submitted an experiment record"
+        experiment_submitter_id = experiment.props["submitter_id"]
+
+    # generate and submit the TSV data
+    data = f"{property_name}	submitter_id	experiments.submitter_id	type\n{tsv_value}	{case_submitter_id}	{experiment_submitter_id}	case"
+    print(f"Submitting TSV data:\n{data}")
+    r = client.put(
+        BLGSP_PATH, headers={**submitter, "Content-Type": "text/tsv"}, data=data
+    )
+    assert r.status_code == 200, r.data
+
+    # query the data and check that the values are of the expected type even when they look
+    # like ints/floats
+    path = "/v0/submission/CGCI/BLGSP/export/?node_label=case&format=json"
+    r = client.get(path, headers=submitter)
+    assert r.status_code == 200, r.data
+    assert r.json, "Expected to receive a json body"
+    assert (
+        len(r.json.get("data", [])) == 1
+    ), f"Expected exactly 1 case but got: {r.json}"
+    assert r.json["data"][0][property_name] == expected_value
 
 
 def test_export_all_node_types_json(

@@ -1,6 +1,7 @@
 """
 Tests for admin endpoint functionality.
 """
+
 # pylint: disable=unused-argument, no-member
 
 import json
