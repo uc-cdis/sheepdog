@@ -12,8 +12,7 @@ include = [
 [tool.poetry.dependencies]
 python = ">=3.9,<3.10"
 authlib = "*" # let authutils decide which version we're using
-#authutils = ">=6.0.0"
-authutils = {git = "https://github.com/uc-cdis/authutils", rev = "support-client-creds"}
+authutils = ">=6.2.6"
 boto = ">=2.49.0"
 botocore = "*"
 datamodelutils = ">=1.0.0"
