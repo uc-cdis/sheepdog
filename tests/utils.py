@@ -75,7 +75,6 @@ def generate_signed_access_token(
     iat, exp = issued_and_expiration_times(expires_in)
     # force exp time if provided
     exp = forced_exp_time or exp
-    sub = str(user.id)
     jti = str(uuid.uuid4())
     if not iss:
         try:
@@ -89,20 +88,22 @@ def generate_signed_access_token(
     claims = {
         "pur": "access",
         "aud": [iss],
-        "sub": sub,
         "iss": iss,
         "iat": iat,
         "exp": exp,
         "jti": jti,
-        "context": {
-            "user": {
-                "name": user.username,
-                "google": {"proxy_group": user.google_proxy_group_id},
-            }
-        },
+        "context": {},
         "azp": client_id or "",
         "scope": ["openid", "user"],
     }
+    identity = f"client [{client_id}]"
+    if user:
+        claims["sub"] = str(user.id)
+        claims["context"]["user"] = {
+            "name": user.username,
+            "google": {"proxy_group": user.google_proxy_group_id},
+        }
+        identity = f"user [{claims['sub']}]"
 
     # only add google linkage information if provided
     if linked_google_email:
@@ -110,7 +111,7 @@ def generate_signed_access_token(
             "linked_google_account"
         ] = linked_google_email
 
-    logger.info("issuing JWT access token with id [{}] to [{}]".format(jti, sub))
+    logger.info("issuing JWT access token with id [{}] to {}".format(jti, identity))
     logger.debug("issuing JWT access token\n" + json.dumps(claims, indent=4))
 
     token = jwt.encode(claims, private_key, headers=headers, algorithm="RS256")

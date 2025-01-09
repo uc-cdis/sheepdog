@@ -36,6 +36,7 @@ PATH_TO_SCHEMA_DIR = (
     + "/datadict/schemas"
 )
 
+
 # update these settings if you want to point to another db
 def pg_config(use_ssl=False, isolation_level=None):
     test_host = (

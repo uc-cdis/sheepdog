@@ -1,6 +1,7 @@
 """
 Class Factory for creating new upload entities
 """
+
 import psqlgraph
 
 from sheepdog.transactions.upload.entity import UploadEntity

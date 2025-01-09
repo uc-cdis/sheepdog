@@ -2,6 +2,7 @@
 Test upload entities (mostly data file handling and communication with
 index service).
 """
+
 import csv
 import json
 import copy
