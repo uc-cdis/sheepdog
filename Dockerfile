@@ -31,9 +31,23 @@ RUN git config --global --add safe.directory /${appname} && COMMIT=`git rev-pars
 # Final stage
 FROM base
 
-RUN  yum install -y postgresql-libs
+# Copy poetry artifacts and install the dependencies
+# This will ensure dependencies are cached
+COPY poetry.lock pyproject.toml /$appname/
+RUN poetry config virtualenvs.create false \
+    && poetry install -vv --no-root --without dev --no-interaction \
+    && poetry show -v
 
+# Install PostgreSQL libraries
+RUN yum install -y postgresql-libs
+
+# Copy application files from the builder stage
 COPY --from=builder /${appname} /${appname}
+
+# Install sheepdog
+RUN poetry config virtualenvs.create false \
+    && poetry install -vv --without dev --no-interaction \
+    && poetry show -v
 
 # Switch to non-root user 'gen3' for the serving process
 USER gen3
