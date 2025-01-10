@@ -22,9 +22,6 @@ RUN poetry install -vv --without dev --no-interaction
 
 COPY --chown=gen3:gen3 . /${appname}
 
-# Run poetry again so this app itself gets installed too
-RUN poetry install --without dev --no-interaction
-
 RUN git config --global --add safe.directory /${appname} && COMMIT=`git rev-parse HEAD` && echo "COMMIT=\"${COMMIT}\"" > /${appname}/version_data.py \
     && VERSION=`git describe --always --tags` && echo "VERSION=\"${VERSION}\"" >> /${appname}/version_data.py
 
@@ -38,15 +35,10 @@ RUN poetry config virtualenvs.create false \
     && poetry install -vvv --no-root --without dev --no-interaction
 
 # Install PostgreSQL libraries
-RUN yum install -y postgresql-libs
+RUN dnf install -y postgresql-libs
 
 # Copy application files from the builder stage
 COPY --from=builder /${appname} /${appname}
-
-# Install sheepdog
-RUN poetry config virtualenvs.create false \
-    && poetry install -vv --without dev --no-interaction \
-    && poetry show -v
 
 # Switch to non-root user 'gen3' for the serving process
 USER gen3
