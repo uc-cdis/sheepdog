@@ -35,8 +35,7 @@ FROM base
 # This will ensure dependencies are cached
 COPY poetry.lock pyproject.toml /$appname/
 RUN poetry config virtualenvs.create false \
-    && poetry install -vv --no-root --without dev --no-interaction \
-    && poetry show -v
+    && poetry install -vvv --no-root --without dev --no-interaction
 
 # Install PostgreSQL libraries
 RUN yum install -y postgresql-libs
