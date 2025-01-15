@@ -8,6 +8,9 @@ repository = "https://github.com/uc-cdis/sheepdog"
 include = [
   "NOTICE",
 ]
+packages = [
+    { include = "sheepdog" }
+]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.10"
