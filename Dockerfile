@@ -16,7 +16,7 @@ RUN dnf install -y python3-devel postgresql-devel gcc
 
 USER gen3
 
-COPY poetry.lock pyproject.toml /${appname}/
+COPY --chown=gen3:gen3 . /${appname}
 
 RUN poetry install -vv --without dev --no-interaction
 
