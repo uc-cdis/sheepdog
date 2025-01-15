@@ -37,7 +37,7 @@ RUN dnf install -y postgresql-devel gcc && \
     poetry show -v
 
 # Install PostgreSQL libraries
-RUN dnf install -y python3-devel postgresql-devel gcc libpq-devel
+RUN dnf install -y python3-devel libpq-devel
 
 # Copy application files from the builder stage
 COPY --from=builder /${appname} /${appname}
