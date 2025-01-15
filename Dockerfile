@@ -12,7 +12,7 @@ RUN chown -R gen3:gen3 /${appname}
 # Builder stage
 FROM base AS builder
 
-RUN dnf install -y python3-devel postgresql-devel gcc
+RUN dnf install -y python3-devel postgresql-devel gcc libpq-devel
 
 USER gen3
 
@@ -37,7 +37,7 @@ RUN dnf install -y postgresql-devel gcc && \
     poetry show -v
 
 # Install PostgreSQL libraries
-RUN dnf install -y postgresql-libs
+RUN dnf install -y python3-devel postgresql-devel gcc libpq-devel
 
 # Copy application files from the builder stage
 COPY --from=builder /${appname} /${appname}
