@@ -15,6 +15,10 @@ FROM base AS builder
 RUN dnf install -y python3-devel postgresql-devel gcc libpq-devel && \
 dnf clean all
 
+run yum install postgresql postgresql-devel python-devel
+
+RUN pip install "psycopg2-binary>=2.8.2,<2.9.0"
+
 USER gen3
 
 COPY --chown=gen3:gen3 . /${appname}
