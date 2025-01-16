@@ -12,10 +12,8 @@ RUN chown -R gen3:gen3 /${appname}
 # Builder stage
 FROM base AS builder
 
-RUN dnf install -y python3-devel postgresql-devel gcc libpq-devel && \
-dnf clean all
-
-RUN pip install "psycopg2-binary>=2.8.2,<2.9.0"
+RUN yum install -y python3-devel postgresql-devel gcc libpq-devel && \
+    yum clean all
 
 USER gen3
 
@@ -29,8 +27,11 @@ RUN git config --global --add safe.directory /${appname} && COMMIT=`git rev-pars
 # Final stage
 FROM base
 
+# Install runtime dependencies
+RUN yum install -y python3-devel libpq-devel && \
+    yum clean all
+
 # Copy poetry artifacts and install the dependencies
-# This will ensure dependencies are cached
 COPY poetry.lock pyproject.toml /$appname/
 RUN poetry config virtualenvs.create false && \
     poetry install -vv --no-root --without dev --no-interaction && \
