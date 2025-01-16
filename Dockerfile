@@ -12,7 +12,11 @@ RUN chown -R gen3:gen3 /${appname}
 # Builder stage
 FROM base AS builder
 
-RUN yum install -y python3-devel postgresql-devel gcc libpq-devel && \
+RUN yum install -y \
+    gcc \
+    python3-devel \
+    postgresql-devel \
+    libpq-devel && \
     yum clean all
 
 USER gen3
@@ -28,7 +32,11 @@ RUN git config --global --add safe.directory /${appname} && COMMIT=`git rev-pars
 FROM base
 
 # Install runtime dependencies
-RUN yum install -y python3-devel libpq-devel && \
+RUN yum install -y \
+    gcc \
+    python3-devel \
+    postgresql-devel \
+    libpq-devel && \
     yum clean all
 
 # Copy poetry artifacts and install the dependencies
