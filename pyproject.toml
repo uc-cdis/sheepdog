@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sheepdog"
-version = "5.1.5"
+version = "5.1.6"
 description = "Gen3 Submission Service"
 authors = ["CTDS UChicago <cdis@uchicago.edu>"]
 license = "Apache-2.0"
