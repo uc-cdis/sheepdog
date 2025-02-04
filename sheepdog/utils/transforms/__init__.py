@@ -236,7 +236,7 @@ class DelimitedConverter(object):
                 # Parse the item type from the dictionary schema.
                 # NOTE: `cls.__pg_properties__.get(prop_name)` would be easier but the value is
                 # only `list` and does not include the item type.
-                # https://github.com/uc-cdis/gdcdatamodel/blob/190f998/gdcdatamodel/models/__init__.py#L120
+                # https://github.com/uc-cdis/gen3datamodel/blob/190f998/gdcdatamodel/models/__init__.py#L120
                 # Setting this ^ to `list[<item type>]` may work but it breaks other code.
                 list_item_type = (
                     dictionary.schema.get(cls.label, {})

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sheepdog"
-version = "5.1.6"
+version = "5.1.7"
 description = "Gen3 Submission Service"
 authors = ["CTDS UChicago <cdis@uchicago.edu>"]
 license = "Apache-2.0"
@@ -8,15 +8,18 @@ repository = "https://github.com/uc-cdis/sheepdog"
 include = [
   "NOTICE",
 ]
+packages = [
+    { include = "sheepdog" }
+]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.10"
 authlib = "*" # let authutils decide which version we're using
-authutils = ">=6.2.6"
+authutils = ">=6.0.0"
 boto = ">=2.49.0"
 botocore = "*"
-datamodelutils = ">=1.0.0"
-dictionaryutils = ">=3.4.10"
+datamodelutils = ">=1.1.0"
+dictionaryutils = ">=3.4.11"
 envelopes = ">=0.4"
 Flask = ">=2.2.5"
 Flask-SQLAlchemy-Session = ">=1.1"
@@ -25,7 +28,7 @@ gen3authz = ">=1.0.4"
 graphene = ">=2.0.1"
 jsonschema = ">=3.2"
 lxml = ">=4.6.5"
-psycopg2 = ">=2.8.4"
+psycopg2-binary = ">=2.8.2,<2.9.0"
 PyYAML = ">=5.4.1"
 requests = ">=2.31.0,<3.0.0"
 simplejson = ">=3.8.1"
@@ -35,12 +38,12 @@ psqlgraph = ">=3.0.1"
 cdiserrors = ">=1.0.0"
 cdislogging = ">=1.0.0"
 gen3dictionary = ">=2.0.3"
-gen3datamodel = ">=3.1.0"
+gen3datamodel = ">=3.2.1"
+gunicorn = ">=21.2.0"
 indexclient = ">=2.1.1"
 urllib3 = "<2.0.0"
-werkzeug = ">=3.0.6"
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.dev-dependencies]
 pytest = ">=4.6.5"
 pytest-cov = ">=2.5.1"
 requests_mock = ">=1.4.0"

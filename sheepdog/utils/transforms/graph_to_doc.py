@@ -792,7 +792,7 @@ def export_all(node_label, project_id, file_format, db, without_id):
             ))
     """
     # Examples in coments throughout function will start from ``'case'`` as an
-    # example ``node_label`` (so ``gdcdatamodel.models.Case`` is the example
+    # example ``node_label`` (so ``gen3datamodel.models.Case`` is the example
     # class).
 
     titles_non_linked, titles_linked = get_all_titles(node_label, without_id)
@@ -803,7 +803,7 @@ def export_all(node_label, project_id, file_format, db, without_id):
         #
         #     Case._pg_links == {
         #         'experiments': {
-        #             'dst_type': gdcdatamodel.models.Experiment,
+        #             'dst_type': gen3datamodel.models.Experiment,
         #             'edge_out': '_CaseMemberOfExperiment_out',
         #         }
         #     }
