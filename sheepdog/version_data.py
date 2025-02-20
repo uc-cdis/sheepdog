@@ -1,2 +1,2 @@
-VERSION = ""
-COMMIT = ""
+VERSION = "x.y.z"
+COMMIT = "random"
