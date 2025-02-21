@@ -1,9 +1,24 @@
+import pytest
+
 from sheepdog import dictionary
 from sheepdog.utils.transforms.graph_to_doc import (
     entity_to_template,
     is_property_hidden,
+    get_delimited_template,
 )
 from sheepdog.utils import _get_links
+
+
+@pytest.mark.parametrize("file_format", ["json", "csv", "tsv"])
+def test_get_delimited_template(file_format):
+    try:
+        get_delimited_template(
+            dictionary.schema, file_format=file_format, filename="test"
+        )
+    except Exception as e:
+        pytest.fail(
+            "get_delimited_template unexpectedly threw an exception {0}".format(e)
+        )
 
 
 def test_urls_in_templates_json():
