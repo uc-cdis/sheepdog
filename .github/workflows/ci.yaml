@@ -28,6 +28,8 @@ jobs:
 
   ImageBuildAndPush:
     name: Build Image and Push
+    with:
+      BUILD_PLATFORMS: "linux/amd64"
     uses: uc-cdis/.github/.github/workflows/image_build_push.yaml@master
     secrets:
       ECR_AWS_ACCESS_KEY_ID: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
