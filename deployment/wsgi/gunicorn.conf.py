@@ -10,4 +10,4 @@ user = "gen3"
 group = "gen3"
 timeout = 300
 keepalive = 10
-pidfile = "/var/run/gunicorn.pid"
+pidfile = "/sheepdog/gunicorn.pid"
