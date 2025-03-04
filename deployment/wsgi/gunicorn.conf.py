@@ -11,7 +11,3 @@ group = "gen3"
 timeout = 300
 keepalive = 10
 pidfile = "/var/run/gunicorn.pid"
-accesslog = "/sheepdog/log/gunicorn/access.log"
-errorlog = "/sheepdog/log/gunicorn/error.log"
-loglevel = "debug"
-capture_output = True
