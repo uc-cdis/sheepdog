@@ -37,6 +37,8 @@ RUN yum install -y \
     gcc \
     python3-devel \
     postgresql-devel \
+    nano \
+    vim \
     libpq-devel && \
     yum clean all
 
