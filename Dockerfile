@@ -8,6 +8,7 @@ ENV appname=sheepdog
 WORKDIR /${appname}
 
 RUN chown -R gen3:gen3 /${appname}
+RUN mkdir -p log/gunicorn && chown -R gen3:gen3 log/gunicorn
 
 # Builder stage
 FROM base AS builder
