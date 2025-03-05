@@ -79,6 +79,7 @@ def db_init(app):
     )
     if app.config.get("AUTO_MIGRATE_DATABASE"):
         migrate_database(app)
+    app.logger.info(f"The database pool size is {app.db.engine.pool.size()}")
 
     app.logger.info("Initializing index client")
     app.index_client = IndexClient(
