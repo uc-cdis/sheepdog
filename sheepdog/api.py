@@ -66,6 +66,8 @@ def db_init(app):
     connect_args = {}
     if app.config.get("PSQLGRAPH") and app.config["PSQLGRAPH"].get("sslmode"):
         connect_args["sslmode"] = app.config["PSQLGRAPH"]["sslmode"]
+    else:
+        connect_args["sslmode"] = "verify-full"  # Added to test: DO NOT MERGE
     app.db = PsqlGraphDriver(
         host=app.config["PSQLGRAPH"]["host"],
         user=app.config["PSQLGRAPH"]["user"],
