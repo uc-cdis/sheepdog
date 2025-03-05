@@ -76,10 +76,12 @@ def db_init(app):
         isolation_level=app.config["PSQLGRAPH"].get(
             "isolation_level", "READ_COMMITTED"
         ),
+        pool_size=10,
+        max_overflow=20,
     )
     if app.config.get("AUTO_MIGRATE_DATABASE"):
         migrate_database(app)
-    app.logger.info(f"The database pool size is {app.db.engine.pool.size()}")
+    app.logger.warn(f"The database pool size is {app.db.engine.pool.size()}")
 
     app.logger.info("Initializing index client")
     app.index_client = IndexClient(
