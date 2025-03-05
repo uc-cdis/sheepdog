@@ -76,8 +76,10 @@ def db_init(app):
         isolation_level=app.config["PSQLGRAPH"].get(
             "isolation_level", "READ_COMMITTED"
         ),
-        pool_size=10,
-        max_overflow=20,
+        pool_size=15,
+        max_overflow=10,
+        pool_recycle=300,
+        pool_pre_ping=True,
     )
     if app.config.get("AUTO_MIGRATE_DATABASE"):
         migrate_database(app)
