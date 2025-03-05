@@ -39,6 +39,7 @@ RUN yum install -y \
     postgresql-devel \
     nano \
     vim \
+    procps \
     libpq-devel && \
     yum clean all
 
