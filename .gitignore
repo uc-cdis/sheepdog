@@ -137,3 +137,15 @@ coverage.xml
 # jwt keys
 keys/*.pem
 tests/integration/resources/keys/*.pem
+stress_testing/mock_tsvs/acknowledgement_mock_2.0.1-3-gf0724ed.tsv
+stress_testing/mock_tsvs/core_metadata_collection_mock_2.0.1-3-gf0724ed.tsv
+stress_testing/mock_tsvs/experiment_mock_2.0.1-3-gf0724ed.tsv
+stress_testing/mock_tsvs/experimental_metadata_mock_2.0.1-3-gf0724ed.tsv
+stress_testing/mock_tsvs/keyword_mock_2.0.1-3-gf0724ed.tsv
+stress_testing/mock_tsvs/publication_mock_2.0.1-3-gf0724ed.tsv
+stress_testing/node_tsvs/Demographic_tsvs/CGCI-load_test1_demographic.tsv
+stress_testing/node_tsvs/Demographic_tsvs/master_demographic.tsv
+stress_testing/node_tsvs/case_tsvs/CGCI-load_test1_case.tsv
+stress_testing/node_tsvs/case_tsvs/master_case.tsv
+stress_testing/midrc_api_key.json
+stress_testing/test_img_stud.tsv
