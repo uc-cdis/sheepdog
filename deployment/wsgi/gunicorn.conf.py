@@ -2,7 +2,9 @@ import multiprocessing
 
 wsgi_app = "bin.settings:application"
 bind = "0.0.0.0:8000"
-workers = 1
+workers = 2
+worker_type = "gevent"
+worker_connections = 25
 preload_app = False
 user = "gen3"
 group = "gen3"
