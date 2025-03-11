@@ -128,7 +128,6 @@ class UploadTransaction(TransactionBase):
         """
         return [entity.specify_errors() for entity in self.entities]
 
-    @timeit
     def pre_validate(self):
         """
         Cover validation steps that are not JSON Schema or graph validation.
@@ -183,7 +182,6 @@ class UploadTransaction(TransactionBase):
                         keys=list(props.keys()),
                     )
 
-    @timeit
     def instantiate(self):
         """Create a SQLAlchemy model for all transaction entities."""
         for entity in self.valid_entities:
