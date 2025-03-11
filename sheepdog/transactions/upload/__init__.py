@@ -243,7 +243,9 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
     for wrapper in wrappers:
         if not isinstance(wrapper, dict):
             raise UserError(invalid_format_msg)
-
+    flask.current_app.logger.info(
+        f"Application running BulkUploadTransaction in {is_async=}"
+    )
     is_async = tx_kwargs.pop("is_async", utils.is_flag_set(FLAG_IS_ASYNC))
 
     transaction = BulkUploadTransaction(
@@ -256,7 +258,6 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
         external_proxies=utils.get_external_proxies(),
         **tx_kwargs,
     )
-
     if is_async:
         session = transaction.db_driver.session_scope(can_inherit=False)
         with session, transaction:
