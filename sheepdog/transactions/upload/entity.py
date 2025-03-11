@@ -22,6 +22,7 @@ from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.utils import get_suggestion, timeit
 
 
+@timeit
 def lookup_node(psql_driver, label, node_id=None, secondary_keys=None):
     """Return a query for nodes by id and secondary keys."""
     cls = psqlgraph.Node.get_subclass(label)

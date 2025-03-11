@@ -15,7 +15,7 @@ from cdislogging import get_logger
 import flask
 
 from sheepdog.errors import AuthNError, AuthZError
-
+from sheepdog.utils import timeit
 
 logger = get_logger(__name__)
 
@@ -110,6 +110,7 @@ def require_sheepdog_project_admin(func):
     return authorize_and_call
 
 
+@timeit
 def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
     jwt = get_jwt_from_header()
