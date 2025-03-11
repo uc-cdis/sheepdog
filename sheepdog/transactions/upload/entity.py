@@ -19,7 +19,7 @@ from sheepdog.globals import (
     UNVERIFIED_PROJECT_CODES,
 )
 from sheepdog.transactions.entity_base import EntityBase, EntityErrors
-from sheepdog.utils import get_suggestion
+from sheepdog.utils import get_suggestion, timeit
 
 
 def lookup_node(psql_driver, label, node_id=None, secondary_keys=None):
@@ -109,6 +109,7 @@ class UploadEntity(EntityBase):
         if self.entity_type and self.is_valid:
             self._parse_id()
 
+    @timeit
     def instantiate(self):
         """
         Create the graph node by populating necessary information within this
@@ -455,6 +456,7 @@ class UploadEntity(EntityBase):
 
         return doc
 
+    @timeit
     def _set_node_properties(self):
         """
         Take the key, values from the dictionary (minus system keys) and set
