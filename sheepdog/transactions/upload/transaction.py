@@ -14,6 +14,8 @@ from gdcdictionary import gdcdictionary
 
 from sheepdog import models
 from sheepdog import utils
+from sheepdog.utils import timeit
+
 from sheepdog.errors import UserError, HandledIntegrityError
 from sheepdog.globals import (
     TX_LOG_STATE_ERRORED,
@@ -76,6 +78,7 @@ class UploadTransaction(TransactionBase):
         numbers = [project.dbgap_accession_number, program.dbgap_accession_number]
         return [n for n in numbers if n is not None]
 
+    @timeit
     def parse_doc(self, name, doc_format, doc, data):
         """Add/parse a document to the transaction."""
         self.parse_entities(data)
