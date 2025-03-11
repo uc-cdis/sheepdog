@@ -128,6 +128,7 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
         db_driver=db_driver,
         **tx_kwargs,
     )
+    flask.current_app.logger.info(f"Application running in {is_async=}")
     if is_async:
         session = transaction.db_driver.session_scope(can_inherit=False)
         with session, transaction:
