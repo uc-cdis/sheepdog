@@ -111,7 +111,7 @@ def require_sheepdog_project_admin(func):
 
 
 @timeit
-@functools.lrucache(maxsize=5)
+@functools.lru_cache(maxsize=5)
 def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
     jwt = get_jwt_from_header()
