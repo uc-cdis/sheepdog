@@ -244,7 +244,7 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
             raise UserError(invalid_format_msg)
 
     is_async = tx_kwargs.pop("is_async", utils.is_flag_set(FLAG_IS_ASYNC))
-
+    flask.current_app.logger.info(f"Application running in {is_async=}")
     transaction = BulkUploadTransaction(
         program=program,
         project=project,
