@@ -8,12 +8,12 @@ Pylint ``no-member`` error disabled because of false positives with
 import flask
 import lxml
 import uuid
-import time
-from functools import wraps
+
 from sqlalchemy.exc import IntegrityError
 
 from sheepdog import auth
 from sheepdog import utils
+from sheepdog.utils import timeit
 from sheepdog.errors import ParsingError, SchemaError, UnsupportedError, UserError
 from sheepdog.errors import HandledIntegrityError
 from sheepdog.globals import FLAG_IS_ASYNC, PROJECT_SEED
@@ -89,21 +89,6 @@ def _single_transaction(role, program, project, *doc_args, **tx_kwargs):
     else:
         response, code = single_transaction_worker(transaction, *doc_args)
         return flask.jsonify(response), code
-
-
-def timeit(func):
-    @wraps(func)
-    def timeit_wrapper(*args, **kwargs):
-        start_time = time.perf_counter()
-        result = func(*args, **kwargs)
-        end_time = time.perf_counter()
-        total_time = end_time - start_time
-        flask.current_app.logger.info(
-            f"Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds"
-        )
-        return result
-
-    return timeit_wrapper
 
 
 @timeit
