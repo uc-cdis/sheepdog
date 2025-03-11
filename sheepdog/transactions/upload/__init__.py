@@ -72,7 +72,7 @@ def _single_transaction(role, program, project, *doc_args, **tx_kwargs):
         external_proxies=utils.get_external_proxies(),
         **tx_kwargs,
     )
-    flask.current_app.logger.info(f"Application running in {is_async=}")
+
     if is_async:
         session = transaction.db_driver.session_scope(can_inherit=False)
         with session, transaction:
@@ -128,6 +128,7 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
         db_driver=db_driver,
         **tx_kwargs,
     )
+    flask.current_app.logger.info(f"Application running in {is_async=}")
 
     if is_async:
         session = transaction.db_driver.session_scope(can_inherit=False)
