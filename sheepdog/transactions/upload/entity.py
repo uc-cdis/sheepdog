@@ -217,6 +217,7 @@ class UploadEntity(EntityBase):
             )
         self._validate_type()
 
+    @timeit
     def get_node_create(self, skip_node_lookup=False):
         """
         This is called for a POST operation.
@@ -301,6 +302,7 @@ class UploadEntity(EntityBase):
 
         return node
 
+    @timeit
     def get_node_merge(self):
         """
         This is called for a PATCH operation and supports upsert. It will
