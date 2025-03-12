@@ -110,14 +110,18 @@ def require_sheepdog_project_admin(func):
     return authorize_and_call
 
 
-@timeit
+@timeit(params=True)
 @functools.lru_cache(maxsize=5)
+def get_authz_response(jwt, service, methods, resources):
+    return flask.current_app.auth.auth_request(
+        jwt=jwt, service=service, methods=methods, resources=resources
+    )
+
+
 def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
     jwt = get_jwt_from_header()
-    authz = flask.current_app.auth.auth_request(
-        jwt=jwt, service="sheepdog", methods=roles, resources=[resource]
-    )
+    authz = get_authz_response(jwt, "sheepdog", roles, [resource])
     if not authz:
         raise AuthZError("user is unauthorized")
 

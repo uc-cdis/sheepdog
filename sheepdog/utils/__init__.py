@@ -48,15 +48,17 @@ from . import scheduling
 ALLOWED_STATES = [ERROR_STATE, submitted_state(), UPLOADING_STATE]
 
 
-def timeit(func):
+def timeit(func, params=False):
+
     @wraps(func)
     def timeit_wrapper(*args, **kwargs):
         start_time = time.perf_counter()
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         total_time = end_time - start_time
+        param_list = f"with params: {args}, {kwargs}" if params else ""
         flask.current_app.logger.info(
-            f"Function {func.__name__} Took {total_time:.4f} seconds"
+            f"Function {func.__name__} {param_list} Took {total_time:.4f} seconds"
         )
         return result
 
