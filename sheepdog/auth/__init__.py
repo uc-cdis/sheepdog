@@ -121,7 +121,7 @@ def get_authz_response(jwt, service, methods, resources):
 def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
     jwt = get_jwt_from_header()
-    authz = get_authz_response(jwt, "sheepdog", roles, (resource))
+    authz = get_authz_response(jwt, "sheepdog", tuple(roles), (resource))
     if not authz:
         raise AuthZError("user is unauthorized")
 
