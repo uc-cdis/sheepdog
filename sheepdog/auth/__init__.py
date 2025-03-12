@@ -11,6 +11,7 @@ import functools
 
 from authutils.user import current_user
 from authutils.token.validate import current_token
+from cachelib import SimpleCache
 from cdislogging import get_logger
 import flask
 
@@ -18,6 +19,8 @@ from sheepdog.errors import AuthNError, AuthZError
 from sheepdog.utils import timeit
 
 logger = get_logger(__name__)
+
+AUTHZ_CACHE = SimpleCache(default_timeout=1)
 
 try:
     from authutils.token.validate import validate_request
@@ -110,7 +113,7 @@ def require_sheepdog_project_admin(func):
     return authorize_and_call
 
 
-@functools.lru_cache(maxsize=5)
+# @functools.lru_cache(maxsize=5)
 def get_authz_response(jwt, service, methods, resources):
     return flask.current_app.auth.auth_request(
         jwt=jwt, service=service, methods=methods, resources=resources
@@ -121,7 +124,14 @@ def get_authz_response(jwt, service, methods, resources):
 def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
     jwt = get_jwt_from_header()
-    authz = get_authz_response(jwt, "sheepdog", tuple(roles), (resource))
+    cache_key = str(hash((jwt, "sheepdog", tuple(roles), (resource))))
+
+    if AUTHZ_CACHE.has(cache_key):
+        authz = AUTHZ_CACHE.get(cache_key)
+    else:
+        authz = get_authz_response(jwt, "sheepdog", tuple(roles), (resource))
+        AUTHZ_CACHE.set(cache_key, authz)
+
     if not authz:
         raise AuthZError("user is unauthorized")
 
