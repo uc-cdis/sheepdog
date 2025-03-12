@@ -125,12 +125,15 @@ def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
     jwt = get_jwt_from_header()
     cache_key = str(hash((jwt, "sheepdog", tuple(roles), (resource))))
-
-    if AUTHZ_CACHE.has(cache_key):
-        authz = AUTHZ_CACHE.get(cache_key)
-    else:
-        authz = get_authz_response(jwt, "sheepdog", tuple(roles), (resource))
-        AUTHZ_CACHE.set(cache_key, authz)
+    authz = None
+    try:
+        if AUTHZ_CACHE.has(cache_key):
+            authz = AUTHZ_CACHE.get(cache_key)
+        else:
+            authz = get_authz_response(jwt, "sheepdog", tuple(roles), (resource))
+            AUTHZ_CACHE.set(cache_key, authz)
+    except UnboundLocalError as e:
+        logger.error("Catching error caused by caching library: {}".format(e))
 
     if not authz:
         raise AuthZError("user is unauthorized")
