@@ -22,7 +22,6 @@ from sheepdog.transactions.entity_base import EntityBase, EntityErrors
 from sheepdog.utils import get_suggestion, timeit
 
 
-@timeit
 def lookup_node(psql_driver, label, node_id=None, secondary_keys=None):
     """Return a query for nodes by id and secondary keys."""
     cls = psqlgraph.Node.get_subclass(label)
@@ -110,7 +109,6 @@ class UploadEntity(EntityBase):
         if self.entity_type and self.is_valid:
             self._parse_id()
 
-    @timeit
     def instantiate(self):
         """
         Create the graph node by populating necessary information within this
@@ -218,7 +216,6 @@ class UploadEntity(EntityBase):
             )
         self._validate_type()
 
-    @timeit
     def get_node_create(self, skip_node_lookup=False):
         """
         This is called for a POST operation.
@@ -303,7 +300,6 @@ class UploadEntity(EntityBase):
 
         return node
 
-    @timeit
     def get_node_merge(self):
         """
         This is called for a PATCH operation and supports upsert. It will
@@ -459,7 +455,6 @@ class UploadEntity(EntityBase):
 
         return doc
 
-    @timeit
     def _set_node_properties(self):
         """
         Take the key, values from the dictionary (minus system keys) and set

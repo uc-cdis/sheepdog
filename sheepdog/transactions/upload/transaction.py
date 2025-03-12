@@ -78,7 +78,6 @@ class UploadTransaction(TransactionBase):
         numbers = [project.dbgap_accession_number, program.dbgap_accession_number]
         return [n for n in numbers if n is not None]
 
-    @timeit
     def parse_doc(self, name, doc_format, doc, data):
         """Add/parse a document to the transaction."""
         self.parse_entities(data)
@@ -88,7 +87,6 @@ class UploadTransaction(TransactionBase):
         with self.fetch_transaction_log() as tx_log:
             tx_log.documents.append(tx_document)
 
-    @timeit
     def parse_entities(self, docs):
         """
         Take a list of `docs` (json representations of nodes) and add each as a
