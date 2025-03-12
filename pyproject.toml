@@ -24,7 +24,6 @@ envelopes = ">=0.4"
 Flask = ">=2.2.5"
 Flask-SQLAlchemy-Session = ">=1.1"
 fuzzywuzzy = ">=0.6.1"
-cachelib = ">=0.13.0"
 gen3authz = ">=1.0.4"
 graphene = ">=2.0.1"
 jsonschema = ">=3.2"
@@ -44,8 +43,9 @@ gunicorn = ">=21.2.0"
 gevent = ">1.4"
 indexclient = ">=2.1.1"
 urllib3 = "<2.0.0"
+cachelib = "^0.13.0"
 
-[poetry.group.dev.dependencies]
+[tool.poetry.dev-dependencies]
 pytest = ">=4.6.5"
 pytest-cov = ">=2.5.1"
 requests_mock = ">=1.4.0"
