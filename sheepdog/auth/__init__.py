@@ -110,7 +110,7 @@ def require_sheepdog_project_admin(func):
     return authorize_and_call
 
 
-@timeit()
+@timeit
 @functools.lru_cache(maxsize=5)
 def get_authz_response(jwt, service, methods, resources):
     return flask.current_app.auth.auth_request(

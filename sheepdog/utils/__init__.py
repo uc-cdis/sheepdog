@@ -49,7 +49,6 @@ ALLOWED_STATES = [ERROR_STATE, submitted_state(), UPLOADING_STATE]
 
 
 def timeit(func):
-
     @wraps(func)
     def timeit_wrapper(*args, **kwargs):
         start_time = time.perf_counter()
