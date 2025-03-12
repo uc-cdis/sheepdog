@@ -111,7 +111,7 @@ def require_sheepdog_project_admin(func):
 
 
 @timeit
-# @functools.lru_cache(maxsize=5)
+@functools.lru_cache(maxsize=5)
 def get_authz_response(jwt, service, methods, resources):
     return flask.current_app.auth.auth_request(
         jwt=jwt, service=service, methods=methods, resources=resources
