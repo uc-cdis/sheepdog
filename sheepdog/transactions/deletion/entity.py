@@ -25,7 +25,10 @@ class DeletionEntity(EntityBase):
         # Check user permissions for deleting nodes
         try:
             program, project = self.transaction.project_id.split("-", 1)
-            authorize(program, project, ["delete"])
+            authz = authorize(program, project, ["delete"])
+            self.logger.info(
+                f"Retrieveing response from arborist: {authz} with {type(authz)=}"
+            )
         except AuthZError:
             return self.record_error(
                 "You do not have delete permission for project {}".format(
