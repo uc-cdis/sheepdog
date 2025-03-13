@@ -115,26 +115,16 @@ def require_sheepdog_project_admin(func):
 def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
     jwt = get_jwt_from_header()
-    cache_key = str(hash((jwt, "sheepdog", tuple(roles), (resource))))
+    cache_key = f"{jwt}_sheepdog_{roles}_{resource}"
     authz = None
-    try:
-        if AUTHZ_CACHE.has(cache_key):
-            authz = AUTHZ_CACHE.get(cache_key)
-        else:
-            authz = flask.current_app.auth.auth_request(
-                jwt=jwt, service="sheepdog", methods=roles, resources=[resource]
-            )
-            logger.info(
-                f"Retrieveing response from arborist: {authz} with {type(authz)=}"
-            )
-            AUTHZ_CACHE.set(cache_key, authz)
-    # The caching library raises an UnboundLocalError during unit tests due to a known bug.
-    # This workaround prevents the error from occurring in test environments.
-    except UnboundLocalError as e:
-        logger.error("Catching error caused by caching library: {}".format(e))
+
+    if AUTHZ_CACHE.has(cache_key):
+        authz = AUTHZ_CACHE.get(cache_key)
+    else:
         authz = flask.current_app.auth.auth_request(
             jwt=jwt, service="sheepdog", methods=roles, resources=[resource]
         )
+        AUTHZ_CACHE.set(cache_key, authz)
 
     if not authz:
         raise AuthZError("user is unauthorized")
