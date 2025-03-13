@@ -124,6 +124,7 @@ def get_authz_response(jwt, service, methods, resources):
 def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
     jwt = get_jwt_from_header()
+    logger.info(f"Making a cache check to get authz")
     cache_key = str(hash((jwt, "sheepdog", tuple(roles), (resource))))
     authz = None
     try:
@@ -131,6 +132,10 @@ def authorize(program, project, roles):
             authz = AUTHZ_CACHE.get(cache_key)
         else:
             authz = get_authz_response(jwt, "sheepdog", tuple(roles), (resource))
+            logger.info(
+                f"Retrieveing response from arborist: {authz} with {type(authz)=}"
+            )
+
             AUTHZ_CACHE.set(cache_key, authz)
     except UnboundLocalError as e:
         logger.error("Catching error caused by caching library: {}".format(e))
