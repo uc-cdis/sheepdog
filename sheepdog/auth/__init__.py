@@ -124,6 +124,9 @@ def authorize(program, project, roles):
             authz = flask.current_app.auth.auth_request(
                 jwt=jwt, service="sheepdog", methods=roles, resources=[resource]
             )
+            logger.info(
+                f"Retrieveing response from arborist: {authz} with {type(authz)=}"
+            )
             AUTHZ_CACHE.set(cache_key, authz)
     # The caching library raises an UnboundLocalError during unit tests due to a known bug.
     # This workaround prevents the error from occurring in test environments.
