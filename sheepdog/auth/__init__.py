@@ -11,6 +11,7 @@ import functools
 
 from authutils.user import current_user
 from authutils.token.validate import current_token
+from cachelib import SimpleCache
 from cdislogging import get_logger
 import flask
 
@@ -19,6 +20,7 @@ from sheepdog.errors import AuthNError, AuthZError
 
 logger = get_logger(__name__)
 
+AUTHZ_CACHE = SimpleCache(default_timeout=1)
 try:
     from authutils.token.validate import validate_request
 except ImportError:
@@ -113,9 +115,19 @@ def require_sheepdog_project_admin(func):
 def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
     jwt = get_jwt_from_header()
-    authz = flask.current_app.auth.auth_request(
-        jwt=jwt, service="sheepdog", methods=roles, resources=[resource]
-    )
+    cache_key = str(hash((jwt, "sheepdog", tuple(roles), (resource))))
+    authz = None
+    try:
+        if AUTHZ_CACHE.has(cache_key):
+            authz = AUTHZ_CACHE.get(cache_key)
+        else:
+            authz = flask.current_app.auth.auth_request(
+                jwt=jwt, service="sheepdog", methods=roles, resources=[resource]
+            )
+            AUTHZ_CACHE.set(cache_key, authz)
+    except UnboundLocalError as e:
+        logger.error("Catching error caused by caching library: {}".format(e))
+
     if not authz:
         raise AuthZError("user is unauthorized")
 
