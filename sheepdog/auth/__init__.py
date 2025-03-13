@@ -125,8 +125,13 @@ def authorize(program, project, roles):
                 jwt=jwt, service="sheepdog", methods=roles, resources=[resource]
             )
             AUTHZ_CACHE.set(cache_key, authz)
+    # UnboundLocalError is raised by the caching library during unit tests due to a bug.
+    # This is a workaround to prevent the error from being raised only during unit tests.
     except UnboundLocalError as e:
         logger.error("Catching error caused by caching library: {}".format(e))
+        authz = flask.current_app.auth.auth_request(
+            jwt=jwt, service="sheepdog", methods=roles, resources=[resource]
+        )
 
     if not authz:
         raise AuthZError("user is unauthorized")
