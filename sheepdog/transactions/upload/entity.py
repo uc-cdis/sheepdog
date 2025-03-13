@@ -231,7 +231,10 @@ class UploadEntity(EntityBase):
         # Check user permissions for updating nodes
         try:
             program, project = self.transaction.project_id.split("-", 1)
-            authorize(program, project, ["create"])
+            authz = authorize(program, project, ["create"])
+            self.logger.info(
+                f"Retrieveing response from arborist: {authz} with {type(authz)=}"
+            )
         except AuthZError:
             return self.record_error(
                 "You do not have create permission for project {}".format(
