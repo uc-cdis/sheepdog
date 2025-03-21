@@ -1,6 +1,6 @@
 wsgi_app = "bin.settings:application"
 bind = "0.0.0.0:8000"
-workers = 2
+workers = 5
 preload_app = False
 user = "gen3"
 group = "gen3"
