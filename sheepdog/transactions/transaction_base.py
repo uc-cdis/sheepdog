@@ -33,7 +33,7 @@ class MissingNode(object):
 
 class TransactionBase(object):
     """
-    Parent class for GDC API transactions.
+    Parent class for sheepdog API transactions.
 
     * Children must define:
 

@@ -154,7 +154,7 @@ class DeletionEntity(EntityBase):
             message = (
                 "This node has file_state '{file_state}'. "
                 "Deletion is disallowed for entities that have "
-                "raw data uploaded to the GDC.  In order to delete "
+                "raw data uploaded to the Gen3 commons.  In order to delete "
                 "this node you must first delete the raw data with "
                 "the Data Transfer Tool.".format(file_state=self.node.file_state)
             )
