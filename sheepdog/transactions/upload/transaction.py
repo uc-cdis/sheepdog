@@ -62,7 +62,7 @@ class UploadTransaction(TransactionBase):
         self.json_validator = validators.GDCJSONValidator()
 
         # The dbGapXReferencer conditionally requires cases to exist in
-        # dbGaP prior to submission to the GDC
+        # dbGaP prior to submission to the Gen3 commons
         self.dbgap_x_referencer = dbgap.dbGaPXReferencer(
             self.db_driver, self.logger, proxies=self.external_proxies
         )
@@ -433,7 +433,7 @@ class BulkUploadTransaction(TransactionBase):
                         type=EntityErrors.NOT_UNIQUE,
                     )
 
-        # Check GDC ids
+        # Check entity ids
         for ID in dup_ids.keys():
             for entity in self.entities:
                 if entity.entity_id == ID:

@@ -128,7 +128,7 @@ def to_bool(val):
 class BcrXmlToJsonParser(object):
     def __init__(self, project):
         """
-        Create a parser to convert XML to GDC JSON.
+        Create a parser to convert XML to JSON.
 
         Args:
             project (str): the id of the project node to link cases to

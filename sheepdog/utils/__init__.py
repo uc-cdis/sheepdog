@@ -90,7 +90,7 @@ def _get_links_delimited(link, exclude_id):
     """
     link_template = []
     target_schema = dictionary.schema[link["target_type"]]
-    # default key for link is the GDC ID
+    # default key for link is the entity ID
     if not exclude_id:
         link_template.append("id")
 
