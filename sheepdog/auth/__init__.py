@@ -115,7 +115,7 @@ def require_sheepdog_project_admin(func):
 def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
     jwt = get_jwt_from_header()
-    cache_key = f"{jwt}_sheepdog_{roles}_{resource}"
+    cache_key = f"{jwt}_{roles}_{resource}"
     authz = None
 
     if AUTHZ_CACHE.has(cache_key):
