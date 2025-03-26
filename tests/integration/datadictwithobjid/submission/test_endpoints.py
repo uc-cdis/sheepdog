@@ -55,9 +55,9 @@ def mock_request(f):
     return wrapper
 
 
-def test_program_creation_endpoint(client, pg_driver, submitter):
+def test_program_creation_endpoint(client, pg_driver, submitter_and_client_submitter):
     # Does not test authz.
-    resp = put_cgci(client, auth=submitter)
+    resp = put_cgci(client, auth=submitter_and_client_submitter)
     assert resp.status_code == 200, resp.data
     print(resp.data)
     resp = client.get("/v0/submission/")
@@ -85,9 +85,9 @@ def test_program_creation_endpoint_for_program_not_supported(
     assert resp.status_code == 404
 
 
-def test_project_creation_endpoint(client, pg_driver, submitter):
+def test_project_creation_endpoint(client, pg_driver, submitter_and_client_submitter):
     # Does not test authz.
-    resp = put_cgci_blgsp(client, auth=submitter)
+    resp = put_cgci_blgsp(client, auth=submitter_and_client_submitter)
     assert resp.status_code == 200
     resp = client.get("/v0/submission/CGCI/")
     with pg_driver.session_scope():
@@ -147,8 +147,10 @@ def test_project_creation_invalid_due_to_registed_project_name(
     assert resp.status_code == 400
 
 
-def test_put_entity_creation_valid(client, pg_driver, cgci_blgsp, submitter):
-    headers = submitter
+def test_put_entity_creation_valid(
+    client, pg_driver, cgci_blgsp, submitter_and_client_submitter
+):
+    headers = submitter_and_client_submitter
     data = json.dumps(
         {
             "type": "experiment",
@@ -160,7 +162,20 @@ def test_put_entity_creation_valid(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
 
 
-def test_unauthenticated_post(client, pg_driver, cgci_blgsp, submitter):
+def test_unauthenticated_post(client, pg_driver, cgci_blgsp):
+    headers = {}
+    data = json.dumps(
+        {
+            "type": "case",
+            "submitter_id": "BLGSP-71-06-00019",
+            "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+        }
+    )
+    resp = client.post(BLGSP_PATH, headers=headers, data=data)
+    assert resp.status_code == 401
+
+
+def test_bad_token_post(client, pg_driver, cgci_blgsp):
     # garbage token
     headers = {"Authorization": "test"}
     data = json.dumps(
@@ -175,9 +190,13 @@ def test_unauthenticated_post(client, pg_driver, cgci_blgsp, submitter):
 
 
 def test_unauthorized_post(
-    client, pg_driver, cgci_blgsp, submitter, mock_arborist_requests
+    client,
+    pg_driver,
+    cgci_blgsp,
+    submitter_and_client_submitter,
+    mock_arborist_requests,
 ):
-    headers = submitter
+    headers = submitter_and_client_submitter
     mock_arborist_requests(authorized=False)
     resp = client.post(
         BLGSP_PATH,
@@ -304,8 +323,10 @@ def do_test_post_example_entities_together(client, submitter):
     assert condition_to_check, resp.data
 
 
-def test_post_example_entities_together(client, pg_driver, cgci_blgsp, submitter):
-    do_test_post_example_entities_together(client, submitter)
+def test_post_example_entities_together(
+    client, pg_driver, cgci_blgsp, submitter_and_client_submitter
+):
+    do_test_post_example_entities_together(client, submitter_and_client_submitter)
 
 
 def test_dictionary_list_entries(client, pg_driver, cgci_blgsp, submitter):
@@ -477,10 +498,10 @@ def test_disallow_cross_project_references(client, pg_driver, cgci_blgsp, submit
     assert resp.status_code == 400, resp.data
 
 
-def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
+def test_delete_entity(client, pg_driver, cgci_blgsp, submitter_and_client_submitter):
     resp = client.put(
         BLGSP_PATH,
-        headers=submitter,
+        headers=submitter_and_client_submitter,
         data=json.dumps(
             {
                 "type": "experiment",
@@ -492,7 +513,7 @@ def test_delete_entity(client, pg_driver, cgci_blgsp, submitter):
     assert resp.status_code == 200, resp.data
     did = resp.json["entities"][0]["id"]
     path = BLGSP_PATH + "entities/" + did
-    resp = client.delete(path, headers=submitter)
+    resp = client.delete(path, headers=submitter_and_client_submitter)
     assert resp.status_code == 200, resp.data
 
 
@@ -536,10 +557,10 @@ def test_validator_error_types(client, pg_driver, cgci_blgsp, submitter):
     assert errors["longest_dimension"] == "INVALID_VALUE"
 
 
-def test_invalid_json(client, pg_driver, cgci_blgsp, submitter):
+def test_invalid_json(client, pg_driver, cgci_blgsp, submitter_and_client_submitter):
     resp = client.put(
         BLGSP_PATH,
-        headers=submitter,
+        headers=submitter_and_client_submitter,
         data="""{
     "key1": "valid value",
     "key2": not a string,
@@ -651,20 +672,32 @@ def test_export_entity_by_id_json(client, pg_driver, cgci_blgsp, submitter):
     assert data[0]["id"] == case_id
 
 
-def get_export_data(client, submitter, node_type, format_type, without_id):
+def get_export_data(
+    client, submitter_and_client_submitter, node_type, format_type, without_id
+):
     path = "/v0/submission/CGCI/BLGSP/export/?node_label={}&format={}".format(
         node_type, format_type
     )
     if without_id:
         path += "&without_id=True"
-    r = client.get(path, headers=submitter)
+    r = client.get(path, headers=submitter_and_client_submitter)
     return r
 
 
 def test_export_all_node_types(
-    client, pg_driver, cgci_blgsp, require_index_exists_off, submitter
+    client,
+    pg_driver,
+    cgci_blgsp,
+    require_index_exists_off,
+    submitter_and_client_submitter,
 ):
-    do_test_export(client, pg_driver, submitter, "experimental_metadata", "tsv")
+    do_test_export(
+        client,
+        pg_driver,
+        submitter_and_client_submitter,
+        "experimental_metadata",
+        "tsv",
+    )
 
 
 def test_export_node_with_array_json(
