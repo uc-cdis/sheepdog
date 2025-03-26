@@ -754,10 +754,6 @@ def create_submit_project_viewer(dry_run=False):
         """
         Submit a project.
 
-        Submitting a project means that the Gen3 commons can make all metadata that
-        *currently* exists in the project public in every index built after
-        the project is released.
-
         Summary:
             Submit a project
 
