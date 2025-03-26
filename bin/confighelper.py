@@ -49,6 +49,6 @@ def load_json(file_name, app_name, search_folders=None):
     """
     actual_files = find_paths(file_name, app_name, search_folders)
     if not actual_files:
-        return None
+        return {}
     with open(actual_files[0], "r") as reader:
         return json.load(reader)

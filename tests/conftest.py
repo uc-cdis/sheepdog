@@ -30,7 +30,7 @@ def iss():
 
 @pytest.fixture(scope="session")
 def encoded_jwt(iss):
-    def encoded_jwt_function(private_key, user):
+    def encoded_jwt_function(private_key, user=None, client_id=None):
         """
         Return an example JWT containing the claims and encoded with the private
         key.
@@ -45,7 +45,14 @@ def encoded_jwt(iss):
         kid = list(JWT_KEYPAIR_FILES.keys())[0]
         scopes = ["openid"]
         token = utils.generate_signed_access_token(
-            kid, private_key, user, 3600, scopes, iss=iss, forced_exp_time=None
+            kid,
+            private_key,
+            user,
+            3600,
+            scopes,
+            iss=iss,
+            forced_exp_time=None,
+            client_id=client_id,
         )
         return token.token
 
@@ -77,6 +84,22 @@ def create_user_header(encoded_jwt):
 @pytest.fixture()
 def submitter(create_user_header):
     return create_user_header(SUBMITTER_USERNAME)
+
+
+@pytest.fixture(params=["user", "client"])
+def submitter_and_client_submitter(request, create_user_header, encoded_jwt):
+    """
+    Used to test select functionality with both a regular user token, and a token issued from
+    the `client_credentials` flow, linked to a client and not to a user.
+    """
+    if request.param == "user":
+        return create_user_header(SUBMITTER_USERNAME)
+    else:
+        private_key = utils.read_file(
+            "./integration/resources/keys/test_private_key.pem"
+        )
+        token = encoded_jwt(private_key, client_id="test_client_id")
+        return {"Authorization": "bearer " + token}
 
 
 @pytest.fixture()
