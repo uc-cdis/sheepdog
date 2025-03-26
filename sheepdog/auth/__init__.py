@@ -15,6 +15,7 @@ from cdislogging import get_logger
 import flask
 
 from sheepdog.errors import AuthNError, AuthZError
+from sheepdog.globals import ROLES
 
 
 logger = get_logger(__name__)
@@ -110,20 +111,53 @@ def require_sheepdog_project_admin(func):
     return authorize_and_call
 
 
-def authorize(program, project, roles):
+def authorize(program, project, roles, resource_list=None):
     resource = "/programs/{}/projects/{}".format(program, project)
+
+    resources = []
+    if resource_list:
+        for res in resource_list:
+            resources.append(resource + res)
+    else:
+        resources = [resource]
+
     jwt = get_jwt_from_header()
     authz = flask.current_app.auth.auth_request(
-        jwt=jwt, service="sheepdog", methods=roles, resources=[resource]
+        jwt=jwt, service="sheepdog", methods=roles, resources=resources
     )
+
     if not authz:
         raise AuthZError("user is unauthorized")
 
 
-def create_resource(program, project=None):
+def create_resource(program, project=None, data=None):
     resource = "/programs/{}".format(program)
+
     if project:
         resource += "/projects/{}".format(project)
+
+    if isinstance(data, list):
+        for d in data:
+            get_and_create_resource_values(resource, d)
+    else:
+        get_and_create_resource_values(resource, data)
+
+
+def get_and_create_resource_values(resource, data):
+    stop_node = flask.current_app.node_authz_entity
+    person_node = flask.current_app.subject_entity
+    if data and data["type"] == person_node.label:
+        resource += "/persons/{}".format(data["submitter_id"])
+    elif data and data["type"] == stop_node.label:
+        person = None
+        if isinstance(data["persons"], list):
+            person = data["persons"][0]
+        else:
+            person = data["persons"]
+        resource += "/persons/{}/subjects/{}".format(person["submitter_id"], data["submitter_id"])
+    logger.warn(resource)
+
+
     logger.info("Creating arborist resource {}".format(resource))
 
     json_data = {
@@ -139,3 +173,73 @@ def create_resource(program, project=None):
                 resp.error.code, resp.error.message
             )
         )
+
+
+def check_resource_access(program, project, nodes):
+    subject_submitter_ids = []
+    stop_node = flask.current_app.node_authz_entity_name
+
+    for node in nodes:
+        if node.label == stop_node:
+            subject_submitter_ids.append({"id": node.node_id, "submitter_id": node.props.get("submitter_id", None)})
+        else:
+            for link in node._pg_links:
+                tmp_dads = getattr(node, link, None)
+                if tmp_dads:
+                    tmp_dad = tmp_dads[0]
+                    nodeType = link
+                    path_tmp = nodeType
+                    tmp = node._pg_links[link]["dst_type"]
+                    while tmp.label != stop_node and tmp.label != "program":
+                        # assuming ony one parents
+                        nodeType = list(tmp._pg_links.keys())[0]
+                        path_tmp = path_tmp + "." + nodeType
+                        tmp = tmp._pg_links[nodeType]["dst_type"]
+                        # TODO double check this with deeper relationship > 2 nodes under project
+                        tmp_dad = getattr(tmp_dad, nodeType)[0]
+
+                    if tmp.label == stop_node:
+                        subject_submitter_ids.append({"id": tmp_dad.node_id, "submitter_id": tmp_dad.props.get("submitter_id", None)})
+                    else:
+                        logger.warn("resource not found " + node.label)
+                        logger.warn(node)
+
+    try:
+        resources = [
+                "/{}s/{}".format(stop_node, node["submitter_id"])
+                for node in subject_submitter_ids
+            ]
+        authorize(program, project, [ROLES["READ"]], resources)
+    except AuthZError:
+        return "You do not have read permission on project {} for one or more of the subjects requested"
+
+
+# TEST BUT YOU NEED TO ADD ACTUAL ID LIST NOT ONLY THE ONE LISTED IN THE DB
+def get_authorized_ids(program, project):
+    try:
+        mapping = flask.current_app.auth.auth_mapping(current_user.username)
+    except AuthZError as e:
+        logger.warn(
+            "Unable to retrieve auth mapping for user `{}`: {}".format(current_user.username, e)
+        )
+        mapping = {}
+
+    base_resource_path = "/programs/{}/projects/{}".format(program, project)
+    result = [resource_path for resource_path, permissions in mapping.items() if base_resource_path in resource_path]
+    ids = []
+
+    for path in result:
+        parts = path.strip("/").split("/")
+        if path != "/" and parts[0] != "programs":
+            continue
+
+        if len(parts) > 6 or (len(parts) > 2 and parts[2] != "projects") or (len(parts) > 4 and (flask.current_app.node_authz_entity_name is None or flask.current_app.node_authz_entity is None or parts[4] != (flask.current_app.node_authz_entity_name + "s"))):
+            continue
+
+        if len(parts) <  6:
+            return(None)
+        else:
+            ids.append(parts[5])
+
+    return(ids)
+
