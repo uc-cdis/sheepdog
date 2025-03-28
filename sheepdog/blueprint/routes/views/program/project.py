@@ -245,7 +245,7 @@ def get_project_dictionary_entry(program, project, entry):
 @auth.authorize_for_project(ROLES["READ"])
 def get_entities_by_id(program, project, entity_id_string):
     """
-    Retrieve existing GDC entities by ID.
+    Retrieve existing entities by ID.
 
     The return type of a HTTP `get` on this endpoint is a JSON array
     containing JSON object elements, each corresponding to a provided ID.
@@ -297,12 +297,12 @@ def create_delete_entities_viewer(dry_run=False):
     @auth.authorize_for_project(ROLES["DELETE"])
     def delete_entities(program, project, ids, to_delete=None):
         """
-        Delete existing GDC entities.
+        Delete existing entities.
 
         Using the :http:method:`delete` on a project's endpoint will
         *completely delete* an entity.
 
-        The GDC does not allow deletions or creations that would leave nodes
+        The Gen3 commons does not allow deletions or creations that would leave nodes
         without parents, i.e. nodes that do not have an entity from which they
         were derived. To prevent catastrophic mistakes, the current philosophy
         is to disallow automatic cascading of deletes. However, to inform a
@@ -318,7 +318,7 @@ def create_delete_entities_viewer(dry_run=False):
         Args:
             program (str): |program_id|
             project (str): |project_id|
-            ids (str): A comma separated list of ids specifying the entities to delete. These ids must be official GDC ids.
+            ids (str): A comma separated list of ids specifying the entities to delete. These ids must be official ids.
 
         Query Args:
             to_delete (bool): Set the to_delete sysan as true or false. If none, then don't try to set the sysan, and instead delete the node.
@@ -481,7 +481,7 @@ def create_files_viewer(dry_run=False, reassign=False):
     def file_operations(program, project, file_uuid):
         """
         Handle molecular file operations.  This will only be available once the
-        user has created a file entity with GDC id ``uuid`` via the
+        user has created a file entity with id ``uuid`` via the
         ``/<program>/<project>/`` endppoint.
 
         This endpoint is an S3 compatible endpoint as described here:
@@ -520,7 +520,7 @@ def create_files_viewer(dry_run=False, reassign=False):
         Args:
             program (str): |program_id|
             project (str): |project_id|
-            uuid (str): The GDC id of the file to upload.
+            uuid (str): The id of the file to upload.
 
         Responses:
             200: Success.
@@ -753,10 +753,6 @@ def create_submit_project_viewer(dry_run=False):
     def submit_project(program, project):
         """
         Submit a project.
-
-        Submitting a project means that the GDC can make all metadata that
-        *currently* exists in the project public in every GDC index built after
-        the project is released.
 
         Summary:
             Submit a project

@@ -124,7 +124,7 @@ class UploadEntity(EntityBase):
                 return self.record_error(
                     (
                         "There are no unique keys defined on type {} except"
-                        " for the official GDC id.  To upload this entity you"
+                        " for the official id.  To upload this entity you"
                         " must add a UUID"
                     ).format(self.entity_type),
                     keys=["id"],

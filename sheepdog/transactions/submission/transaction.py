@@ -152,7 +152,7 @@ class SubmissionTransaction(TransactionBase):
     def send_submission_notification_email(self):
         """Sends an email notification
 
-        This is used in the GDC to notify the user services team
+        This is used in the Gen3 commons to notify the user services team
         about submitting a project
         """
 
