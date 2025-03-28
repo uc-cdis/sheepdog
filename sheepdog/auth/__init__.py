@@ -21,8 +21,8 @@ from sheepdog.errors import AuthNError, AuthZError
 
 
 logger = get_logger(__name__)
-
-AUTHZ_CACHE = SimpleCache(default_timeout=1)
+CACHE_SECONDS = 1
+AUTHZ_CACHE = SimpleCache(default_timeout=CACHE_SECONDS)
 try:
     from authutils.token.validate import validate_request
 except ImportError:
@@ -44,14 +44,14 @@ def get_jwt_from_header():
     return jwt_token
 
 
-def check_if_jwt_expired(jwt_token):
-    """
-    Check if the JWT is expired.
-    """
+def check_if_jwt_close_to_expiry(jwt_token):
+    """Check if a JWT is close to expiry based on `CACHE_SECONDS`."""
     try:
         # decode the JWT to check its expiration, use verify_signature=False to skip signature verification
         decoded_token = jwt.decode(jwt_token, options={"verify_signature": False})
-        return decoded_token.get("exp", 0) < time.time()
+
+        # The token is considered "close to expiry" if it expires within the next CACHE_SECONDS seconds.
+        return decoded_token.get("exp", 0) < time.time() + CACHE_SECONDS
     except jwt.exceptions.DecodeError as e:
         logger.error(f"Unable to decode jwt token: {e}")
         raise AuthNError("Didn't receive JWT correctly")
@@ -130,11 +130,11 @@ def require_sheepdog_project_admin(func):
 def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
     jwt_token = get_jwt_from_header()
-    jwt_expired = check_if_jwt_expired(jwt_token)
+    jwt_close_to_expiry = check_if_jwt_close_to_expiry(jwt_token)
     cache_key = f"{jwt_token}_{roles}_{resource}"
     authz = None
 
-    if not jwt_expired and AUTHZ_CACHE.has(cache_key):
+    if not jwt_close_to_expiry and AUTHZ_CACHE.has(cache_key):
         authz = AUTHZ_CACHE.get(cache_key)
     else:
         authz = flask.current_app.auth.auth_request(

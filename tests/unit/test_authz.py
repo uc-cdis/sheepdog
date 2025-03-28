@@ -4,8 +4,8 @@ import time
 import flask
 import json
 import base64
-from sheepdog.auth import check_if_jwt_expired
-from sheepdog.auth import authorize, AUTHZ_CACHE
+from sheepdog.auth import check_if_jwt_close_to_expiry
+from sheepdog.auth import authorize, AUTHZ_CACHE, CACHE_SECONDS
 
 
 @pytest.fixture
@@ -34,13 +34,18 @@ def encode_jwt(payload):
     return f"{encoded_header}.{encoded_payload}."
 
 
-def test_check_if_jwt_expired():
+def test_check_if_jwt_close_to_expiry():
     """Tests JWT expiration logic."""
     expired_token = encode_jwt({"data": "test", "exp": time.time() - 1000})
+    # Token expires before cache expiration
+    token_about_to_expire = encode_jwt(
+        {"data": "test", "exp": time.time() + CACHE_SECONDS / 2}
+    )
     valid_token = encode_jwt({"data": "test", "exp": time.time() + 1000})
 
-    assert check_if_jwt_expired(expired_token) is True
-    assert check_if_jwt_expired(valid_token) is False
+    assert check_if_jwt_close_to_expiry(expired_token) is True
+    assert check_if_jwt_close_to_expiry(token_about_to_expire) is True
+    assert check_if_jwt_close_to_expiry(valid_token) is False
 
 
 @patch("sheepdog.auth.get_jwt_from_header", return_value="jwt")
