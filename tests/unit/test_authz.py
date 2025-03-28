@@ -48,8 +48,8 @@ def test_check_if_jwt_close_to_expiry():
     assert check_if_jwt_close_to_expiry(valid_token) is False
 
 
-@patch("sheepdog.auth.check_if_jwt_close_to_expiry", return_value="jwt")
-@patch("sheepdog.auth.check_if_jwt_expired", return_value=False)
+@patch("sheepdog.auth.get_jwt_from_header", return_value="jwt")
+@patch("sheepdog.auth.check_if_jwt_close_to_expiry", return_value=False)
 def test_authorize_caching(
     mock_jwt, mock_jwt_expired, mock_flask_app, mock_auth_request
 ):
@@ -80,8 +80,8 @@ def test_authorize_caching(
         mock_auth_request.assert_called_once()
 
 
-@patch("sheepdog.auth.check_if_jwt_close_to_expiry", return_value="jwt")
-@patch("sheepdog.auth.check_if_jwt_expired", return_value=False)
+@patch("sheepdog.auth.get_jwt_from_header", return_value="jwt")
+@patch("sheepdog.auth.check_if_jwt_close_to_expiry", return_value=False)
 def test_authorize_cache_invalidation(
     mock_jwt, mock_jwt_expired, mock_flask_app, mock_auth_request
 ):
@@ -102,8 +102,8 @@ def test_authorize_cache_invalidation(
         mock_auth_request.assert_called_once()
 
 
-@patch("sheepdog.auth.check_if_jwt_expired", return_value=False)
-@patch("sheepdog.auth.check_if_jwt_close_to_expiry")
+@patch("sheepdog.auth.check_if_jwt_close_to_expiry", return_value=False)
+@patch("sheepdog.auth.get_jwt_from_header")
 def test_authorize_caching_per_user(
     mock_jwt, mock_jwt_expired, mock_flask_app, mock_auth_request
 ):
@@ -120,7 +120,7 @@ def test_authorize_caching_per_user(
         # Mock JWTs for two different users
         jwt_generator = iter(["jwt_for_user1", "jwt_for_user2"])
 
-        # Configure `check_if_jwt_close_to_expiry` to return different JWTs per call
+        # Configure `get_jwt_from_header` to return different JWTs per call
         mock_jwt.side_effect = lambda: next(jwt_generator)
 
         # First user makes a request (jwt_for_user1)
@@ -133,8 +133,8 @@ def test_authorize_caching_per_user(
         mock_auth_request.assert_called_once()
 
 
-@patch("sheepdog.auth.check_if_jwt_expired", return_value=True)
-@patch("sheepdog.auth.check_if_jwt_close_to_expiry", return_value="jwt")
+@patch("sheepdog.auth.check_if_jwt_close_to_expiry", return_value=True)
+@patch("sheepdog.auth.get_jwt_from_header", return_value="jwt")
 def test_authorize_expired_token(
     mock_jwt, mock_jwt_expired, mock_flask_app, mock_auth_request
 ):
