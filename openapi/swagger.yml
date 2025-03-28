@@ -652,11 +652,10 @@ paths:
       - dry run
   /v0/submission/<program>/<project>/entities/<entity_id_string>:
     get:
-      description: Retrieve existing GDC entities by ID. The return type of a HTTP
-        `get` on this endpoint is a JSON array containing JSON object elements, each
-        corresponding to a provided ID. Return results are unordered. If any ID is
-        not found in the database, a status code of 404 is returned with the missing
-        IDs.
+      description: Retrieve existing entities by ID. The return type of a HTTP `get`
+        on this endpoint is a JSON array containing JSON object elements, each corresponding
+        to a provided ID. Return results are unordered. If any ID is not found in
+        the database, a status code of 404 is returned with the missing IDs.
       parameters:
       - description: The program to which the submitter belongs and in which the entities
           will be created. The `program` is the human-readable name, e.g. TCGA.
@@ -691,9 +690,9 @@ paths:
       - entity
   /v0/submission/<program>/<project>/entities/<ids>:
     delete:
-      description: Delete existing GDC entities. Using the :http:method:`delete` on
-        a project's endpoint will *completely delete* an entity. The GDC does not
-        allow deletions or creations that would leave nodes without parents, i.e.
+      description: Delete existing entities. Using the :http:method:`delete` on a
+        project's endpoint will *completely delete* an entity. The Gen3 commons does
+        not allow deletions or creations that would leave nodes without parents, i.e.
         nodes that do not have an entity from which they were derived. To prevent
         catastrophic mistakes, the current philosophy is to disallow automatic cascading
         of deletes. However, to inform a user which entities must be deleted for the
@@ -713,7 +712,7 @@ paths:
         required: true
         type: string
       - description: A comma separated list of ids specifying the entities to delete.
-          These ids must be official GDC ids.
+          These ids must be official ids.
         in: path
         name: ids
         required: true
@@ -737,9 +736,9 @@ paths:
       - entity
   /v0/submission/<program>/<project>/entities/_dry_run/<ids>:
     delete:
-      description: Delete existing GDC entities. Using the :http:method:`delete` on
-        a project's endpoint will *completely delete* an entity. The GDC does not
-        allow deletions or creations that would leave nodes without parents, i.e.
+      description: Delete existing entities. Using the :http:method:`delete` on a
+        project's endpoint will *completely delete* an entity. The Gen3 commons does
+        not allow deletions or creations that would leave nodes without parents, i.e.
         nodes that do not have an entity from which they were derived. To prevent
         catastrophic mistakes, the current philosophy is to disallow automatic cascading
         of deletes. However, to inform a user which entities must be deleted for the
@@ -759,7 +758,7 @@ paths:
         required: true
         type: string
       - description: A comma separated list of ids specifying the entities to delete.
-          These ids must be official GDC ids.
+          These ids must be official ids.
         in: path
         name: ids
         required: true
@@ -922,7 +921,7 @@ paths:
         name: project
         required: true
         type: string
-      - description: The GDC id of the file to upload.
+      - description: The id of the file to upload.
         in: path
         name: uuid
         required: true
@@ -960,7 +959,7 @@ paths:
         name: project
         required: true
         type: string
-      - description: The GDC id of the file to upload.
+      - description: The id of the file to upload.
         in: path
         name: uuid
         required: true
@@ -998,7 +997,7 @@ paths:
         name: project
         required: true
         type: string
-      - description: The GDC id of the file to upload.
+      - description: The id of the file to upload.
         in: path
         name: uuid
         required: true
@@ -1041,7 +1040,7 @@ paths:
         name: project
         required: true
         type: string
-      - description: The GDC id of the file to upload.
+      - description: The id of the file to upload.
         in: path
         name: uuid
         required: true
@@ -1084,7 +1083,7 @@ paths:
         name: project
         required: true
         type: string
-      - description: The GDC id of the file to upload.
+      - description: The id of the file to upload.
         in: path
         name: uuid
         required: true
@@ -1122,7 +1121,7 @@ paths:
         name: project
         required: true
         type: string
-      - description: The GDC id of the file to upload.
+      - description: The id of the file to upload.
         in: path
         name: uuid
         required: true
@@ -1160,7 +1159,7 @@ paths:
         name: project
         required: true
         type: string
-      - description: The GDC id of the file to upload.
+      - description: The id of the file to upload.
         in: path
         name: uuid
         required: true
@@ -1203,7 +1202,7 @@ paths:
         name: project
         required: true
         type: string
-      - description: The GDC id of the file to upload.
+      - description: The id of the file to upload.
         in: path
         name: uuid
         required: true
@@ -1574,9 +1573,7 @@ paths:
       - dry run
   /v0/submission/<program>/<project>/submit:
     post:
-      description: Submit a project. Submitting a project means that the GDC can make
-        all metadata that *currently* exists in the project public in every GDC index
-        built after the project is released.
+      description: Submit a project.
       parameters:
       - description: The program to which the submitter belongs and in which the entities
           will be created. The `program` is the human-readable name, e.g. TCGA.
@@ -1601,9 +1598,7 @@ paths:
       tags:
       - project
     put:
-      description: Submit a project. Submitting a project means that the GDC can make
-        all metadata that *currently* exists in the project public in every GDC index
-        built after the project is released.
+      description: Submit a project.
       parameters:
       - description: The program to which the submitter belongs and in which the entities
           will be created. The `program` is the human-readable name, e.g. TCGA.
@@ -1629,9 +1624,7 @@ paths:
       - project
   /v0/submission/<program>/<project>/submit/_dry_run:
     post:
-      description: Submit a project. Submitting a project means that the GDC can make
-        all metadata that *currently* exists in the project public in every GDC index
-        built after the project is released.
+      description: Submit a project.
       parameters:
       - description: The program to which the submitter belongs and in which the entities
           will be created. The `program` is the human-readable name, e.g. TCGA.
@@ -1656,9 +1649,7 @@ paths:
       tags:
       - dry run
     put:
-      description: Submit a project. Submitting a project means that the GDC can make
-        all metadata that *currently* exists in the project public in every GDC index
-        built after the project is released.
+      description: Submit a project.
       parameters:
       - description: The program to which the submitter belongs and in which the entities
           will be created. The `program` is the human-readable name, e.g. TCGA.
@@ -2089,9 +2080,9 @@ paths:
       - dictionary
   /v0/submission/admin/<program>/<project>/entities/<ids>/to_delete/<to_delete>:
     delete:
-      description: Delete existing GDC entities. Using the :http:method:`delete` on
-        a project's endpoint will *completely delete* an entity. The GDC does not
-        allow deletions or creations that would leave nodes without parents, i.e.
+      description: Delete existing entities. Using the :http:method:`delete` on a
+        project's endpoint will *completely delete* an entity. The Gen3 commons does
+        not allow deletions or creations that would leave nodes without parents, i.e.
         nodes that do not have an entity from which they were derived. To prevent
         catastrophic mistakes, the current philosophy is to disallow automatic cascading
         of deletes. However, to inform a user which entities must be deleted for the
@@ -2111,7 +2102,7 @@ paths:
         required: true
         type: string
       - description: A comma separated list of ids specifying the entities to delete.
-          These ids must be official GDC ids.
+          These ids must be official ids.
         in: path
         name: ids
         required: true
@@ -2149,7 +2140,7 @@ paths:
         name: project
         required: true
         type: string
-      - description: The GDC id of the file to upload.
+      - description: The id of the file to upload.
         in: path
         name: uuid
         required: true
