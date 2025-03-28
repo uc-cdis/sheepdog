@@ -1,7 +1,10 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from time import sleep
+import time
 import flask
+import json
+import base64
+from sheepdog.auth import check_if_jwt_expired
 from sheepdog.auth import authorize, AUTHZ_CACHE
 
 
@@ -19,8 +22,32 @@ def mock_auth_request():
     return MagicMock(return_value=True)
 
 
+def encode_jwt(payload):
+    """Helper function to encode a JWT without a signature."""
+    header = {"alg": "none", "typ": "JWT"}
+    encoded_header = (
+        base64.urlsafe_b64encode(json.dumps(header).encode()).rstrip(b"=").decode()
+    )
+    encoded_payload = (
+        base64.urlsafe_b64encode(json.dumps(payload).encode()).rstrip(b"=").decode()
+    )
+    return f"{encoded_header}.{encoded_payload}."
+
+
+def test_check_if_jwt_expired():
+    """Tests JWT expiration logic."""
+    expired_token = encode_jwt({"data": "test", "exp": time.time() - 1000})
+    valid_token = encode_jwt({"data": "test", "exp": time.time() + 1000})
+
+    assert check_if_jwt_expired(expired_token) is True
+    assert check_if_jwt_expired(valid_token) is False
+
+
 @patch("sheepdog.auth.get_jwt_from_header", return_value="jwt")
-def test_authorize_caching(mock_jwt, mock_flask_app, mock_auth_request):
+@patch("sheepdog.auth.check_if_jwt_expired", return_value=False)
+def test_authorize_caching(
+    mock_jwt, mock_jwt_expired, mock_flask_app, mock_auth_request
+):
     """
     Unit test for `authorize` function to verify caching behavior.
     Ensures that:
@@ -49,7 +76,10 @@ def test_authorize_caching(mock_jwt, mock_flask_app, mock_auth_request):
 
 
 @patch("sheepdog.auth.get_jwt_from_header", return_value="jwt")
-def test_authorize_cache_invalidation(mock_jwt, mock_flask_app, mock_auth_request):
+@patch("sheepdog.auth.check_if_jwt_expired", return_value=False)
+def test_authorize_cache_invalidation(
+    mock_jwt, mock_jwt_expired, mock_flask_app, mock_auth_request
+):
     """Ensures cache is invalidated after a timeout period."""
 
     AUTHZ_CACHE.clear()
@@ -61,14 +91,17 @@ def test_authorize_cache_invalidation(mock_jwt, mock_flask_app, mock_auth_reques
         mock_auth_request.assert_called_once()
         mock_auth_request.reset_mock()
 
-        sleep(1)  # Simulating cache expiration
+        time.sleep(1)  # Simulating cache expiration
 
         authorize("program", "project", ["role1"])
         mock_auth_request.assert_called_once()
 
 
+@patch("sheepdog.auth.check_if_jwt_expired", return_value=False)
 @patch("sheepdog.auth.get_jwt_from_header")
-def test_authorize_caching_per_user(mock_jwt, mock_flask_app, mock_auth_request):
+def test_authorize_caching_per_user(
+    mock_jwt, mock_jwt_expired, mock_flask_app, mock_auth_request
+):
     """
     Ensures `auth_request` is called separately for each unique user.
     Each user has a unique JWT, ensuring independent authorization checks.
@@ -93,3 +126,22 @@ def test_authorize_caching_per_user(mock_jwt, mock_flask_app, mock_auth_request)
         # Second user makes a request (jwt_for_user2)
         authorize("program", "project", ["role1"])
         mock_auth_request.assert_called_once()
+
+
+@patch("sheepdog.auth.check_if_jwt_expired", return_value=True)
+@patch("sheepdog.auth.get_jwt_from_header", return_value="jwt")
+def test_authorize_expired_token(
+    mock_jwt, mock_jwt_expired, mock_flask_app, mock_auth_request
+):
+    """Ensures data is not pulled from cache when jwt is expired"""
+
+    AUTHZ_CACHE.clear()
+
+    with patch.object(flask, "current_app") as mock_app:
+        mock_app.auth.auth_request = mock_auth_request
+
+        authorize("program", "project", ["role1"])
+        mock_auth_request.assert_called_once()
+
+        authorize("program", "project", ["role1"])
+        mock_auth_request.call_count == 2

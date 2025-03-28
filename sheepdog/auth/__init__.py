@@ -14,6 +14,8 @@ from authutils.token.validate import current_token
 from cachelib import SimpleCache
 from cdislogging import get_logger
 import flask
+import jwt
+import time
 
 from sheepdog.errors import AuthNError, AuthZError
 
@@ -31,15 +33,28 @@ except ImportError:
 
 
 def get_jwt_from_header():
-    jwt = None
+    jwt_token = None
     auth_header = flask.request.headers.get("Authorization")
     if auth_header:
         items = auth_header.split(" ")
         if len(items) == 2 and items[0].lower() == "bearer":
-            jwt = items[1]
-    if not jwt:
+            jwt_token = items[1]
+    if not jwt_token:
         raise AuthNError("Didn't receive JWT correctly")
-    return jwt
+    return jwt_token
+
+
+def check_if_jwt_expired(jwt_token):
+    """
+    Check if the JWT is expired.
+    """
+    try:
+        # decode the JWT to check its expiration, use verify_signature=False to skip signature verification
+        decoded_token = jwt.decode(jwt_token, options={"verify_signature": False})
+        return decoded_token.get("exp", 0) < time.time()
+    except jwt.exceptions.DecodeError as e:
+        logger.error(f"Unable to decode jwt token: {e}")
+        raise AuthNError("Didn't receive JWT correctly")
 
 
 def authorize_for_project(*required_roles):
@@ -52,9 +67,9 @@ def authorize_for_project(*required_roles):
         @functools.wraps(func)
         def authorize_and_call(program, project, *args, **kwargs):
             resource = "/programs/{}/projects/{}".format(program, project)
-            jwt = get_jwt_from_header()
+            jwt_token = get_jwt_from_header()
             authz = flask.current_app.auth.auth_request(
-                jwt=jwt,
+                jwt=jwt_token,
                 service="sheepdog",
                 methods=required_roles,
                 resources=[resource],
@@ -76,9 +91,9 @@ def require_sheepdog_program_admin(func):
 
     @functools.wraps(func)
     def authorize_and_call(*args, **kwargs):
-        jwt = get_jwt_from_header()
+        jwt_token = get_jwt_from_header()
         authz = flask.current_app.auth.auth_request(
-            jwt=jwt,
+            jwt=jwt_token,
             service="sheepdog",
             methods="*",
             resources=["/services/sheepdog/submission/program"],
@@ -98,9 +113,9 @@ def require_sheepdog_project_admin(func):
 
     @functools.wraps(func)
     def authorize_and_call(*args, **kwargs):
-        jwt = get_jwt_from_header()
+        jwt_token = get_jwt_from_header()
         authz = flask.current_app.auth.auth_request(
-            jwt=jwt,
+            jwt=jwt_token,
             service="sheepdog",
             methods="*",
             resources=["/services/sheepdog/submission/project"],
@@ -114,15 +129,16 @@ def require_sheepdog_project_admin(func):
 
 def authorize(program, project, roles):
     resource = "/programs/{}/projects/{}".format(program, project)
-    jwt = get_jwt_from_header()
-    cache_key = f"{jwt}_{roles}_{resource}"
+    jwt_token = get_jwt_from_header()
+    jwt_expired = check_if_jwt_expired(jwt_token)
+    cache_key = f"{jwt_token}_{roles}_{resource}"
     authz = None
 
-    if AUTHZ_CACHE.has(cache_key):
+    if not jwt_expired and AUTHZ_CACHE.has(cache_key):
         authz = AUTHZ_CACHE.get(cache_key)
     else:
         authz = flask.current_app.auth.auth_request(
-            jwt=jwt, service="sheepdog", methods=roles, resources=[resource]
+            jwt=jwt_token, service="sheepdog", methods=roles, resources=[resource]
         )
         AUTHZ_CACHE.set(cache_key, authz)
 
