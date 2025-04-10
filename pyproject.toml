@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sheepdog"
-version = "5.2.1"
+version = "5.2.2"
 description = "Gen3 Submission Service"
 authors = ["CTDS UChicago <cdis@uchicago.edu>"]
 license = "Apache-2.0"
@@ -13,9 +13,9 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.10"
+python = ">=3.9.2, <3.10"
 authlib = "*" # let authutils decide which version we're using
-authutils = ">=6.0.0"
+authutils = ">=6.2.7"
 boto = ">=2.49.0"
 botocore = "*"
 datamodelutils = ">=1.1.0"
