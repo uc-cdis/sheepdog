@@ -38,7 +38,7 @@ psqlgraph = ">=3.0.1"
 cdiserrors = ">=1.0.0"
 cdislogging = ">=1.0.0"
 gen3dictionary = ">=2.0.3"
-gen3datamodel = {git = "git+https://github.com/uc-cdis/gen3datamodel.git@paulineribeyre-patch-1"}
+gen3datamodel = {git = "https://github.com/uc-cdis/gen3datamodel.git", branch="paulineribeyre-patch-1"}
 gunicorn = ">=21.2.0"
 indexclient = ">=2.1.1"
 urllib3 = "<2.0.0"
