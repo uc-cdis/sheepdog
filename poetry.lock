@@ -856,7 +856,7 @@ strict-rfc3339 = "==0.7"
 type = "git"
 url = "https://github.com/uc-cdis/gen3datamodel.git"
 reference = "paulineribeyre-patch-1"
-resolved_reference = "095f38a457dd1ef51b68631cd31ada4f9c573828"
+resolved_reference = "a49b05038bbfc47a756ea00bd164fd08494e8e41"
 
 [[package]]
 name = "gen3dictionary"
