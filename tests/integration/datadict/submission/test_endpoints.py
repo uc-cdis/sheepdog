@@ -357,6 +357,31 @@ def test_put_dry_run(client, pg_driver, cgci_blgsp, submitter):
     with pg_driver.session_scope():
         assert not pg_driver.nodes(md.Experiment).first()
 
+def test_commit_dry_run_delete(client, pg_driver, cgci_blgsp, submitter):
+    resp = client.put(
+        BLGSP_PATH,
+        headers=submitter,
+        data=json.dumps(
+            {
+                "type": "experiment",
+                "submitter_id": "BLGSP-71-06-00019",
+                "projects": {"id": "daa208a7-f57a-562c-a04a-7a7c77542c98"},
+            }
+        ),
+    )
+    assert resp.status_code == 200, resp.data
+    created_id =  resp.json["entities"][0]["id"]
+    assert created_id
+    resp = client.delete(
+        BLGSP_PATH + "entities/_dry_run/" + created_id,
+        headers=submitter
+    )
+    assert resp.status_code == 200, resp.data
+    response = resp.json
+    transaction_id = response["transaction_id"]
+    path = BLGSP_PATH + "transactions/" + str(transaction_id) + "/commit"
+    resp = client.post(path, headers=submitter)
+    assert resp.status_code == 200, resp.data
 
 def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter):
     put_tcga_brca(client, submitter)
