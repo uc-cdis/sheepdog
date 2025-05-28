@@ -946,7 +946,7 @@ def resubmit_transaction(transaction_log):
         return transactions.deletion.handle_deletion_request(
             program,
             project,
-            [entity.node_id for entity in transaction_log.entities],
+            [entity.entity_id for entity in transaction_log.entities],
             dry_run=False,
         )
     elif transaction_log.role in {"review"}:
