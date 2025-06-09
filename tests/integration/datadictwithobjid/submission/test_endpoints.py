@@ -462,6 +462,23 @@ def test_insert_multiple_parents_and_export_by_ids(
     assert "experiments.submitter_id" in str_data
 
 
+def test_insert_tsv_detailed_error(client, pg_driver, cgci_blgsp, submitter):
+    """
+    Submitting a bad TSV that triggers the "Unable to parse document" error should result in
+    a detailed error message.
+    """
+    post_example_entities_together(client, submitter)
+    path = BLGSP_PATH
+    with open(os.path.join(DATA_DIR, "experimental_metadata_bad_link.tsv"), "r") as f:
+        headers = submitter
+        headers["Content-Type"] = "text/tsv"
+        resp = client.post(path, headers=headers, data=f.read())
+        assert resp.status_code == 400, resp.data
+        assert json.loads(resp.data) == {
+            "message": "Unable to parse document: type object 'ExperimentalMetadata' has no attribute 'unknown_link'"
+        }
+
+
 def test_timestamps(client, pg_driver, cgci_blgsp, submitter):
     test_post_example_entities(client, pg_driver, cgci_blgsp, submitter)
     with pg_driver.session_scope():
