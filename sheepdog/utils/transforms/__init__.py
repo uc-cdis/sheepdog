@@ -134,7 +134,7 @@ class DelimitedConverter(object):
             list(map(self.add_row, self.reader))
         except Exception as e:
             current_app.logger.exception(e)
-            raise UserError("Unable to parse document")
+            raise UserError(f"Unable to parse document: {e}")
         return self.docs, self.errors
 
     @staticmethod

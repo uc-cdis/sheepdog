@@ -1,0 +1,2 @@
+type	submitter_id	data_type	data_format	data_category	file_size	file_name	md5sum	state_comment	experiments.submitter_id	urls	unknown_link.submitter_id
+experimental_metadata	BLGSP-71-experimental-01-a	Experimental Metadata	some_format	data_file	42	CGCI-file-a.bam	35b39360cc41a7b635980159aef265ba	comment	BLGSP-71-experiment-01,BLGSP-71-experiment-02		some_value

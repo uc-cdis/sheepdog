@@ -8,4 +8,4 @@ set -e
 # loading different datamodels
 poetry run pytest -vv --cov=sheepdog --cov-report xml tests/integration/datadict
 poetry run pytest -vv --cov=sheepdog --cov-report xml --cov-append tests/integration/datadictwithobjid
-poetry run pytest -vv --cov=sheepdog --cov-report xml --cov-append tests/unit
+poetry run pytest -vv --cov=sheepdog --cov-report xml --cov-report=term-missing:skip-covered --cov-append tests/unit
