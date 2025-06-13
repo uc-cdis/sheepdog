@@ -95,25 +95,29 @@ name = "authutils"
 version = "6.2.7"
 description = "Gen3 auth utility functions"
 optional = false
-python-versions = "<4.0,>=3.9.2"
+python-versions = ">=3.9.2, <4.0"
 groups = ["main", "dev"]
-files = [
-    {file = "authutils-6.2.7-py3-none-any.whl", hash = "sha256:4f50990b841af56afe3a79a897df269a072035b89440dc27a80451c095cc2005"},
-    {file = "authutils-6.2.7.tar.gz", hash = "sha256:768ebf5f1f776e1a78ffe43f730f6fe01e1b5441e7ec9c8f99997284286dac5e"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 authlib = ">=1.1.0"
-cached-property = ">=1.4,<2.0"
+cached-property = "~=1.4"
 cdiserrors = "<2.0.0"
-cryptography = ">=44.0.1,<45.0.0"
+cryptography = "^44.0.1"
 httpx = ">=0.23.0,<1.0.0"
 pyjwt = {version = ">=2.4.0,<3.0", extras = ["crypto"]}
-xmltodict = ">=0.9,<1.0"
+xmltodict = "~=0.9"
 
 [package.extras]
 fastapi = ["fastapi (>=0.65.2,<0.66.0)"]
 flask = ["Flask (<=2.3.3)"]
+
+[package.source]
+type = "git"
+url = "https://github.com/uc-cdis/authutils"
+reference = "feat/no-aud-check"
+resolved_reference = "0eebee2dcb0fc77aa930e858e8328f77d4fd6947"
 
 [[package]]
 name = "avro"
@@ -2535,4 +2539,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9.2, <3.10"
-content-hash = "ca4df1550a01166a2459e57cd07dfd21baff71f1fe483fef5c6c4889b3c7b860"
+content-hash = "16638a1d148676469a9ef6578399a6c94a66ff545154c75573cc07bda7142de6"
