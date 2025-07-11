@@ -15,7 +15,8 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.9.2, <3.10"
 authlib = "*" # let authutils decide which version we're using
-authutils = ">=6.2.7"
+#authutils = ">=6.2.7"
+authutils = {git = "https://github.com/uc-cdis/authutils", rev = "feat/no-aud-check"}
 boto = ">=2.49.0"
 botocore = "*"
 datamodelutils = ">=1.1.0"
