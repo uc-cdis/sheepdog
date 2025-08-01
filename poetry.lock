@@ -686,7 +686,7 @@ sqlalchemy = ">=1.3.0,<2"
 type = "git"
 url = "https://github.com/uc-cdis/datamodelutils"
 reference = "update-sqlalchemy"
-resolved_reference = "811b417b102524aa3b06d28c02880a890745c51d"
+resolved_reference = "d5800c0ac745fc3f4fe3fe3ac0f824d9f3ed7bc4"
 
 [[package]]
 name = "dictionaryutils"
@@ -905,7 +905,7 @@ strict-rfc3339 = "==0.7"
 type = "git"
 url = "https://github.com/uc-cdis/gen3datamodel"
 reference = "sqlalchemy-dep"
-resolved_reference = "fa79cd65cb13014ad8c63b672933f91d19f4cd04"
+resolved_reference = "2b3ad6df9254318f168e586e7cb5622637a97ee2"
 
 [[package]]
 name = "gen3dictionary"
@@ -1647,7 +1647,7 @@ xlocal = "==0.5"
 type = "git"
 url = "https://github.com/uc-cdis/psqlgraph.git"
 reference = "update-sqlalchemy"
-resolved_reference = "a3fed6a4dc99bb46afb293c1efc2ab910577034d"
+resolved_reference = "b2fd4346257ec047abef51abe6c7aceb1c91fa32"
 
 [[package]]
 name = "psycopg2"
