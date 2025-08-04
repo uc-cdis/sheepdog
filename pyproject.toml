@@ -15,10 +15,10 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.9.2, <3.10"
 authlib = "*" # let authutils decide which version we're using
-authutils = ">=6.2.7"
+authutils = ">=6.2.7,<8"
 boto = ">=2.49.0"
 botocore = "*"
-datamodelutils = ">=1.1.0"
+datamodelutils = ">=1.1.0,<2"
 dictionaryutils = ">=3.4.11"
 envelopes = ">=0.4"
 Flask = ">=2.2.5"
@@ -34,11 +34,11 @@ requests = ">=2.31.0,<3.0.0"
 simplejson = ">=3.8.1"
 sqlalchemy = ">=1.3.*"
 cdispyutils = ">=2.0.1"
-psqlgraph = ">=3.0.1"
+psqlgraph = ">=3.0.1,<4"
 cdiserrors = ">=1.0.0"
 cdislogging = ">=1.0.0"
 gen3dictionary = ">=2.0.3"
-gen3datamodel = ">=3.2.4"
+gen3datamodel = ">=3.2.4,<4"
 gunicorn = ">=21.2.0"
 indexclient = ">=2.1.1"
 urllib3 = "<2.0.0"
@@ -56,7 +56,7 @@ sphinxcontrib-httpdomain = ">=1.3.0"
 Sphinx = ">=1.6.5"
 sphinx_rtd_theme = "*"
 flasgger = ">=0.9.1"
-indexd = {git = "https://github.com/uc-cdis/indexd", rev = "5.0.3"}
+indexd = {git = "https://github.com/uc-cdis/indexd", rev = "5.1.3"}
 
 [build-system]
 requires = ["poetry>=0.12"]
