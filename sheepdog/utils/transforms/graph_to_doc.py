@@ -427,7 +427,7 @@ def entity_to_template_delimited(links, schema, exclude_id):
 class ExportFile(object):
     """
     Export entities to tsv or csv or json.
-    An ExportFile should be intantiated and then call get_response to pass the
+    An ExportFile should be instantiated and then call get_response to pass the
     generator to flask response.
     """
 
