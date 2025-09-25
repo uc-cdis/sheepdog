@@ -46,11 +46,11 @@ def try_drop_test_data(  # nosec
 
 
 def _get_connection_string(user, password, host, port, database):
-    connect_str = "postgres://{user}@{host}:{port}/{database}".format(
+    connect_str = "postgresql://{user}@{host}:{port}/{database}".format(
         user=user, host=host, port=port, database=database
     )
     if password:
-        connect_str = "postgres://{user}:{password}@{host}:{port}/{database}".format(
+        connect_str = "postgresql://{user}:{password}@{host}:{port}/{database}".format(
             user=user,
             password=password,
             host=host,

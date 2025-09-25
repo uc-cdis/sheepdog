@@ -83,7 +83,7 @@ class TransactionBase(object):
         self.transactional_errors = []
 
         self.logger.info(
-            "User %s: new transaction for project %s",
+            "User ID %s: new transaction for project %s",
             auth.current_user.id,
             self.project_id,
         )
