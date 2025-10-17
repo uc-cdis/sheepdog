@@ -1,7 +1,7 @@
 ARG AZLINUX_BASE_VERSION=master
 
 # Base stage with python-build-base
-FROM quay.io/cdis/python-nginx-al:${AZLINUX_BASE_VERSION} AS base
+FROM quay.io/cdis/python-build-base:feat_python3.13-alias AS base
 
 ENV appname=sheepdog
 
