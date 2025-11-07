@@ -15,7 +15,6 @@ import io
 import tarfile
 import time
 
-import boto
 import flask
 from fuzzywuzzy.process import extract
 import psqlgraph

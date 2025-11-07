@@ -11,7 +11,7 @@ import os
 import uuid
 from io import StringIO
 
-import boto
+import boto3
 from datamodelutils import models as md
 from flask import g
 from moto import mock_s3
@@ -38,7 +38,7 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 def s3_conn():
     mock = mock_s3()
     mock.start(reset=False)
-    conn = boto.connect_s3()
+    conn = boto3.connect_s3()
     yield conn
     bucket = conn.get_bucket("test_submission")
     for part in bucket.list_multipart_uploads():
@@ -50,7 +50,7 @@ def mock_request(f):
     def wrapper(*args, **kwargs):
         mock = mock_s3()
         mock.start(reset=False)
-        conn = boto.connect_s3()
+        conn = boto3.connect_s3()
         conn.create_bucket("test_submission")
 
         result = f(*args, **kwargs)
@@ -357,6 +357,7 @@ def test_put_dry_run(client, pg_driver, cgci_blgsp, submitter):
     with pg_driver.session_scope():
         assert not pg_driver.nodes(md.Experiment).first()
 
+
 def test_commit_dry_run_delete(client, pg_driver, cgci_blgsp, submitter):
     resp = client.put(
         BLGSP_PATH,
@@ -370,11 +371,10 @@ def test_commit_dry_run_delete(client, pg_driver, cgci_blgsp, submitter):
         ),
     )
     assert resp.status_code == 200, resp.data
-    created_id =  resp.json["entities"][0]["id"]
+    created_id = resp.json["entities"][0]["id"]
     assert created_id
     resp = client.delete(
-        BLGSP_PATH + "entities/_dry_run/" + created_id,
-        headers=submitter
+        BLGSP_PATH + "entities/_dry_run/" + created_id, headers=submitter
     )
     assert resp.status_code == 200, resp.data
     response = resp.json
@@ -382,6 +382,7 @@ def test_commit_dry_run_delete(client, pg_driver, cgci_blgsp, submitter):
     path = BLGSP_PATH + "transactions/" + str(transaction_id) + "/commit"
     resp = client.post(path, headers=submitter)
     assert resp.status_code == 200, resp.data
+
 
 def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter):
     put_tcga_brca(client, submitter)

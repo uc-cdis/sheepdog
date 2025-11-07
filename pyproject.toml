@@ -15,7 +15,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.13"
 indexd = {git = "https://github.com/uc-cdis/indexd", rev = "5.0.3"}
-boto = ">=2.49.0"
+boto3 = ">=1.40.69"
 authlib = "*" # let authutils decide which version we're using
 authutils = ">=6.2.7"
 datamodelutils = ">=1.1.0"
