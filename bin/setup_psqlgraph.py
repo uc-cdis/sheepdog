@@ -9,12 +9,12 @@ from psqlgraph import create_all, Node, Edge
 
 def try_drop_test_data(  # nosec
     user,
-    database="postgres",
+    database="sheepdog_automated_test",
     root_user="postgres",
     host="",
     port="5432",
     root_password="",
-    default_database="postgres",
+    default_database="sheepdog_automated_test",
     use_ssl=False,
 ):
     print("Dropping old test data")
@@ -70,7 +70,7 @@ def setup_database(  # nosec
     no_drop=False,
     no_user=False,
     root_password="",
-    default_database="postgres",
+    default_database="sheepdog_automated_test",
     use_ssl=False,
 ):
     """
@@ -223,7 +223,7 @@ if __name__ == "__main__":
         "--default-database",
         type=str,
         action="store",
-        default="postgres",
+        default="sheepdog_automated_test",
         help="psql test database for root user",
     )
     parser.add_argument(
