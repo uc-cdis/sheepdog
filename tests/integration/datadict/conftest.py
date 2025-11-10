@@ -87,8 +87,6 @@ def app(tmpdir, request):
     _app.config.from_object("sheepdog.test_settings")
     _app.config["PATH_TO_SCHEMA_DIR"] = PATH_TO_SCHEMA_DIR
 
-    request.addfinalizer(teardown)
-
     app_init(_app)
 
     _app.logger.setLevel(os.environ.get("GDC_LOG_LEVEL", "WARNING"))
