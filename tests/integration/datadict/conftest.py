@@ -1,9 +1,7 @@
-import importlib
 import os
 import json
 import multiprocessing
 
-from indexd import default_settings, get_app as get_indexd_app
 from indexclient.client import IndexClient
 import pytest
 import requests
@@ -20,12 +18,8 @@ from sheepdog.test_settings import (
 )
 
 from tests import utils
-from tests.integration.utils import (
-    get_parent,
-    wait_for_indexd_alive,
-    wait_for_indexd_not_alive,
-)
-from tests.integration.api import app as _app, app_init, indexd_init
+from tests.integration.utils import get_parent
+from tests.integration.api import app as _app, app_init
 
 
 multiprocessing.set_start_method("fork")
@@ -77,20 +71,6 @@ def app(tmpdir, request):
 
     port = 8000
     dictionary_setup(_app)
-    # this is to make sure sqlite is initialized
-    # for every unit test
-    importlib.reload(default_settings)
-
-    # fresh files before running
-    for filename in ["auth.sq3", "index.sq3", "alias.sq3"]:
-        if os.path.exists(filename):
-            os.remove(filename)
-    indexd_app = get_indexd_app()
-
-    indexd_init(*INDEX_CLIENT["auth"])
-    indexd = multiprocessing.Process(target=indexd_app.run, args=["localhost", port])
-    indexd.start()
-    wait_for_indexd_alive(port)
 
     gencode_json = tmpdir.mkdir("slicing").join("test_gencode.json")
     gencode_json.write(
@@ -103,14 +83,6 @@ def app(tmpdir, request):
             }
         )
     )
-
-    def teardown():
-        for filename in ["auth.sq3", "index.sq3", "alias.sq3"]:
-            if os.path.exists(filename):
-                os.remove(filename)
-
-        indexd.terminate()
-        wait_for_indexd_not_alive(port)
 
     _app.config.from_object("sheepdog.test_settings")
     _app.config["PATH_TO_SCHEMA_DIR"] = PATH_TO_SCHEMA_DIR

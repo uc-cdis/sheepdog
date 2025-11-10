@@ -637,7 +637,6 @@ def test_valid_file_index(
     """
     Test that submitting a valid data file creates an index and an alias.
     """
-
     # Update this dictionary in the patched functions to check that they are
     # called.
 

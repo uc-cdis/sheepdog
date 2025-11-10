@@ -1,19 +1,9 @@
-import flask
-
+from mock import patch, MagicMock
 import pytest
 import requests
 
-# Python 2 and 3 compatible
-try:
-    from unittest.mock import MagicMock
-    from unittest.mock import patch
-except ImportError:
-    from mock import MagicMock
-    from mock import patch
-
 from sheepdog.errors import AuthZError
 from sheepdog.test_settings import JWT_KEYPAIR_FILES
-
 from tests import utils
 
 
@@ -162,3 +152,32 @@ def arborist_authorized(mock_arborist_requests):
     "mock_arborist_requests(authorized=False)" in the test itself
     """
     mock_arborist_requests()
+
+
+@pytest.fixture(scope="function", autouse=True)
+def mock_indexd_requests(request):
+    """
+    This fixture mocks calls made by indexclient to Indexd
+    """
+    mocked_get_response = MagicMock
+    mocked_get_response.status_code = 200
+    mocked_get_response.json = lambda _: {}
+
+    mocked_post_response = MagicMock
+    mocked_post_response.status_code = 200
+    mocked_post_response.json = lambda _: {"did": "test-did", "records": []}
+
+    get_patch = patch(
+        "indexclient.client.requests.get",
+        mocked_get_response,
+    )
+    post_patch = patch(
+        "indexclient.client.requests.post",
+        mocked_post_response,
+    )
+
+    get_patch.start()
+    post_patch.start()
+
+    request.addfinalizer(get_patch.stop)
+    request.addfinalizer(post_patch.stop)
