@@ -63,11 +63,22 @@ def mock_request(f):
 def add_and_get_new_experimental_metadata_count(pg_driver):
     with pg_driver.session_scope() as s:
         experimental_metadata = pg_driver.nodes(md.ExperimentalMetadata).first()
+        # print('\nedges_out', dir(experimental_metadata))
+        # print('\nedges_out', experimental_metadata.edges_out)
+        # print(experimental_metadata._pg_links)
         new_experimental_metadata = md.ExperimentalMetadata(str(uuid.uuid4()))
-        new_experimental_metadata.props = experimental_metadata.props
+        new_experimental_metadata.props = experimental_metadata.props.copy()
+        # new_experimental_metadata.edges_out = experimental_metadata.edges_out
+        # print('\nedges_out', new_experimental_metadata.edges_out)
         new_experimental_metadata.submitter_id = "case-2"
         s.add(new_experimental_metadata)
         experimental_metadata_count = pg_driver.nodes(md.ExperimentalMetadata).count()
+        print("\n+++++++")
+        print("NODES:")
+        for n in pg_driver.nodes(md.ExperimentalMetadata).all():
+            print(n.submitter_id, n)
+            # print(n._pg_links)
+        print("+++++++\n")
     return experimental_metadata_count
 
 
@@ -813,12 +824,19 @@ def test_export_entity_by_id_json(
 
 def do_test_export(client, pg_driver, submitter, node_type, format_type):
     post_example_entities_together(client, submitter, extended_data_fnames)
+    # import time; time.sleep(2)
     experimental_metadata_count = add_and_get_new_experimental_metadata_count(pg_driver)
+    # print("experimental_metadata_count", experimental_metadata_count)
     r = get_export_data(client, submitter, node_type, format_type, False)
     assert r.status_code == 200, r.data
     assert r.headers["Content-Disposition"].endswith(format_type)
     if format_type == "tsv":
         str_data = str(r.data, "utf-8")
+        # print(str_data)
+        print("\n\n\n====")
+        for e in (str_data.strip().split("\n")):
+            print(e)
+            print("====")
         assert len(str_data.strip().split("\n")) == experimental_metadata_count + 1
         return str_data
     else:

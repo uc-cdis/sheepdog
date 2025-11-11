@@ -1,6 +1,8 @@
+import json
 from mock import patch, MagicMock
 import pytest
 import requests
+import uuid
 
 from sheepdog.errors import AuthZError
 from sheepdog.test_settings import JWT_KEYPAIR_FILES
@@ -159,25 +161,50 @@ def mock_indexd_requests(request):
     """
     This fixture mocks calls made by indexclient to Indexd
     """
-    mocked_get_response = MagicMock
-    mocked_get_response.status_code = 200
-    mocked_get_response.json = lambda _: {}
+    _records = {}
+    def make_mock_response(method, url, *args, **kwargs):
+        print(f"DEBUG: mock_indexd_requests: {method} {url} {args} {kwargs}")
+        url = url.rstrip("/")
 
-    mocked_post_response = MagicMock
-    mocked_post_response.status_code = 200
-    mocked_post_response.json = lambda _: {"did": "test-did", "records": []}
+        resp = MagicMock
+        resp.status_code = 200
+        resp_data = None
 
-    get_patch = patch(
-        "indexclient.client.requests.get",
-        mocked_get_response,
+        if method == "get":
+            if url.endswith("/index"):  # "list records" endpoint
+                resp_data = {"records": _records}
+            else:  # "get record" endpoint
+                did = url.split("/index/")[-1]
+                resp_data = _records[did]
+        elif method == "post":
+            body = json.loads(args[1]["data"])
+            if "rev" not in body:
+                body["rev"] = str(uuid.uuid4())[:6]
+            if "did" not in body:
+                body["did"] = str(uuid.uuid4())
+            _records[body["did"]] = body
+            resp_data = body
+        elif method == "put":
+            did = url.split("/index/")[-1]
+            record = _records[did]
+            body = json.loads(args[1]["data"])
+            record.update(body)
+            _records[record["did"]] = record
+            resp_data = record
+        resp.json = lambda: resp_data
+        return resp
+
+    mocked_requests = MagicMock
+    mocked_requests.get = lambda url, *args, **kwargs: make_mock_response(
+        "get", url, args, kwargs)
+    mocked_requests.post = lambda url, *args, **kwargs: make_mock_response(
+        "post", url, args, kwargs)
+    mocked_requests.put = lambda url, *args, **kwargs: make_mock_response(
+        "put", url, args, kwargs)
+
+    requests_patch = patch(
+        "indexclient.client.requests",
+        mocked_requests,
     )
-    post_patch = patch(
-        "indexclient.client.requests.post",
-        mocked_post_response,
-    )
-
-    get_patch.start()
-    post_patch.start()
-
-    request.addfinalizer(get_patch.stop)
-    request.addfinalizer(post_patch.stop)
+    requests_patch.start()
+    request.addfinalizer(requests_patch.stop)
