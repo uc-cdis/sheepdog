@@ -173,7 +173,7 @@ def mock_indexd_requests(request):
         url = url.rstrip("/")
         if method == "GET":
             if url.endswith("/index"):  # "list records" endpoint
-                resp_data = {"records": _records}
+                resp_data = {"records": list(_records.values())}
             else:  # "get record" endpoint
                 did = url.split("/index/")[-1]
                 if did in _records:

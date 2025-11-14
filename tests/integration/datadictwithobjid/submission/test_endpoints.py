@@ -19,9 +19,7 @@ from sheepdog.transactions.upload import UploadTransaction
 from tests.integration.utils import put_cgci, put_cgci2, put_cgci_blgsp, put_tcga_brca
 from tests.integration.datadict.submission.utils import data_fnames
 from tests.integration.datadictwithobjid.submission.utils import extended_data_fnames
-from tests.integration.datadict.submission.test_endpoints import (
-    do_test_export,
-)
+from tests.integration.datadict.submission.test_endpoints import do_test_export
 
 BLGSP_PATH = "/v0/submission/CGCI/BLGSP/"
 BRCA_PATH = "/v0/submission/TCGA/BRCA/"
@@ -295,7 +293,9 @@ def post_example_entities_together(client, submitter, data_fnames2=None):
     for fname in data_fnames2:
         with open(os.path.join(DATA_DIR, fname), "r") as f:
             data.append(json.loads(f.read()))
-    return client.post(path, headers=submitter, data=json.dumps(data))
+    resp = client.post(path, headers=submitter, data=json.dumps(data))
+    assert resp.status_code < 300, resp.text
+    return resp
 
 
 def put_example_entities_together(client, headers):
@@ -713,6 +713,7 @@ def test_export_all_node_types(
         submitter_and_client_submitter,
         "experimental_metadata",
         "tsv",
+        test_add_new_experimental_metadata=True,
     )
 
 

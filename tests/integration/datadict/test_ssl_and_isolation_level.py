@@ -40,4 +40,11 @@ def test_submit_valid_tsv(client, pg_driver, cgci_blgsp, submitter):
 def test_export_all_node_types(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
-    do_test_export(client, pg_driver, submitter, "experimental_metadata", "tsv")
+    do_test_export(
+        client,
+        pg_driver,
+        submitter,
+        "experimental_metadata",
+        "tsv",
+        test_add_new_experimental_metadata=True,
+    )
