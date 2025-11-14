@@ -161,22 +161,22 @@ def mock_indexd_requests(request):
     """
     This fixture mocks calls made by indexclient to Indexd
     """
-    _records = {}
-    def make_mock_response(method, url, *args, **kwargs):
-        print(f"DEBUG: mock_indexd_requests: {method} {url} {args} {kwargs}")
-        url = url.rstrip("/")
+    _records = {}  # {did: record} all records currently in the mocked indexd DB
 
+    def make_mock_response(method, url, *args, **kwargs):
+        print(f"DEBUG: indexd request: {method} {url} {args} {kwargs}")
         resp = MagicMock
         resp.status_code = 200
         resp_data = None
 
-        if method == "get":
+        url = url.rstrip("/")
+        if method == "GET":
             if url.endswith("/index"):  # "list records" endpoint
                 resp_data = {"records": _records}
             else:  # "get record" endpoint
                 did = url.split("/index/")[-1]
                 resp_data = _records[did]
-        elif method == "post":
+        elif method == "POST":
             body = json.loads(args[1]["data"])
             if "rev" not in body:
                 body["rev"] = str(uuid.uuid4())[:6]
@@ -184,24 +184,27 @@ def mock_indexd_requests(request):
                 body["did"] = str(uuid.uuid4())
             _records[body["did"]] = body
             resp_data = body
-        elif method == "put":
+        elif method == "PUT":
             did = url.split("/index/")[-1]
             record = _records[did]
             body = json.loads(args[1]["data"])
             record.update(body)
             _records[record["did"]] = record
             resp_data = record
+
         resp.json = lambda: resp_data
         return resp
 
     mocked_requests = MagicMock
     mocked_requests.get = lambda url, *args, **kwargs: make_mock_response(
-        "get", url, args, kwargs)
+        "GET", url, args, kwargs
+    )
     mocked_requests.post = lambda url, *args, **kwargs: make_mock_response(
-        "post", url, args, kwargs)
+        "POST", url, args, kwargs
+    )
     mocked_requests.put = lambda url, *args, **kwargs: make_mock_response(
-        "put", url, args, kwargs)
-
+        "PUT", url, args, kwargs
+    )
     requests_patch = patch(
         "indexclient.client.requests",
         mocked_requests,
