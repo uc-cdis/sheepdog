@@ -165,6 +165,7 @@ def mock_indexd_requests(request):
 
     def make_mock_response(method, url, *args, **kwargs):
         print(f"DEBUG: indexd request: {method} {url} {args} {kwargs}")
+        print(f"DEBUG: indexd records: {list(_records.keys())}")
         resp = MagicMock
         resp.status_code = 200
         resp_data = None
@@ -175,7 +176,11 @@ def mock_indexd_requests(request):
                 resp_data = {"records": _records}
             else:  # "get record" endpoint
                 did = url.split("/index/")[-1]
-                resp_data = _records[did]
+                if did in _records:
+                    resp_data = _records[did]
+                else:
+                    resp.status_code = 404
+                    raise requests.HTTPError(response=resp)
         elif method == "POST":
             body = json.loads(args[1]["data"])
             if "rev" not in body:
@@ -205,6 +210,8 @@ def mock_indexd_requests(request):
     mocked_requests.put = lambda url, *args, **kwargs: make_mock_response(
         "PUT", url, args, kwargs
     )
+    mocked_requests.exceptions = requests.exceptions
+    mocked_requests.HTTPError = requests.HTTPError
     requests_patch = patch(
         "indexclient.client.requests",
         mocked_requests,
