@@ -840,6 +840,45 @@ def test_export_error(client, cgci_blgsp, submitter, file_type):
         assert response.status_code == 400
 
 
+def test_export_project_id_filtering(client, submitter, require_index_exists_off):
+    """
+    Create 2 experiments in CGCI-BLGSP and 1 experiment in TCGA-BRCA. Check that the
+    export endpoint only returns the experiments that are in the specified project.
+    """
+    # create program CGCI, project BLGSP and 2 experiments
+    put_cgci_blgsp(client, submitter)
+    post_example_entities_together(client, submitter, extended_data_fnames)
+
+    # create program TCGA, project BRCA and 1 experiments
+    put_tcga_brca(client, submitter)
+    data = {
+        "type": "experiment",
+        "submitter_id": "TCGA-BRCA-experiment-01",
+        "projects": {"code": "BRCA"},
+    }
+    resp = client.post(BRCA_PATH, headers=submitter, data=json.dumps(data))
+    assert resp.status_code == 201, resp.text
+
+    # export CGCI-BLGSP data
+    resp = get_export_data(client, submitter, "experiment", "json", False)
+    assert resp.status_code == 200, resp.text
+    experiments = resp.json.get("data", [])
+    assert len(experiments) == 2
+    for e in experiments:
+        assert e["project_id"] == "CGCI-BLGSP"
+
+    # export TCGA-BRCA data
+    resp = client.get(
+        "/v0/submission/TCGA/BRCA/export/?node_label=experiment&format=json",
+        headers=submitter,
+    )
+    assert resp.status_code == 200, resp.text
+    experiments = resp.json.get("data", [])
+    assert len(experiments) == 1
+    for e in experiments:
+        assert e["project_id"] == "TCGA-BRCA"
+
+
 def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter):
     """
     Test that returns error  when attemping to delete non-empty project
