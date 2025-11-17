@@ -261,7 +261,9 @@ def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
             assert condition_to_check, resp.data
 
 
-def post_example_entities_together(client, submitter, data_fnames2=None):
+def post_example_entities_together(
+    client, submitter, data_fnames2=None, assert_success=True
+):
     if not data_fnames2:
         data_fnames2 = data_fnames
     path = BLGSP_PATH
@@ -270,7 +272,8 @@ def post_example_entities_together(client, submitter, data_fnames2=None):
         with open(os.path.join(DATA_DIR, fname), "r") as f:
             data.append(json.loads(f.read()))
     resp = client.post(path, headers=submitter, data=json.dumps(data))
-    assert resp.status_code < 300, resp.text
+    if assert_success:
+        assert resp.status_code < 300, resp.text
     return resp
 
 
@@ -637,7 +640,9 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
         "read_group.json",
         "submitted_unaligned_reads_invalid.json",
     ]
-    resp = post_example_entities_together(client, submitter, data_fnames2=test_fnames)
+    resp = post_example_entities_together(
+        client, submitter, data_fnames2=test_fnames, assert_success=False
+    )
     print(resp)
 
 
