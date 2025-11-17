@@ -4,12 +4,16 @@ import pytest
 import requests
 import uuid
 
+from cdislogging import get_logger
+
 from sheepdog.errors import AuthZError
 from sheepdog.test_settings import JWT_KEYPAIR_FILES
 from tests import utils
 
 
 SUBMITTER_USERNAME = "submitter"
+
+logger = get_logger(__name__, log_level="debug")
 
 
 @pytest.fixture(scope="session")
@@ -159,13 +163,15 @@ def arborist_authorized(mock_arborist_requests):
 @pytest.fixture(scope="function", autouse=True)
 def mock_indexd_requests(request):
     """
-    This fixture mocks calls made by indexclient to Indexd
+    This fixture automatically mocks all calls made by indexclient to Indexd
     """
-    _records = {}  # {did: record} all records currently in the mocked indexd DB
+    # _records: {did: record} mapping. All records currently in the mocked indexd DB
+    _records = {}
 
     def make_mock_response(method, url, *args, **kwargs):
-        print(f"DEBUG: indexd request: {method} {url} {args} {kwargs}")
-        print(f"DEBUG: indexd records: {list(_records.keys())}")
+        logger.debug(
+            f"indexd request: {method} {url} {args} {kwargs}. Mocked records: {list(_records.keys())}"
+        )
         resp = MagicMock
         resp.status_code = 200
         resp_data = None
@@ -183,19 +189,17 @@ def mock_indexd_requests(request):
                     raise requests.HTTPError(response=resp)
         elif method == "POST":
             body = json.loads(args[1]["data"])
-            if "rev" not in body:
-                body["rev"] = str(uuid.uuid4())[:6]
             if "did" not in body:
                 body["did"] = str(uuid.uuid4())
+            body["rev"] = str(uuid.uuid4())[:8]
             _records[body["did"]] = body
             resp_data = body
         elif method == "PUT":
             did = url.split("/index/")[-1]
-            record = _records[did]
             body = json.loads(args[1]["data"])
-            record.update(body)
-            _records[record["did"]] = record
-            resp_data = record
+            _records[did].update(body)
+            _records[did]["rev"] = str(uuid.uuid4())[:8]
+            resp_data = _records[did]
 
         resp.json = lambda: resp_data
         return resp

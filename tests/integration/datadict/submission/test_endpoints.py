@@ -60,16 +60,13 @@ def mock_request(f):
     return wrapper
 
 
-def add_and_get_new_experimental_metadata_count(pg_driver, client, submitter):
-    path = BLGSP_PATH
-    fname = "experimental_metadata.json"
-    with open(os.path.join(DATA_DIR, fname), "r") as f:
-        data = json.loads(f.read())
-        data["submitter_id"] += "_2"
-    resp = client.post(path, headers=submitter, data=json.dumps(data))
-    assert resp.status_code < 300, resp.text
-
+def add_and_get_new_experimental_metadata_count(pg_driver):
     with pg_driver.session_scope() as s:
+        experimental_metadata = pg_driver.nodes(md.ExperimentalMetadata).first()
+        new_experimental_metadata = md.ExperimentalMetadata(str(uuid.uuid4()))
+        new_experimental_metadata.props = experimental_metadata.props
+        new_experimental_metadata.submitter_id = "case-2"
+        s.add(new_experimental_metadata)
         experimental_metadata_count = pg_driver.nodes(md.ExperimentalMetadata).count()
     return experimental_metadata_count
 
@@ -832,7 +829,7 @@ def do_test_export(
     post_example_entities_together(client, submitter, extended_data_fnames)
     if test_add_new_experimental_metadata:
         experimental_metadata_count = add_and_get_new_experimental_metadata_count(
-            pg_driver, client, submitter
+            pg_driver
         )
     r = get_export_data(client, submitter, node_type, format_type, False)
     assert r.status_code == 200, r.data
