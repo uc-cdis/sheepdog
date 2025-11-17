@@ -849,7 +849,7 @@ def test_export_project_id_filtering(client, submitter, require_index_exists_off
     put_cgci_blgsp(client, submitter)
     post_example_entities_together(client, submitter, extended_data_fnames)
 
-    # create program TCGA, project BRCA and 1 experiments
+    # create program TCGA, project BRCA and 1 experiment
     put_tcga_brca(client, submitter)
     data = {
         "type": "experiment",
