@@ -17,7 +17,8 @@ python = ">=3.9.2, <3.10"
 authlib = "*" # let authutils decide which version we're using
 authutils = ">=6.2.7,<8"
 boto = ">=2.49.0"
-datamodelutils = ">=1.1.0,<2"
+#datamodelutils = ">=1.1.0,<2"
+datamodelutils = {git = "https://github.com/uc-cdis/datamodelutils", rev = "fix/has_table"}
 dictionaryutils = ">=3.4.11"
 envelopes = ">=0.4"
 Flask = ">=2.2.5"
