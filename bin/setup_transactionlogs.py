@@ -14,7 +14,7 @@ def setup(host, port, user, password, database, use_ssl=False):
         connect_args["sslmode"] = "require"
 
     engine = create_engine(
-        "postgres://{user}:{password}@{host}:{port}/{database}".format(
+        "postgresql://{user}:{password}@{host}:{port}/{database}".format(
             user=user, host=host, port=port, password=password, database=database
         ),
         connect_args=connect_args,

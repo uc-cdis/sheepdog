@@ -258,7 +258,9 @@ def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
             assert condition_to_check, resp.data
 
 
-def post_example_entities_together(client, submitter, data_fnames2=None):
+def post_example_entities_together(
+    client, submitter, data_fnames2=None, assert_success=True
+):
     if not data_fnames2:
         data_fnames2 = data_fnames
     path = BLGSP_PATH
@@ -267,6 +269,8 @@ def post_example_entities_together(client, submitter, data_fnames2=None):
         with open(os.path.join(DATA_DIR, fname), "r") as f:
             data.append(json.loads(f.read()))
     resp = client.post(path, headers=submitter, data=json.dumps(data))
+    if assert_success:
+        assert resp.status_code < 300, resp.text
     return resp
 
 
@@ -357,6 +361,7 @@ def test_put_dry_run(client, pg_driver, cgci_blgsp, submitter):
     with pg_driver.session_scope():
         assert not pg_driver.nodes(md.Experiment).first()
 
+
 def test_commit_dry_run_delete(client, pg_driver, cgci_blgsp, submitter):
     resp = client.put(
         BLGSP_PATH,
@@ -370,11 +375,10 @@ def test_commit_dry_run_delete(client, pg_driver, cgci_blgsp, submitter):
         ),
     )
     assert resp.status_code == 200, resp.data
-    created_id =  resp.json["entities"][0]["id"]
+    created_id = resp.json["entities"][0]["id"]
     assert created_id
     resp = client.delete(
-        BLGSP_PATH + "entities/_dry_run/" + created_id,
-        headers=submitter
+        BLGSP_PATH + "entities/_dry_run/" + created_id, headers=submitter
     )
     assert resp.status_code == 200, resp.data
     response = resp.json
@@ -382,6 +386,7 @@ def test_commit_dry_run_delete(client, pg_driver, cgci_blgsp, submitter):
     path = BLGSP_PATH + "transactions/" + str(transaction_id) + "/commit"
     resp = client.post(path, headers=submitter)
     assert resp.status_code == 200, resp.data
+
 
 def test_incorrect_project_error(client, pg_driver, cgci_blgsp, submitter):
     put_tcga_brca(client, submitter)
@@ -632,7 +637,9 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
         "read_group.json",
         "submitted_unaligned_reads_invalid.json",
     ]
-    resp = post_example_entities_together(client, submitter, data_fnames2=test_fnames)
+    resp = post_example_entities_together(
+        client, submitter, data_fnames2=test_fnames, assert_success=False
+    )
     print(resp)
 
 
@@ -811,19 +818,31 @@ def test_export_entity_by_id_json(
     assert data[0]["id"] == case_id
 
 
-def do_test_export(client, pg_driver, submitter, node_type, format_type):
+def do_test_export(
+    client,
+    pg_driver,
+    submitter,
+    node_type,
+    format_type,
+    test_add_new_experimental_metadata=False,
+):
     post_example_entities_together(client, submitter, extended_data_fnames)
-    experimental_metadata_count = add_and_get_new_experimental_metadata_count(pg_driver)
+    if test_add_new_experimental_metadata:
+        experimental_metadata_count = add_and_get_new_experimental_metadata_count(
+            pg_driver
+        )
     r = get_export_data(client, submitter, node_type, format_type, False)
     assert r.status_code == 200, r.data
     assert r.headers["Content-Disposition"].endswith(format_type)
     if format_type == "tsv":
         str_data = str(r.data, "utf-8")
-        assert len(str_data.strip().split("\n")) == experimental_metadata_count + 1
+        if test_add_new_experimental_metadata:
+            assert len(str_data.strip().split("\n")) == experimental_metadata_count + 1
         return str_data
     else:
         js_data = json.loads(r.data)
-        assert len(js_data["data"]) == experimental_metadata_count
+        if test_add_new_experimental_metadata:
+            assert len(js_data["data"]) == experimental_metadata_count
         return js_data
 
 
@@ -840,7 +859,14 @@ def get_export_data(client, submitter, node_type, format_type, without_id):
 def test_export_all_node_types(
     client, pg_driver, cgci_blgsp, submitter, require_index_exists_off
 ):
-    do_test_export(client, pg_driver, submitter, "experimental_metadata", "tsv")
+    do_test_export(
+        client,
+        pg_driver,
+        submitter,
+        "experimental_metadata",
+        "tsv",
+        test_add_new_experimental_metadata=True,
+    )
 
 
 def test_export_non_string_array_values():
@@ -900,19 +926,23 @@ def test_export_all_node_types_and_resubmit_json_with_empty_field(
     Test we can export an entity with empty fields (as json) then resubmit it.
     The exported entity should have the empty fields omitted.
     """
-    js_id_data = do_test_export(client, pg_driver, submitter, "experiment", "json")
-    assert js_id_data
-    js_data = json.loads(
+    js_data_with_ids = do_test_export(
+        client, pg_driver, submitter, "experiment", "json"
+    )
+    assert js_data_with_ids.get("data")
+    js_data_without_ids = json.loads(
         get_export_data(client, submitter, "experiment", "json", True).data
     )
     nonempty = ["project_id", "submitter_id", "projects", "type"]
-    print(js_data)
-    for data in js_data["data"]:
+    print(js_data_without_ids)
+    for data in js_data_without_ids["data"]:
         for key in data.keys():
             assert key in nonempty
 
     headers = submitter
-    resp = client.put(BLGSP_PATH, headers=headers, data=json.dumps(js_data["data"]))
+    resp = client.put(
+        BLGSP_PATH, headers=headers, data=json.dumps(js_data_without_ids["data"])
+    )
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 200, resp.data
 
@@ -924,21 +954,27 @@ def test_export_all_node_types_and_resubmit_tsv_with_empty_field(
     Test we can export an entity with empty fields (as tsv) then resubmit it.
     The empty values of the exported entity should be empty strings.
     """
-    str_id_data = do_test_export(client, pg_driver, submitter, "experiment", "tsv")
-    assert str_id_data
-    str_data = get_export_data(client, submitter, "experiment", "tsv", True).data
+    str_data_with_ids = do_test_export(
+        client, pg_driver, submitter, "experiment", "tsv"
+    )
+    assert str_data_with_ids
+    str_data_without_ids = get_export_data(
+        client, submitter, "experiment", "tsv", True
+    ).data
 
     nonempty = ["project_id", "submitter_id", "projects.code", "type"]
-    tsv_output = csv.DictReader(StringIO(str_data.decode("utf-8")), delimiter="\t")
+    tsv_output = csv.DictReader(
+        StringIO(str_data_without_ids.decode("utf-8")), delimiter="\t"
+    )
     for row in tsv_output:
         for k, v in row.items():
             if k not in nonempty:
                 assert v == ""
 
-    str_data = str(str_data, "utf-8")
+    str_data_without_ids = str(str_data_without_ids, "utf-8")
     headers = submitter
     headers["Content-Type"] = "text/tsv"
-    resp = client.put(BLGSP_PATH, headers=headers, data=str_data)
+    resp = client.put(BLGSP_PATH, headers=headers, data=str_data_without_ids)
     print(json.dumps(json.loads(resp.data), indent=4, sort_keys=True))
     assert resp.status_code == 200, resp.data
 
