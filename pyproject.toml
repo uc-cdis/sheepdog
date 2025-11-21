@@ -14,7 +14,6 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.13"
-indexd = {git = "https://github.com/uc-cdis/indexd", rev = "5.0.3"}
 boto3 = ">=1.40.69"
 authlib = "*" # let authutils decide which version we're using
 authutils = ">=6.2.7,<8"
@@ -31,6 +30,8 @@ PyYAML = ">=5.4.1"
 requests = ">=2.31.0,<3.0.0"
 simplejson = ">=3.8.1"
 sqlalchemy = ">=1.3.3,<2"
+gen3dictionary = ">=2.0.3"
+gen3datamodel = ">=3.2.6,<4"
 cdispyutils = ">=2.0.1"
 Flask-SQLAlchemy-Session = ">=1.1"
 psqlgraph = ">=3.0.1,<4"
