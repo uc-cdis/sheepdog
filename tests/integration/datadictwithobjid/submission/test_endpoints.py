@@ -19,9 +19,7 @@ from sheepdog.transactions.upload import UploadTransaction
 from tests.integration.utils import put_cgci, put_cgci2, put_cgci_blgsp, put_tcga_brca
 from tests.integration.datadict.submission.utils import data_fnames
 from tests.integration.datadictwithobjid.submission.utils import extended_data_fnames
-from tests.integration.datadict.submission.test_endpoints import (
-    do_test_export,
-)
+from tests.integration.datadict.submission.test_endpoints import do_test_export
 
 BLGSP_PATH = "/v0/submission/CGCI/BLGSP/"
 BRCA_PATH = "/v0/submission/TCGA/BRCA/"
@@ -287,7 +285,9 @@ def test_post_example_entities(client, pg_driver, cgci_blgsp, submitter):
             assert condition_to_check, resp.data
 
 
-def post_example_entities_together(client, submitter, data_fnames2=None):
+def post_example_entities_together(
+    client, submitter, data_fnames2=None, assert_success=True
+):
     if not data_fnames2:
         data_fnames2 = data_fnames
     path = BLGSP_PATH
@@ -295,7 +295,10 @@ def post_example_entities_together(client, submitter, data_fnames2=None):
     for fname in data_fnames2:
         with open(os.path.join(DATA_DIR, fname), "r") as f:
             data.append(json.loads(f.read()))
-    return client.post(path, headers=submitter, data=json.dumps(data))
+    resp = client.post(path, headers=submitter, data=json.dumps(data))
+    if assert_success:
+        assert resp.status_code < 300, resp.text
+    return resp
 
 
 def put_example_entities_together(client, headers):
@@ -621,7 +624,9 @@ def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitte
         "read_group.json",
         "submitted_unaligned_reads_invalid.json",
     ]
-    resp = post_example_entities_together(client, submitter, data_fnames2=test_fnames)
+    resp = post_example_entities_together(
+        client, submitter, data_fnames2=test_fnames, assert_success=False
+    )
     print(resp)
 
 
@@ -637,7 +642,6 @@ def test_valid_file_index(
     """
     Test that submitting a valid data file creates an index and an alias.
     """
-
     # Update this dictionary in the patched functions to check that they are
     # called.
 
@@ -714,6 +718,7 @@ def test_export_all_node_types(
         submitter_and_client_submitter,
         "experimental_metadata",
         "tsv",
+        test_add_new_experimental_metadata=True,
     )
 
 
@@ -833,6 +838,45 @@ def test_export_error(client, cgci_blgsp, submitter, file_type):
         )
         response = client.get(path, headers=submitter)
         assert response.status_code == 400
+
+
+def test_export_project_id_filtering(client, submitter, require_index_exists_off):
+    """
+    Create 2 experiments in CGCI-BLGSP and 1 experiment in TCGA-BRCA. Check that the
+    export endpoint only returns the experiments that are in the specified project.
+    """
+    # create program CGCI, project BLGSP and 2 experiments
+    put_cgci_blgsp(client, submitter)
+    post_example_entities_together(client, submitter, extended_data_fnames)
+
+    # create program TCGA, project BRCA and 1 experiment
+    put_tcga_brca(client, submitter)
+    data = {
+        "type": "experiment",
+        "submitter_id": "TCGA-BRCA-experiment-01",
+        "projects": {"code": "BRCA"},
+    }
+    resp = client.post(BRCA_PATH, headers=submitter, data=json.dumps(data))
+    assert resp.status_code == 201, resp.text
+
+    # export CGCI-BLGSP data
+    resp = get_export_data(client, submitter, "experiment", "json", False)
+    assert resp.status_code == 200, resp.text
+    experiments = resp.json.get("data", [])
+    assert len(experiments) == 2
+    for e in experiments:
+        assert e["project_id"] == "CGCI-BLGSP"
+
+    # export TCGA-BRCA data
+    resp = client.get(
+        "/v0/submission/TCGA/BRCA/export/?node_label=experiment&format=json",
+        headers=submitter,
+    )
+    assert resp.status_code == 200, resp.text
+    experiments = resp.json.get("data", [])
+    assert len(experiments) == 1
+    for e in experiments:
+        assert e["project_id"] == "TCGA-BRCA"
 
 
 def test_delete_non_empty_project(client, pg_driver, cgci_blgsp, submitter):

@@ -1,5 +1,4 @@
 import json
-import requests
 
 from flask import g
 
@@ -7,26 +6,6 @@ from flask import g
 def get_parent(path):
     print(path)
     return path[0 : path.rfind("/")]
-
-
-def wait_for_indexd_alive(port):
-    url = "http://localhost:{}/_status".format(port)
-    try:
-        requests.get(url)
-    except requests.ConnectionError:
-        return wait_for_indexd_alive(port)
-    else:
-        return
-
-
-def wait_for_indexd_not_alive(port):
-    url = "http://localhost:{}/_status".format(port)
-    try:
-        requests.get(url)
-    except requests.ConnectionError:
-        return
-    else:
-        return wait_for_indexd_not_alive(port)
 
 
 def put_cgci(client, auth=None):
