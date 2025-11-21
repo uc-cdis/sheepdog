@@ -11,7 +11,7 @@ import os
 import uuid
 from io import StringIO
 
-import boto
+import boto3
 from datamodelutils import models as md
 from flask import g
 from moto import mock_s3
@@ -38,7 +38,7 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 def s3_conn():
     mock = mock_s3()
     mock.start(reset=False)
-    conn = boto.connect_s3()
+    conn = boto3.connect_s3()
     yield conn
     bucket = conn.get_bucket("test_submission")
     for part in bucket.list_multipart_uploads():
@@ -50,7 +50,7 @@ def mock_request(f):
     def wrapper(*args, **kwargs):
         mock = mock_s3()
         mock.start(reset=False)
-        conn = boto.connect_s3()
+        conn = boto3.connect_s3()
         conn.create_bucket("test_submission")
 
         result = f(*args, **kwargs)
