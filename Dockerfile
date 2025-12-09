@@ -1,7 +1,7 @@
 ARG AZLINUX_BASE_VERSION=master
 
 # Base stage with python-build-base
-FROM quay.io/cdis/amazonlinux-base:3.13-pythonnginx AS base
+FROM quay.io/cdis/amazonlinux-base:3.13-pythonbase AS base
 
 ENV appname=sheepdog
 
