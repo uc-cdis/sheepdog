@@ -813,10 +813,11 @@ def export_all(node_label, project_id, file_format, db, without_id):
         cls = psqlgraph.Node.get_subclass(node_label)
         linked_props = make_linked_props(cls, titles_linked)
 
-        # Bui ld up the query. The query will contain, firstly, the node class,
+        # Build up the query. The query will contain, firstly, the node class,
         # and secondly, all the relevant properties in linked nodes.
         query_args = [cls] + linked_props
-        query = session.query(*query_args).prop("project_id", project_id)
+        query = session.query(*query_args).filter(cls.project_id.astext == project_id)
+
         # Join the related node tables using the links.
         for link in cls._pg_links.values():
             query = (

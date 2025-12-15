@@ -1,23 +1,19 @@
-import flask
-
+import json
+from mock import patch, MagicMock
 import pytest
 import requests
+import uuid
 
-# Python 2 and 3 compatible
-try:
-    from unittest.mock import MagicMock
-    from unittest.mock import patch
-except ImportError:
-    from mock import MagicMock
-    from mock import patch
+from cdislogging import get_logger
 
 from sheepdog.errors import AuthZError
 from sheepdog.test_settings import JWT_KEYPAIR_FILES
-
 from tests import utils
 
 
 SUBMITTER_USERNAME = "submitter"
+
+logger = get_logger(__name__, log_level="debug")
 
 
 @pytest.fixture(scope="session")
@@ -162,3 +158,67 @@ def arborist_authorized(mock_arborist_requests):
     "mock_arborist_requests(authorized=False)" in the test itself
     """
     mock_arborist_requests()
+
+
+@pytest.fixture(scope="function", autouse=True)
+def mock_indexd_requests(request):
+    """
+    This fixture automatically mocks all calls made by indexclient to Indexd
+    """
+    # _records: {did: record} mapping. All records currently in the mocked indexd DB
+    _records = {}
+
+    def make_mock_response(method, url, *args, **kwargs):
+        logger.debug(
+            f"indexd request: {method} {url} {args} {kwargs}. Mocked records: {list(_records.keys())}"
+        )
+        resp = MagicMock
+        resp.status_code = 200
+        resp_data = None
+
+        url = url.rstrip("/")
+        if method == "GET":
+            if url.endswith("/index"):  # "list records" endpoint
+                resp_data = {"records": list(_records.values())}
+            else:  # "get record" endpoint
+                did = url.split("/index/")[-1]
+                if did in _records:
+                    resp_data = _records[did]
+                else:
+                    resp.status_code = 404
+                    raise requests.HTTPError(response=resp)
+        elif method == "POST":
+            body = json.loads(args[1]["data"])
+            if "did" not in body:
+                body["did"] = str(uuid.uuid4())
+            body["rev"] = str(uuid.uuid4())[:8]
+            _records[body["did"]] = body
+            resp_data = body
+        elif method == "PUT":
+            did = url.split("/index/")[-1]
+            body = json.loads(args[1]["data"])
+            _records[did].update(body)
+            _records[did]["rev"] = str(uuid.uuid4())[:8]
+            resp_data = _records[did]
+
+        resp.json = lambda: resp_data
+        return resp
+
+    mocked_requests = MagicMock
+    mocked_requests.get = lambda url, *args, **kwargs: make_mock_response(
+        "GET", url, args, kwargs
+    )
+    mocked_requests.post = lambda url, *args, **kwargs: make_mock_response(
+        "POST", url, args, kwargs
+    )
+    mocked_requests.put = lambda url, *args, **kwargs: make_mock_response(
+        "PUT", url, args, kwargs
+    )
+    mocked_requests.exceptions = requests.exceptions
+    mocked_requests.HTTPError = requests.HTTPError
+    requests_patch = patch(
+        "indexclient.client.requests",
+        mocked_requests,
+    )
+    requests_patch.start()
+    request.addfinalizer(requests_patch.stop)

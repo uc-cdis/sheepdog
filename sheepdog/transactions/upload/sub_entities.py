@@ -532,7 +532,7 @@ class FileUploadEntity(UploadEntity):
                     self.record_error(
                         "Graph ID and index file ID found in index service do not match, "
                         "which is currently not permitted. Graph ID: {}. "
-                        "Index ID: {}. Index ID found using hash/size: {}.".format(
+                        "Index ID found using hash/size: {}. Index ID found using uuid: {}.".format(
                             nodes[0].node_id, file_by_hash_index, file_by_uuid_index
                         ),
                         type=EntityErrors.NOT_UNIQUE,
