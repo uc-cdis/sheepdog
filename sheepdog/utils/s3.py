@@ -5,7 +5,7 @@ TODO
 import socket
 import urllib.parse
 
-import boto
+import boto3
 import flask
 
 from sheepdog.globals import UPLOADING_PARTS
@@ -17,7 +17,7 @@ def get_s3_conn(host):
     current app context.
     """
     config = flask.current_app.config["STORAGE"]["s3"]
-    return boto.connect_s3(
+    return boto3.connect_s3(
         config["keys"][host]["access_key"],
         config["keys"][host]["secret_key"],
         **config["kwargs"][host]

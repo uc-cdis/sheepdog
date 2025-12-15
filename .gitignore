@@ -84,6 +84,7 @@ target/
 .DS_Store
 .project
 .pydevproject
+.vscode/
 
 # JS
 node_modules/
