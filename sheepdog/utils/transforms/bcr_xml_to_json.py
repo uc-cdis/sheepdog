@@ -11,7 +11,7 @@ of false positives with ``lxml.etree``.
 import datetime
 import json
 import math
-import pkg_resources
+import importlib
 from uuid import uuid5, UUID
 
 from cdislogging import get_logger
@@ -574,7 +574,7 @@ class BcrXmlToJsonParser(object):
 class BcrClinicalXmlToJsonParser(object):
     def __init__(self, project_code, mapping=None):
         if mapping is None:
-            mapping = pkg_resources.resource_string(
+            mapping = importlib.resources.resource_string(
                 "gen3datamodel", "xml_mappings/tcga_clinical.yaml"
             )
         self.xpath_ref = yaml.safe_load(mapping)
