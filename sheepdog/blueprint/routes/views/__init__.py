@@ -116,7 +116,14 @@ def create_program():
             "dbgap_accession_number": "phs000178"
         }
     """
-    input_doc = flask.request.get_data().decode("utf-8")
+    input_doc = flask.request.get_data()
+    try:
+        input_doc = input_doc.decode("utf-8")
+    except UnicodeDecodeError:
+        flask.current_app.logger.error(
+            f"UnicodeDecodeError while trying to decode data: {input_doc}"
+        )
+        raise
     content_type = flask.request.headers.get("Content-Type", "").lower()
     errors = None
     if content_type == "text/csv":
