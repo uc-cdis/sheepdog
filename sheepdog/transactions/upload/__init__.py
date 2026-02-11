@@ -97,14 +97,7 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
     This function multiplexes on the content-type to call the appropriate
     transaction handler.
     """
-    doc = flask.request.get_data()
-    try:
-        doc = doc.decode("utf-8")
-    except UnicodeDecodeError:
-        flask.current_app.logger.error(
-            f"UnicodeDecodeError while trying to decode data: {doc}"
-        )
-        raise
+    doc = utils.parse.decode_request_body()
     content_type = flask.request.headers.get("Content-Type", "").lower()
     errors = None
     if content_type == "text/csv":
