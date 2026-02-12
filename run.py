@@ -2,6 +2,9 @@
 
 from collections import defaultdict
 import os
+import sys
+import uvicorn
+import yaml
 
 from authutils import ROLES as all_roles
 from flask import current_app
@@ -9,8 +12,9 @@ from mock import patch, PropertyMock
 from psqlgraph import PolyNode as Node
 import requests
 
-from sheepdog.api import run_for_development
+from sheepdog.main import app_init, run_for_development
 
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 requests.packages.urllib3.disable_warnings()
 
@@ -113,7 +117,7 @@ def run_with_fake_auth():
         "sheepdog.auth.verify_hmac", new=set_user
     ):
 
-        run_for_development(debug=debug, threaded=True)
+        run_for_development(reload=True)
 
 
 def run_with_fake_authz():
@@ -129,7 +133,7 @@ def run_with_fake_authz():
         new_callable=PropertyMock,
         return_value=lambda jwt, service, methods, resources: authorized,
     ):
-        run_for_development(debug=debug, threaded=True)
+        run_for_development(reload=True)
 
 
 def run_with_fake_download():
@@ -143,15 +147,22 @@ def run_with_fake_download():
             if os.environ.get("GDC_FAKE_AUTH"):
                 run_with_fake_auth()
             else:
-                run_for_development(debug=debug, threaded=True)
+                run_for_development(reload=True)
 
 
 if __name__ == "__main__":
     debug = bool(os.environ.get("SHEEPDOG_DEBUG", True))
-    if os.environ.get("GDC_FAKE_DOWNLOAD") == "True":
+    if sys.argv[-1] == "openapi":
+        schema = app_init().openapi()
+        path = os.path.join(CURRENT_DIR, "docs/openapi.yaml")
+        yaml.Dumper.ignore_aliases = lambda *args: True
+        with open(path, "w+") as f:
+            yaml.dump(schema, f, default_flow_style=False)
+        print(f"Saved docs at {path}")
+    elif os.environ.get("GDC_FAKE_DOWNLOAD") == "True":
         run_with_fake_download()
+    elif os.environ.get("GDC_FAKE_AUTH") == "True":
+        run_with_fake_auth()
     else:
-        if os.environ.get("GDC_FAKE_AUTH") == "True":
-            run_with_fake_auth()
-        else:
-            run_with_fake_authz()
+        print("MAIN Running with fake_authz")
+        run_with_fake_authz()

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sheepdog"
-version = "5.2.3"
+version = "5.3.0"
 description = "Gen3 Submission Service"
 authors = ["CTDS UChicago <cdis@uchicago.edu>"]
 license = "Apache-2.0"
@@ -14,6 +14,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.13"
+fastapi = "<1"
 boto3 = ">=1.40.69"
 authlib = "*" # let authutils decide which version we're using
 authutils = ">=6.2.7,<8"
@@ -37,7 +38,8 @@ Flask-SQLAlchemy-Session = ">=1.1"
 psqlgraph = ">=3.1.1"
 cdiserrors = ">=1.0.0"
 cdislogging = ">=1.0.0"
-gunicorn = ">=21.2.0"
+uvicorn = {extras = ["standard"], version="^0.18.2"}
+gunicorn = ">=22.0.0"
 indexclient = ">=2.1.1"
 urllib3 = ">=2.6.3"
 cachelib = "^0.13.0"
@@ -45,6 +47,7 @@ flasgger = ">=0.9.1"
 mock = ">=1.0.1"
 pyjwt = ">=2.4.0,<3.0"
 setuptools = "*"
+pydantic-settings = ">=2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=4.6.5"
@@ -57,6 +60,9 @@ sphinxcontrib-httpdomain = ">=1.3.0"
 Sphinx = ">=1.6.5"
 sphinx_rtd_theme = "*"
 deptry = "^0.23.1"
+
+[tool.poetry.plugins."sheepdog.modules"]
+"system" = "sheepdog.routes.system"
 
 [build-system]
 requires = ["poetry>=0.12"]

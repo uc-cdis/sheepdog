@@ -47,10 +47,9 @@ which by default will output the `index.html` page to
 
 ### Swagger
 
-[OpenAPI documentation available here.](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/uc-cdis/sheepdog/master/openapi/swagger.yml)
+[OpenAPI documentation available here.](http://petstore.swagger.io/?url=https://raw.githubusercontent.com/uc-cdis/sheepdog/master/docs/openapi.yaml)
 
-The YAML file containing the OpenAPI documentation is in the `openapi` folder;
-see the README in that folder for more details.
+The YAML file containing the OpenAPI documentation is in the `docs` folder.
 
 ## Gen3 graph data flow
 
