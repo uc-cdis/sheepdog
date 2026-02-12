@@ -47,7 +47,7 @@ def parse_list_from_string(value, list_item_type=None):
         items = [list_item_type(item) for item in items]
     elif list_item_type == bool:
         items = [e.lower() in ["true", "t", "yes", "y"] for e in items]
-    else:
+    elif list_item_type != str:
         current_app.logger.warning(
             f"'parse_list_from_string' does not know how to handle type '{list_item_type}' so assuming string is fine... Value is '{value}'"
         )
