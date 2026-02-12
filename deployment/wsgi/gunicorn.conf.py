@@ -1,4 +1,4 @@
-wsgi_app = "bin.settings:application"
+wsgi_app = "deployment.wsgi.wsgi:application"
 bind = "0.0.0.0:8000"
 workers = 2
 preload_app = False
