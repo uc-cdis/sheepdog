@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sheepdog"
-version = "5.2.2"
+version = "5.2.3"
 description = "Gen3 Submission Service"
 authors = ["CTDS UChicago <cdis@uchicago.edu>"]
 license = "Apache-2.0"
@@ -39,7 +39,7 @@ cdiserrors = ">=1.0.0"
 cdislogging = ">=1.0.0"
 gunicorn = ">=21.2.0"
 indexclient = ">=2.1.1"
-urllib3 = ">=2.6.0"
+urllib3 = ">=2.6.3"
 cachelib = "^0.13.0"
 flasgger = ">=0.9.1"
 mock = ">=1.0.1"

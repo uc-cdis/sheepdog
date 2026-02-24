@@ -70,7 +70,7 @@ def _single_transaction(role, program, project, *doc_args, **tx_kwargs):
         flask_config=flask.current_app.config,
         db_driver=db_driver,
         external_proxies=utils.get_external_proxies(),
-        **tx_kwargs
+        **tx_kwargs,
     )
 
     if is_async:
@@ -97,7 +97,7 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
     This function multiplexes on the content-type to call the appropriate
     transaction handler.
     """
-    doc = flask.request.get_data().decode("utf-8")
+    doc = utils.parse.decode_request_body()
     content_type = flask.request.headers.get("Content-Type", "").lower()
     errors = None
     if content_type == "text/csv":
@@ -126,7 +126,7 @@ def handle_single_transaction(role, program, project, **tx_kwargs):
         index_client=flask.current_app.index_client,
         external_proxies=utils.get_external_proxies(),
         db_driver=db_driver,
-        **tx_kwargs
+        **tx_kwargs,
     )
     if is_async:
         session = transaction.db_driver.session_scope(can_inherit=False)
@@ -253,7 +253,7 @@ def handle_bulk_transaction(role, program, project, **tx_kwargs):
         index_client=flask.current_app.index_client,
         db_driver=flask.current_app.db,
         external_proxies=utils.get_external_proxies(),
-        **tx_kwargs
+        **tx_kwargs,
     )
 
     if is_async:

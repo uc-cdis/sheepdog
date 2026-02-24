@@ -86,3 +86,11 @@ def parse_request_yaml():
         return yaml.safe_load(flask.request.get_data())
     except Exception as e:
         raise UserError("Unable to parse yaml: {}".format(e))
+
+
+def decode_request_body():
+    doc = flask.request.get_data()
+    try:
+        return doc.decode("utf-8")
+    except UnicodeDecodeError as e:
+        raise UserError(f"UnicodeDecodeError: {e}: unable to decode data: {doc}")
