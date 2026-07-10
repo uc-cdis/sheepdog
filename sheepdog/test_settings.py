@@ -40,6 +40,7 @@ FLASK_SECRET_KEY = "flask_test_key"  # nosec
 
 USER_API = "localhost"
 BASE_URL = "localhost"
+AUTHZ_AUDIENCE = "gen3"
 
 VERIFY_PROJECT = False
 AUTH_SUBMISSION_LIST = False
