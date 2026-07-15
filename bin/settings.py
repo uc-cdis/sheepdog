@@ -57,7 +57,9 @@ config["PSQL_USER_DB_CONNECTION"] = "postgresql://%s:%s@%s:5432/%s" % (
 
 config["USER_API"] = "https://%s/user" % conf_data.get(
     "hostname", os.environ.get("CONF_HOSTNAME", "localhost")
-)  # for use by authutils
+)
+config["AUTHZ_AUDIENCE"] = "gen3"  # for use by authutils
+
 # use the USER_API URL instead of the public issuer URL to accquire JWT keys
 config["FORCE_ISSUER"] = True
 config["DICTIONARY_URL"] = os.environ.get(

@@ -71,6 +71,7 @@ DICTIONARY_URL = os.environ.get(
 )
 
 USER_API = "http://localhost/user/"
+AUTHZ_AUDIENCE = "gen3"
 
 SESSION_COOKIE_NAME = "sheepdog_session"
 # verify project existence in dbgap or not
