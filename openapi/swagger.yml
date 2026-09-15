@@ -654,8 +654,9 @@ paths:
     get:
       description: Retrieve existing entities by ID. The return type of a HTTP `get`
         on this endpoint is a JSON array containing JSON object elements, each corresponding
-        to a provided ID. Return results are unordered. If any ID is not found in
-        the database, a status code of 404 is returned with the missing IDs.
+        to a provided ID. Return results are unordered. Only entities belonging to
+        the given project are returned. If any ID is not found in that project, a
+        status code of 404 is returned with the missing IDs.
       parameters:
       - description: The program to which the submitter belongs and in which the entities
           will be created. The `program` is the human-readable name, e.g. TCGA.
