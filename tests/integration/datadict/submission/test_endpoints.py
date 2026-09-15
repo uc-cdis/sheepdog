@@ -608,6 +608,24 @@ def test_get_entity_by_id(client, pg_driver, cgci_blgsp, submitter):
     assert r.json["entities"][0]["properties"]["id"] == case_id, r.data
 
 
+def test_get_entity_by_id_is_scoped_to_project(
+    client, pg_driver, cgci_blgsp, submitter
+):
+    """A node is not readable through a different project's entities path."""
+    # Populates CGCI-BLGSP; put_tcga_brca adds TCGA-BRCA, which stays empty
+    post_example_entities_together(client, submitter)
+    put_tcga_brca(client, submitter)
+    with pg_driver.session_scope():
+        blgsp_case = pg_driver.nodes(md.Case).props(project_id="CGCI-BLGSP").first()
+        assert blgsp_case, "expected the cgci_blgsp fixture to create a case"
+        blgsp_case_id = blgsp_case.node_id
+
+    r = client.get(BRCA_PATH + "entities/" + blgsp_case_id, headers=submitter)
+
+    assert r.status_code >= 400, r.data
+    assert "entities" not in r.json, r.data
+
+
 def test_invalid_file_index(monkeypatch, client, pg_driver, cgci_blgsp, submitter):
     """
     Test that submitting an invalid data file doesn't create an index and an

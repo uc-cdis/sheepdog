@@ -251,8 +251,9 @@ def get_entities_by_id(program, project, entity_id_string):
     containing JSON object elements, each corresponding to a provided ID.
     Return results are unordered.
 
-    If any ID is not found in the database, a status code of 404 is returned
-    with the missing IDs.
+    Only entities belonging to the given project are returned. If any ID is not
+    found in that project, a status code of 404 is returned with the missing
+    IDs.
 
     Summary:
         Get entities by ID
@@ -277,8 +278,16 @@ def get_entities_by_id(program, project, entity_id_string):
     :resheader Content-Type: |resheader_Content-Type|
     """
     entity_ids = entity_id_string.split(",")
+    # Authorization is granted on the project in the URL, so the lookup must be
+    # confined to it
+    project_id = "{}-{}".format(program, project)
     with flask.current_app.db.session_scope():
-        nodes = flask.current_app.db.nodes().ids(entity_ids).all()
+        nodes = (
+            flask.current_app.db.nodes()
+            .ids(entity_ids)
+            .props(project_id=project_id)
+            .all()
+        )
         entities = {n.node_id: n for n in nodes}
         missing_entities = set(entity_ids) - set(entities.keys())
         if missing_entities:
