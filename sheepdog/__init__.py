@@ -12,3 +12,9 @@ Notes on frequently disabled pylint warnings/errors:
 from dictionaryutils import dictionary
 from datamodelutils import models, validators
 from .blueprint import create_blueprint
+
+from gen3logging import get_logger
+
+# Can't read config yet. Just set to debug for now.
+# Later, in app.app_init(), will actually set level based on config
+logger = get_logger("sheepdog", log_level="debug")
