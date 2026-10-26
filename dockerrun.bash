@@ -1,4 +1,4 @@
 #!/bin/bash
 
-nginx 
-poetry run gunicorn -c "/sheepdog/deployment/wsgi/gunicorn.conf.py"
+nginx
+exec gunicorn -c "/sheepdog/deployment/wsgi/gunicorn.conf.py"
