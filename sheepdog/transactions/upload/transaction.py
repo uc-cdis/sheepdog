@@ -64,7 +64,7 @@ class UploadTransaction(TransactionBase):
         # The dbGapXReferencer conditionally requires cases to exist in
         # dbGaP prior to submission to the Gen3 commons
         self.dbgap_x_referencer = dbgap.dbGaPXReferencer(
-            self.db_driver, self.logger, proxies=self.external_proxies
+            self.db_driver, self.logger, proxy=self.external_proxies
         )
 
         self._config = kwargs["flask_config"]
