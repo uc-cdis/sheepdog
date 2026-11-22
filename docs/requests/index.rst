@@ -81,7 +81,7 @@ success.
     A human readable summary of the transaction results.
 
 **transactional_errors**
-    A list of transactional errors occured.  These errors are errors that are
+    A list of transactional errors occurred.  These errors are errors that are
     not specific to an individual entity. Transactional errors are of the form
 
   .. code-block:: javascript
@@ -91,7 +91,7 @@ success.
    }
 
 **transactional_error_count**
-    A count of the number of transactional errors that occured.
+    A count of the number of transactional errors that occurred.
 
 **entity_error_count**
     A count of the number entities that were not successful.
@@ -154,20 +154,20 @@ Status Messages
 API responses will contain a status for each entity specified in the request:
 
 **success**
-    The desired transaction was sucessful and the entity's state was
+    The desired transaction was successful and the entity's state was
     modified in the database.  Because requests are transactional,
     either all entities will have status ``success`` or none will.
 
 **valid**
-    The desired transaction was not sucessful, but the trasaction was
+    The desired transaction was not successful, but the transaction was
     not aborted because of this entity.  Had all other entities in this
     transaction been ``valid`` and there were no internal errors, then
     the stats of this entity would ``success``.
 
 **error**
-    The desired transaction was not sucessful, and the trasaction was in
+    The desired transaction was not successful, and the transaction was in
     part aborted because of this entity.  This entity did not pass
-    validation or an internal error occured when attempting to complete
+    validation or an internal error occurred when attempting to complete
     the transaction. The ``error`` state will be accompanied by a list
     of errors recorded about the entity (see
     :ref:`label-error-messages`).
